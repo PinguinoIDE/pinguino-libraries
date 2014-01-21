@@ -112,8 +112,6 @@ void PWM_setFrequency(u32 freq)
 
 void PWM_setDutyCycle(u8 pin, u16 duty)
 {
-    u8 temp;
-
     if (duty > 1023) duty = 1023;		// upper limit (10-bit)
 
     // 1- Set the PWM period by writing to the PR2 (PR4) register.

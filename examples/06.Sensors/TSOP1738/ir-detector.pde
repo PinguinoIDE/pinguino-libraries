@@ -63,7 +63,7 @@ void IR_transmission()
 			IR_emitterOff(IR_LEFT_LED);
 			IR_emitterOn(IR_RIGHT_LED);
 			break;
-		default:
+		default: // GAPTIME1 or GAPTIME2
 			IR_emitterOff(IR_RIGHT_LED);
 			IR_emitterOff(IR_LEFT_LED);
 			break;

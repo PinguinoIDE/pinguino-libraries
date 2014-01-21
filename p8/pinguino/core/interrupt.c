@@ -1182,8 +1182,8 @@ u8 OnTimer3(callback func, u8 timediv, u16 delay)
                 break;
         }
 
-        preloadH[INT_TMR0] = high8(0xFFFF - _cycles_);
-        preloadL[INT_TMR0] =  low8(0xFFFF - _cycles_);
+        preloadH[INT_TMR3] = high8(0xFFFF - _cycles_);
+        preloadL[INT_TMR3] =  low8(0xFFFF - _cycles_);
         
         #if defined(__18f26j50) || defined(__18f46j50) || \
             defined(__18f25k50) || defined(__18f45k50)
