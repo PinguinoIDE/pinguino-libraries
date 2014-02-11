@@ -1,5 +1,5 @@
 /*	----------------------------------------------------------------------------
-	FILE:			memory.c
+	FILE:			flashmem.c
 	PROJECT:		pinguinoX
 	PURPOSE:		
 	PROGRAMER:		jean-pierre mandon <jp.mandon@gmail.com>
@@ -38,15 +38,15 @@ u32 TotalMem()
 
 u32 FlashOperation(u16 operation)
 {
+    unsigned long t0;
+    
 	// disable interrupt
 	asm("di");
 	NVMCON=operation;
 	
 	// wait for LVD to start up ( at least 6 µS )
-	{
-        unsigned long t0 = _CP0_GET_COUNT();
-        while (_CP0_GET_COUNT() - t0 < (80/2)*6);
-    }
+    t0 = _CP0_GET_COUNT();
+    while (_CP0_GET_COUNT() - t0 < (80/2)*6);
     
 	// unlock system
 	NVMKEY=0xAA996655;
@@ -86,9 +86,8 @@ u32 PageErase(void* address)
 // WordWrite
 // write a single word in memory
 
-u32 WordWrite(void* address,u32 data)
+u32 WordWrite(void* address, u32 data)
 {
-
 	// check for error in the NVMCON register
 	if (NVMCON & (_NVMCON_WRERR_MASK | _NVMCON_LVDERR_MASK)) FlashClearError();
 	// set Address to erase and Non Volatile Memory instruction ERASE PAGE
@@ -97,9 +96,8 @@ u32 WordWrite(void* address,u32 data)
 	return(FlashOperation(0x4001));
 }
 
-u32 RowWrite(void* address,u32* data)
+u32 RowWrite(void* address, u32* data)
 {
-
 	// check for error in the NVMCON register
 	if (NVMCON & (_NVMCON_WRERR_MASK | _NVMCON_LVDERR_MASK)) FlashClearError();
 	// set Address to erase and Non Volatile Memory instruction ERASE PAGE
@@ -108,4 +106,4 @@ u32 RowWrite(void* address,u32* data)
 	return(FlashOperation(0x4003));
 }
 
-#endif	/* __NVMMEM__ */
+#endif	/* FLASHMEM */

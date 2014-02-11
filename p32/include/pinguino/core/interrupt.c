@@ -32,6 +32,8 @@
 	#include <typedef.h>
 	#include <macro.h>
 
+    #define __ISR(v,ipl) __attribute__((vector(v), interrupt(ipl), nomips16))
+
 	// INTERRUPT CONFIG MODE
 	#define INT_SYSTEM_CONFIG_MULT_VECTOR	1
 	#define INT_SYSTEM_CONFIG_SINGLE_VECTOR 2

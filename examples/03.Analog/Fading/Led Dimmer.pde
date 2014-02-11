@@ -17,25 +17,25 @@
 					PIC32 PINGUINO 220	 can only use pins	D2, D3, D11, D12, D13
 	--------------------------------------------------------------------------*/
 
-#define MYLED 10
+#define MYLED 11
 
 u8 i = 0;
 s8 dir;
 
 void setup()
 {
-    // Frequency must be high to avoid blinking effect
-    PWM.setFrequency(5000);
+    // Frequency (Hz) must be high to avoid blinking effect
+    PWM.setFrequency((36*1000));
 }
 
 void loop()
 {
-    // Duty Cycle from 10% to 90% and back
-    if (i > 90) dir = -1;
-    if (i < 10) dir =  1;
+    // Duty Cycle from 0% to 50% and back
+    if (i > 50) dir = -1;
+    if (i <= 0) dir =  1;
     i = i + dir;
     // Duty Cycle is a percentage measure of the time that the LED is physically on.
-    PWM.setPercentDutyCycle(MYLED, i);
-    // Delay of 50 ms
-    delay(50);
+    PWM.setPercentDutyCycle(MYLED, 50);
+    // Delay of 25 ms
+    delay(25);
 }

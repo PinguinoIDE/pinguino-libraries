@@ -291,7 +291,7 @@ void analogwrite(u8 pin, u16 duty)
         case CCP2:
             CCP2CON  = 0b00001100;
             CCPR2L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP1CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCP2CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
             break;
 
         #endif

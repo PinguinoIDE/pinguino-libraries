@@ -13,10 +13,11 @@
  * JVC and Panasonic protocol added by Kristian Lauszus (Thanks to zenwheel and other people at the original blog post)
  */
 
-#ifndef IRremoteint_h
-#define IRremoteint_h
+#ifndef IRREMOTEINT_H
+#define IRREMOTEINT_H
 
 #include <IRremote.h>
+#include <typedef.h>
 
 #define ERR 0
 #define DECODED 1
@@ -120,7 +121,7 @@
 int MATCH(int measured, int desired) {return measured >= TICKS_LOW(desired) && measured <= TICKS_HIGH(desired);}
 int MATCH_MARK(int measured_ticks, int desired_us) {return MATCH(measured_ticks, (desired_us + MARK_EXCESS));}
 int MATCH_SPACE(int measured_ticks, int desired_us) {return MATCH(measured_ticks, (desired_us - MARK_EXCESS));}
-// Debugging versions are in IRremote.cpp
+// Debugging versions are in IRremote.c
 #endif
 
 // receiver states
@@ -131,17 +132,17 @@ int MATCH_SPACE(int measured_ticks, int desired_us) {return MATCH(measured_ticks
 
 // information for the interrupt handler
 typedef struct {
-  uint8_t recvpin;           // pin for IR data from detector
-  uint8_t outpin;            // pin to output IR data
-  uint8_t rcvstate;          // state machine
-  uint8_t blinkflag;         // TRUE to enable blinking of pin 13 on IR processing
-  unsigned int timer;     // state timer, counts 50uS ticks.
-  unsigned int rawbuf[RAWBUF]; // raw data
-  uint8_t rawlen;         // counter of entries in rawbuf
+    u8  recvpin;           // pin for IR data from detector
+    u8  outpin;            // pin to output IR data
+    u8  rcvstate;          // state machine
+    u8  blinkflag;         // TRUE to enable blinking of pin 13 on IR processing
+    u16 timer;     // state timer, counts 50uS ticks.
+    u16 rawbuf[RAWBUF]; // raw data
+    u8  rawlen;         // counter of entries in rawbuf
 } 
 irparams_t;
 
-// Defined in IRremote.cpp
+// Defined in IRremote.c
 extern volatile irparams_t irparams;
 
 // IR detector output is active low
@@ -159,7 +160,7 @@ extern volatile irparams_t irparams;
 #define PANASONIC_BITS 48
 #define JVC_BITS 16
 
-#endif /* IRremoteint_h */
+#endif /* IRREMOTEINT_H */
 
 
 

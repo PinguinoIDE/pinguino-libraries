@@ -37,6 +37,7 @@
 #define __DIGITALW__
 
 #include <pic18fregs.h>
+#include <pin.h>
 //#include <typedef.h>
 
 /*
@@ -219,8 +220,34 @@ const unsigned char port[14]={
     #error "Processor Not Yet Supported. Please, Take Contact with Developpers."
 #endif
 
+#if defined(ANALOGWRITE) || defined(__PWM__)
+void pwmclose(unsigned char pin)
+{
+    switch (pin)
+    {
+        #if defined(__18f26j53) || defined(__18f46j53) || \
+            defined(__18f27j53) || defined(__18f47j53)
+            case CCP4:  CCP4CON  = 0; break;
+            case CCP5:  CCP5CON  = 0; break;
+            case CCP6:  CCP6CON  = 0; break;
+            case CCP7:  CCP7CON  = 0; break;
+            case CCP8:  CCP8CON  = 0; break;
+            case CCP9:  CCP9CON  = 0; break;
+            case CCP10: CCP10CON = 0; break;
+        #else
+            case CCP1:  CCP1CON  = 0; break;
+            case CCP2:  CCP2CON  = 0; break;
+        #endif
+    }
+}
+#endif
+
 void digitalwrite(unsigned char pin, unsigned char state)
 {
+    #if defined(ANALOGWRITE) || defined(__PWM__)
+    pwmclose(pin);
+    #endif
+
     switch (port[pin])
     {
         case pA: if (state) LATA=LATA | mask[pin];
@@ -263,6 +290,10 @@ void digitalwrite(unsigned char pin, unsigned char state)
 
 unsigned char digitalread(unsigned char pin)
 {
+    #if defined(ANALOGWRITE) || defined(__PWM__)
+    pwmclose(pin);
+    #endif
+
     switch (port[pin])
     {
         case pA: if ((PORTA & mask[pin])!=0) return (1);
