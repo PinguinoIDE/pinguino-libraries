@@ -279,8 +279,12 @@
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
+<<<<<<< HEAD
      defined(__IRREMOTE__)  || defined(RTCCALARMINTENABLE) || defined(__STEPPER__)
      // || defined(__MICROSTEPPING__)
+=======
+     defined(RTCCALARMINTENABLE) || defined(__STEPPER__) // || defined(__MICROSTEPPING__)
+>>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
 
 /*  ----------------------------------------------------------------------------
     High Interrupt Vector
@@ -341,10 +345,13 @@ void high_priority_isr(void) __interrupt 1
     dcf77_interrupt();
     #endif
 
+<<<<<<< HEAD
     #ifdef __IRREMOTE__
     irremote_interrupt();
     #endif
     
+=======
+>>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
     //#ifdef __MICROSTEPPING__
     #ifdef __STEPPER__
     stepper_interrupt();
