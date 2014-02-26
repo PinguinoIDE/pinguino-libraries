@@ -9,16 +9,6 @@
 # ------------------------------------------------------------------------------
 # HOME, PDEDIR, PROC & BOARD are defined in pinguino.py
 
-<<<<<<< HEAD
-OSDIR			=	linux
-SRCDIR		=	$(HOME)/source
-P32DIR		=	$(HOME)/p32
-P32CORE		=	$(HOME)/$(OSDIR)/p32
-BINDIR		=	$(P32CORE)/bin
-INCDIR		=	$(P32DIR)/include
-LKRDIR		=	$(P32DIR)/lkr/$(BOARD)
-OBJDIR		=	$(P32DIR)/obj/non-free
-=======
 #OSDIR			=	linux
 #SRCDIR		=	$(HOME)/source
 #P32DIR		=	$(HOME)/p32
@@ -27,23 +17,16 @@ OBJDIR		=	$(P32DIR)/obj/non-free
 INCDIR		=	$(P32DIR)/include
 LKRDIR		=	$(P32DIR)/lkr/$(BOARD)
 OBJDIR		=	$(SRCDIR)/obj/non-free
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
 
 INCLUDEDIRS	=	-I$(INCDIR)/non-free\
 					-I$(INCDIR)/pinguino/core\
 					-I$(INCDIR)/pinguino/libraries\
 					-I$(LKRDIR)\
 					-I$(PDEDIR)\
-<<<<<<< HEAD
-					-I$(OBJDIR)
-
-LIBDIRS		=	-L$(OBJDIR)/usb
-=======
 					-I$(OBJDIR)\
                                         $(USERLIBS)
 
 LIBDIRS		=	-L$(OBJDIR)/usb 
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
 
 # ------------------------------------------------------------------------------
 # unsupported record in hex file / Jean-pierre Mandon 2012
