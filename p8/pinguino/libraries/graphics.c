@@ -103,7 +103,7 @@ void fillCircle(u16 x, u16 y, u16 radius)
 				drawPixel(x+x1, y+y1); 
 }
 
-void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
+void drawLine(s16 x0, s16 y0, s16 x1, s16 y1)
 {
 	s16 steep, t;
 	s16 deltax, deltay, error;

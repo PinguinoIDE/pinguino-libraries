@@ -31,7 +31,7 @@
 
 #if defined(SCROLL) || defined(WRITESTRING) || defined(DISPLAYCHAR)
     #include <fonts/font8x8.h>
-    u8 (*alphabetBitmap)[8] = font;
+    u8 (*alphabetBitmap)[8] = font8x8 + 2;
 #endif
 
 #define LSBFIRST 100

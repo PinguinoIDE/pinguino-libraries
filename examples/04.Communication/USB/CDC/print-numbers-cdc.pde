@@ -8,51 +8,52 @@ int number;
 
 void setup()
 {
-	CDC.getKey();
+	pinMode(USERLED, OUTPUT);
 }
 
 void loop()
 {
 	number=3200;
 	// Arduino or Pinguino
-	CDC.printf("Decimal 3200=");
-	CDC.print(number,DEC);
-	CDC.printf("\r\n");
+	CDC.print("Decimal 3200=");
+	CDC.printNumber(number, DEC);
+	CDC.print("\r\n");
 	// Only Pinguino
-	CDC.printf("Decimal 3200=%d\r\n", number);
+	//CDC.printf("Decimal 3200=%d\r\n", number);
 
 	number=253;
 	// Arduino or Pinguino
-	CDC.printf("Hexadecimal 253=");
-	CDC.print(number,HEX);
-	CDC.printf("\r\n");
+	CDC.print("Hexadecimal 253=0x");
+	CDC.printNumber(number, HEX);
+	CDC.print("\r\n");
 	// Only Pinguino
-	CDC.printf("Hexadecimal 253=%x\r\n", number);
+	//CDC.printf("Hexadecimal 253=%x\r\n", number);
 
 	number=156;
 	// Arduino or Pinguino
-	CDC.printf("Binary 156=");
-	CDC.print(number,BIN);
-	CDC.printf("\r\n");
+	CDC.print("Binary 156=0b");
+	CDC.printNumber(number, BIN);
+	CDC.print("\r\n");
 	// Only Pinguino
-	CDC.printf("Binary 156=%b\r\n", number);
+	//CDC.printf("Binary 156=%b\r\n", number);
 
 	number=236;
 	// Arduino or Pinguino
-	CDC.printf("Octal 236=");
-	CDC.print(number,OCT);
-	CDC.printf("\r\n");
+	CDC.print("Octal 236=");
+	CDC.printNumber(number, OCT);
+	CDC.print("\r\n");
 	// Only Pinguino
-	CDC.printf("Octal 236=%o\r\n", number);
+	//CDC.printf("Octal 236=%o\r\n", number);
 
 	number=65;
 	// Arduino or Pinguino
-	CDC.printf("Byte 65=");
-	CDC.print(number,BYTE);
-	CDC.printf("\r\n");
+	CDC.print("Byte 65=");
+	CDC.printNumber(number, 2);
+	CDC.print("\r\n");
 	// Only Pinguino
-	CDC.printf("Byte 65=%d\r\n", number);
+	//CDC.printf("Byte 65=%d\r\n", number);
  
- CDC.getKey();
+  toggle(USERLED);
+  delay(1000);
  
 }

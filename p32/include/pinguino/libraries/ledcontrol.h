@@ -38,7 +38,7 @@
 
 #if defined(SCROLL) || defined(WRITESTRING) || defined(DISPLAYCHAR)
     #include <fonts/font8x8.h>
-    u8 (*alphabetBitmap)[8] = font;
+    u8 (*alphabetBitmap)[8] = font8x8 +2 ;
 #endif
 
 #define LSBFIRST 100
@@ -87,7 +87,7 @@ u8 LEDCONTROL_SPI_MOSI;
 u8 LEDCONTROL_SPI_CLK;
 /* This one is driven LOW for chip selectzion */
 u8 LEDCONTROL_SPI_CS;
-/* The maximum number of devices we use */
+/* The number of devices we use */
 u8 maxDevices;
 /* Send out a single command to the device */
 void spiTransfer(u8 matrix, u8 opcode, u8 data);

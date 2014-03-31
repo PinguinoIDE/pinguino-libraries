@@ -7,7 +7,7 @@ Extended doc at http://elm-chan.org/fsw/ff/00index_e.html
 Look at serialtffdemo to know the MCUs, boards, MCU-card connections to apply this example. 
 We are only interested by SD cards with low capacity (< 4GB) and FAT12/16.
 Nevertheless this lib is able to manage FAT32.
-This demo is done in an interactive way thru a hyperterminal.
+This demo is done in an interactive way thru a hyperterminal using RS232 UART.
 Our SD card only contains one drive and one FAT.
 The user can send synthetic orders to create files or directories, etc ...
 fi to initialize the FAT file system and open the root directory (/)

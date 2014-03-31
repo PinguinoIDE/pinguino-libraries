@@ -290,47 +290,53 @@ u8 LedControl_getCharArrayPosition(char input)
 #if defined(SCROLL)
 void LedControl_scroll(const char * displayString)
 {
-    u8 nextchar;   // next char to display
-    u8 r;          // current row
-    u8 ascii;     // current ASCII code
-    u8 curchar;    // current displayed char
-    u8 offset;     // nombre de bits à prendre dans l'octet suivant
-    u8 row[8];     //
-    u8 scrollmax = 8 * max(maxDevices, strlen(displayString));
+    u8 nextchar;    // next char to display
+    u8 r;           // current row
+    u8 m;           // current matrix
+    u8 ascii;       // current ASCII code
+    u8 curchar;     // current displayed char
+    u8 offset;      // nombre de bits à prendre dans l'octet suivant
+    u8 row[8];      // number of lines of the matrix
+    u16 scrollmax = 8 * max(maxDevices, strlen(displayString));
     
     // octet de départ
     curchar = scroll / 8;
 
     // nombre de bits à prendre dans l'octet suivant
-    offset = scroll % 8;
+    offset  = scroll % 8;
 
-    // for every row of the matrix
-    for(r=0; r<8; r++)
+    for (m=0; m<maxDevices; m++)
     {
-        row[r]=0;
-
-        // matrix = current char shifted by offset
-
-        ascii = displayString[curchar]-32;
-        row[r] |= ( alphabetBitmap[ascii][r] >> offset );
-
-        // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
-        // afficher dans l'octet suivant
-
-        if (offset > 0) 
+        // for every line of the matrix
+        for(r=0; r<8; r++)
         {
-            ascii = displayString[curchar+1]-32;
-            if (ascii >= 0x20 && ascii <= 0x7F)
+            row[r]=0;
+
+            // matrix = current char shifted by offset
+
+            ascii = displayString[curchar]-32;
+            row[r] |= ( alphabetBitmap[ascii][r] >> offset );
+
+            // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
+            // afficher dans l'octet suivant
+
+            if (offset > 0) 
             {
-                nextchar = alphabetBitmap[ascii][r];
-                row[r] |=  nextchar << (8-offset);
+                ascii = displayString[curchar+1]-32;
+                if (ascii >= 0x20 && ascii <= 0x7F)
+                {
+                    nextchar = alphabetBitmap[ascii][r];
+                    row[r] |=  nextchar << (8-offset);
+                }
             }
         }
-    }
 
-    // Display the new matrix
-    for (r=0; r<8; r++)
-        LedControl_setColumn(0, 7-r, row[r]);     
+        // Display the new matrix
+        for (r=0; r<8; r++)
+            LedControl_setColumn(m, 7-r, row[r]);     
+
+        curchar++;
+    }
 
     // and wait a bit
     Delayms(50);
@@ -368,7 +374,7 @@ void LedControl_displayChar(u8 matrix, u8 charIndex)
     if (charIndex >= 0x20 && charIndex <= 0x7F)
     {
         for (i=0; i<8;i++)
-            LedControl_setColumn(matrix, 7-i, alphabetBitmap[charIndex-32][i]);
+            LedControl_setColumn(matrix, 7-i, alphabetBitmap[2+charIndex-32][i]);
     }
 }
 #endif

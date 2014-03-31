@@ -8,7 +8,7 @@
     ----------------------------------------------------------------------------
     CHANGELOG:
     [02-12-10][jp.mandon@gmail.com][tested from 0 to 31 OK except PORTA pin]
-    [02-12-10][rblanchot@gamil.com][PORTA pin issue fixed in system.c]
+    [02-12-10][rblanchot@gamil.com][PORTA pin issue fixed in system.c (JTAGEN)]
     [13-02-11][jp.mandon@gmail.com][updated for EMPEROR 460 and PIC32_PINGUINO]
     [15-02-11][Marcus Fazzi][UBW32 mask fixed]
     [23-02-11][Marcus Fazzi][PGC/PGD order for UBW32 mask fixed]
@@ -18,7 +18,7 @@
     [30-01-12][rblanchot@gmail.com][added PIC32-PINGUINO-220 et PIC32-PINGUINO-MICRO]
     [03-03-12][jp.mandon@gmail.com][added UEXT pin for PIC32-PINGUINO-MX220]
     [29-03-12][hgmvanbeek@gmail.com][extended PIC32-PINGUINO-MICRO pinning]
-    [13-05-12][jp.mandon@gmail.com][extended GENERIC250F128 and GENERIC220F032 pinning]
+    [13-05-12][jp.mandon@gmail.com][extended PINGUINO32MX250 and PINGUINO32MX22 pinning]
     [02-12-13][rblanchot@gmail.com][updated toggle function]
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or

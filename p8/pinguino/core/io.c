@@ -1,33 +1,33 @@
 /*	----------------------------------------------------------------------------
-	FILE:			io.c
-	PROJECT:		pinguino
-	PURPOSE:		Peripheral Remappage and IOs Configuration
-	PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	20 Jun. 2012
-	LAST RELEASE:	28 Feb 2013
-	----------------------------------------------------------------------------
-	CHANGELOG:
-	23 Nov 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
-	07 Dec 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
+    FILE:			io.c
+    PROJECT:		pinguino
+    PURPOSE:		Peripheral Remappage and IOs Configuration
+    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:	20 Jun. 2012
+    LAST RELEASE:	28 Feb 2013
+    ----------------------------------------------------------------------------
+    CHANGELOG:
+    23 Nov 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
+    07 Dec 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
     05 Oct 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
                                    with EECON2 = 0x55; EECON2 = 0xAA;]
     28 Feb 2013 - Régis Blanchot - renamed functions
                                    added IO_init()
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    ----------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	--------------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    --------------------------------------------------------------------------*/
 
 #ifndef __IO_C
 #define __IO_C
@@ -46,24 +46,24 @@ void IO_init(void)
     LATA  = 0x00;
     LATB  = 0x00;
 
-	#if defined(__18f26j50) || defined(__18f46j50) || \
+    #if defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f27j53) || defined(__18f47j53)
-	    #ifdef __SERIAL__
-		LATC  = 0x44;	// Except UART TX,TX2 bit (maintain high state to not emit extra low state) 
-		#else
-		LATC  = 0x00;	
-	    #endif
-	#endif
+        #ifdef __SERIAL__
+        LATC  = 0x44;	// Except UART TX,TX2 bit (maintain high state to not emit extra low state) 
+        #else
+        LATC  = 0x00;	
+        #endif
+    #endif
     
-	#if  defined(__18f2455)  || defined(__18f4455)  || \
+    #if  defined(__18f2455)  || defined(__18f4455)  || \
          defined(__18f2550)  || defined(__18f4550)  || \
          defined(__18f25k50) || defined(__18f45k50)
-	    #ifdef __SERIAL__
-		LATC  = 0x40;	// Except UART TX bit (maintain high state to not emit extra low state) 
-		#else
-		LATC  = 0x40;	
-	    #endif
-	#endif
+        #ifdef __SERIAL__
+        LATC  = 0x40;	// Except UART TX bit (maintain high state to not emit extra low state) 
+        #else
+        LATC  = 0x40;	
+        #endif
+    #endif
 
     #if defined(__18f4455)  || defined(__18f4550)  || \
         defined(__18f45k50) || defined(__18f46j50) || \
@@ -72,7 +72,7 @@ void IO_init(void)
     LATE  = 0x00; 
     #endif
 
-	TRISA = 0x00;
+    TRISA = 0x00;
     #ifndef I2CINT	
     TRISB = 0x00;
     #endif
@@ -187,6 +187,19 @@ void IO_remap(void)
         //#endif
 
         //#ifdef __SPI2__
+        /**
+         * datasheet 18f47j53 p296 or 18f26j50 p274
+         * When MSSP2 is used in SPI Master mode, the SCK2 function must be
+         * configured as both an output and an input in the PPS module.
+         * SCK2 must be initialized as an output pin (by writing 0x0A to one
+         * of the RPORx registers).
+         * Additionally, SCK2IN must also be mapped to the same pin by
+         * initializing the RPINR22 register.
+         * Failure to initialize SCK2/SCK2IN as both output and input will
+         * prevent the module from receiving data on the SDI2 pin, as the
+         * module uses the SCK2IN signal to latch the received data.
+        **/
+        RPINR22 = 5;                    // 2014-20-03 fixed by AG (see above)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR5 = 10;                     // RP5 (RB2) -> SCK2
         RPOR4 = 9;                      // RP4 (RB1) -> SDO2 (func. num. 9)

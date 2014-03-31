@@ -36,6 +36,9 @@
 #include <pic18fregs.h>
 #include <typedef.h>
 #include <pin.h>
+#ifndef PINMODE
+#define PINMODE
+#endif
 #include <digitalw.c>
 #include <oscillator.c>
 //#include <interrupt.c>    // to save memory space

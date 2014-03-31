@@ -4,15 +4,15 @@
     PURPOSE:		PIC32 Parallel Master Port functions
     PROGRAMER:		Regis Blanchot
     FIRST RELEASE:	07 Apr. 2012
-    LAST RELEASE:	03 Dec. 2013
+    LAST RELEASE:	20 Mar. 2014
     --------------------------------------------------------------------
     CHANGELOG : 
 
-    Apr  07 2012  - initial release
+    Apr  07 2012  - Regis Blanchot - initial release
+    Mar  20 2014  - Regis Blanchot - complete rewrite
 
     --------------------------------------------------------------------
     TODO :
-    * PMP_autoInc(s8 inc) with inc = 1, -1, or 0 
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -45,198 +45,147 @@
 //#define INTDISABLE
 
 #include <typedef.h>
+#include <pin.h>
 #include <macro.h>
 #include <delay.c>
 //#include <interrupt.h>
 //#include <interrupt.c>
 #include <pmp.h>
 
-/*
- * The significance of the bits of the PMCON (Parallel Port Control Register)
- * are as follows:
- *
- * bit 31-16 Reserved: Write ?0?; ignore read
- *
- * bit 15 ON: Parallel Master Port Enable bit
- * 1 = PMP enabled
- * 0 = PMP disabled, no off-chip access performed
- * Note: When using 1:1 PBCLK divisor, the user?s software should not read/write
- * the peripheral?s SFRs in the SYSCLK cycle immediately following the instruction
- * that clears the module?s ON control bit.
- *
- * bit 14 FRZ: Freeze in Debug Exception Mode bit
- * 1 = Freeze operation when CPU is in Debug Exception mode
- * 0 = Continue operation even when CPU is in Debug Exception mode
- * Note: FRZ is writable in Debug Exception mode only, it is forced to ?0? in normal mode.
- *
- * bit 13 SIDL: Stop in Idle Mode bit
- * 1 = Discontinue module operation when device enters Idle mode
- * 0 = Continue module operation in Idle mode
- *
- * bit 12-11 ADRMUX<1:0>: Address/Data Multiplexing Selection bits
- * 11 = All 16 bits of address are multiplexed on PMD<15:0> pins
- * 10 = All 16 bits of address are multiplexed on PMD<7:0> pins
- * 01 = Lower 8 bits of address are multiplexed on PMD<7:0> pins,
- *      upper 8 bits are on PMA<15:8>
- * 00 = Address and data appear on separate pins
- *
- * bit 10 PMPTTL: PMP Module TTL Input Buffer Select bit
- * 1 = PMP module uses TTL input buffers
- * 0 = PMP module uses Schmitt Trigger input buffer
- *
- * bit 9 PTWREN: Write Enable Strobe Port Enable bit
- * 1 = PMWR/PMENB port enabled
- * 0 = PMWR/PMENB port disabled
- *
- * bit 8 PTRDEN: Read/Write Strobe Port Enable bit
- * 1 = PMRD/PMWR port enabled
- * 0 = PMRD/PMWR port disabled
- *
- * bit 7-6 CSF<1:0>: Chip Select Function bits(4)
- * 11 = Reserved
- * 10 = PMCS2 and PMCS1 function as Chip Select
- * 01 = PMCS2 functions as Chip Select, PMCS1 functions as address bit 14
- * 00 = PMCS2 and PMCS1 function as address bits 15 and 14
- *
- * bit 5 ALP: Address Latch Polarity bit(4)
- * 1 = Active-high (PMALL and PMALH)
- * 0 = Active-low (PMALL and PMALH)
- *
- * bit 4 CS2P: Chip Select 1 Polarity bit(4)
- * 1 = Active-high (PMCS2)
- * 0 = Active-low (PMCS2)
- *
- * bit 3 CS1P: Chip Select 0 Polarity bit(4)
- * 1 = Active-high (PMCS1)
- * 0 = Active-low (PMCS1)
- *
- * bit 2 Reserved: Write ?0?; ignore read
- *
- * bit 1 WRSP: Write Strobe Polarity bit
- * For Slave Modes and Master mode 2 (PMMODE<9:8> = 00,01,10):
- * 1 = Write strobe active-high (PMWR)
- * 0 = Write strobe active-low (PMWR)
- * For Master mode 1 (PMMODE<9:8> = 11):
- * 1 = Enable strobe active-high (PMENB)
- * 0 = Enable strobe active-low (PMENB)
- *
- * bit 0 RDSP: Read Strobe Polarity bit
- * For Slave modes and Master mode 2 (PMMODE<9:8> = 00,01,10):
- * 1 = Read Strobe active-high (PMRD)
- * 0 = Read Strobe active-low (PMRD)
- * For Master mode 1 (PMMODE<9:8> = 11):
- * 1 = Read/write strobe active-high (PMRD/PMWR)
- * 0 = Read/write strobe active-low (PMRD/PMWR)
- *
- */
-
-u8 _pmp_mode     = PMP_MODE_8BIT;       // 8-bit PMP by default
-u8 _pmp_polarity = PMP_ACTIVE_LOW;      // Active low by default
-u8 _pmp_master   = PMP_MODE_MASTER2;    // PMWR et PMRD on 2 separate pins
-u8 _pmp_address  = PMA0 | PMA1 | PMA2;  //
+u8  _pmp_width    = PMP_MODE_8BIT;      // 8-bit PMP by default
+u8  _pmp_polarity = PMP_ACTIVE_LOW;     // Active low by default
+u8  _pmp_mode     = PMP_MODE_MASTER2;   // PMWR et PMRD on 2 separate pins
+u16 _pmp_address  = 0;//PMA1;               // PMA1 used as address 
+u16 _pmp_control  = 0;//PMWR | PMRD | PMCS1;//
+s8  _pmp_inc      = 0;                  // address won't be auto-incremented
+u8  _pmp_mux      = PMP_MUX_OFF;        // data and address on separate lines
+u8  _pmp_waitB    = 4;                  //  4 x Tpb
+u8  _pmp_waitM    = 16;                 // 16 x Tpb
+u8  _pmp_waitE    = 4;                  //  4 x Tpb
 
 /*	--------------------------------------------------------------------
-    ---------- PMP_address(u16 pmaxx)
-    --------------------------------------------------------------------
-    @author		Regis Blanchot <rblanchot@gmail.com>
-    @descr		Set Parrallel Master Port address pins
-    @param		PMP_MODE_MASTER1 or PMP_MODE_MASTER2
-    ------------------------------------------------------------------*/
- 
-void PMP_address(u16 pmaxx)
-{
-    _pmp_address = 0;
-    _pmp_address = pmaxx;
-}
-
-/*	--------------------------------------------------------------------
-    ---------- PMP_master(u8 mode)
+    ---------- PMP_setMode(u8 mode)
     --------------------------------------------------------------------
     @author		Regis Blanchot <rblanchot@gmail.com>
     @descr		Set Parrallel Master Port mode
-    @param		PMP_MODE_MASTER1 or PMP_MODE_MASTER2
+    @param		PMP_MODE_MASTER1, PMP_MODE_MASTER2,
+                PMP_MODE_SLAVE or PMP_MODE_ESLAVE
     ------------------------------------------------------------------*/
  
-void PMP_master(u8 mode)
+void PMP_setMode(u8 mode)
 {
-    if ((mode==1) || (mode == PMP_MODE_MASTER1))
-    {
-        _pmp_master = PMP_MODE_MASTER1;
-    }
-
-    else
-    {
-        _pmp_master = PMP_MODE_MASTER2;
-    }
-
-    PMMODEH |= _pmp_master;
+    _pmp_mode = mode;
 }
 
 /*	--------------------------------------------------------------------
-    ---------- PMP_slave(u8 mode)
-    --------------------------------------------------------------------
-    @author		Regis Blanchot <rblanchot@gmail.com>
-    @descr		Set Parrallel Master Port mode
-    @param		PMP_MODE_MASTER1 or PMP_MODE_MASTER2
-    ------------------------------------------------------------------*/
- 
-void PMP_slave(u8 mode)
-{
-    if ((mode==1) || (mode == PMP_MODE_ESLAVE))
-    {
-        _pmp_master = PMP_MODE_ESLAVE;
-    }
-
-    else
-    {
-        _pmp_master = PMP_MODE_SLAVE;
-    }
-}
-
-/*	--------------------------------------------------------------------
-    ---------- PMP_mode(u8 mode)
+    ---------- PMP_setWidth(u8 wifth)
     --------------------------------------------------------------------
     @author		Regis Blanchot <rblanchot@gmail.com>
     @descr		Set Parrallel Master Port mode
     @param		mode:	8 = 8-bit mode, 16 = 16-bit mode
     ------------------------------------------------------------------*/
  
-void PMP_mode(u8 mode)
+void PMP_setWidth(u8 width)
 {
-    if ( (mode==16) || (mode==PMP_MODE_16BIT) )
-    {
-        _pmp_mode = PMP_MODE_16BIT;
-    }
-
+    if ( (width==16) || (width==PMP_MODE_16BIT) )
+        _pmp_width = PMP_MODE_16BIT;
     else
-    {
-        _pmp_mode = PMP_MODE_8BIT;
-    }
+        _pmp_width = PMP_MODE_8BIT;
 }
 
 /*	--------------------------------------------------------------------
-    ---------- PMP_polarity(u8 polarity)
+    ---------- PMP_address(u16 addr)
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Set address pins
+    @param		16-bit address from PMA0 to PMA15
+    ------------------------------------------------------------------*/
+ 
+void PMP_setAddress(u16 addr)
+{
+    _pmp_address = addr;
+}
+
+/*	--------------------------------------------------------------------
+    ---------- PMP_setControl(u8 control)
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Set Parrallel Master Port Control pins
+    @param		PMWR, PMRD, PMCS or PMBE
+    ------------------------------------------------------------------*/
+ 
+void PMP_setControl(u16 control)
+{
+    _pmp_control = control;
+}
+
+/*	--------------------------------------------------------------------
+    ---------- PMP_setPolarity(u8 polarity)
     --------------------------------------------------------------------
     @author		Regis Blanchot <rblanchot@gmail.com>
     @descr		Set Parrallel Master Port activity
     @param		polarity:	LOW = active-low; HIGH = active-high
     ------------------------------------------------------------------*/
  
-void PMP_polarity(u8 polarity)
+void PMP_setPolarity(u8 polarity)
 {
-    if ( polarity == PMP_ACTIVE_HIGH )
-    {
-        _pmp_polarity = PMP_ACTIVE_HIGH;
-    }
-
-    else
-    {
-        _pmp_polarity = PMP_ACTIVE_LOW;
-    }
+    _pmp_polarity = polarity;
 }
 
 /*	--------------------------------------------------------------------
-    ---------- PMP_initMaster(u8 mode)
+    ---------- PMP_autoIncrement(u8 inc)
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Set auto-increment mode
+    @param		PMP_MODE_AUTO_ADDR_BUFFER, PMP_MODE_AUTO_ADDR_DEC,
+                PMP_MODE_AUTO_ADDR_INC or PMP_MODE_AUTO_ADDR_OFF
+    ------------------------------------------------------------------*/
+ 
+void PMP_autoIncrement(s8 inc)
+{
+    if (inc==1 || inc==PMP_MODE_INC_BUFFER || inc==PMP_MODE_INC_ADDR)
+        _pmp_inc = 1;
+
+    else if (inc==-1 || inc==PMP_MODE_DEC_ADDR)
+        _pmp_inc = -1;
+    
+    else //if (inc==0 || inc==PMP_MODE_INC_OFF)
+        _pmp_inc = 0;
+}
+
+/*	--------------------------------------------------------------------
+    ---------- PMP_setMux(u8 mux)
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Set multiplexed mode
+    @param		PMP_MUX_16X16, PMP_MUX_16X8, PMP_MUX_8X16 or PMP_MUX_OFF
+    ------------------------------------------------------------------*/
+ 
+void PMP_setMux(u8 mux)
+{
+    _pmp_mux = mux;
+}
+
+/*	--------------------------------------------------------------------
+    ---------- PMP_setWaitStates(u8 b, u8 m, u8 e)
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Set Data Read/Write Strobe Wait States
+    @param		WAIT B, WAIT M, WAIT E
+    ------------------------------------------------------------------*/
+ 
+void PMP_setWaitStates(u8 beg, u8 mid, u8 end)
+{
+    if (beg>=4) beg=4;
+    _pmp_waitB = beg-1;
+    if (mid>=16) mid=16;
+    _pmp_waitM = mid-1;
+    if (end>=4) end=4;
+    _pmp_waitE = end-1;
+}
+
+/*	--------------------------------------------------------------------
+    ---------- PMP_init()
     --------------------------------------------------------------------
     @author		Regis Blanchot <rblanchot@gmail.com>
     @descr		Configure Parrallel Master Port
@@ -245,31 +194,48 @@ void PMP_polarity(u8 polarity)
  
 void PMP_init()
 {
-    /** 1. If interrupts are used, disable the PMP interrupt **/
+    /// 1. Disable the PMP interrupt
 
     //IntDisable(PMPINT);
 
-    /** 2. Stop and reset the PMP module by clearing the ON control bit **/
+    /// 2. Stop and reset the PMP module
 
     PMCONHbits.PMPEN = 0;//Bit(15);
-/*
+
     PMCONH  = 0; 
     PMCONL  = 0; 
     PMMODEH = 0;
     PMMODEL = 0;
     PMEH    = 0;
     PMEL    = 0;
-*/
-    /** 3. Configure Mode **/
+
+    /// 3. Configure Mode
 
     // Enable Interrupt Request mode: IRQM<1:0> bits (PMMODE<14:13>).
     PMMODEHbits.IRQM = PMP_MODE_IRQ_OFF;
+    
     // Select auto address increment: INCM<1:0> bits (PMMODE<12:11>).
-    PMMODEHbits.INCM = PMP_MODE_AUTO_ADDR_OFF;
+    if (_pmp_mode==PMP_MODE_ESLAVE || _pmp_mode==PMP_MODE_SLAVE)
+    {
+        if (_pmp_inc==1)
+            PMMODEHbits.INCM = PMP_MODE_INC_BUFFER;
+        else
+            PMMODEHbits.INCM = PMP_MODE_INC_OFF;
+    }
+    else // master mode 1 or 2
+    {
+        if (_pmp_inc==1)
+            PMMODEHbits.INCM = PMP_MODE_INC_ADDR;
 
+        if (_pmp_inc==-1)
+            PMMODEHbits.INCM = PMP_MODE_DEC_ADDR;
+        
+        if (_pmp_inc==0)
+            PMMODEHbits.INCM = PMP_MODE_INC_OFF;
+    }
+    
     // Select 8- or 16-bit Data mode: MODE16 bit (PMMODE<10>).
-    // cf PMP_mode()
-    PMMODEHbits.MODE16 = _pmp_mode;
+    PMMODEHbits.MODE16 = _pmp_width;
     
     // Select Master mode : MODE<1:0> bits (PMMODE<9:8>).
     // In Master mode 1, read and write strobe are combined into a 
@@ -278,49 +244,85 @@ void PMP_init()
     // action is to be taken.
     // In Master mode 2, read and write strobes (PMRD and PMWR)
     // are supplied on separate pins.
-    PMMODEHbits.MODE = _pmp_master;
+    PMMODEHbits.MODE = _pmp_mode;
 
-    // Select 4 wait cycle for data setup: WAITB<1:0> bits (PMMODE<7:6>) = 00.
-    PMMODELbits.WAITB = 0b11;  // number of wait cycles before the PMRD/PMWR strobe
-    // Select 3 wait cycles to extend PMRD/PMWR: WAITM<3:0> bits (PMMODE<5:2>) = 0001.
-    PMMODELbits.WAITM = 0b0000;// number of wait cycles during the PMRD/PMWR strobe
-    // Select 4 wait cycle for data hold: WAITE<1:0> bits (PMMODE<1:0>) = 00.
-    PMMODELbits.WAITE = 0b11;  // number of wait cycles after the PMRD/PMWR strobe
+    // Select 4 wait cycles before the PMRD/PMWR strobe
+    PMMODELbits.WAITB = _pmp_waitB;
 
-    /** 4. Configure Control **/
+    // Wait cycles for a Read/Write strobe
+    PMMODELbits.WAITM = _pmp_waitM;
+
+    // Wait cycles for data hold
+    PMMODELbits.WAITE = _pmp_waitE;
+
+    /// 4. Configure Control
 
     //SIDL: Stop in Idle Mode bi
     //1 = Discontinue module operation when device enters Idle mode
     //0 = Continue module operation in Idle mode
-    PMCONHbits.PSIDL = 1;    // PMP idle when MCU idle
+    PMCONHbits.PSIDL = 0;    // PMP idle when MCU idle
 
     // Select multiplexed addressing: ADRMUX<1:0> bits (PMCON<12:11>).
-    //PMCONHbits.ADRMUX = PMP_MUX_OFF; // Address and data appear on separate pins
-    PMCONHbits.ADRMUX1 = 0; // Address and data appear on separate pins
-    PMCONHbits.ADRMUX0 = 0; // Address and data appear on separate pins
-    //PMCONbits.ADRMUX = MUX_16X8;  // Partial Multiplexed mode
-    //PMCONbits.ADRMUX = MUX_8X16;  // Partial Multiplexed mode
+    PMCONHbits.ADRMUX = _pmp_mux; // Address and data appear on separate pins
     
-    //
-    //PMCONbits.PMPTTL = 0;
-    
-    // To differentiate data bytes, the byte enable control strobe,
-    // PMBE, is used to signal when the Most Significant Byte(MSB)
-    // of data is being presented on the data lines
-    // Enable bit : PTBEEN bit (PMCONH<2>)
-    if ( _pmp_mode == PMP_MODE_16BIT)
-        PMCONHbits.PTBEEN = 1;		// PMP bit enable
-    else
-        PMCONHbits.PTBEEN = 0;		// PMP bit disable
-    
-    // Enable PMWR strobe: PTWREN bit (PMCON<9>)
-    PMCONHbits.PTWREN = 1;		// PMP write strobe enable
-    
-    // Enable PMRD strobe: PTRDEN bit (PMCON<8>)
-    PMCONHbits.PTRDEN = 1;		// PMP read strobe enable
+    //PMPTTL: PMP Module TTL Input Buffer Select bit
+    //1 = PMP module uses TTL input buffers
+    //0 = PMP module uses Schmitt Trigger input buffer
+
+    PADCFG1bits.PMPTTL = 0;
+/*    
+    /// Master Mode 1 (PMCSx, PMRD/PMWR, PMENB, PMBE, PMA<x:0> and PMD<7:0>)
+    if ( _pmp_mode == PMP_MODE_MASTER1 )
+    {
+        // Enable PMBE strobe: PTWREN bit (PMCON<9>)
+        if ( _pmp_control & PMENB )
+            PMCONHbits.PTWREN = 1;		// PMP write strobe enable
+        else
+            PMCONHbits.PTWREN = 0;		// PMP write strobe disable
+
+        // Enable PMRD/PMWR strobe: PTRDEN bit (PMCON<8>)
+        if (_pmp_control & PMRD_PMWR)
+            PMCONHbits.PTRDEN = 1;		// PMP read strobe enable
+        else
+            PMCONHbits.PTRDEN = 0;		// PMP read strobe disable
+
+        // To differentiate data bytes, the byte enable control strobe,
+        // PMBE, is used to signal when the Most Significant Byte(MSB)
+        // of data is being presented on the data lines
+        // Enable bit : PTBEEN bit (PMCONH<2>)
+        if ( _pmp_control & PMBE )
+            PMCONHbits.PTBEEN = 1;		// PMP Enable strobe enable
+        else
+            PMCONHbits.PTBEEN = 0;		// PMP Enable strobe disable
+    }
+
+    /// Master Mode 2 (PMCSx, PMRD, PMWR, PMBE, PMA<x:0> and PMD<7:0>)
+    else if ( _pmp_mode == PMP_MODE_MASTER2 )
+    {
+*/
+        // Enable PMWR strobe: PTWREN bit (PMCON<9>)
+        if ( _pmp_control & PMWR )
+            PMCONHbits.PTWREN = 1;		// PMP write strobe enable
+        else
+            PMCONHbits.PTWREN = 0;		// PMP write strobe disable
+        
+        // Enable PMRD strobe: PTRDEN bit (PMCON<8>)
+        if (_pmp_control & PMRD)
+            PMCONHbits.PTRDEN = 1;		// PMP read strobe enable
+        else
+            PMCONHbits.PTRDEN = 0;		// PMP read strobe disable
+
+        if ( _pmp_control & PMBE )
+            PMCONHbits.PTBEEN = 1;		// PMP Enable strobe enable
+        else
+            PMCONHbits.PTBEEN = 0;		// PMP Enable strobe disable
+//    }
     
     // Enable PMCS1 Chip Selects: CSF<1:0> bits (PMCON<7:6>)
-    PMCONLbits.CSF = PMP_CS_ON;
+    if ((_pmp_control & PMCS1) || (_pmp_control & PMCS2))
+        PMCONLbits.CSF = PMP_CS_ON;
+    else
+        PMCONLbits.CSF = PMP_CS_OFF;
 
     // Address Latch Polarity bit
     PMCONLbits.ALP  = _pmp_polarity;
@@ -328,8 +330,8 @@ void PMP_init()
     // Select PMCS2, PMCS1 active-low pin polarity: CS2P bit (PMCON<4>) = 0 and CS1P bit (PMCON<3>) = 0.
     PMCONLbits.CS1P = _pmp_polarity;
 
-    // Byte enable priority bit
-    PMCONLbits.BEP = _pmp_polarity;
+    // Byte Enable priority bit
+    PMCONLbits.BEP  = _pmp_polarity;
 
     // Select PMWR active-low pin polarity: WRSP bit (PMCON<1>) = 0.
     PMCONLbits.WRSP = _pmp_polarity;
@@ -337,32 +339,32 @@ void PMP_init()
     // Select PMRD active-low pin polarity: RDSP bit (PMCON<0>) = 0.
     PMCONLbits.RDSP = _pmp_polarity;
 
-    /** 5. Enable/Disable PMA<15:0> Address pins **/
-    /*
-    bit 15-14 PTEN<15:14>: PMCSx Strobe Enable bits
-    1 = PMA15 and PMA14 function as either PMA<15:14> or PMCS2 and PMCS1(1)
-    0 = PMA15 and PMA14 function as port I/O
-    bit 13-2 PTEN<13:2>: PMP Address Port Enable bits
-    1 = PMA<13:2> function as PMP address lines
-    0 = PMA<13:2> function as port I/O
-    bit 1-0
-    PTEN<1:0>: PMALH/PMALL Strobe Enable bits
-    1 = PMA1 and PMA0 function as either PMA<1:0> or PMALH and PMALL(2)
-    0 = PMA1 and PMA0 pads function as port I/O
-    */
+    /// 5. Enable/Disable PMA<15:0> Address pins
+    
     PMEH = high8(_pmp_address);
     PMEL =  low8(_pmp_address);
 
+    if ( _pmp_control & PMCS1 )
+    {
+        PMEHbits.PTEN14 = 1;	//address 14 or PMCS1
+        //PMEH |= PMCS1;
+    }
+    
+    if ( _pmp_control & PMCS2 )
+    {
+        PMEHbits.PTEN15 = 1;	//address 15 or PMCS2
+        //PMEH |= PMCS2;
+    }
+    
     /** 6. If interrupts are used: **/
 /*
-    // 4.1. Clear the interrupt flag bit, PMPIF (IFS1<2>) = 0.
+    // 6.1. Clear the interrupt flag bit, PMPIF (IFS1<2>) = 0.
     IntClearFlag(INT_PARALLEL_MASTER_PORT);
-    // 4.2. Configure the PMP interrupt priority bits
+    // 6.2. Configure the PMP interrupt priority bits
     IntSetVectorPriority(INT_PARALLEL_MASTER_PORT_VECTOR, 7, 3);
-    // 4.3. Enable the PMP interrupt by setting the interrupt enable bit, PMPIE = 1.
+    // 6.3. Enable the PMP interrupt by setting the interrupt enable bit, PMPIE = 1.
     IntEnable(INT_PARALLEL_MASTER_PORT);
 */
-
     /** 7. Enable the PMP master port **/
     PMCONHbits.PMPEN = 1;//Bit(15);
 
@@ -388,19 +390,18 @@ void PMP_init()
 
 void PMP_write(u16 value)
 {
-    if (_pmp_mode == PMP_MODE_16BIT)
+    if (_pmp_width == PMP_MODE_16BIT)
     {
         PMP_wait();         // wait for PMP to be available
         PMDIN1L =  low8(value);
+        PMP_wait();         // wait for PMP to be available
         PMDIN1H = high8(value);
     }
     
     else
     {
         PMP_wait();         // wait for PMP to be available
-        PMDIN1L = high8(value);
-        PMP_wait();         // wait for PMP to be available
-        PMDIN1L =  low8(value);
+        PMDIN1L = low8(value);
     }   
 }
 
@@ -417,7 +418,7 @@ u16 PMP_read()
 {
     u16 dummy;
     
-    if (_pmp_mode == PMP_MODE_16BIT)
+    if (_pmp_width == PMP_MODE_16BIT)
     {
         PMP_wait();         // wait for PMP to be available
         dummy = PMDIN1L;    // init read cycle, dummy read
@@ -441,18 +442,11 @@ u16 PMP_read()
     0 = inactive
 */
 
-void PMP_setAddress(u16 addr)
+void PMP_sendAddress(u16 addr)
 {
     PMP_wait();     // wait for PMP to be available
-    PMADDRH |= high8(addr);
-    PMADDRL |=  low8(addr);
-}
-
-void PMP_clrAddress(u16 addr)
-{
-    PMP_wait();     // wait for PMP to be available
-    PMADDRH &= ( 255 - high8(addr) );
-    PMADDRL &= ( 255 -  low8(addr) );
+    PMADDRH = high8(addr);
+    PMADDRL =  low8(addr);
 }
 
 #endif /* __PMP_C */

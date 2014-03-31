@@ -110,7 +110,7 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 	s16 x, y;
 	s16 ystep;
 	
-	// simple clipping
+	// simple clipping is done in the drawPixel routine
 /*
 	if (( x0 < 0) || (x0 > HRES)) return;
 	if (( x1 < 0) || (x1 > HRES)) return;

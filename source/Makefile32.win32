@@ -31,59 +31,55 @@ LIBDIRS		=	-L$(OBJDIR)\usb
 
 # ------------------------------------------------------------------------------
 # unsupported record in hex file / Jean-pierre Mandon 2012
+# 04       : 4 bytes
+# 0000     : address
+# 05       : record type = Start_Linear_Address_Record
+# 9D004000 : address where the user program should start
+#          : _RESET_ADDR (see lkr/procdefs.ld)
+# 1A       : checksum
 # ------------------------------------------------------------------------------
 
-BADRECORD='^:040000059D006000FA'
-ifeq ($(BOARD),PIC32_PINGUINO_220)
-	BADRECORD = '^:040000059D0040001A'
-endif
-ifeq ($(BOARD),PINGUINO32MX250)
-	BADRECORD = '^:040000059D0040001A'
-endif
-ifeq ($(BOARD),PINGUINO32MX220)
-	BADRECORD = '^:040000059D0040001A'
-endif
-
-REMOVE = grep --binary --invert-match $(BADRECORD) $(SRCDIR)/main32.hex > $(SRCDIR)/temp.hex
 
 # ------------------------------------------------------------------------------
-# heap size / Regis Blanchot 2012
+# Various options
+# ------------------------------------------------------------------------------
+# - heap size / Regis Blanchot 2012
+# - cdc library / Jean-pierre Mandon 2012
+# - MIPS16/MIPS32 option (MIPS16 option could drastically reduce code size) / ??? 2013 
+# - unsupported record in hex file / Jean-pierre Mandon 2012
 # ------------------------------------------------------------------------------
 
 HEAP_SIZE = 16384
-ifeq ($(BOARD),PIC32_PINGUINO_220)
-	HEAP_SIZE = 512
-endif
-ifeq ($(BOARD),PINGUINO32MX220)
-	HEAP_SIZE = 512
-endif
-
-# ------------------------------------------------------------------------------
-# select the cdc library / Jean-pierre Mandon 2012
-# ------------------------------------------------------------------------------
-
 CDCLIBRARY = libcdc.a
+__MIPS16_ENABLE__ = false
+BADRECORD='^:040000059D006000FA'
+
+# TO BE TESTED (Regis Blanchot 2014)
+# Makes's logical OR
+# ifneq (,$(filter $(BOARD),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
+
 ifeq ($(BOARD),PIC32_PINGUINO_220)
-	CDCLIBRARY = libcdc220.a
+    HEAP_SIZE = 512
+    CDCLIBRARY = libcdc220.a
+    __MIPS16_ENABLE__ = true
+    BADRECORD = '^:040000059D0040001A'
 endif
+
 ifeq ($(BOARD),PINGUINO32MX250)
-	CDCLIBRARY = libcdc220.a
+    HEAP_SIZE = 512
+    CDCLIBRARY = libcdc220.a
+    __MIPS16_ENABLE__ = true
+    BADRECORD = '^:040000059D0040001A'
 endif
+
 ifeq ($(BOARD),PINGUINO32MX220)
-	CDCLIBRARY = libcdc220.a
+    HEAP_SIZE = 512
+    CDCLIBRARY = libcdc220.a
+    __MIPS16_ENABLE__ = true
+    BADRECORD = '^:040000059D0040001A'
 endif
 
-# ------------------------------------------------------------------------------
-# select MIPS16/MIPS32 option
-# MIPS16 option could drastically reduce code size. 
-# ------------------------------------------------------------------------------
-__MIPS16_ENABLE__	= true
-ifdef __MIPS16_ENABLE__
-	MIPS16_INTER = -minterlink-mips16
-	MIPS16_OPT   = -mips16
-endif
-
-# ------------------------------------------------------------------------------
+REMOVE = grep --binary --invert-match $(BADRECORD) $(SRCDIR)/main32.hex > $(SRCDIR)/temp.hex
 
 # ------------------------------------------------------------------------------
 # commands
@@ -108,11 +104,17 @@ MV				=	@move
 #					-pedantic -Wall\
 #					-std=c99 
 
+ifdef __MIPS16_ENABLE__
+	MIPS16_INTER = -minterlink-mips16
+	MIPS16_OPT   = -mips16
+endif
+
 CFLAGS		=	-fdollars-in-identifiers $(INCLUDEDIRS) -msoft-float -ffunction-sections -fdata-sections 
 
 LDFLAGS		=	$(LIBDIRS) $(LIBS)
 
-ELF_FLAGS	=	-EL -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -march=24kc \
+# -Os option leads to errors when non-zero initialized static variable are defined
+ELF_FLAGS	=	-EL -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections -march=24kc \
 				-msoft-float \
 				$(MIPS16_INTER)  \
 				-Wl,-L$(OBJDIR) \

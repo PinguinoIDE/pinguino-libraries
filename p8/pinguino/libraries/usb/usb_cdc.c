@@ -155,10 +155,14 @@ u8 CDCputs(u8 *buffer, u8 length)
     u8 i=0;
 
     if (deviceState != CONFIGURED) return 0;
+    
     if (!CONTROL_LINE) return 0;
+    
     if (!EP_IN_BD(CDC_DATA_EP_NUM).Stat.UOWN)
     {
-        if (length > CDC_BULK_IN_SIZE) length = CDC_BULK_IN_SIZE;
+        if (length > CDC_BULK_IN_SIZE)
+            length = CDC_BULK_IN_SIZE;
+        
         for (i=0; i < length; i++)
         {
             CDCTxBuffer[i] = buffer[i];

@@ -33,8 +33,8 @@
 		(byte |= (1 << n))
 
 	// Met le bit n à 0 dans octet
-	#define BitClear(byte, n) \
-		(byte = byte & !(1 << n))
+	#define BitClear(octet, n) \
+		((octet) &= ~(1 << (n)))			//(octet &= !(1 << n))
 
 	#define BitWrite(value, bit, bitvalue) \
 		(bitvalue ? bitSet(value, bit) : bitClear(value, bit))

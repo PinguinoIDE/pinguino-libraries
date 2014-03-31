@@ -292,6 +292,7 @@ void LedControl_scroll(const char * displayString)
 {
     u8 nextchar;   // next char to display
     u8 r;          // current row
+    u8 m;           // current matrix
     u8 ascii;     // current ASCII code
     u8 curchar;    // current displayed char
     u8 offset;     // nombre de bits à prendre dans l'octet suivant
@@ -304,33 +305,38 @@ void LedControl_scroll(const char * displayString)
     // nombre de bits à prendre dans l'octet suivant
     offset = scroll % 8;
 
-    // for every row of the matrix
-    for(r=0; r<8; r++)
+    for (m=0; m<maxDevices; m++)
     {
-        row[r]=0;
-
-        // matrix = current char shifted by offset
-
-        ascii = displayString[curchar]-32;
-        row[r] |= ( alphabetBitmap[ascii][r] >> offset );
-
-        // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
-        // afficher dans l'octet suivant
-
-        if (offset > 0) 
+        // for every line of the matrix
+        for(r=0; r<8; r++)
         {
-            ascii = displayString[curchar+1]-32;
-            if (ascii >= 0x20 && ascii <= 0x7F)
+            row[r]=0;
+
+            // matrix = current char shifted by offset
+
+            ascii = displayString[curchar]-32;
+            row[r] |= ( alphabetBitmap[ascii][r] >> offset );
+
+            // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
+            // afficher dans l'octet suivant
+
+            if (offset > 0) 
             {
-                nextchar = alphabetBitmap[ascii][r];
-                row[r] |=  nextchar << (8-offset);
+                ascii = displayString[curchar+1]-32;
+                if (ascii >= 0x20 && ascii <= 0x7F)
+                {
+                    nextchar = alphabetBitmap[ascii][r];
+                    row[r] |=  nextchar << (8-offset);
+                }
             }
         }
-    }
 
-    // Display the new matrix
-    for (r=0; r<8; r++)
-        LedControl_setColumn(0, 7-r, row[r]);     
+        // Display the new matrix
+        for (r=0; r<8; r++)
+            LedControl_setColumn(m, 7-r, row[r]);     
+
+        curchar++;
+    }
 
     // and wait a bit
     Delayms(50);

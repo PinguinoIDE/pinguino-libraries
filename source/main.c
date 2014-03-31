@@ -113,34 +113,32 @@
         RCON |= 0b10010011;     // set all reset flag
                                 // enable priority levels on interrupts
     }
-    
+
+    /// ----------------------------------------------------------------
+    /// Disables all interrupt
+    /// ----------------------------------------------------------------
+
+    //INTCONbits.GIEH     = 0;        // Disables all HP interrupts
+    //INTCONbits.GIEL     = 0;        // Disables all LP interrupts
+
     /// ----------------------------------------------------------------
     /// Perform a loop for some processors until their frequency is stable
     /// ----------------------------------------------------------------
 
-    #if defined(__18f26j50) || defined(__18f46j50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__18f2455) || defined(__18f4455) || \
+        defined(__18f2550) || defined(__18f4550)
 
-        // Enable the PLL and wait 2+ms until the PLL locks
-        OSCTUNEbits.PLLEN = 1;
-        while (pll_startup_counter--);
-    
         // If Internal Oscillator is used
-        // ???
-
-    #elif defined(__18f2455) || defined(__18f4455) || \
-          defined(__18f2550) || defined(__18f4550)
-    
-        // If Internal Oscillator is used
-        if (OSCCONbits.SCS > 0x02)
+        if (OSCCONbits.SCS > 0x01)
             // wait INTOSC frequency is stable (IOFS=1) 
             while (!OSCCONbits.IOFS);
+            
+        // PLL is enabled by Config. Bits
 
     #elif defined(__18f25k50) || defined(__18f45k50)
     
         // If Internal Oscillator is used
-        if (OSCCONbits.SCS > 0x02)
+        if (OSCCONbits.SCS > 0x01)
             // wait HFINTOSC frequency is stable (HFIOFS=1) 
             while (!OSCCONbits.HFIOFS);
 
@@ -149,53 +147,29 @@
         OSCTUNEbits.SPLLMULT = 1;   // 1=3xPLL, 0=4xPLL
         while (pll_startup_counter--);
 
+    #elif defined(__18f26j50) || defined(__18f46j50)
+    
+        // If Internal Oscillator is used
+        // if (OSCCONbits.SCS > 0x02)
+        // Seems there is no time to wait
+        
+        // Enable the PLL and wait 2+ms until the PLL locks
+        OSCTUNEbits.PLLEN = 1;
+        while (pll_startup_counter--);
+
+    #elif defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+        // If Internal Oscillator is used
+        if (OSCCONbits.SCS > 0x02)
+            // wait INTOSC frequency is stable (FLTS=1) 
+            while(!OSCCONbits.FLTS);
+
+        // Enable the PLL and wait 2+ms until the PLL locks
+        OSCTUNEbits.PLLEN = 1;
+        while (pll_startup_counter--);
+
     #endif
-
-    /// ----------------------------------------------------------------
-    /// Init. all flag/interrupt
-    /// ----------------------------------------------------------------
-
-    INTCONbits.GIEH     = 0;        // Disables all HP interrupts
-    INTCONbits.GIEL     = 0;        // Disables all LP interrupts
-
-/*
-    INTCON = 0;
-    INTCON2 = 0;
-    INTCON3 = 0;
-*/
-
-/*
-    // All peripheral interrupt disabled
-    PIE1 = 0;
-    PIE2 = 0;
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j50) || defined(__18f46j50)
-    PIE3 = 0;
-    #endif
-*/
-
-/*
-    // All interrupts with low priority
-    INTCON2bits.TMR0IP = 0;
-    IPR1bits.TMR1IP = 0;
-    IPR1bits.TMR2IP = 0;
-    IPR1 = 0;
-    IPR2 = 0;
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j50) || defined(__18f46j50)
-    IPR3 = 0;
-    #endif
-*/
-
-/*
-    // All peripheral interrupts flags cleared
-    PIR1 = 0;
-    PIR2 = 0;
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j50) || defined(__18f46j50)
-    PIR3 = 0;
-    #endif
-*/
 
     /// ----------------------------------------------------------------
     /// I/O init 
@@ -279,12 +253,8 @@
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
-<<<<<<< HEAD
      defined(__IRREMOTE__)  || defined(RTCCALARMINTENABLE) || defined(__STEPPER__)
      // || defined(__MICROSTEPPING__)
-=======
-     defined(RTCCALARMINTENABLE) || defined(__STEPPER__) // || defined(__MICROSTEPPING__)
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
 
 /*  ----------------------------------------------------------------------------
     High Interrupt Vector
@@ -345,13 +315,10 @@ void high_priority_isr(void) __interrupt 1
     dcf77_interrupt();
     #endif
 
-<<<<<<< HEAD
     #ifdef __IRREMOTE__
     irremote_interrupt();
     #endif
     
-=======
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
     //#ifdef __MICROSTEPPING__
     #ifdef __STEPPER__
     stepper_interrupt();

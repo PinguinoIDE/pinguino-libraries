@@ -25,7 +25,7 @@ s8 dir;
 void setup()
 {
     // Frequency (Hz) must be high to avoid blinking effect
-    PWM.setFrequency((36*1000));
+    PWM.setFrequency((36000));
 }
 
 void loop()

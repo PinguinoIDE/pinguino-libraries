@@ -42,7 +42,7 @@ void loop()
     u32 t,r;
     u8 d,h,m,s;
 
-    digitalWrite(12, HIGH);// Switch build-in led on
+    digitalWrite(USERLED, HIGH);// Switch build-in led on
     
     t = millis() / 1000;   // time in sec.
     d = t / 86400;         // days
@@ -58,6 +58,6 @@ void loop()
     // print the number of seconds since reset:
     lcd.printf("Uptime %02d:%02d:%02d", h,m,s);
 
-    digitalWrite(12, LOW);// Switch build-in led off
+    digitalWrite(USERLED, LOW);// Switch build-in led off
     delay(500);
 }

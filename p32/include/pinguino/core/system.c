@@ -517,7 +517,9 @@ void SystemConfig(u32 cpuCoreFrequency)
     SystemClocksCalcPeripheralClockSettings(&s, cpuCoreFrequency / 2);
     SystemClocksWriteSettings(&s);
 
-    DDPCONbits.JTAGEN=0;		// PORTA is used as digital instead of JTAG
+    //RB2014 : already defined in io.c / IOsetDigital()
+    //DDPCONbits.JTAGEN=0;  // PORTA is used as digital instead of JTAG
+    //CFGCONbits.JTAGEN=0;  // Disable the JTAG port
 }
 
 /*	----------------------------------------------------------------------------

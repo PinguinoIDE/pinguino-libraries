@@ -24,6 +24,7 @@
 #include <p32xxxx.h>			// always in first place to avoid conflict with const.h ON
 #include <typedef.h>			// Pinguino's types definitions
 #include <const.h>				// Pinguino's constants definitions
+#include <pin.h>				// Pinguino's pins definitions
 #include <macro.h>				// Pinguino's macros definitions
 #include <system.c>				// PIC32 System Core Functions
 #include "define.h"				// Pinguino Sketch Constants
@@ -31,98 +32,104 @@
 
 #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
 #include <newlib.c>
-#endif	
+#endif
 
 #ifdef __USBCDC
 #include <cdc.h>
-#endif	
+#endif
 
 #include "user.c"				// Pinguino User's Sketch
 
 int main()
 {
-	// default peripheral freq. is CPUCoreFrequency / 2 (cf. system.c)
-	#if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-	SystemConfig(40000000);	// default clock frequency is 40Mhz
-	#else
-	SystemConfig(80000000);	// default clock frequency is 80Mhz
-	#endif
+    // default peripheral freq. is CPUCoreFrequency / 2 (cf. system.c)
+    #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+    SystemConfig(40000000);	    // default clock frequency is 40Mhz
+    #else
+    SystemConfig(80000000);	    // default clock frequency is 80Mhz
+    #endif
 
-	IOsetSpecial();
-	IOsetDigital();
-	IOsetRemap();
+	#if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
+    IOsetSpecial();
+    #endif
+    
+    IOsetDigital();
+    
+    #if defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__)
+    IOsetRemap();
+    #endif
+    
+    #ifdef __ANALOG__
+    analog_init();
+    #endif
 
-	#ifdef __ANALOG__
-	analog_init();
-	#endif
+    #ifdef __MILLIS__
+    millis_init();
+    #endif
 
-	#ifdef __MILLIS__
-	millis_init();
-	#endif
+    #ifdef __PWM__
+    PWM_init();
+    #endif    
 
-	#ifdef __PWM__
-	PWM_init();
-	#endif    
+    #ifdef __USBCDC
+    CDC_init();
+    #endif    
 
-	#ifdef __USBCDC
-	CDC_init();
-	#endif    
+    #ifdef __RTCC__
+    RTCC_init();
+    #endif    
+    
+    setup();
 
-	#ifdef __RTCC__
-	RTCC_init();
-	#endif    
-	
-	setup();
-
-	while (1)
-	{
-		#ifdef __USBCDC
-			#if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-				USB_Service( );
-			#else
-				CDCTxService();
-			#endif
-		#endif
+    while (1)
+    {
+        #ifdef __USBCDC
+            #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+                USB_Service( );
+            #else
+                CDCTxService();
+            #endif
+        #endif
  
-		loop();
-	}
+        loop();
+    }
 
-	return(0);    
+    return(0);    
 }
 
 #ifndef __SERIAL__
 void Serial1Interrupt(void)
 {
-	Nop();    
+    Nop();    
 }
 
 void Serial2Interrupt(void)
 {
-	Nop();    
+    Nop();    
 }
 #else
 #ifndef ENABLE_UART3
 void Serial3Interrupt(void)
 {
-	Nop();
+    Nop();
 }
 #endif
 #ifndef ENABLE_UART4
 void Serial4Interrupt(void)
 {
-	Nop();
+    Nop();
 }
 #endif
 #ifndef ENABLE_UART5
 void Serial5Interrupt(void)
 {
-	Nop();
+    Nop();
 }
 #endif
 #ifndef ENABLE_UART6
 void Serial6Interrupt(void)
 {
-	Nop();
+    Nop();
 }
 #endif
 #endif /* __SERIAL__ */
@@ -130,14 +137,14 @@ void Serial6Interrupt(void)
 #ifndef __MILLIS__
 void Tmr2Interrupt(void)
 {
-	Nop();    
+    Nop();    
 }
 #endif /* __MILLIS__ */
 
 #ifndef __SPI__
 void SPIxInterrupt(void)
 {
-	Nop();    
+    Nop();    
 }
 #endif /* __SPI__ */
 
@@ -145,8 +152,6 @@ void SPIxInterrupt(void)
 #ifndef __RTCC__
 void RTCCInterrupt(void)
 {
-	Nop();    
+    Nop();    
 }
 #endif /* __RTCC__ */
-
-

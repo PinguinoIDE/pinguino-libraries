@@ -12,11 +12,17 @@ float f = 3.14159265;
 
 void setup()
 {
+}
+
+void loop()
+{
+	u8 *buffer;
+	
 	CDC.getKey();
  
 	CDC.printf("\r\n");
 	CDC.printf("**************************\r\n");
-	CDC.printf("*** CDC Printf Demo ***\r\n");
+	CDC.printf("*** CDC Printf Demo  ***\r\n");
 	CDC.printf("**************************\r\n");
 	CDC.printf("\r\n");
 	CDC.printf("string = %s\r\n", string);
@@ -39,17 +45,11 @@ void setup()
 
 	CDC.printf("Press Any Key ...\r\n");
 	c = CDC.getKey();
-	CDC.printf("You pressed Key %c\r\n", c);
+	CDC.printf("\rYou pressed Key %c, (ASCII=%d)\r\n", c, c);
 	CDC.printf("\r\n");
 
 	CDC.printf("Press Any Key to continue ...\r\n");
-	c = CDC.getKey();
-}
-
-void loop()
-{
-	u8 *buffer;
-	
+	CDC.getKey();
 	CDC.printf("Write Any Texte ...\r\n");
 	buffer = CDC.getString();
 	CDC.printf("You wrote : %s\r\n", buffer);

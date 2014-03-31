@@ -34,6 +34,7 @@
 #include <typedef.h>
 #include <system.c>
 
+#if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
 void IOsetSpecial()
 {
 	#if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
@@ -47,12 +48,16 @@ void IOsetSpecial()
 	//TRISCbits.TRISC8 = INPUT;		// RC8 / U2RX input			
 	#endif	
 }
+#endif /* defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG) */
 
 // All Analog Pins as Digital IOs
 void IOsetDigital()
 {
+    //RB 2014 : same sfr, 2 different names
+    //DDPCONbits.JTAGEN=0;  // Disable the JTAG port, Port A as Digital Port
+    CFGCONbits.JTAGEN=0;    // Disable the JTAG port, Port A as Digital Port
+
 	#if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-			DDPCONbits.JTAGEN=0;		// check : already in system.c
 			ANSELA = 0;
 			ANSELB = 0;
 			#if defined(__32MX220F032D__)
@@ -64,6 +69,8 @@ void IOsetDigital()
 }
 
 // PIC32 Peripheral Remappage
+#if defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__)
+
 void IOsetRemap()
 {
 #if defined(PIC32_PINGUINO_220)
@@ -119,5 +126,6 @@ void IOsetRemap()
 	SystemLock();
 #endif
 }
+#endif /* defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__) */
 
 #endif /* __REMAP_C */

@@ -10,12 +10,6 @@
 #define LA7 LATBbits.LATB5
 #define LA6 LATBbits.LATB4
 
-void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase);
-u8 SPI_write(u8 datax);
-void SPI_interrupt();
-static void SPI_onEvent (u8(*func)(u8));
-static u8 (*SPI_onEvent_func)( u8);
-
 u8 this_mode = SPI_MODE1;
 u8 this_clock = SPI_CLOCK_DIV4;
 u8 this_role = SPI_MASTER;

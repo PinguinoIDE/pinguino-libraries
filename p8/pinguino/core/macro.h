@@ -79,7 +79,7 @@
 
 	// Clear (0) bit #n from octet
 	#define BitClear(octet, n) \
-		(octet &= ~(1 << n))			//(octet &= !(1 << n))
+		((octet) &= ~(1 << (n)))			//(octet &= !(1 << n))
 
 	// Inverse bit #n from octet
 	#define BitInv(octet, n) \

@@ -8,7 +8,7 @@
 
 #define SEND_PIN 11    // must be a valid PWM pin
 
-#define TV1_POWER_OFF 0b11100000001100
+#define RC6_POWER_OFF 12
 
 void setup()
 {
@@ -20,8 +20,8 @@ void setup()
 void loop()
 {
     digitalWrite(USERLED, ON);    
-    delay(50);
-    IRremote.sendRC5(TV1_POWER_OFF, 14);
+    delay(100);
+    IRremote.sendRC6(RC6_POWER_OFF, 14);
     digitalWrite(USERLED, OFF);    
-    delay(1000);
+    delay(900);
 }

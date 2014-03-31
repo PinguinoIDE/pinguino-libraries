@@ -61,7 +61,7 @@ static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 400
 #elif   defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f27j53) || defined(__18f47j53)
 // The indices are valid values for CPDIV
-static const u8 cpudiv[] = { 6, 3, 2, 1 };
+static const u8 cpudiv[] = { 6, 3, 2, 1 }; // rblanchot 2014-03-27 - fixed 
 static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000 };
 
 #endif
@@ -178,7 +178,7 @@ u32 System_getCpuFrequency()
             {
                 return 48000000L;
             } 
-			else
+            else
             {
                 return CRYSTAL;
             }
@@ -191,10 +191,10 @@ u32 System_getCpuFrequency()
                 defined(__18f2550)  || defined(__18f4550)
                 
             CPUDIV  = ( System_readFlashMemory(__CONFIG1L) & 0b00011000 ) >> 3;
-			CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
+            CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
             fosc  = System_readFlashMemory(__CONFIG1H) & 0b00001111;
 
-            #else
+            #else // xxJ5x
 
             CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
 
@@ -207,7 +207,7 @@ u32 System_getCpuFrequency()
             #if defined(__18f2455) || defined(__18f4455) || \
                 defined(__18f2550) || defined(__18f4550)
                   
-			fosc >>=1;
+            fosc >>=1;
             if( (fosc==0) || (fosc==2) || (fosc==6) )
             {
                 return CRYSTAL / CPUDIV_XTAL;
@@ -222,9 +222,9 @@ u32 System_getCpuFrequency()
 
             if (OSCTUNEbits.PLLEN)
             {
-                return 48000000L / CPUDIV;
+                return 48000000UL / CPUDIV;
             } 
-			else
+            else
             {
                 return CRYSTAL / CPUDIV;
             }

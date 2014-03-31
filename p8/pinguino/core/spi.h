@@ -112,4 +112,12 @@
 #define SPI_FALLING_EDGE    0x00  // negated
 #define SPI_RISING_EDGE        0x01  // negated
 
+/// Prototypes
+
+void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase);
+u8 SPI_write(u8 datax);
+void SPI_interrupt();
+static void SPI_onEvent (u8(*func)(u8));
+static u8 (*SPI_onEvent_func)( u8);
+
 #endif   /* __SPI_H__ */

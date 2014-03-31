@@ -25,6 +25,7 @@
 #include <p32xxxx.h>			// always in first place to avoid conflict with const.h ON
 #include <typedef.h>
 #include <const.h>
+#include <pin.h>
 #include <macro.h>
 #include <system.c>
 #include "define.h"

@@ -29,15 +29,12 @@ LIBDIRS		=	-L$(OBJDIR)/usb
 
 # ------------------------------------------------------------------------------
 # unsupported record in hex file / Jean-pierre Mandon 2012
-<<<<<<< HEAD
 # 04       : 4 bytes
 # 0000     : address
 # 05       : record type = Start_Linear_Address_Record
 # 9D004000 : address where the user program should start
 #          : _RESET_ADDR (see lkr/procdefs.ld)
 # 1A       : checksum
-=======
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
 # ------------------------------------------------------------------------------
 
 BADRECORD='^:040000059D006000FA'
@@ -102,14 +99,10 @@ CFLAGS		=	-fdollars-in-identifiers $(INCLUDEDIRS)
 
 LDFLAGS		=	$(LIBDIRS) $(LIBS)
 
-<<<<<<< HEAD
-ELF_FLAGS	=	-EL -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -march=24kc\
-					-msoft-float\
-                    -minterlink-mips16\
-=======
+# -Os option leads to errors when non-zero initialized static variable are defined
 ELF_FLAGS	=	-EL -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections -march=24kc\
 					-msoft-float\
->>>>>>> 2e551c80bdc212cba1e94aa6ce8b7c561d130d28
+                    -minterlink-mips16\
 					-Wl,--defsym,_min_heap_size=$(HEAP_SIZE)\
 					-Wl,-Map=$(SRCDIR)/output.map\
 					-Wl,-L$(OBJDIR)/\
