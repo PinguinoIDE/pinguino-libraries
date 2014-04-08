@@ -1,0 +1,4 @@
+digitalWrite digitalwrite#include <digitalw.c>#define DIGITALWRITE
+pinMode pinmode#include <digitalw.c>#define PINMODE
+digitalRead digitalread#include <digitalw.c>#define DIGITALREAD
+toggle toggle#include <digitalw.c>#define TOGGLE
