@@ -188,7 +188,7 @@ void IO_remap(void)
 
         //#ifdef __SPI2__
         /**
-         * datasheet 18f47j53 p296 or 18f26j50 p274
+         * datasheet 18f26j50 p274
          * When MSSP2 is used in SPI Master mode, the SCK2 function must be
          * configured as both an output and an input in the PPS module.
          * SCK2 must be initialized as an output pin (by writing 0x0A to one
@@ -231,6 +231,19 @@ void IO_remap(void)
         EECON2 = 0xAA;
         PPSCONbits.IOLOCK = 0;			// Turn on PPS Write Protect
 
+        /**
+         * datasheet 18f47j53 p296
+         * When MSSP2 is used in SPI Master mode, the SCK2 function must be
+         * configured as both an output and an input in the PPS module.
+         * SCK2 must be initialized as an output pin (by writing 0x0A to one
+         * of the RPORx registers).
+         * Additionally, SCK2IN must also be mapped to the same pin by
+         * initializing the RPINR22 register.
+         * Failure to initialize SCK2/SCK2IN as both output and input will
+         * prevent the module from receiving data on the SDI2 pin, as the
+         * module uses the SCK2IN signal to latch the received data.
+        **/
+        RPINR22 = 5;                    // 2014-20-03 fixed by AG (see above)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR5 = 11;                     // RP5 (RB2) -> SCK2
         RPOR4 = 10;                     // RP4 (RB1) -> SDO2 (func. num. 10)

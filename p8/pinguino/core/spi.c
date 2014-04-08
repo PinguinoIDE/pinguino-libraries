@@ -10,9 +10,11 @@
 #define LA7 LATBbits.LATB5
 #define LA6 LATBbits.LATB4
 
-u8 this_mode = SPI_MODE1;
-u8 this_clock = SPI_CLOCK_DIV4;
-u8 this_role = SPI_MASTER;
+u8 this_mode = SPI_MODE0;
+u8 this_clock = SPI_MASTER_FOSC_64;
+u8 this_role = SPI_CLOCK_DIV64;
+u8 this_bitorder = SPI_MSBFIRST;
+u8 this_phase = SPI_SMPEND;
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -46,58 +48,67 @@ u8 this_role = SPI_MASTER;
    Nota bene : enter 128 as decimal value or 0x80 as hexadecimal value for the below smp_phase parameter
  */
 
-void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
+void SPI_init()
 {
-  DESELECT();
-  ENABLE = 0;
-  STATUS &= 0x3F;                // power on state 
-  CONFIG = 0x00;                 // power on state
-  CONFIG |= sync_mode;           // select serial mode 
-  STATUS |= smp_phase;           // select data input sample phase
+    DESELECT();
+    ENABLE = 0;
+    STATUS = 0x3F;                 // power on state (SMP=0) 
+    CONFIG = 0x00;                 // power on state
+    CONFIG |= this_clock;           // select serial mode
 
-  switch( bus_mode )
-  {
-    case 0:                       // SPI bus mode 0,0
-      CKE = 1;        // data transmitted on falling edge
-      break;    
-    case 2:                       // SPI bus mode 1,0
-      CKE = 1;        // data transmitted on rising edge
-      CKP = 1;        // clock idle state high
-      break;
-    case 3:                       // SPI bus mode 1,1
-      CKP = 1;        // clock idle state high
-      break;
-    default:                      // default SPI bus mode 0,1
-      break;
-  }
+    if (this_phase == SPI_SMPEND)
+        SMP = 1;                   // input data sampled at end of data output time
 
-  switch( sync_mode )
-  {
-    case 4:                       // slave mode w /SS enable
-		SSPIN = 1;       // define /SS pin as input
-	 	SCKPIN = 1;       // define clock pin as input
-		break;
+    switch( this_mode )
+    {
+        case SPI_MODE0:              // SPI bus mode 0,0
+          CKP = 0;
+          CKE = 1;                   // data transmitted on falling edge
+          break;    
+        case SPI_MODE1:              // default SPI bus mode 0,1
+          CKP = 0;
+          CKE = 0;                   // data transmitted on falling edge
+          break;
+        case SPI_MODE2:              // SPI bus mode 1,0
+          CKP = 1;                   // clock idle state high
+          CKE = 1;                   // data transmitted on rising edge
+          break;
+        case SPI_MODE3:              // SPI bus mode 1,1
+          CKP = 1;                   // clock idle state high
+          CKE = 0;                   // data transmitted on falling edge
+          break;
+    }
 
-    case 5:                       // slave mode w/o /SS enable
-	 	SCKPIN = 1;       // define clock pin as input
-		break;
-    
-	default:                      // master mode, define clock pin as output
-	 	SCKPIN = 0;       // define clock pin as input
-        break;
-  }
-  SDIPIN = 1;       // define SDI pin as input	
-  SDOPIN = 0;       // define SDO pin as output
-  ENABLE = 1;
-  Delayms(30);
-#ifdef SPIINT
-    SSPIE = 1;
-    INTCONbits.GIEH = 1;
-    INTCONbits.GIEL = 1;
-    INTCONbits.PEIE = 1;
-//    SSPHPE = 1;
-    FLAG = 0;
-#endif
+    switch( this_role )
+    {
+        case SPI_SLAVE_SS:           // slave mode w /SS enable
+            SSPIN = 1;               // define /SS pin as input
+            SCKPIN = 1;              // define clock pin as input
+            break;
+
+        case SPI_SLAVE:              // slave mode w/o /SS enable
+            SCKPIN = 1;              // define clock pin as input
+            break;
+
+        default:                     // master mode, define clock pin as output
+            SCKPIN = 0;              // define clock pin as input
+            break;
+    }
+
+    SSPIN  = 0;                    // define SS  pin as output
+    SDIPIN = 1;                    // define SDI pin as input
+    SDOPIN = 0;                    // define SDO pin as output
+    ENABLE = 1;
+    Delayms(30);
+
+    #ifdef SPIINT
+        SSPIE = 1;
+        INTCONbits.GIEH = 1;
+        INTCONbits.GIEL = 1;
+        INTCONbits.PEIE = 1;
+        //SSPHPE = 1;
+        FLAG = 0;
+    #endif
 }
 
 /**
@@ -105,9 +116,9 @@ void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
  * either LSBFIRST (least-significant bit first) or MSBFIRST (most-significant bit first). 
  */
 
-void SPI_setBitOrder(u8 bitOrder)
+void SPI_setBitOrder(u8 bitorder)
 {
-	bitOrder = 0;
+	this_bitorder = bitorder;
 }
 
 /**
@@ -120,9 +131,15 @@ void SPI_setDataMode(u8 mode)
 	this_mode = mode;
 }
 
+void SPI_setMode(u8 mode)
+{
+	this_role  = mode;
+	this_clock = mode;
+}
+
 /**
  * This function sets the SPI clock divider relative to the system clock.
- * The dividers available are 4, 16, 64.
+ * The dividers available are 4, 8, 16, 64.
  * The default setting is SPI_CLOCK_DIV4, which sets the SPI clock to one-quarter
  * the frequency of the system clock. 
  */
@@ -130,6 +147,7 @@ void SPI_setDataMode(u8 mode)
 void SPI_setClockDivider(u8 clock)
 {
 	this_clock = clock;
+	this_role  = clock;
 }
 
 u8 SPI_write(u8 datax) {

@@ -27,7 +27,10 @@
 #ifndef __PIN_H
 #define __PIN_H
 
+/**********************************************************************/
 #if defined(__18f4685)		// Added by Andrej Golac
+/**********************************************************************/
+
 	#define RA0	0		/*-----------*/
 	#define AN0	0		/*           */
 	#define CVREF	0		/*           */
@@ -140,8 +143,9 @@
 	#define VPP		35	/*           */
 	#define RE3		35	/*-----------*/
 
-/*****************************************************/
+/**********************************************************************/
 #elif defined(PICUNO_EQUO)
+/**********************************************************************/
 
 	#define C7 		0
 //	#define RC7 	0
@@ -238,11 +242,13 @@
 	#define LED1	13
 	#define USERLED	13
 
+/**********************************************************************/
 #elif defined(PINGUINO2455)  || defined(PINGUINO4455)  || \
       defined(PINGUINO2550)  || defined(PINGUINO4550)  || \
       defined(PINGUINO25K50) || defined(PINGUINO45K50) || \
       defined(PINGUINO26J50) || defined(PINGUINO46J50) || \
       defined(PINGUINO27J53) || defined(CHRP3)
+/**********************************************************************/
 
 	#define B0 0
 //	#define RB0 0
@@ -339,7 +345,9 @@
 	#define HLVDIN 17
 	#define C2OU 17
 
+/**********************************************************************/
     #if defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(PINGUINO2455)
+/**********************************************************************/
     
         #define A4          18
         //#define RA4       18
@@ -349,7 +357,9 @@
         #define CCP1        12
         #define CCP2        11
 
+/**********************************************************************/
     #elif defined(CHRP3)
+/**********************************************************************/
 
         #define USERLED 17
         #define BACKLIGHT 17 // RA4
@@ -384,7 +394,9 @@
         #define CCP1        12
         #define CCP2        11
         
+/**********************************************************************/
     #elif defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PINGUINO4455)
+/**********************************************************************/
     
         #define A4          29
         //#define RA4       29
@@ -394,7 +406,9 @@
         #define CCP1        12
         #define CCP2        11
         
-    #elif defined(PINGUINO26J50) || defined(PINGUINO46J50) || defined(PINGUINO27J53)
+/**********************************************************************/
+    #elif defined(PINGUINO26J50) || defined(PINGUINO27J53)
+/**********************************************************************/
 
         #define RTCC        1
         #define CCP1        10  // cf. io.c
@@ -404,7 +418,10 @@
 
     #endif
 
-#elif defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
+/**********************************************************************/
+#elif defined(PINGUINO46J50)  || \
+      defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
+/**********************************************************************/
 
     //#error "*** BREAKPOINT ***"
 

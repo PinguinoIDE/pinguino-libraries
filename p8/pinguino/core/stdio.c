@@ -217,6 +217,7 @@ static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 pre
     // takes last 23 bits and adds the implicit 1
     mantissa = (helper.l & 0x7FFFFF) | 0x800000;
 
+/*
     if ( (exponent >= 31) || (exponent < -23) )
     {
         buffer[0] = 'i';
@@ -225,15 +226,43 @@ static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 pre
         buffer[3] = '\0';
         return pprints(out, buffer, width, pad);
     }
+*/
+
+    if (exponent >= 31)
+    {
+        buffer[0] = '+';
+        buffer[1] = 'i';
+        buffer[2] = 'n';
+        buffer[3] = 'f';
+        buffer[4] = '\0';
+        return pprints(out, buffer, width, pad);
+    }
+
+    else if (exponent < -23)
+    {
+        /*
+        buffer[0] = '-';
+        buffer[1] = 'i';
+        buffer[2] = 'n';
+        buffer[3] = 'f';
+        buffer[4] = '\0';
+        return pprints(out, buffer, width, pad);
+        */
+        int_part  = 0;
+        frac_part = 0;
+    }
+
     else if (exponent >= 23)
     {
         int_part = mantissa << (exponent - 23);
     }
+
     else if (exponent >= 0) 
     {
         int_part = mantissa >> (23 - exponent);
         frac_part = (mantissa << (exponent + 1)) & 0xFFFFFF; // mfh
     }
+
     else // if (exponent < 0)
         frac_part = (mantissa & 0xFFFFFF) >> -(exponent + 1);
 

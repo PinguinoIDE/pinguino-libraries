@@ -55,6 +55,7 @@
 	#define radians(deg) ((deg)*DEG_TO_RAD)
 	#define degrees(rad) ((rad)*RAD_TO_DEG)
 	#define sq(x) ((x)*(x))
+    #define swap(i, j) {int t = i; i = j; j = t;}
 
 #endif	/* __MACRO_H */
 

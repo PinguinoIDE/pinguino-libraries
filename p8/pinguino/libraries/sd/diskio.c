@@ -70,6 +70,7 @@ static u8 wait_ready (void)
 
 	return res;
 }
+
 /*-----------------------------------------------------------------------*/
 /* Deselect the card and release SPI bus                                 */
 /*-----------------------------------------------------------------------*/
@@ -80,8 +81,6 @@ void deselect (void)
 	CS_HIGH();
 	SPI_write(0xFF);		/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
-
-
 
 /*-----------------------------------------------------------------------*/
 /* Select the card and wait ready                                        */
@@ -97,7 +96,6 @@ int select (void)	/* 1:Successful, 0:Timeout */
 	deselect();
 	return 0;	/* Timeout */
 }
-
 
 /*-----------------------------------------------------------------------*/
 /* Deselect the card and release SPI bus                                 */

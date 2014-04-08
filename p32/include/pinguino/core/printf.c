@@ -227,12 +227,16 @@ static u8 pprintfl(u8 **out, int value, u8 width, u8 pad, u8 separator, u8 preci
 
     else if (exponent < -23)
     {
+        /*
         buffer[0] = '-';
         buffer[1] = 'i';
         buffer[2] = 'n';
         buffer[3] = 'f';
         buffer[4] = '\0';
         return pprints(out, buffer, width, pad);
+        */
+        int_part  = 0;
+        frac_part = 0;
     }
 
     else if (exponent >= 23)
@@ -242,7 +246,7 @@ static u8 pprintfl(u8 **out, int value, u8 width, u8 pad, u8 separator, u8 preci
 
     else if (exponent >= 0) 
     {
-        int_part = mantissa >> (23 - exponent);
+        int_part  = mantissa >> (23 - exponent);
         frac_part = (mantissa << (exponent + 1)) & 0xFFFFFF; // mfh
     }
 
