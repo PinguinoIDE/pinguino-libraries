@@ -20,6 +20,8 @@
 	* Up to 1400 short bursts per second can be received continuously
 	--------------------------------------------------------------------------*/
 
+/// This program is only for 8-bit Pinguino
+ 
 #define IR_LEFT_LED		11	// Left IR Led is connected on pin #11
 #define IR_RIGHT_LED		12	// Right IR Led is connected on pin #12
 #define IR_RECEIVER		0 	// TSOP1738 is connected on pin #0

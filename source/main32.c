@@ -30,9 +30,11 @@
 #include "define.h"				// Pinguino Sketch Constants
 #include <io.c>					// Pinguino Boards Peripheral Remappage and IOs configurations
 
+/*
 #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
 #include <newlib.c>
 #endif
+*/
 
 #ifdef __USBCDC
 #include <cdc.h>
@@ -44,20 +46,14 @@ int main()
 {
     // default peripheral freq. is CPUCoreFrequency / 2 (cf. system.c)
     #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-    SystemConfig(40000000);	    // default clock frequency is 40Mhz
+        SystemConfig(40000000);	    // default clock frequency is 40Mhz
     #else
-    SystemConfig(80000000);	    // default clock frequency is 80Mhz
+        SystemConfig(80000000);	    // default clock frequency is 80Mhz
     #endif
 
-	#if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
-    IOsetSpecial();
-    #endif
-    
     IOsetDigital();
-    
-    #if defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__)
+    IOsetSpecial();
     IOsetRemap();
-    #endif
     
     #ifdef __ANALOG__
     analog_init();
@@ -132,21 +128,21 @@ void Serial6Interrupt(void)
     Nop();
 }
 #endif
-#endif /* __SERIAL__ */
+#endif // __SERIAL__
 
 #ifndef __MILLIS__
 void Tmr2Interrupt(void)
 {
     Nop();    
 }
-#endif /* __MILLIS__ */
+#endif // __MILLIS__
 
 #ifndef __SPI__
 void SPIxInterrupt(void)
 {
     Nop();    
 }
-#endif /* __SPI__ */
+#endif // __SPI__
 
 // vector 35
 #ifndef __RTCC__
@@ -154,4 +150,4 @@ void RTCCInterrupt(void)
 {
     Nop();    
 }
-#endif /* __RTCC__ */
+#endif // __RTCC__

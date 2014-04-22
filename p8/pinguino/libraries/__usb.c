@@ -10,7 +10,7 @@
 #include <usb/usb_config.c>
 #include <usb/picUSB.c>
 #include <usb/usb_cdc.c>
-#include <delay.c>
+#include <delayms.c>
 
 void init_CDC()
 {

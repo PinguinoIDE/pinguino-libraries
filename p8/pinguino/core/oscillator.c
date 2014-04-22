@@ -33,6 +33,7 @@
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+//#include <millis.c>
 
 #ifndef CRYSTAL
 #define CRYSTAL 8000000L
@@ -218,6 +219,7 @@ u32 System_getCpuFrequency()
             }
             
             #elif defined(__18f26j50) || defined(__18f46j50) || \
+                  defined(__18f26j53) || defined(__18f46j53) || \
                   defined(__18f27j53) || defined(__18f47j53)
 
             if (OSCTUNEbits.PLLEN)
@@ -245,7 +247,9 @@ u32 System_getCpuFrequency()
     On PIC18F, Peripheral Freq. = CPU. Freq. / 4
     TODO : replace with #define
     --------------------------------------------------------------------------*/
+
 #define SystemGetInstructionClock()		System_getPeripheralFrequency()	
+
 u32 System_getPeripheralFrequency() 
 {
     return System_getCpuFrequency() >> 2;
@@ -260,6 +264,7 @@ u32 System_getPeripheralFrequency()
     defined(__18f2550)  || defined(__18f4550)  || \
     defined(__18f25k50) || defined(__18f45k50) || \
     defined(__18f26j50) || defined(__18f46j50) || \
+    defined(__18f26j53) || defined(__18f46j53) || \
     defined(__18f27j53) || defined(__18f47j53)
 
 
@@ -269,7 +274,9 @@ void System_setIntOsc(u8 speed)
     u8 flag=0;
     u8 _save_gie;
     
-    #if defined(__18f26j50) || defined(__18f46j50)
+    #if defined(__18f26j50) || defined(__18f46j50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
     u16 pll_startup_counter = 600;
     #endif
 
@@ -346,7 +353,8 @@ void System_setIntOsc(u8 speed)
     while (!OSCCONbits.HFIOFS); // wait INTOSC frequency is stable (HFIOFS=1) 
     #endif
 
-	updateMillisReloadValue();
+	// RB : Can not work because this function call System_getPeripheralFrequency()
+    //updateMillisReloadValue();
 	INTCONbits.GIE = _save_gie;
 }
 

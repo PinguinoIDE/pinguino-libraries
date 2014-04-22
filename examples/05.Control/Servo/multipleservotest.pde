@@ -22,16 +22,6 @@ servo.attach(4);
 servo.attach(5);
 servo.attach(6);
 servo.attach(7);
-servo.attach(8);
-servo.attach(9);
-servo.attach(10);
-servo.attach(11);
-servo.attach(12);
-servo.attach(13);
-servo.attach(14);
-servo.attach(15);
-servo.attach(16);
-servo.attach(17);
 }
 
 void loop(void)
@@ -39,33 +29,12 @@ void loop(void)
 servo.write(0,255-position);
 servo.write(1,255-position);
 servo.write(2,255-position);
-servo.write(8,255-position);
-servo.write(9,255-position);
-servo.write(10,position);
-servo.write(11,position);
-servo.write(12,position);
-servo.write(16,position);
-servo.write(17,position);
+servo.write(3,255-position);
+servo.write(4,position);
+servo.write(5,position);
+servo.write(6,position);
+servo.write(7,position);
 
-if(position>100){
-    servo.setMaximumPulse(3);
-    servo.setMaximumPulse(4);
-    servo.setMaximumPulse(5);
-    servo.setMaximumPulse(6);
-    servo.setMaximumPulse(7);
-    servo.setMaximumPulse(13);
-    servo.setMaximumPulse(14);
-    servo.setMaximumPulse(15);
-} else {
-    servo.setMinimumPulse(3); 
-    servo.setMinimumPulse(4); 
-    servo.setMinimumPulse(5); 
-    servo.setMinimumPulse(6); 
-    servo.setMinimumPulse(7); 
-    servo.setMinimumPulse(13);
-    servo.setMinimumPulse(14);
-    servo.setMinimumPulse(15);
-}
 delay(250);
 position++;
 }

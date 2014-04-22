@@ -19,8 +19,6 @@
     #define SSPIN           TRISAbits.TRISA5    // Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // SCK Clock TRIS
-    
-    /// RB 2014-02-07 : C7 or RB3 ?
     #define SDOPIN          TRISCbits.TRISC7    // SDO Master output/SDI Slave input TRIS
     
     #define BUFFER          SSPBUF
@@ -125,12 +123,12 @@
 
 /// Prototypes
 
+void SPI_begin();
+void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase);
 void SPI_setMode(u8 mode);
 void SPI_setBitOrder(u8 bitorder);
 void SPI_setDataMode(u8 mode);
 void SPI_setClockDivider(u8 clock);
-//void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase);
-void SPI_init();
 u8 SPI_write(u8 datax);
 u8 SPI_read(void);
 void SPI_interrupt();

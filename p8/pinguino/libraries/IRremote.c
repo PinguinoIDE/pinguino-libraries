@@ -31,8 +31,9 @@
 #include <IRremote.h>
 //#include <IRremoteInt.h>      // moved content in IRremote.h
 #include <pwm.c>
-#include <digitalw.c>
-#include <delay.c>
+#include <digitalw.c>           // digitalwrite
+#include <digitalr.c>           // digitalread
+#include <delayms.c>            // Delayms
 #include <oscillator.c>
 
 //#define _1us_ { nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); }

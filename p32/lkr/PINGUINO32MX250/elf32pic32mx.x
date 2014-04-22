@@ -380,6 +380,7 @@ SECTIONS
     *(.rodata1)
     . = ALIGN(32 / 8) ;
   } >kseg0_program_mem
+  
   /*
    * Small initialized constant global and static data can be placed in the
    * .sdata2 section.  This is different from .sdata, which contains small
@@ -390,6 +391,7 @@ SECTIONS
     *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
     . = ALIGN(32 / 8) ;
   } >kseg0_program_mem
+  
   /*
    * Uninitialized constant global and static data (i.e., variables which will
    * always be zero).  Again, this is different from .sbss, which contains
@@ -420,6 +422,7 @@ SECTIONS
   {
      *(.got.plt) *(.got)
   } >kseg1_data_mem AT>kseg0_program_mem
+  
   /*
    * We want the small data sections together, so single-instruction offsets
    * can access them all, and initialized data all before uninitialized, so
@@ -455,6 +458,7 @@ SECTIONS
     *(.dynbss)
     *(.bss .bss.* .gnu.linkonce.b.*)
     *(COMMON)
+    
     /*
      * Align here to ensure that the .bss section occupies space up to
      * _end.  Align after .bss to ensure correct alignment even if the
@@ -478,6 +482,7 @@ SECTIONS
     _SPLIM = . ;
     . += _min_stack_size ;
   } >kseg1_data_mem
+  
   /*
    * RAM functions go at the end of our stack and heap allocation.
    * Alignment of 2K required by the boundary register (BMXDKPBA).

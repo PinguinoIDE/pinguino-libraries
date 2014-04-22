@@ -6,7 +6,7 @@
 
 #include <sd/diskio.h>
 #include <spi.c>
-#include <delay.c>
+#include <delayms.c>
 #include <serial.c>
 /* Definitions for MMC/SDC command */
 #define CMD0	(0x40+0)	/* GO_IDLE_STATE */

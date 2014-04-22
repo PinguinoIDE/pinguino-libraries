@@ -39,3 +39,4 @@ void loop()
 	// remember the previous value of the sensor
 	previous = val;
 }
+ 

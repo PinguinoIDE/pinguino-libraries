@@ -22,13 +22,11 @@
 #define ONEWIREBUS1  20						// DQ line						
 #define ONEWIREBUS2  19						// DQ line						
 
-  u32 TimemS0,TimemS1;
-  
+u32 TimemS0,TimemS1;
    
 void setup()
 {
 }
-
 
 void loop()
 {

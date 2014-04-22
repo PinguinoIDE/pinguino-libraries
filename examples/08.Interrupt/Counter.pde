@@ -20,6 +20,6 @@ Serial.begin(9600); // to debug
 void loop()
 {
 counts=(TMR3H<<8)+TMR3L;
-Serial.print(counts,DEC);
-Serial.printf("\n\r");
+Serial.printNumber(counts,DEC);
+Serial.println("");
 }

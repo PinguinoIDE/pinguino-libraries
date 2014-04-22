@@ -1,5 +1,5 @@
 // Initialize DS1306 using ce as chip enable line, turn on osc
-DS1306.Init DS1306_Init#include <DS1306.c>
+DS1306.init DS1306_init#include <DS1306.c>
 
 // Time set uses hours (when DS1306_writeHours24 = true) (default), hours12/ampm (when DS1306_writeHours24 = false)
 DS1306.Hours24 DS1306_Hours24#include <DS1306.c>

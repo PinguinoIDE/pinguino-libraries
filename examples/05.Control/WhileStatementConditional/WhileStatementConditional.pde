@@ -28,7 +28,7 @@
 
 
 // These constants won't change:
-const int sensorPin = A2;       // pin that the sensor is attached to
+const int sensorPin = 2;       // pin that the sensor is attached to
 const int ledPin = 9;           // pin that the LED is attached to
 const int indicatorLedPin = 13; // pin that the built-in LED is attached to
 const int buttonPin = 2;        // pin that the button is attached to

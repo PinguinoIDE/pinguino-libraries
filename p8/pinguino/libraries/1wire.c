@@ -30,8 +30,10 @@
 
 	#include <typedef.h>
 	#include <macro.h>
-	#include <delay.c>
-	#include <digitalw.c>
+	#include <delayus.c>            // Delayus
+	#include <digitalp.c>           // pinmode
+	#include <digitalw.c>           // digitalwrite
+	#include <digitalr.c>           // digitalread
 
 	// private
 	static void OneWireLow(u8);

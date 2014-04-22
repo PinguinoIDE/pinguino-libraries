@@ -21,7 +21,7 @@
 
 // These constants won't change.  They're used to give names
 // to the pins used:
-const int analogInPin = A0;  // Analog input pin that the potentiometer is attached to
+const int analogInPin =  0;  // Analog input pin that the potentiometer is attached to
 const int analogOutPin = 9; // Analog output pin that the LED is attached to
 
 int sensorValue = 0;        // value read from the pot
@@ -41,10 +41,7 @@ void loop() {
   analogWrite(analogOutPin, outputValue);           
 
   // print the results to the serial monitor:
-  Serial.printf("sensor = " );                       
-  Serial.print(sensorValue,DEC);      
-  Serial.printf("\t output = ");      
-  Serial.println(outputValue,DEC);   
+  Serial.printf("sensor = %d\toutput = %d\r\n", sensorValue, outputValue);      
 
   // wait 10 milliseconds before the next loop
   // for the analog-to-digital converter to settle

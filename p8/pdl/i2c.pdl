@@ -20,6 +20,7 @@ Wire.write I2C_inBuffer#include <i2c.c>
 Wire.writeS I2C_inBufferS#include <i2c.c>
 Wire.writeStr I2C_inBufferStr#include <i2c.c>
 Wire.read I2C_outBuffer#include <i2c.c>
+Wire.receive I2C_outBuffer#include <i2c.c>
 Wire.beginTransmission I2C_beginTransmission#include <i2c.c>
 Wire.endTransmission I2C_endTransmission#include <i2c.c>
 Wire.available I2C_available#include <i2c.c>

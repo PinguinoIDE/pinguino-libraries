@@ -30,7 +30,7 @@ void anyUserCode(void)
 		CDC.printf("\n%02d, %lu [msec]", i++ ,millis());
 		delay(1);
 		CDC.printf("  ");
-		CDC.print(millis(),HEX);
+		CDC.printNumber(millis(),HEX);
 		delay(1);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * File			DS1306_Test01.pde
+ * File			DS1306_Test02.pde
  *
  * Description		Full test program for DS1306 devices. 
  *
@@ -22,8 +22,6 @@
    properly connected, per DS1306 spec sheet */
    
 /* #define __CHARGING_SUPPORTED */
-
-#define ledPinG			    32 // the number of the Green LED pin
 
 //RTC IO
 #define RTC_E          4
@@ -83,15 +81,15 @@ BOOL compare(u8 in, u8 out, char *desc, BOOL *passflag, int aschar)
     }
      strcat(bf,"..Failure comparing %s - in=");
    if (aschar)
-    sprintf(bf1,"%c",(char) in);
+    Sprintf(bf1,"%c",(char) in);
    else
-    sprintf(bf1,"%d",in);
+    Sprintf(bf1,"%d",in);
    strcat(bf,bf1);
    strcat(bf,", out=");
    if (aschar)
-    sprintf(bf1,"%c\r\n",(char) out);
+    Sprintf(bf1,"%c\r\n",(char) out);
    else
-    sprintf(bf1,"%d\r\n",out);
+    Sprintf(bf1,"%d\r\n",out);
    strcat(bf,bf1);
   }
  CDC.printf("%s",bf);
@@ -169,7 +167,7 @@ BOOL read_write_compare_alarm24(char *tc, int alarm, unsigned char hours, unsign
   compare(ts_in.seconds, ts_out.seconds, "Seconds", &pass,FALSE);
   compare(ts_in.dow, ts_out.dow, "DOW", &pass,FALSE);
   
-  if (pass) CDC.print("Pass\r\n");
+  if (pass) CDC.println("Pass");
   
   return pass; 
 }
@@ -415,7 +413,7 @@ int usermemtests()
   if (fail) {
     CDC.print("Fail\r\n");
     CDC.print("..Offset = 0x");
-    CDC.println(i, HEX);
+    CDC.printNumber(i, HEX);
     failures++;
   } else {
     CDC.print("Pass\r\n");
@@ -445,7 +443,7 @@ int usermemtests()
   if (fail) {
     CDC.print("Fail\r\n");
     CDC.print("..Offset = 0x");
-    CDC.println(i, HEX);
+    CDC.printNumber(i, HEX);
     failures++;
   } else {
     CDC.print("Pass\r\n");
@@ -487,11 +485,11 @@ int crtests()
     CDC.print("Fail\r\n");
     if (diodes != 2) {
       CDC.print("..Expected 2 diodes, got ");
-      CDC.println(diodes, DEC);
+      CDC.printNumber(diodes, DEC);
     }
     if (resistance != 8) {
       CDC.print("..Expected resistance of 8, got ");
-      CDC.println(resistance, DEC);
+      CDC.printNumber(resistance, DEC);
     }
     if (en != true) {
       CDC.print("..Got disabled indication\r\n");
@@ -509,11 +507,11 @@ int crtests()
     CDC.print("Fail\r\n");
     if (diodes != 0) {
       CDC.print("..Expected 0 diodes, got ");
-      CDC.println(diodes, DEC);
+      CDC.printNumber(diodes, DEC);
     }
     if (resistance != 0) {
       CDC.print("..Expected resistance of 0, got ");
-      CDC.println(resistance, DEC);
+      CDC.printNumber(resistance, DEC);
     }
     if (en == true) {
       CDC.println("..Got disabled indication");
@@ -552,11 +550,11 @@ int crtests()
 // Setup routine
 void setup()
 {
- pinMode(ledPinG, OUTPUT); 
- digitalWrite(ledPinG,LOW); 
+ pinMode(USERLED, OUTPUT); 
+ digitalWrite(USERLED,LOW); 
 // randomSeed(12);
  srand(123);
- DS1306.Init(0,RTC_E,SCK,SDO,SDI); 
+ DS1306.init(0,RTC_E,SCK,SDO,SDI); 
  CDC.getKey();
 }
 
@@ -567,7 +565,7 @@ void loop()
   int failures = 0; 
   int i;
 
-  digitalWrite(ledPinG,HIGH); 
+  digitalWrite(USERLED,HIGH); 
   // Provide a countdown to start
   for (i = 5 ; i > 0; i--)
    {
@@ -588,9 +586,9 @@ void loop()
   CDC.println("");
   CDC.println("");
   CDC.print("Final result - ");
-  CDC.println(failures == 0? "Pass" : "Fail");
+  CDC.println(failures == 0 ? "Pass" : "Fail");
   if (failures) {
-    CDC.print(failures, DEC);
+    CDC.printNumber(failures, DEC);
     CDC.println(" total failures");
   }
     

@@ -30,7 +30,7 @@
 #include <typedef.h>
 
 #ifdef boot2
-    #include <delay.c>
+    #include <delayms.c>
 #endif
 
 #if defined(CDCPRINTF)
@@ -106,7 +106,7 @@ void CDC_init(void)
  * write 1 char on CDC port
  **********************************************************************/
 
-//#define CDCwrite(c) CDCputs(c, 1)
+#define CDCwrite(c) CDCputs(c, 1)
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)

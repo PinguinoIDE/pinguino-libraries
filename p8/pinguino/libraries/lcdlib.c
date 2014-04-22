@@ -23,8 +23,11 @@
 #ifndef __LCDLIB_C__
 #define __LCDLIB_C__
 
-#include <delay.c>		//Arduino like delays
-#include <digitalw.c>	//Arduino like DigitalWrite and Read
+#include <delayms.c>		// Delayms
+#include <delayus.c>		// Delayus
+#include <digitalw.c>   	// digitalwrite
+#include <digitalp.c>   	// pinmode
+#include <const.h>   	    // HIGH, LOW, OUTPUT, ...
 #include <lcdlib.h>
 #ifdef LCDPRINTF
 #include <stdio.c>
@@ -138,7 +141,7 @@ void lcd_printf(char *fmt, ...)
 #endif
 
 /** Print a number on LCD */
-#ifdef LCDPRINTNUMBER
+#if defined(LCDPRINTNUMBER) || defined(LCDPRINTFLOAT)
 void lcd_printNumber(u16 n, u8 base)
 {  
 	u8 buf[8 * sizeof(long)]; // Assumes 8-bit chars. 
@@ -299,7 +302,7 @@ void lcd_leftToRight(void)
 #endif
 
 /** This is for text that flows Right to Left */
-#ifdef LCDLEFTTOLEFT
+#ifdef LCDRIGHTTOLEFT
 void lcd_rightToLeft(void)
 {
 	_displaymode &= ~LCD_ENTRYLEFT;

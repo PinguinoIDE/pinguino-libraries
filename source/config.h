@@ -19,6 +19,27 @@
     #error "    ---------------------------------    "
 
 /**********************************************************************/
+#elif defined(__18f4685)
+/**********************************************************************/
+
+	#pragma config IESO = OFF	// Internal/external switchover
+	#pragma config FCMEN = OFF	// Fail-safe clock monitor
+	#pragma config BORV = 3		// Brown-out Voltage set to 2.1V
+	#pragma config BOREN = OFF	// Brown-out Reset bit
+	#pragma config PWRT = OFF	// Power-up Timer
+	#pragma config WDT = OFF	// Watch Dog Timer
+	#pragma config MCLRE = ON	// MCLR Pin Enable bit
+	#pragma config LPT1OSC = OFF	// Low Power Timer1 Oscilator
+	#pragma config PBADEN = ON	// PORTB pins configured as digital I/O
+	#pragma config DEBUG = OFF	// Background Debugger Enable bit
+	#pragma config XINST = OFF	// Extended Instruction Set bit
+	#pragma config BBSIZ = 1024	// Boot Block Size
+	#pragma config LVP = ON		// RB5 is PGM pin
+	#pragma config STVREN = ON	// Stack Full/Underflow will cause reset
+	#pragma config OSC = IRCIO67	// Internal oscilator block, port
+					// function on RA6 and RA7
+
+/**********************************************************************/
 #elif defined(__18f2550) || defined(__18f4550) || \
       defined(__18f2455) || defined(__18f4455)
 /**********************************************************************/

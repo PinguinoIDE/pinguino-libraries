@@ -14,19 +14,19 @@
 
 void setup()
 {
-  Wire.master(100); // join i2c bus, speed is 100KHz
+  I2C.master(100); // join i2c bus, speed is 100KHz
 }
 
 byte val = 0;
 
 void loop()
 {
-  Wire.beginTransmission();
-  Wire.write((44 << 1) & 0xFE);// transmit to device #44 (0x2c)
+  I2C.start();
+  I2C.write((44 << 1) & 0xFE);// transmit to device #44 (0x2c)
                               // device address is specified in datasheet
-  Wire.write(0x00);           // sends instruction byte  
-  Wire.write(val);            // sends potentiometer value byte  
-  Wire.endTransmission();     // stop transmitting
+  I2C.write(0x00);           // sends instruction byte  
+  I2C.write(val);            // sends potentiometer value byte  
+  I2C.stop();     // stop transmitting
 
   val++;        // increment value
   if(val == 64) // if reached 64th position (max)

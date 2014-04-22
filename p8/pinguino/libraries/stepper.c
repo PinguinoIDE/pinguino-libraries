@@ -100,30 +100,43 @@
 
 #define __STEPPER__
 
+/*
 #ifndef ANALOGWRITE
 #define ANALOGWRITE
 #endif
 
+#ifndef DIGITALWRITE
+#define DIGITALWRITE
+#endif
+
+#ifndef PINMODE
+#define PINMODE
+#endif
+*/
+
 #include <system.c>                 // oscillator routines
-#include <digitalw.c>               // pin definitions
+#include <digitalp.c>               // pinmode
+#include <digitalw.c>               // digitalwrite
+#include <oscillator.c>             // 
+
+#ifdef __MICROSTEPPING__
 #include <analog.c>                 // analogwrite
-#include <oscillator.c>                 // analogwrite
-//#ifdef __MICROSTEPPING__
-#include <pwm.c>                    // pwm routines
-//#endif
+//#include <pwmclose.c>               // PWM_close
+#endif
+
 #include <interrupt.c>              // interrupts routines
 //#include <trigo.c>                  // sine table * 256
 
 int this_direction;                 // direction of rotation
 int this_steps_per_rev;             // total number of steps this motor can take
-int this_number_of_steps;           // total number of steps
+int this_number_of_steps;           // total number of steps for one rev.
 volatile int this_current_step;     // which step the motor is on
-int this_number_of_microsteps;      // how many microsteps in one full step
-volatile int this_steps_left;       // how many steps left
+int this_number_of_microsteps=2;    // how many microsteps in one full step
+volatile int this_steps_left=0;     // how many steps left
 int this_pin_count;                 // whether you're driving the motor with 2 or 4 pins
 int this_jump;                      // set table pointer jump
                                     // 32 -> 1, 16 -> 2, 08 -> 4, 04 -> 8
-int delay_us_per_step;              // delay between 2 steps
+int cycles_per_step;                // CPU cycles between 2 steps
 
 // motor pin numbers:
 int this_motor_pin_A;
@@ -144,7 +157,7 @@ int steps_table[8] = {
     Microsteps lookup table
 ***********************************************************************/
 
-//#ifdef __MICROSTEPPING__            // defined if user uses Stepper_setMicrostep()
+#ifdef __MICROSTEPPING__            // defined if user uses Stepper_setMicrostep()
 
 #define TABLE_DEPTH     32
 #define INDEX_MASK      TABLE_DEPTH - 1
@@ -160,26 +173,26 @@ int sine_table[TABLE_DEPTH + 1] = {
     379, 396, 411, 426, 439, 452, 463, 473,
     482, 490, 497, 502, 506, 510, 511, 512
 */
-//#endif
+
+#endif
 
 /*	--------------------------------------------------------------------
     Prototypes
     ------------------------------------------------------------------*/
 
 void Stepper_init(int, int, int, int, int);
-int  Stepper_step(int, int, int);
 void Stepper_stepMotor(int);
+#ifdef __MICROSTEPPING__
+void Stepper_setMicrostep(int);
+#endif
+void Stepper_setSpeed(long);
+//void Stepper_step(int, int, int);
+void Stepper_step(int);
 
-//void Stepper_setSpeed(long);
-//int Stepper_step(int);
-//#ifdef __MICROSTEPPING__
-//void Stepper_setMicrostep(int);
-//#endif
-
-/*	--------------------------------------------------------------------
-    constructor for two and four-pin version
+/**--------------------------------------------------------------------
+    Constructor for two and four-pin version
     Sets which wires should control the motor.
-    ------------------------------------------------------------------*/
+    -----------------------------------------------------------------**/
 
 void Stepper_init(int number_of_steps, int motor_pin_A, int motor_pin_B, int motor_pin_C, int motor_pin_D)
 {
@@ -223,113 +236,32 @@ void Stepper_init(int number_of_steps, int motor_pin_A, int motor_pin_B, int mot
     this_current_step = 0;              // which step the motor is on
     this_direction = 0;                 // motor direction
     //this_last_step_time = 0;          // time stamp in ms of the last step taken
-    this_number_of_microsteps = 1;      // full steps per default
+    this_number_of_microsteps = 2;      // full steps per default
     this_jump = 1;
     this_steps_left = 0;
+    // change number of steps
+    this_number_of_steps = this_steps_per_rev * this_number_of_microsteps;
 }
 
-/*	--------------------------------------------------------------------
+/**--------------------------------------------------------------------
     Sets microsteps per full step
     full steps = 1
     half steps = 2
     microsteps = 4, 8, 16 or 32 per full step.
-    ------------------------------------------------------------------*/
-/*
+    -----------------------------------------------------------------**/
+
 #ifdef __MICROSTEPPING__
 void Stepper_setMicrostep(int microsteps)
 {
-    int i, a;
-
-    if ( (microsteps % 2) == 1 ) // odd ?
-        this_number_of_microsteps = microsteps + 1; 
-    else
-        this_number_of_microsteps = microsteps;
-
-    if (this_number_of_microsteps > 32)
-        this_number_of_microsteps = 32;
-
-    if (this_number_of_microsteps < 2)
-        this_number_of_microsteps = 2;
-
-    if (this_number_of_microsteps > 2)
-    {
-        PWM_init(); // Timer3
-        PWM_set_frequency(64000);
-        this_number_of_steps *= this_number_of_microsteps;
-        this_jump = (32 / this_number_of_microsteps);
-    }
-}
-#endif
-*/
-
-/*	--------------------------------------------------------------------
-    Sets the speed in revs per minute
-    * TODO : interrupt
-    ------------------------------------------------------------------*/
-/*
-void Stepper_setSpeed(long revolutionPerMinute)
-{
-    int cycles, prescaler=0;                    // number of cycles between 2 steps
-    
-    // delay (ms) between 2 steps
-    // 1 mn = 60 sec = 60 * 1000 * 1000 us
-    this_step_delay = 60000000L / (revolutionPerMinute * this_number_of_steps);
-
-    // Set Timer overflow to this_step_delay (in ms)
-    // 1 cycle = Tcy = 1 / Fcy (sec)
-    // nb of cycles in this step_delay (in ms)
-    //  = ( this step_delay / 1000    ) / Tcy
-    //  = ( this step_delay * Fcy     ) / 1000
-    //  = ( this step_delay * PBCLOCK ) / 1000    
-    cycles = this_step_delay * ( GetPeripheralClock() / 1000 / 1000 );
-    
-    while (cycles > 0xFFFF)
-    {
-        cycles /= 8;
-        prescaler += 1;
-    }
-
-    // Timer1 Configuration
-    IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-    //INTCONSET = 0x1000;
-    T1CON    = prescaler << 4;          // prescaler, internal peripheral clock
-    TMR1     = 0x00;                    // clear timer register
-    PR1      = cycles;                  // load period register
-    IntSetVectorPriority(INT_TIMER1_VECTOR, 7, 3);
-    //IPC1SET  = 7;                       // select interrupt priority and sub-priority
-    IntClearFlag(INT_TIMER1);
-    //IFS0CLR  = 1 << 4; //INT_TIMER1_VECTOR;  // clear interrupt flag
-    IntEnable(INT_TIMER1);
-    //IEC0SET  = 1 << 4; //INT_TIMER1_VECTOR;  // enable timer 1 interrupt
-    T1CONSET = 0x8000;                  // start timer 1
-}
-*/
-
-/*	--------------------------------------------------------------------
-    Moves the motor of steps_to_move steps.
-    If the number is negative, the motor moves in the reverse direction.
-    ------------------------------------------------------------------*/
-
-int Stepper_step(int steps_to_move, int microsteps, int revolutionPerMinute)
-{
-    int delay_ms_per_move;              // delay for the whole move
-    int cycles_per_step;                // number of cycles between 2 steps
-    int prescaler = 0;                  // 0 = 1:1 default prescale value
-                                        // 1 = 1:8 prescale value
-                                        // 2 = 1:64 prescale value
-                                        // 3 = 1:256 prescale value
-
-    // wait previous command to be finished
-    while (this_steps_left > 0);
-
     switch ( microsteps )
     {
         case 0:
-            // wave steps todo
-            this_number_of_microsteps = 1;
+            // wave steps
+            this_number_of_microsteps = 2;
             break;
 
         case 1:
+            // full-steps
             this_number_of_microsteps = 1;
             break;
     
@@ -346,31 +278,48 @@ int Stepper_step(int steps_to_move, int microsteps, int revolutionPerMinute)
             //    this_number_of_microsteps = 2;
             break;
     }
-    
-    // determine direction based on whether steps_to_move is + or -:
-    if (steps_to_move > 0) this_direction = 1;
-    if (steps_to_move < 0) this_direction = 0;
-
-    // change number of steps
-    this_number_of_steps = this_steps_per_rev * this_number_of_microsteps;
-    //steps_to_move = this_number_of_steps;
-    steps_to_move *= this_number_of_microsteps;
-
-    // how many steps to take ?
-    this_steps_left = steps_to_move > 0 ? steps_to_move : -steps_to_move;
 
     // microsteps ?
     if (this_number_of_microsteps > 2)
     {
         //PWM_init(); // Timer3
+        //PWM_set_frequency(64000);
         analogwrite_init();
         //PWM_setFrequency(100000); // 100KHz
         this_jump = (TABLE_DEPTH / this_number_of_microsteps);
     }
-    
+/*    
+    else
+    {
+        PWM_close(this_motor_pin_A);
+        PWM_close(this_motor_pin_B);
+        PWM_close(this_motor_pin_C);
+        PWM_close(this_motor_pin_D);
+    }    
+*/
+    // change number of steps
+    this_number_of_steps = this_steps_per_rev * this_number_of_microsteps;
+}
+#endif
+
+
+/**--------------------------------------------------------------------
+    Sets the speed in revs per minute
+    -----------------------------------------------------------------**/
+
+void Stepper_setSpeed(long revolutionPerMinute)
+{
+    //int delay_ms_per_move;              // delay for the whole move
+    int delay_us_per_step;              // delay between 2 steps
+    int prescaler = 0;                  // 0 = 1:1 default prescale value
+                                        // 1 = 1:8 prescale value
+                                        // 2 = 1:64 prescale value
+                                        // 3 = 1:256 prescale value
+
     // delay between 2 steps (1 mn = 60 * 1000 * 1000 us)
     delay_us_per_step = 60 * 1000 * 1000 / revolutionPerMinute / this_number_of_steps;
-    delay_ms_per_move = delay_us_per_step * steps_to_move / 1000;
+    //delay_ms_per_move = delay_us_per_step * steps_to_move / 1000;
+    // number of CPU cycles between 2 steps
     cycles_per_step   = delay_us_per_step * ( System_getPeripheralFrequency() / 1000 / 1000 );
     
     while (cycles_per_step > 0xFFFF)
@@ -390,22 +339,47 @@ int Stepper_step(int steps_to_move, int microsteps, int revolutionPerMinute)
     // Timer3 config.
     INTCONbits.GIEH = 0;    // enable global HP interrupts
     INTCONbits.GIEL = 0;    // enable global LP interrupts
-    TMR3H = high8(0xFFFF - delay_us_per_step);
-    TMR3L =  low8(0xFFFF - delay_us_per_step);
-    T3CON = 0b00000011;     // 16-bit, prescaller 1:1, Timer ON;
+    TMR3H = high8(0xFFFF - cycles_per_step);
+    TMR3L =  low8(0xFFFF - cycles_per_step);
+    T3CON = prescaler << 4; // prescaler, internal peripheral clock
     IPR2bits.TMR3IP = 1;    // interrupt has high priority
     PIR2bits.TMR3IF = 0;    // reset interrupt flag
+    T3CONbits.TMR3ON = 1;   // Timer3 ON;
     PIE2bits.TMR3IE = 1;    // enable interrupt 
     INTCONbits.GIEH = 1;    // enable global HP interrupts
     INTCONbits.GIEL = 1;    // enable global LP interrupts
 
     //  return time (ms) to revolve the whole steps to move
-    return ( delay_ms_per_move );
+    //return ( delay_ms_per_move );
 }
 
-/*	--------------------------------------------------------------------
+/**--------------------------------------------------------------------
+    Moves the motor of steps_to_move steps.
+    If the number is negative, the motor moves in the reverse direction.
+    -----------------------------------------------------------------**/
+
+//int Stepper_step(int steps_to_move, int microsteps, int revolutionPerMinute)
+void Stepper_step(int steps_to_move)
+{
+    // if previous command is not finished
+    while (this_steps_left > 0);
+    //this_steps_left += steps_to_move;
+
+    // determine direction based on whether steps_to_move is + or -:
+    if (steps_to_move > 0) this_direction = 1;
+    if (steps_to_move < 0) this_direction = 0;
+
+    //steps_to_move = this_number_of_steps;
+    //steps_to_move *= this_number_of_microsteps;
+
+    // how many steps to take ?
+    this_steps_left = steps_to_move > 0 ? steps_to_move : -steps_to_move;
+}
+
+/**--------------------------------------------------------------------
     Moves the motor forward or backwards.
-    ------------------------------------------------------------------*/
+    Private function.
+    -----------------------------------------------------------------**/
 
 void Stepper_stepMotor(int thisStep)
 {
@@ -468,7 +442,7 @@ void Stepper_stepMotor(int thisStep)
     }
     
     // microstepping (4, 8, 16 or 32 microsteps / step)
-    //#ifdef __MICROSTEPPING__
+    #ifdef __MICROSTEPPING__
     else if (this_number_of_microsteps > 2)
     {
         /**
@@ -524,7 +498,7 @@ void Stepper_stepMotor(int thisStep)
                 break;
         }
     }
-    //#endif
+    #endif
 }
 
 /*  --------------------------------------------------------------------
@@ -566,8 +540,8 @@ void stepper_interrupt()
         }
 
         // load Timer again
-        TMR3H = high8(0xFFFF - delay_us_per_step);
-        TMR3L =  low8(0xFFFF - delay_us_per_step);
+        TMR3H = high8(0xFFFF - cycles_per_step);
+        TMR3L =  low8(0xFFFF - cycles_per_step);
         PIR2bits.TMR3IF = 0;
     }
 }

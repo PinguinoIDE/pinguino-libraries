@@ -26,31 +26,33 @@ http://arduino.cc/en/Tutorial/IfStatement
  */
  
 // These constants won't change:
-const int analogPin = A0;    // pin that the sensor is attached to
-const int ledPin = 13;       // pin that the LED is attached to
+const int analogPin = 0;    // pin that the sensor is attached to
 const int threshold = 400;   // an arbitrary threshold level that's in the range of the analog input
 
 void setup() {
   // initialize the LED pin as an output:
-  pinMode(ledPin, OUTPUT);
+  pinMode(USERLED, OUTPUT);
   // initialize serial communications:
   Serial.begin(9600);
 }
 
 void loop() {
   // read the value of the potentiometer:
-  int analogValue = analogRead(analogPin);
+  int analogValue;
+
+  analogValue = analogRead(analogPin);
 
   // if the analog value is high enough, turn on the LED:
   if (analogValue > threshold) {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(USERLED, HIGH);
   } 
   else {
-    digitalWrite(ledPin,LOW); 
+    digitalWrite(USERLED,LOW); 
   }
 
   // print the analog value:
-  Serial.println(analogValue, DEC);
+  Serial.printNumber(analogValue, DEC);
+  Serial.println("");
 
 }
 

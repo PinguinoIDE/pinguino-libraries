@@ -69,7 +69,8 @@ BS2     0       1       1       0       0
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
-#include <delay.c>
+#include <delayms.c>
+#include <delayus.c>
 
 // Printf
 #ifdef SSD1306PRINTF
@@ -104,6 +105,7 @@ BS2     0       1       1       0       0
 /// Globals
 ///	--------------------------------------------------------------------
 
+u8 *SSD1306_buffer = logo;
 //*SSD1306_bufferptr = SSD1306_buffer;
 
 ///	--------------------------------------------------------------------
@@ -396,12 +398,13 @@ void SSD1306_setChargePumpEnable(u8 enable)
 
     #else
 
-        void SSD1306_init(u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
+        void SSD1306_init(u8 res, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
         {
             dDATA = 0x00;           // output
             dCMD  = 0x00;           // output
             DATA  = 0x00;
             CMD   = 0xFF;           // every pin HIGH
+            
 
     #endif
 

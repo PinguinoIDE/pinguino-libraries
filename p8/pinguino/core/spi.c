@@ -1,8 +1,12 @@
 #ifndef __SPI_C__
 #define __SPI_C__
 
+#ifndef SPI
+#define SPI
+#endif
+
 #include <spi.h>
-#include <delay.c>
+#include <delayms.c>
 
 /* Port Controls  (Platform dependent) */
 #define SELECT()	SD_CS = 0 // device selection
@@ -48,13 +52,75 @@ u8 this_phase = SPI_SMPEND;
    Nota bene : enter 128 as decimal value or 0x80 as hexadecimal value for the below smp_phase parameter
  */
 
-void SPI_init()
+/** -----------------------------------------------------------------**/
+#ifdef SPIINIT
+/** -----------------------------------------------------------------**/
+
+void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
+{
+  DESELECT();
+  ENABLE = 0;
+  STATUS &= 0x3F;                // power on state
+  CONFIG = 0x00;                 // power on state
+  CONFIG |= sync_mode;           // select serial mode
+  STATUS |= smp_phase;           // select data input sample phase
+
+  switch( bus_mode )
+  {
+    case 0:                       // SPI bus mode 0,0
+      CKE = 1;        // data transmitted on falling edge
+      break;    
+    case 2:                       // SPI bus mode 1,0
+      CKE = 1;        // data transmitted on rising edge
+      CKP = 1;        // clock idle state high
+      break;
+    case 3:                       // SPI bus mode 1,1
+      CKP = 1;        // clock idle state high
+      break;
+    default:                      // default SPI bus mode 0,1
+      break;
+  }
+
+  switch( sync_mode )
+  {
+    case 4:                       // slave mode w /SS enable
+                SSPIN = 1;       // define /SS pin as input
+                SCKPIN = 1;       // define clock pin as input
+                break;
+
+    case 5:                       // slave mode w/o /SS enable
+                SCKPIN = 1;       // define clock pin as input
+                break;
+   
+        default:                      // master mode, define clock pin as output
+                SCKPIN = 0;       // define clock pin as input
+        break;
+  }
+  SDIPIN = 1;       // define SDI pin as input  
+  SDOPIN = 0;       // define SDO pin as output
+  ENABLE = 1;
+  Delayms(30);
+#ifdef SPIINT
+    SSPIE = 1;
+    INTCONbits.GIEH = 1;
+    INTCONbits.GIEL = 1;
+    INTCONbits.PEIE = 1;
+//    SSPHPE = 1;
+    FLAG = 0;
+#endif
+}
+
+/** -----------------------------------------------------------------**/
+#else
+/** -----------------------------------------------------------------**/
+
+//#ifdef SPIBEGIN
+void SPI_begin()
 {
     DESELECT();
     ENABLE = 0;
     STATUS = 0x3F;                 // power on state (SMP=0) 
-    CONFIG = 0x00;                 // power on state
-    CONFIG |= this_clock;           // select serial mode
+    CONFIG = this_clock;           // select serial mode
 
     if (this_phase == SPI_SMPEND)
         SMP = 1;                   // input data sampled at end of data output time
@@ -63,19 +129,19 @@ void SPI_init()
     {
         case SPI_MODE0:              // SPI bus mode 0,0
           CKP = 0;
-          CKE = 1;                   // data transmitted on falling edge
+          CKE = 0;                   // data transmitted on falling edge
           break;    
         case SPI_MODE1:              // default SPI bus mode 0,1
           CKP = 0;
-          CKE = 0;                   // data transmitted on falling edge
+          CKE = 1;                   // data transmitted on falling edge
           break;
         case SPI_MODE2:              // SPI bus mode 1,0
           CKP = 1;                   // clock idle state high
-          CKE = 1;                   // data transmitted on rising edge
+          CKE = 0;                   // data transmitted on rising edge
           break;
         case SPI_MODE3:              // SPI bus mode 1,1
           CKP = 1;                   // clock idle state high
-          CKE = 0;                   // data transmitted on falling edge
+          CKE = 1;                   // data transmitted on falling edge
           break;
     }
 
@@ -90,12 +156,12 @@ void SPI_init()
             SCKPIN = 1;              // define clock pin as input
             break;
 
-        default:                     // master mode, define clock pin as output
-            SCKPIN = 0;              // define clock pin as input
+        default:                     // master mode, define clock en SS pin as output
+            SSPIN  = 0;              // define SS  pin as output
+            SCKPIN = 0;              // define clock pin as output
             break;
     }
 
-    SSPIN  = 0;                    // define SS  pin as output
     SDIPIN = 1;                    // define SDI pin as input
     SDOPIN = 0;                    // define SDO pin as output
     ENABLE = 1;
@@ -110,32 +176,44 @@ void SPI_init()
         FLAG = 0;
     #endif
 }
+//#endif
 
 /**
  * This function sets the order of the bits shifted out of and into the SPI bus,
  * either LSBFIRST (least-significant bit first) or MSBFIRST (most-significant bit first). 
  */
 
+//#ifdef SPISETBITORDER
 void SPI_setBitOrder(u8 bitorder)
 {
 	this_bitorder = bitorder;
 }
 
 /**
- *	This function sets the SPI data mode (clock polarity and phase)
- *	mode is SPI_MODE0, SPI_MODE1, SPI_MODE2, or SPI_MODE3
+ * This function sets the SPI data mode (clock polarity and phase)
+ * Modes available are SPI_MODE0, SPI_MODE1, SPI_MODE2, or SPI_MODE3
+ * Mode    CKP    CKE
+ * 0       0       0
+ * 1       0       1
+ * 2       1       0
+ * 3       1       1
  */
- 
+//#endif
+
+//#ifdef SPISETDATAMODE
 void SPI_setDataMode(u8 mode)
 {
 	this_mode = mode;
 }
+//#endif
 
+//#ifdef SPISETMODE
 void SPI_setMode(u8 mode)
 {
 	this_role  = mode;
 	this_clock = mode;
 }
+//#endif
 
 /**
  * This function sets the SPI clock divider relative to the system clock.
@@ -144,12 +222,19 @@ void SPI_setMode(u8 mode)
  * the frequency of the system clock. 
  */
 
+//#ifdef SPISETCLOCKDIVIDER
 void SPI_setClockDivider(u8 clock)
 {
 	this_clock = clock;
 	this_role  = clock;
 }
+//#endif
 
+/** -----------------------------------------------------------------**/
+#endif /* SPIINIT */
+/** -----------------------------------------------------------------**/
+
+//#ifdef SPIWRITE
 u8 SPI_write(u8 datax) {
     u8 clear;
     clear = BUFFER;        // clear BF
@@ -163,7 +248,9 @@ u8 SPI_write(u8 datax) {
 	    while (!FLAG);
     return(0);
 }
+//#endif
 
+//#ifdef SPIREAD
 u8 SPI_read(void) {
     u8 clear;
     clear = BUFFER; //clear BF
@@ -172,6 +259,7 @@ u8 SPI_read(void) {
     while (!FLAG);
     return(BUFFER);
 }
+//#endif
 
 void SPI_interrupt()
 {
@@ -187,4 +275,5 @@ static void SPI_onEvent(u8(*func)(u8))
 {
   SPI_onEvent_func = func;
 }
-#endif
+
+#endif /* __SPI_C__ */

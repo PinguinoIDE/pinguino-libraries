@@ -238,10 +238,13 @@
 
 	// run led pin
 //	#define RA4		20
+    #if defined(PICUNOV1) // Early version of PICUNO_EQUO (BLUE PCB)
+	#define USERLED	2
+    #else                 // Second and last version (BLACK PCB)
 	#define RUNLED	20
 	#define LED1	13
 	#define USERLED	13
-
+    #endif
 /**********************************************************************/
 #elif defined(PINGUINO2455)  || defined(PINGUINO4455)  || \
       defined(PINGUINO2550)  || defined(PINGUINO4550)  || \

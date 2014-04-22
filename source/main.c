@@ -32,11 +32,13 @@
     -------------------------------------------------------------------------*/
 
 #include <pic18fregs.h>
-#include <typedef.h>
-#include <const.h>
-#include <macro.h>
+//#include <typedef.h>
+//#include <const.h>
+//#include <macro.h>
 
 #ifdef noboot
+    #define SPEED   1
+    #define CRYSTAL 20
     // runtime start code with variable initialisation
     //#include "crt0.c"
     //#include "crt0i.c"
@@ -44,10 +46,10 @@
 #endif
 
 #ifdef boot4
-    // runtime start code with variable initialisation
-    //#include "crt0.c"
-    //#include "crt0i.c"
-    #include "crt0iz.c"
+    // runtime start code
+    //#include "crt0.c"     // minimal  init.
+    //#include "crt0i.c"    // variable init.
+    #include "crt0iz.c"     // variable init. + clear variable
 #endif
 
 ////////////////////////////////////////////////////////////////////////
@@ -219,7 +221,7 @@
     #endif
 
     #ifdef __PS2KEYB__
-    keyboard_init()
+    keyboard_init();
     #endif
 
 ////////////////////////////////////////////////////////////////////////
@@ -235,10 +237,12 @@
                             // at the same time
     #endif
 
-    #ifdef ON_EVENT
+    #ifdef ON_EVENT         // defined if interrupt.c is used
+
     //IntInit();
     INTCONbits.GIEH = 1;    // Enable global HP interrupts
     INTCONbits.GIEL = 1;    // Enable global LP interrupts
+
     #endif
 
     while (1)
@@ -269,10 +273,10 @@
 void high_priority_isr(void) __interrupt 1
 {
     __asm
-        MOVFF   TBLPTRL, POSTDEC1
-        MOVFF   TBLPTRH, POSTDEC1
-        MOVFF   TBLPTRU, POSTDEC1
-        MOVFF   TABLAT,  POSTDEC1
+        MOVFF   _TBLPTRL, POSTDEC1
+        MOVFF   _TBLPTRH, POSTDEC1
+        MOVFF   _TBLPTRU, POSTDEC1
+        MOVFF   _TABLAT,  POSTDEC1
     __endasm;
 
     #ifdef __USBCDC
@@ -329,10 +333,10 @@ void high_priority_isr(void) __interrupt 1
     #endif
 
     __asm 
-        MOVFF   PREINC1, TABLAT
-        MOVFF   PREINC1, TBLPTRU
-        MOVFF   PREINC1, TBLPTRH
-        MOVFF   PREINC1, TBLPTRL
+        MOVFF   PREINC1, _TABLAT
+        MOVFF   PREINC1, _TBLPTRU
+        MOVFF   PREINC1, _TBLPTRH
+        MOVFF   PREINC1, _TBLPTRL
     __endasm;
 
 }
@@ -351,10 +355,10 @@ void low_priority_isr(void) __interrupt 2
 {
 
     __asm
-        MOVFF   TBLPTRL, POSTDEC1
-        MOVFF   TBLPTRH, POSTDEC1
-        MOVFF   TBLPTRU, POSTDEC1
-        MOVFF   TABLAT,  POSTDEC1
+        MOVFF   _TBLPTRL, POSTDEC1
+        MOVFF   _TBLPTRH, POSTDEC1
+        MOVFF   _TBLPTRU, POSTDEC1
+        MOVFF   _TABLAT,  POSTDEC1
     __endasm;
 
     #ifdef USERINT
@@ -366,10 +370,10 @@ void low_priority_isr(void) __interrupt 2
     #endif
 
     __asm 
-        MOVFF   PREINC1, TABLAT
-        MOVFF   PREINC1, TBLPTRU
-        MOVFF   PREINC1, TBLPTRH
-        MOVFF   PREINC1, TBLPTRL
+        MOVFF   PREINC1, _TABLAT
+        MOVFF   PREINC1, _TBLPTRU
+        MOVFF   PREINC1, _TBLPTRH
+        MOVFF   PREINC1, _TBLPTRL
     __endasm;
 
 }

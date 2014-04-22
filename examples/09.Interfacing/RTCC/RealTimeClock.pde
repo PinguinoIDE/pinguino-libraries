@@ -188,7 +188,7 @@ void loop()
 	alarm output management
 	---------------------------------------------------------------------------*/
 	status = digitalRead(RTCC);		// RTCC pin
- 	digitalWrite(LED1, status);	   // LED1 reproduces RTCC pin state
+ 	digitalWrite(USERLED, status);	   // LED1 reproduces RTCC pin state
 /**	-----------------------------------------------------------------------------
 	include status (=alarm output) on display
 	see the result with cat /dev/ttyACM0 

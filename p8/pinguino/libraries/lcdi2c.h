@@ -73,7 +73,7 @@
 #define __LCDI2C_H
 
 #include <typedef.h>
-#include <delay.c>
+//#include <delay.c>
 
 typedef union
 {

@@ -99,12 +99,10 @@ float sinr(int alpha)
     ------------------------------------------------------------------*/
 
 #define cosr(x)     (sinr(x + 90))
-
 /*
 float cosr(int alpha)
 {
     return (sinr(alpha + 90));
 }
 */
-
 #endif /* __TRIGO_C */

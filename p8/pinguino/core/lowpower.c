@@ -43,47 +43,55 @@
     Device and on-chip regulator enter sleep mode on SLEEP instruction
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMSLEEP
-#define SystemSleep()           do { WDTCONbits.REGSLP = 1; OSCCONbits.IDLEN = 0; sleep(); } while (0)
+void System_sleep()
+{
+    WDTCONbits.REGSLP = 1;
+    OSCCONbits.IDLEN = 0;
+    sleep();
+}
 #endif
 
 /*  ----------------------------------------------------------------------------
     Device enters idle mode on SLEEP instruction
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMIDLE
-#define SystemIdle()            do { OSCCONbits.IDLEN = 1; sleep(); } while (0)
+#define System_idle()            do { OSCCONbits.IDLEN = 1; sleep(); } while (0)
 #endif
 
 /*  ----------------------------------------------------------------------------
     Device enters run mode (normal mode)
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMRUN
-#define SystemRun()             do { DSCONHbits.DSEN = 0; OSCCONbits.SCS = 0; } while (0)
+void System_run()
+{
+    DSCONHbits.DSEN = 0;
+    OSCCONbits.SCS = 0;
+}
 #endif
+
+
+#if defined(__18f26j50) || defined(__18f46j50) || \
+    defined(__18f26j53) || defined(__18f46j53) || \
+    defined(__18f27j53) || defined(__18f47j53)
 
 /*  ----------------------------------------------------------------------------
     Save 16-bit context in deep sleep persistent general purpose registers
     --------------------------------------------------------------------------*/
 
-#if defined(__18f26j50) || defined(__18f46j50)
-
 #ifdef SYSTEMDEEPSLEEPSAVECONTEXT
-void SystemDeepSleepSaveContext(u16 save)
+void System_deepSleepSaveContext(u16 save)
 {
     DSGPR0 = highByte(save);  // deep sleep persistent general purpose register
     DSGPR1 = lowByte(save);   // use to save context
 }
 #endif
 
-#endif /* defined(__18f26j50) || defined(__18f46j50) */
-
 /*  ----------------------------------------------------------------------------
     Restore 16-bit context from deep sleep persistent general purpose registers
     --------------------------------------------------------------------------*/
 
-#if defined(__18f26j50) || defined(__18f46j50)
-
 #ifdef SYSTEMDEEPSLEEPRESTORECONTEXT
-u16 SystemDeepSleepRestoreContext()
+u16 System_deepSleepRestoreContext()
 {
     u8 saveL, saveH;
     
@@ -93,17 +101,13 @@ u16 SystemDeepSleepRestoreContext()
 }
 #endif
 
-#endif /* defined(__18f26j50) || defined(__18f46j50) */
-
 /*  ----------------------------------------------------------------------------
     Device enters deep sleep mode on SLEEP instruction
     TODO : give Wake-up source (not only RTCC)
     --------------------------------------------------------------------------*/
 
-#if defined(__18f26j50) || defined(__18f46j50)
-
 #ifdef SYSTEMDEEPSLEEP
-void SystemDeepSleep()
+void System_deepSleep()
 {
     /// Interrupts
 //    INTCONbits.GIEH = 0;     // disable HP interrupt
@@ -150,17 +154,14 @@ void SystemDeepSleep()
 }
 #endif
 
-#endif /* defined(__18f26j50) || defined(__18f46j50) */
-
 /*  ----------------------------------------------------------------------------
     Handle stuff specific to wake up from deep sleep by a power on reset
     TODO : return Wake-up source
     --------------------------------------------------------------------------*/
 
-#if defined(__18f26j50) || defined(__18f46j50)
-
 #if defined(SYSTEMDEEPSLEEPWAKEUP)
-u8 SystemDeepSleepWakeUp()
+
+u8 System_deepSleepWakeUp()
 {
     u8 b;
     
@@ -193,6 +194,12 @@ u8 SystemDeepSleepWakeUp()
 
 #endif
 
-#endif /* defined(__18f26j50) || defined(__18f46j50) */
+#else
+
+        #error "****************************************************"
+        #error "*** Your Pinguino doesn't have a Deep Sleep Mode ***"
+        #error "****************************************************"
+
+#endif /* defined(__18f26j50) || defined(__18f46j50) etc ..*/
 
 #endif /* __LOWPOWER_C */

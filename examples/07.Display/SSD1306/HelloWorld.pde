@@ -42,8 +42,8 @@
         if SSD1306_SPI4
 **/
 
-#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_6800 | SSD1306_128X64)
+//#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
+#define DISPLAY (SSD1306_6800 | SSD1306_128X64)
 //#define DISPLAY (SSD1306_8080 | SSD1306_128X64)
 //#define DISPLAY (SSD1306_I2C  | SSD1306_128X64)
 //#define DISPLAY (SSD1306_SPI3 | SSD1306_128X64)
@@ -53,7 +53,7 @@
     Load one or more fonts and active them with SSD1306.setFont()
 **/
 
-//#include <fonts/font6x8.h>
+#include <fonts/font6x8.h>
 //#include <fonts/font8x8.h>          // wrong direction
 //#include <fonts/font10x14.h>        // ???
 //#include <fonts/font12x8.h>         // wrong direction
@@ -62,17 +62,24 @@
 
 void setup()
 {
-    //On Pingino 32MX250 USERLED is on pin 13
-    //which is also used by the PMP Data bus 
+    //NB : On Pingino 32MX250 USERLED is on pin 13 which is also used by the PMP Data bus
+    // so comment the next line if you use 32MX250 and PMP mode
     pinMode(USERLED, OUTPUT);
-    SSD1306.init(1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
-    //SSD1306.clearScreen();
-    //SSD1306.setFont(font6x8);
+    
+    // if 6800- or 8080-interface and PMP is used
+    //SSD1306.init(1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
+    
+    // if 6800- or 8080-interface (but not PMP) is used
+    //void SSD1306.init(u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
+    SSD1306.init(8, 9, 0, 1, 2, 3, 4, 5, 6, 7);
+
+    SSD1306.clearScreen();
+    SSD1306.setFont(font6x8);
 }   
 
 void loop()
 {
-    //SSD1306.printf("Hello World!\r\n");
+    SSD1306.println("Hello World!");
     SSD1306.refresh();
     toggle(USERLED);
     delay(1000);

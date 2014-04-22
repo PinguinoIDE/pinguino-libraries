@@ -1,6 +1,8 @@
 #ifndef USB_BULK_H_
 #define USB_BULK_H_
 
+#include <typedef.h>
+
 /**
 This file contains the definitinos for the USB BULK examples
 **/
@@ -33,22 +35,22 @@ This file contains the definitinos for the USB BULK examples
 #define USB_RECIP_OTHER                 0x03
 
 /*
-Functions for BULK classes
-*/
+ * Functions for BULK classes
+ */
 #ifdef USB_USE_BULK
 
-#define BULK_IN_EP_SIZE 8
-#define BULK_BULK_IN_SIZE 64
-#define BULK_BULK_OUT_SIZE 64
+    #define BULK_IN_EP_SIZE             8
+    #define BULK_BULK_IN_SIZE           64
+    #define BULK_BULK_OUT_SIZE          64
 
+    // BULK specific buffers
+    extern volatile byte BULKRxBuffer[BULK_BULK_OUT_SIZE];
+    extern volatile byte BULKTxBuffer[BULK_BULK_IN_SIZE];
 
-// BULK specific buffers
-extern volatile byte BULKRxBuffer[BULK_BULK_OUT_SIZE];
-extern volatile byte BULKTxBuffer[BULK_BULK_IN_SIZE];
-
-//void ProcessBULKrequest(void);
-void BULKInitEndpoint(void);
-#endif
+    //void ProcessBULKrequest(void);
+    void BULKInitEndpoint(void);
 
 #endif
+
+#endif /* USB_BULK_H_ */
 

@@ -31,18 +31,6 @@
 #include <typedef.h>
 
 /**	--------------------------------------------------------------------
-    Extern libraries Flags
-    ------------------------------------------------------------------*/
-
-#ifndef DIGITALWRITE
-#define DIGITALWRITE
-#endif
-
-#ifndef PINMODE
-#define PINMODE
-#endif
-
-/**	--------------------------------------------------------------------
     Display interfaces
     ------------------------------------------------------------------*/
 
@@ -327,9 +315,9 @@ u8* SSD1306_bufferptr;
 
         #endif
 
-        /*
         #define Low(x)		BitClear(CMD,x)
         #define High(x)		BitSet(CMD,x)
+        /*
         #define Low(x)      do { __asm bcf _LATB,x  __endasm; } while(0)
         #define High(x)     do { __asm bsf _LATB,x  __endasm; } while(0)
         #define Output(x)   do { __asm bcf _TRISB,x __endasm; } while(0)

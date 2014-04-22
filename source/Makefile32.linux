@@ -50,7 +50,7 @@ ifneq (,$(filter $(BOARD),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
 else
 	HEAP_SIZE   = 16384
 	CDCLIBRARY  = libcdc.a
-	__MIPS16_ENABLE__ = false
+	__MIPS16_ENABLE__ = true
 	BADRECORD   ='^:040000059D006000FA'
 endif
 
@@ -117,13 +117,14 @@ copy:
 	#---------------------------------------------------------------------------
 	#	adding proc. definitions
 	#---------------------------------------------------------------------------
-	cp $(OBJDIR)/$(PROC).o $(OBJDIR)/processor.o
+	$(CP) $(OBJDIR)/$(PROC).o $(OBJDIR)/processor.o
 
 compile:
 	#---------------------------------------------------------------------------
 	#	compiling and linking
 	#---------------------------------------------------------------------------
 	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(SRCDIR)/main32.elf $(SRCDIR)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(SRCDIR)/main32.c > $(SRCDIR)/main32.lst
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(SRCDIR)/main32.o $(SRCDIR)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(SRCDIR)/main32.elf\
 		$(SRCDIR)/main32.o\
@@ -146,4 +147,4 @@ correct:
 	#	fixing bad record
 	#---------------------------------------------------------------------------
 	grep --binary --invert-match $(BADRECORD) $(SRCDIR)/main32.hex > $(SRCDIR)/temp.hex
-	mv $(SRCDIR)/temp.hex $(SRCDIR)/main32.hex	  
+	$(MV) $(SRCDIR)/temp.hex $(SRCDIR)/main32.hex	  

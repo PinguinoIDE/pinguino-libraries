@@ -35,21 +35,27 @@
     Enable watchdog timer
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMWATCHDOG
-#define SystemWatchdog()        do { WDTCONbits.SWDTEN = 1; } while (0)
+void System_watchdog()
+{
+    WDTCONbits.SWDTEN = 1;
+}
 #endif
 
 /*  ----------------------------------------------------------------------------
     Disable watchdog timer
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMNOWATCHDOG
-#define SystemNoWatchdog()      do { WDTCONbits.SWDTEN = 0; } while (0)
+void System_noWatchdog()
+{
+    WDTCONbits.SWDTEN = 0;
+}
 #endif
 
 /*  ----------------------------------------------------------------------------
     Clear watchdog timer
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMCLEARWATCHDOG
-#define SystemClearWatchdog()   clrwdt()
+#define System_clearWatchdog()   clrwdt()
 #endif
 
 /*  ----------------------------------------------------------------------------
@@ -57,7 +63,10 @@
     --------------------------------------------------------------------------*/
 #if defined(__18f26j50) || defined(__18f46j50)
 #ifdef SYSTEMDEEPWATCHDOG
-#define SystemDeepWatchdog()        do { WDTCONbits.SWDTEN = 1; } while (0)
+void System_deepWatchdog()
+{
+    WDTCONbits.SWDTEN = 1;
+}
 #endif
 #endif
 
@@ -66,7 +75,7 @@
     --------------------------------------------------------------------------*/
 #if defined(__18f26j50) || defined(__18f46j50)
 #ifdef SYSTEMNODEEPWATCHDOG
-#define SystemNoDeepWatchdog()      do { WDTCONbits.SWDTEN = 0; } while (0)
+#define System_noDeepWatchdog()      do { WDTCONbits.SWDTEN = 0; } while (0)
 #endif
 #endif
 
@@ -75,7 +84,7 @@
     --------------------------------------------------------------------------*/
 #if defined(__18f26j50) || defined(__18f46j50)
 #ifdef SYSTEMCLEARDEEPWATCHDOG
-#define SystemClearDeepWatchdog()   clrwdt()
+#define System_clearDeepWatchdog()   clrwdt()
 #endif
 #endif
 

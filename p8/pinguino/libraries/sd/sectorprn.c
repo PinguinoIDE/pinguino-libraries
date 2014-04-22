@@ -3,7 +3,7 @@
 #endif
 #ifdef CDC_PRINT
   #include <__cdc.c>
-  #include <delay.c>
+  #include <delayms.c>
 #endif
 
 /********************************************************************

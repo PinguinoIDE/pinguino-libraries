@@ -3,7 +3,9 @@
 
 #ifndef __USBBULK
 
+/**********************************************************************/
 #ifdef boot4
+/**********************************************************************/
 
 #define __USBBULK
 
@@ -16,7 +18,7 @@
 #include <usb/picUSB.c>
 #include <usb/usb_bulk.c>
 #include <typedef.h>
-#include <delay.c>
+#include <delayms.c>
 #include <stdio.c>                  // Pinguino printf
 #include <stdarg.h>
 
@@ -94,6 +96,7 @@ void bulk_interrupt(void)
         UEIR = 0;
     }
 }
+
 // BULK.printf
 void BULK_printf(const u8 *fmt, ...)
 {
@@ -105,38 +108,43 @@ void BULK_printf(const u8 *fmt, ...)
     BULKputs(_bulk_buffer,length);
     va_end(args);
 }
+
 u8 BULK_write(u8 *txpointer, u8 length)
 {
-return(BULKputs(txpointer,length));
+    return(BULKputs(txpointer,length));
 }
 
 u8 BULK_read(u8 *rxpointer)
 {
-return(BULKgets(rxpointer)); // now rxpointer buffer is filled and the buffer length is returned
+    return(BULKgets(rxpointer)); // now rxpointer buffer is filled and the buffer length is returned
 }
 
 u8 BULK_available(void)
 {
-return(BULKavailable());
+    return(BULKavailable());
 }
 
+/**********************************************************************/
 #elif boot2
+/**********************************************************************/
+
 #include <usb.c>
+
 void BULK_write(u8 *txpointer, u8 length)
 {
-usbsend(txpointer,length);
+    usbsend(txpointer,length);
 }
 
 u8 BULK_read(u8 *rxpointer)
 {
-return(usbreceive(rxpointer)); // one only character is returned
+    return(usbreceive(rxpointer)); // one only character is returned
 }
 
 u8 BULK_available(void)
 {
-return(usbavailable());
+    return(usbavailable());
 }
 
-#endif //boot4 and boot2
+#endif /* boot4 and boot2 */
 
-#endif
+#endif /* __USBBULK */

@@ -9,7 +9,7 @@
 #define __PULSE__
 
 #include <typedef.h>
-#include <digitalw.c>
+#include <digitalr.c>       // digitalread
  
 /**
 * Measures the length (in microseconds) of a pulse on the pin; state is HIGH

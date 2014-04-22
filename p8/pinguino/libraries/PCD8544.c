@@ -49,15 +49,24 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <const.h>              // false, true, ...
 #include <macro.h>              // BitSet, BitClear, ...
 #include <typedef.h>            // u8, u16, ...
-#include <delay.c>              // Delayms, Delayus
+#include <delayms.c>              // Delayms, Delayus
 //#include <string.h>             // memset
+#ifdef _PCD8544_USE_GRAPHICS
 #include <graphics.c>           // graphic routines
+#endif
 #include <logo/pinguino84x48.h> // Pinguino Logo
 
 #if !(PCD8544_INTERFACE & PCD8544_PORTB)
-    #define DIGITALWRITE
-    #define PINMODE
+/*
+    #ifdef DIGITALWRITE
+        #define DIGITALWRITE
+    #endif
+    #ifdef PINMODE
+        #define PINMODE
+    #endif
+*/
     #include <digitalw.c>       // pinmode, digitalwrite
+    #include <digitalp.c>       // pinmode, digitalwrite
 #endif
 
 // Printf
@@ -71,7 +80,21 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if (PCD8544_INTERFACE & PCD8544_SPIHW)
-#include <spi.c>
+/*
+    #ifdef SPIBEGIN
+        #define SPIBEGIN
+    #endif
+    #ifdef SPISETMODE
+        #define SPISETMODE
+    #endif
+    #ifdef SPISETDATAMODE
+        #define SPISETDATAMODE
+    #endif
+    #ifdef SPIWRITE
+        #define SPIWRITE
+    #endif
+*/
+    #include <spi.c>
 #endif
 
 ///	--------------------------------------------------------------------
@@ -240,7 +263,8 @@ static void PCD8544_updateBoundingBox(u8 xmin, u8 ymin, u8 xmax, u8 ymax)
             pinmode(PCD8544._rst,  OUTPUT);
         // SPI_MASTER_FOSC_4, SPI_MODE0, SPI_SMPEND;
         SPI_setMode(SPI_MASTER_FOSC_16);
-        SPI_init();
+        SPI_setDataMode(SPI_MODE0);
+        SPI_begin();
     #endif
 
     // toggle RST low to reset
@@ -359,6 +383,7 @@ void PCD8544_clearScreen()
     PCD8544.cursor.x = 0;
 }
 
+#ifdef _PCD8544_USE_DISPLAYONOFF
 void PCD8544_displayOff(void)
 {
     // First, fill RAM with zeroes to ensure minimum specified current consumption
@@ -371,6 +396,7 @@ void PCD8544_displayOn(void)
 {
     PCD8544_command(PCD8544_FUNCTIONSET);
 }
+#endif
 
 void PCD8544_setContrast(u8 val)
 {
@@ -592,6 +618,8 @@ void PCD8544_printf(const u8 *fmt, ...)
 /// Graphic functions
 ///	--------------------------------------------------------------------
 
+#ifdef _PCD8544_USE_GRAPHICS
+
 //draw Pixel on the buffer
 void PCD8544_drawPixel(u8 x, u8 y)//, u8 color)
 {
@@ -638,6 +666,18 @@ void PCD8544_drawLine(u8 x0, u8 y0, u8 x1, u8 y1)
 {
     drawLine(x0, y0, x1, y1);
 }
+
+void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color)
+{
+    drawLine(x, y, x, y+h-1);//, color);
+}
+
+void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color)
+{
+    drawLine(x, y, x+w-1, y);//, color);
+}
+
+#endif
 
 /*
 void PCD8544_drawBitmap(u8 x, u8 y, u8 w, u8 h, u8* bitmap)
@@ -823,15 +863,7 @@ void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color)
  }
  #endif
 */
-void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color)
-{
-    PCD8544_drawLine(x, y, x, y+h-1);//, color);
-}
 
-void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color)
- {
-    PCD8544_drawLine(x, y, x+w-1, y);//, color);
- }
 /*
 void PCD8544_fillScreen(u8 color)
  {
@@ -1025,29 +1057,36 @@ void PCD8544_drawChar(u8 x, u8 y, u8 c, u8 color,u8 bg, u8 size)
 }
 */
 
+#ifdef _PCD8544_USE_SETCURSOR
 void PCD8544_setCursor(u8 x, u8 y)
 {
      PCD8544.cursor.x = x;
      PCD8544.cursor.y = y;
 }
+#endif
 
+#ifdef _PCD8544_USE_SETTEXTSIZE
 void PCD8544_setTextSize(u8 s)
 {
     PCD8544.textsize = (s > 0) ? s : 1;
 }
+#endif
 
+#ifdef _PCD8544_USE_SETTEXTCOLOR
 void PCD8544_setTextColor(u8 c)
 {
     PCD8544.color.c = c;
     PCD8544.bcolor.c = c;
 }
+#endif
 
+#ifdef _PCD8544_USE_SETTEXTCOLOR2
 void PCD8544_setTextColor2(u8 c, u8 bg)
 {
     PCD8544.color.c   = c;
     PCD8544.bcolor.c = bg; 
 }
-//#endif
+#endif
 
 #ifdef _PCD8544_USE_ORIENTATION
 void PCD8544_setOrientation(u8 x)

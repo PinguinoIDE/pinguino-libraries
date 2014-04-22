@@ -34,24 +34,13 @@
 #include <typedef.h>
 #include <system.c>
 
-//#if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
-void IOsetSpecial()
-{
-    #if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
-        TRISDbits.TRISD9  = INPUT;		// because PORTB is shared with SDA on Olimex board
-        TRISDbits.TRISD10 = INPUT;		// because PORTB is shared with SCL on Olimex board
-    #endif
-
-    /* the followings are already declared in serial.c
-    #if defined(PIC32_PINGUINO_220)
-    TRISCbits.TRISC9 = OUTPUT;          // RC9 / U2TX output
-    TRISCbits.TRISC8 = INPUT;           // RC8 / U2RX input
-    #endif
-    */
-}
-//#endif /* defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG) */
-
-// All Analog Pins as Digital IOs
+/**
+ * Set all Analog Pins as Digital IOs
+ * The ANSELx register has a default value of 0xFFFF; therefore,
+ * all pins that share analog functions are analog (not digital)
+ * by default.
+ **/
+ 
 void IOsetDigital()
 {
     #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
@@ -67,65 +56,103 @@ void IOsetDigital()
     #endif
 }
 
-// PIC32 Peripheral Remappage
+/**
+ * Set all Pins as Output
+ **/
+
+void IOsetSpecial()
+{
+    TRISA  = 0;
+    TRISB  = 0;
+
+    #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        TRISC  = 0;
+        #if !defined(__32MX220F032D__)
+            TRISD  = 0;
+            TRISE  = 0;
+            TRISF  = 0;
+            TRISG  = 0;
+        #endif
+    #endif
+
+    #if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
+        TRISDbits.TRISD9  = INPUT;		// because PORTB is shared with SDA on Olimex board
+        TRISDbits.TRISD10 = INPUT;		// because PORTB is shared with SCL on Olimex board
+    #endif
+
+    /* the followings are already declared in serial.c
+    #if defined(PIC32_PINGUINO_220)
+    TRISCbits.TRISC9 = OUTPUT;          // RC9 / U2TX output
+    TRISCbits.TRISC8 = INPUT;           // RC8 / U2RX input
+    #endif
+    */
+}
+
+/**
+ * PIC32 Peripheral Remappage
+ **/
+
 void IOsetRemap()
 {
-    //#if defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__)
-    
-        #if defined(PIC32_PINGUINO_220)
-            SystemUnlock();
-            CFGCONbits.IOLOCK=0;			// unlock configuration
-            CFGCONbits.PMDLOCK=0;
-            #ifdef __SERIAL__
-                U2RXRbits.U2RXR=6;			// Define U2RX as RC8 ( D0 )
-                RPC9Rbits.RPC9R=2;			// Define U2TX as RC9 ( D1 )
-                U1RXRbits.U1RXR=2;			// Define U1RX as RA4 ( UEXT SERIAL )
-                RPB4Rbits.RPB4R=1;			// Define U1TX as RB4 ( UEXT SERIAL )
-            #endif
-            #ifdef __SPI__
-                SDI1Rbits.SDI1R=5;			// Define SDI1 as RA8 ( UEXT SPI )
-                RPA9Rbits.RPA9R=3;			// Define SDO1 as RA9 ( UEXT SPI )
-            #endif
-            #ifdef __PWM__
-                RPC2Rbits.RPC2R  =0b0101;	// PWM0 = OC3 as D2  = RC2
-                RPC3Rbits.RPC3R  =0b0101;	// PWM1 = OC4 as D3  = RC3
-                RPB5Rbits.RPB5R  =0b0101;	// PWM2 = OC2 as D11 = RB5
-                RPB13Rbits.RPB13R=0b0110;	// PWM3 = OC5 as D12 = RB13
-                RPB15Rbits.RPB15R=0b0101;	// PWM4 = OC1 as D13 = RB15
-            #endif
-            CFGCONbits.IOLOCK=1;			// relock configuration
-            CFGCONbits.PMDLOCK=1;	
-            SystemLock();
+    #if defined(PIC32_PINGUINO_220)
+        SystemUnlock();
+        CFGCONbits.IOLOCK=0;			// unlock configuration
+        CFGCONbits.PMDLOCK=0;
+        #ifdef __SERIAL__
+            U2RXRbits.U2RXR=6;			// Define U2RX as RC8 ( D0 )
+            RPC9Rbits.RPC9R=2;			// Define U2TX as RC9 ( D1 )
+            U1RXRbits.U1RXR=2;			// Define U1RX as RA4 ( UEXT SERIAL )
+            RPB4Rbits.RPB4R=1;			// Define U1TX as RB4 ( UEXT SERIAL )
         #endif
+        #ifdef __SPI__
+            SDI1Rbits.SDI1R=5;			// Define SDI1 as RA8 ( UEXT SPI )
+            RPA9Rbits.RPA9R=3;			// Define SDO1 as RA9 ( UEXT SPI )
+        #endif
+        #ifdef __PWM__
+            RPC2Rbits.RPC2R  =0b0101;	// PWM0 = OC3 as D2  = RC2
+            RPC3Rbits.RPC3R  =0b0101;	// PWM1 = OC4 as D3  = RC3
+            RPB5Rbits.RPB5R  =0b0101;	// PWM2 = OC2 as D11 = RB5
+            RPB13Rbits.RPB13R=0b0110;	// PWM3 = OC5 as D12 = RB13
+            RPB15Rbits.RPB15R=0b0101;	// PWM4 = OC1 as D13 = RB15
+        #endif
+        CFGCONbits.IOLOCK=1;			// relock configuration
+        CFGCONbits.PMDLOCK=1;	
+        SystemLock();
+    #endif
 
-        // Thanks to danirobin
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
-            SystemUnlock();
-            CFGCONbits.IOLOCK=0;			// unlock configuration
-            CFGCONbits.PMDLOCK=0;
-            #ifdef __SERIAL__
-                U2RXRbits.U2RXR =0b0010;    // Define U2RX as RB1
-                RPB0Rbits.RPB0R =0b0010;    // Define U2TX as RB0 _
-                U1RXRbits.U1RXR =0b0100;	// Define U1RX as RB2 ( D10 )
-                RPB3Rbits.RPB3R =0b0001;	// Define U1TX as RB3 ( D9 )
-            #endif
-            #ifdef __SPI__
-                SDI1Rbits.SDI1R=1;			// Define SDI1 as RB5  [Overlap!]
-                RPA4Rbits.RPA4R=3;			// Define SDO1 as RA4  [Overlap!]
-            #endif
-            #ifdef __PWM__
-                RPB4Rbits.RPB4R =0b0101;    // PWM0 = OC1 = RB4
-                RPA4Rbits.RPA4R =0b0110;    // PWM1 = OC4 = RA4
-                RPB5Rbits.RPB5R =0b0101;    // PWM2 = OC2 = RB5
-                RPB13Rbits.RPB13R=0b0101;   // PWM3 = OC5 = RB13
-                RPB14Rbits.RPB14R=0b0101;   // PWM4 = OC3 = RB14
-            #endif
-            CFGCONbits.IOLOCK=1;			// relock configuration
-            CFGCONbits.PMDLOCK=1;	
-            SystemLock();
+    // Thanks to danirobin
+    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        SystemUnlock();
+        CFGCONbits.IOLOCK=0;			// unlock configuration
+        CFGCONbits.PMDLOCK=0;
+        #ifdef __SERIAL__
+            // Serial 1
+            U1RXRbits.U1RXR = 0b0100;   // Define U1RX as RB2 ( D10 )
+            RPB3Rbits.RPB3R = 0b0001;   // Define U1TX as RB3 ( D9 )
+            // Serail 2
+            U2RXRbits.U2RXR = 0b0010;   // Define U2RX as RB1 (D11)
+            RPB0Rbits.RPB0R = 0b0010;   // Define U2TX as RB0 (D12)
         #endif
-        
-    //#endif /* defined(__SERIAL__) || defined(__SPI__) || defined(__PWM__) */
+        #ifdef __SPI__
+            // Input
+            //SS1Rbits.SS1R   = 0b0100;   // Define SS1  as RB7 ( D5 )
+            SDI1Rbits.SDI1R = 0b0001;   // Define SDI1 as RB5 ( D6 )
+            // Output
+            //RPB7Rbits.RPB7R = 0b0011;   // Define SS1  as RB7 ( D5 )
+            RPA4Rbits.RPA4R = 0b0011;   // Define SDO1 as RA4 ( D7 )
+            // NB : SCK1 is not a remappable pin (SCK1 = RB14 = D1)
+        #endif
+        #ifdef __PWM__
+            RPB4Rbits.RPB4R =0b0101;    // PWM0 = OC1 = RB4
+            RPA4Rbits.RPA4R =0b0110;    // PWM1 = OC4 = RA4
+            RPB5Rbits.RPB5R =0b0101;    // PWM2 = OC2 = RB5
+            RPB13Rbits.RPB13R=0b0101;   // PWM3 = OC5 = RB13
+            RPB14Rbits.RPB14R=0b0101;   // PWM4 = OC3 = RB14
+        #endif
+        CFGCONbits.IOLOCK=1;			// relock configuration
+        CFGCONbits.PMDLOCK=1;	
+        SystemLock();
+    #endif
 }
 
 #endif /* __IO_C */

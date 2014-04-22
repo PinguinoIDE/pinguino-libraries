@@ -22,6 +22,6 @@ System.idle System_idle#include <lowpower.c>#define SYSTEMIDLE
 System.run System_run#include <lowpower.c>#define SYSTEMRUN
 System.sleep System_sleep#include <lowpower.c>#define SYSTEMSLEEP
 System.lowPower System_sleep#include <lowpower.c>#define SYSTEMSLEEP
-System.deepSleep SystemD_depSleep#include <lowpower.c>#define SYSTEMDEEPSLEEP
+System.deepSleep System_deepSleep#include <lowpower.c>#define SYSTEMDEEPSLEEP
 System.ultraLowPower System_deepSleep#include <lowpower.c>#define SYSTEMDEEPSLEEP
 System.deepSleepWakeUp System_deepSleepWakeUp#include <lowpower.c>#define SYSTEMDEEPSLEEPWAKEUP

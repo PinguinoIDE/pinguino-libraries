@@ -73,7 +73,7 @@ void IO_init(void)
     #endif
 
     TRISA = 0x00;
-    #ifndef I2CINT	
+    #ifndef I2CINT
     TRISB = 0x00;
     #endif
     TRISCbits.TRISC0 = 0x00;

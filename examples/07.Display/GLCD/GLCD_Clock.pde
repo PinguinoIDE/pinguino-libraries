@@ -93,16 +93,16 @@ void loop(){ // run over and over again
 	//Relogio analógico?
 	GLCD.DrawCircle(21,43,18,BLACK);
 	//Second
-	x = (int) RSEC * sin(sec*0.10472);
-	y = (int) RSEC * cos(sec*0.10472);
+	x = (int) RSEC * sinr(sec*0.10472);
+	y = (int) RSEC * cosr(sec*0.10472);
 	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
 	//Minute
-	x = (int) RMIN * sin(min*0.10472);
-	y = (int) RMIN * cos(min*0.10472);
+	x = (int) RMIN * sinr(min*0.10472);
+	y = (int) RMIN * cosr(min*0.10472);
 	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
 	//Hour
-	x = (int) RHOUR * sin((hour>12?hour-12:hour)*0.5236);
-	y = (int) RHOUR * cos((hour>12?hour-12:hour)*0.5236);
+	x = (int) RHOUR * sinr((hour>12?hour-12:hour)*0.5236);
+	y = (int) RHOUR * cosr((hour>12?hour-12:hour)*0.5236);
 	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
 	
 	GLCD.DrawRect(45, 30, 82, 10, BLACK); 

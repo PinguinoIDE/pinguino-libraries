@@ -15,8 +15,6 @@
  *   18/06/2013 	Ver. 1 Rev. 0 First release --- Moreno Manzini ( moreno at mediacom dot it )
 */
 
-#define ledPinG			    32 // the number of the Green LED pin
-
 //RTC IO
 #define RTC_E          4
 #define SCK            5
@@ -26,9 +24,9 @@
 
 void setup()
 {
- pinMode(ledPinG, OUTPUT); 
- digitalWrite(ledPinG,LOW); 
- DS1306.Init(0,RTC_E,SCK,SDO,SDI); 
+ pinMode(USERLED, OUTPUT); 
+ digitalWrite(USERLED,LOW); 
+ DS1306.init(0,RTC_E,SCK,SDO,SDI); 
 }
 
 char Riga[50];
@@ -45,7 +43,7 @@ void loop()
  Riga[1] = 0;
  DS1306.readUser(0x40,Riga,1);
  CDC.printf("Time %02d:%02d:%02d - UserWrite %02d\n\r",MyTime.hours,MyTime.minutes,MyTime.seconds,Riga[0]); 
- //Toggle Green LED
- toggle(ledPinG);
+ //Toggle built-in LED
+ toggle(USERLED);
  delay(1000);
 }

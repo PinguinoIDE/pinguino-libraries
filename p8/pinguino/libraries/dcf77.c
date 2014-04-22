@@ -42,15 +42,17 @@
 
 #include <typedef.h>			// u8, u16, ...
 #include <const.h>
+#include <macro.h>              // low8, high8
 //#include <interrupt.c>
 #include <interrupt.h>
 #include <dcf77.h>
-#include <digitalw.c>			// pinMode, ...
+#include <digitalp.c>			// pinMode
+#include <digitalr.c>			// digitalread
 #include <bcd.c>
 
 //#define DEBUG					// NB: Turn debugging on or off from the IDE
-#define USBCDCDEBUG
-#include <debug.c>
+//#define USBCDCDEBUG
+//#include <debug.c>
 
 /*
     Timer Configuration

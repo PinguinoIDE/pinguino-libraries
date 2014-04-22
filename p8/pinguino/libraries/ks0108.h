@@ -31,6 +31,9 @@
  *   Bitmaps at 0x7600
 */
 
+#ifndef	KS0108_H
+#define KS0108_H
+
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 64
 
@@ -102,16 +105,16 @@
 #define FONT_WIDTH_TABLE	6
 
 #if (DISPLAY_WIDTH / CHIP_WIDTH  == 2) 
-   unsigned char chipSelect[] = {1,2};        // this is for 128 pixel displays
+   u8 chipSelect[] = {1,2};        // this is for 128 pixel displays
 #elif (DISPLAY_WIDTH / CHIP_WIDTH  == 3)
    //byte chipSelect[] = {0, 1, 2};  // this is for 192 pixel displays
-   unsigned char chipSelect[] = {0, 2, 1};  // this is for 192 pixel displays on sanguino only
+   u8 chipSelect[] = {0, 2, 1};  // this is for 192 pixel displays on sanguino only
 #endif
 
 typedef struct {
-	unsigned char x;
-	unsigned char y;
-	unsigned char page;
+	u8 x;
+	u8 y;
+	u8 page;
 } lcdCoord;
 
 //
@@ -119,16 +122,16 @@ typedef struct {
 //
 
 // Graphic Functions
-void DrawLine(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2, unsigned char color);
-void DrawRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char color);
-void DrawRoundRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char radius, unsigned char color);
-void FillRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char color);
-void InvertRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height);
-void SetInverted(unsigned char invert);
-void SetDot(unsigned char x, unsigned char y, unsigned char color);
+void DrawLine(u8 x1, u8 y1, u8 x2, u8 y2, u8 color);
+void DrawRect(u8 x, u8 y, u8 width, u8 height, u8 color);
+void DrawRoundRect(u8 x, u8 y, u8 width, u8 height, u8 radius, u8 color);
+void FillRect(u8 x, u8 y, u8 width, u8 height, u8 color);
+void InvertRect(u8 x, u8 y, u8 width, u8 height);
+void SetInverted(u8 invert);
+void SetDot(u8 x, u8 y, u8 color);
 
-void ClearPage(unsigned char page, unsigned char color);
-void ClearScreen(unsigned char color);
+void ClearPage(u8 page, u8 color);
+void ClearScreen(u8 color);
 
 #define DrawVertLine(x, y, length, color) FillRect(x, y, 0, length, color)
 #define DrawHoriLine(x, y, length, color) FillRect(x, y, length, 0, color)
@@ -143,29 +146,31 @@ void ClearScreen(unsigned char color);
 #define fastWriteLow(_pin_) (PORTA=PORTA & (0XFF-_pin_))
 #else*/
 //Slow Display use functions
-void fastWriteHigh(unsigned char pin);
-void fastWriteLow(unsigned char pin);
+void fastWriteHigh(u8 pin);
+void fastWriteLow(u8 pin);
 //#endif
 
 // Font Functions
-unsigned char ReadFontData(const unsigned char* ptr);		//Standard Read Callback
-void SelectFont(const char* font, unsigned char color);
+u8 ReadFontData(const u8* ptr);		//Standard Read Callback
+void SelectFont(const char* font, u8 color);
 void PrintNumber(long n);
 #ifdef USEFLOAT
-void PrintFloat(float number, unsigned char digits);
+void PrintFloat(float number, u8 digits);
 #endif
 int PutChar(char c);
 void Puts(char* str);
-unsigned char CharWidth(char c);
+u8 CharWidth(char c);
 unsigned int StringWidth(char* str);
 
 // Control Functions
-void CursorTo( unsigned char x, unsigned char y);
-void GotoXY(unsigned char x, unsigned char y);
-void Init(unsigned char invert);
+void CursorTo( u8 x, u8 y);
+void GotoXY(u8 x, u8 y);
+void Init(u8 invert);
 void Enable(void);
-unsigned char DoReadData(unsigned char first);
-unsigned char ReadData(void);
-void WriteCommand(unsigned char cmd, unsigned char chip);
-void WriteData(unsigned char data);
-void DrawBitmap(const unsigned char * bitmap, unsigned char x, unsigned char y, unsigned char color);
+u8 DoReadData(u8 first);
+u8 ReadData(void);
+void WriteCommand(u8 cmd, u8 chip);
+void WriteData(u8 data);
+void DrawBitmap(const u8 * bitmap, u8 x, u8 y, u8 color);
+
+#endif /* KS0108_H */

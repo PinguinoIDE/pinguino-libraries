@@ -38,31 +38,31 @@ void loop()
   // prints value unaltered, i.e. the raw binary version of the 
   // byte. The serial monitor interprets all bytes as 
   // ASCII, so 33, the first number,  will show up as '!' 
-  Serial.print(thisByte, BYTE);    
+  Serial.printNumber(thisByte, BYTE);    
 
-  Serial.printf(", dec: "); 
+  Serial.print(", dec: "); 
   // prints value as string as an ASCII-encoded decimal (base 10).
   // Decimal is the  default format for Serial.print() and Serial.println(),
   // so no modifier is needed:
-  Serial.print(thisByte,DEC);      
+  Serial.printNumber(thisByte,DEC);      
   // But you can declare the modifier for decimal if you want to.
   //this also works if you uncomment it:
 
   // Serial.print(thisByte, DEC);  
 
 
-  Serial.printf(", hex: "); 
+  Serial.print(", hex: "); 
   // prints value as string in hexadecimal (base 16):
-  Serial.print(thisByte, HEX);     
+  Serial.printNumber(thisByte, HEX);     
 
-  Serial.printf(", oct: "); 
+  Serial.print(", oct: "); 
   // prints value as string in octal (base 8);
-  Serial.print(thisByte, OCT);     
+  Serial.printNumber(thisByte, OCT);     
 
-  Serial.printf(", bin: "); 
+  Serial.print(", bin: "); 
   // prints value as string in binary (base 2) 
   // also prints ending line break:
-  Serial.println(thisByte, BIN);   
+  Serial.printNumber(thisByte, BIN);   
 
   // if printed last visible character '~' or 126, stop: 
   if(thisByte == 126) {     // you could also use if (thisByte == '~') {

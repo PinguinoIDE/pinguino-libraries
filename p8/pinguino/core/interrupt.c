@@ -10,6 +10,7 @@
     23-11-2012		rblanchot	added __18f1220,1320,14k22,2455,4455,46j50 support
     24-01-2013		rblanchot	added IntEnable and IntDisable functions
                                 added partial support to RTCC interrupt
+    18-04-2014      rblanchot   fixed OnTimer1 and 3 bug for x550 family
     ----------------------------------------------------------------------------
     TODO :
     * x7j53 family support
@@ -938,6 +939,7 @@ u8 OnTimer1(callback func, u8 timediv, u16 delay)
 {
     u8 _t1con = 0;
     u16 _cycles_;
+    u32 osc;
 
     if (intUsed[INT_TMR1] == INT_NOT_USED)
     {
@@ -946,11 +948,23 @@ u8 OnTimer1(callback func, u8 timediv, u16 delay)
         intCountLimit[INT_TMR1] = delay;
         intFunction[INT_TMR1] = func;
 
+        #if defined(__18f26j50) || defined(__18f46j50) || \
+            defined(__18f26j53) || defined(__18f46j53) || \
+            defined(__18f27j53) || defined(__18f47j53)
+
+            osc = System_getCpuFrequency();
+
+        #else
+
+            osc = System_getPeripheralFrequency();
+
+        #endif
+    
         switch(timediv)
         {
             case INT_MICROSEC:
                 // 1us = 1.000 ns = 12 cy
-                _cycles_ = System_getPeripheralFrequency() / 1000 / 1000;
+                _cycles_ = osc / 1000 / 1000;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_OFF | T1_SOSC_OFF | T1_PS_1_1 | T1_RUN_FROM_OSC;
                 #else
@@ -959,7 +973,7 @@ u8 OnTimer1(callback func, u8 timediv, u16 delay)
                 break;
             case INT_MILLISEC:
                 // 1ms = 1.000.000ns = 12.000 cy
-                _cycles_ = System_getPeripheralFrequency() / 1000;
+                _cycles_ = osc / 1000;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_OFF | T1_SOSC_OFF | T1_PS_1_1 | T1_RUN_FROM_OSC;
                 #else
@@ -970,7 +984,7 @@ u8 OnTimer1(callback func, u8 timediv, u16 delay)
                 // 1 sec = 1.000.000.000 ns = 12.000.000 cy
                 // 12.000.000 / 8 = 1.500.000
                 // 1.500.000 / 25 = 60000
-                _cycles_ = System_getPeripheralFrequency() / 8 / 25;
+                _cycles_ = osc / 8 / 25;
                 intCountLimit[INT_TMR1] = delay * 25;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_OFF | T1_SOSC_OFF | T1_PS_1_8 | T1_RUN_FROM_OSC;
@@ -1140,7 +1154,8 @@ u8 OnTimer3(callback func, u8 timediv, u16 delay)
 {
     u8 _t3con = 0;
     u16 _cycles_;
-
+    u32 osc;
+    
     if (intUsed[INT_TMR3] == INT_NOT_USED)
     {
         intUsed[INT_TMR3] = INT_USED;
@@ -1148,13 +1163,25 @@ u8 OnTimer3(callback func, u8 timediv, u16 delay)
         intCountLimit[INT_TMR3] = delay;
         intFunction[INT_TMR3] = func;
 
+        #if defined(__18f26j50) || defined(__18f46j50) || \
+            defined(__18f26j53) || defined(__18f46j53) || \
+            defined(__18f27j53) || defined(__18f47j53)
+
+            osc = System_getCpuFrequency();
+
+        #else
+
+            osc = System_getPeripheralFrequency();
+
+        #endif
+
         switch(timediv)
         {
             // nb : T3_SOURCE_INT => Fosc/4
             // 1 cy = 1/(Fosc/4)=4/Fosc=4/48MHz=83ns
             case INT_MICROSEC:
                 // 1us = 1.000 ns = 12 cy
-                _cycles_ = System_getPeripheralFrequency() / 1000 / 1000;
+                _cycles_ = osc / 1000 / 1000;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t3con = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_1 | T3_RUN_FROM_OSC;
                 #else
@@ -1163,7 +1190,7 @@ u8 OnTimer3(callback func, u8 timediv, u16 delay)
                 break;
             case INT_MILLISEC:
                 // 1 ms = 1.000.000 ns = 12.000 cy at Fosc/4
-                _cycles_ = System_getPeripheralFrequency() / 1000;
+                _cycles_ = osc / 1000;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t3con = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_1 | T3_RUN_FROM_OSC;
                 #else
@@ -1172,7 +1199,7 @@ u8 OnTimer3(callback func, u8 timediv, u16 delay)
                 break;
             case INT_SEC:
                 // 1 sec = 1.000.000.000 ns = 12.000.000 cy
-                _cycles_ = System_getPeripheralFrequency() / 8 / 25;
+                _cycles_ = osc / 8 / 25;
                 intCountLimit[INT_TMR3] = delay * 25;
                 #if defined(__18f25k50) || defined(__18f45k50)
                 _t3con = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_8 | T3_RUN_FROM_OSC;

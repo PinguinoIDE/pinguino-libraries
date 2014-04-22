@@ -2,11 +2,7 @@ delay Delayms#include <delay.c>
 delayMicroseconds Delayus#include <delay.c>
 millis millis#include <millis.c>
 micros micros#include <millis.c>
-digitalWrite digitalwrite#include <digitalw.c>
 analogWrite analogwrite#include <pwm.c>
-pinMode pinmode#include <digitalw.c>
-digitalRead digitalread#include <digitalw.c>
-toggle toggle#include <digitalw.c>
 analogRead analogRead#include <analog.c>
 randomSeed srand#include <stdlib.h>
 pulseIn pulseIn#include <pulse.c>

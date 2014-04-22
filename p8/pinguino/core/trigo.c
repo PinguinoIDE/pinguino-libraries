@@ -30,7 +30,7 @@
 #ifndef __TRIGO_C
 #define __TRIGO_C
 
-#include <typedef.h>
+//#include <typedef.h>
 //#include <macro.h>
 //#include <const.h>
 //#include <math.h>

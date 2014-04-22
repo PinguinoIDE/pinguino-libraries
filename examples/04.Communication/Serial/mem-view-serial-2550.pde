@@ -28,7 +28,7 @@ void anyUserCode(void)
 	while(i<10){
 		Serial.printf("\n%02d, %lu [msec]", i++ ,millis());
 		Serial.printf("  ");
-		Serial.print(millis(),HEX);
+		Serial.printNumber(millis(),HEX);
 	}
 }
 

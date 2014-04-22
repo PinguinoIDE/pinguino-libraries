@@ -1,9 +1,11 @@
 Serial.init serial1init#include <pinguinoserial1.c>
 Serial.begin serial1init#include <pinguinoserial1.c>
 Serial.write serial1write#include <pinguinoserial1.c>
-Serial.print serial1print#include <pinguinoserial1.c>
-Serial.println serial1println#include <pinguinoserial1.c>
-Serial.printf serial1printf#include <pinguinoserial1.c>
+Serial.print serial1print#include <pinguinoserial1.c>#define SERIALPRINT
+Serial.println serial1println#include <pinguinoserial1.c>#define SERIALPRINTLN
+Serial.printNumber serial1printNumber#include <pinguinoserial1.c>#define SERIALPRINTNUMBER
+Serial.printFLoat serial1printFloat#include <pinguinoserial1.c>#define SERIALPRINTFLOAT
+Serial.printf serial1printf#include <pinguinoserial1.c>#define SERIALPRINTF
 Serial.getKey serial1getkey#include <pinguinoserial1.c>
 Serial.getString serial1getstring#include <pinguinoserial1.c>
 Serial.available serial1available#include <pinguinoserial1.c>

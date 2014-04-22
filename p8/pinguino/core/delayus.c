@@ -1,5 +1,5 @@
 /*	----------------------------------------------------------------------------
-	FILE:			delay.c
+	FILE:			delayus.c
 	PROJECT:		pinguino
 	PURPOSE:		pinguino delays functions
 	PROGRAMER:		jean-pierre mandon
@@ -26,8 +26,8 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	--------------------------------------------------------------------------*/
 
-#ifndef __DELAY_C__
-#define __DELAY_C__
+#ifndef __DELAYUS_C__
+#define __DELAYUS_C__
 
 #include <typedef.h>
 //#include <macro.h>
@@ -51,37 +51,14 @@
     8 < Cycles per millisecond < 16.000
     0 < Cycles per microsecond < 16
 */
+
 /*
-void Delayms(u16 p)
-{
-    u16 _cycles_per_millisecond_ = SystemGetInstructionClock() / 1000;
-
-    if (_cycles_per_millisecond_ <= 2550)
-    {
-        while(p--) delay10tcy(_cycles_per_millisecond_ >> 4);
-        return;
-    }
-    if (_cycles_per_millisecond_ <= 25500)
-    {
-        while(p--) delay100tcy(_cycles_per_millisecond_ >> 7);
-        return;
-    }
-}
-
 void Delayus(u16 p)
 {
     //u16 _cycles_per_microsecond_ = SystemGetInstructionClock() / 1000 / 1000;
     while (p--);
 }
 */
-
-void Delayms(unsigned int milliseconds)
-{
-    unsigned int i;
-    
-    for (i=0; i<milliseconds; i++)
-        delay1ktcy(12);
-}
 
 void Delayus(unsigned int microseconds)
 {

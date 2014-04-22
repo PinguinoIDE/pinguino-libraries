@@ -59,12 +59,14 @@ void analog_init(void)
     // RB 09/09/2013: Analog Conversion Mode is set to 12-bit in Bootloader Config file
     // #pragma config ADCSEL = BIT12 // 12-bit conversion mode is enabled
 
-	TRISA=TRISA|0b00011111;	// RA0 (AN0) to RA4 (AN4) are INPUT
-	TRISE=TRISE|0b00000111;	// RE0 (AN5) to RE2 (AN7) are INPUT
+    // RB - March 2014 - Individual Analog channel selection is done in analogRead()
+	//TRISA=TRISA|0b00011111;	// RA0 (AN0) to RA4 (AN4) are INPUT
+	//TRISE=TRISE|0b00000111;	// RE0 (AN5) to RE2 (AN7) are INPUT
 
     //1 = Pin configured as a digital port
     //0 = Pin configured as an analog channel – digital input is disabled and reads ‘0’
-	ANCON0=0;           // AN0 to AN7 enabled
+    // RB - March 2014 - Individual Analog channel selection is done in analogRead()
+	//ANCON0=0;           // AN0 to AN7 enabled
 	ANCON1=0b01111111;  // VBGEN=0, AN8 to AN12 disabled (1=digital/0=analog)
 
 	ADCON0=0x00;        // 0b00000000 = VRef-=VSS, VRef+=VDD, No channel selected yet 
@@ -96,7 +98,7 @@ void analog_init(void)
     analogReference
     ------------------------------------------------------------------*/
 
-#ifdef ANALOGREFERENCE
+//#ifdef ANALOGREFERENCE
 
 void analogreference(u8 Type)
 {
@@ -118,13 +120,13 @@ void analogreference(u8 Type)
     #endif
 }
 
-#endif /* ANALOGREFERENCE */
+//#endif /* ANALOGREFERENCE */
 
 /*  --------------------------------------------------------------------
     analogRead
     ------------------------------------------------------------------*/
 
-#ifdef ANALOGREAD
+//#ifdef ANALOGREAD
 
 // The A/D conversion requires 11 TAD per 10-bit conversion
 // and 13 TAD per 12-bit conversion.
@@ -139,22 +141,40 @@ u16 analogread(u8 channel)
     // #endif
 
     #ifdef PICUNO_EQUO
+
         if(channel>=14 && channel<=16)
             ADCON0=(channel-14) << 2;
         else if(channel>=17 && channel<=19)
             ADCON0=(channel-13) << 2;
 
+    // RB - March 2014 - Enable individual Analog channel selection
+    //                   Has to be done for other Pinguino
+    
     #elif defined(PINGUINO47J53A)
-        if(channel>=8 && channel<=15)
-            ADCON0=(channel-8) << 2;    // A0=8 to A7=15
-        else if(channel<=7)
-            ADCON0 = channel << 2;      // A0=0 to A7=7
+
+        if (channel > 15)
+            return 0;
+
+        if (channel >= 8 && channel <= 15)
+            channel = channel - 8;      // A0=8 to A7=15
+
+        if (channel < 5)
+            TRISA |= 1 << channel;      // channel as INPUT
+
+        if (channel >= 5 && channel <= 7)
+            TRISE |= 1 << (channel - 5);// channel as INPUT
+
+        ANCON0 |= 1 << channel;         // channel enabled
+
+        ADCON0 = channel << 2;          // A0=0 to A7=7
 
     #else
+    
         if(channel>=13 && channel<=20)
             ADCON0=(channel-13) << 2;   // A0 = 13, ..., A4 = 17
         else if(channel<=5)
             ADCON0 = channel << 2;      // A0 = 0, ..., A4 = 4
+
     #endif
 
     ADCON0bits.ADON=1;                  // A/D Converter module is enabled
@@ -174,7 +194,7 @@ u16 analogread(u8 channel)
     return(result);
 }
 
-#endif /* ANALOGREAD */
+//#endif /* ANALOGREAD */
 
 /*  --------------------------------------------------------------------
     analogWrite
@@ -193,7 +213,7 @@ u16 analogread(u8 channel)
     PR2 = 255
     ------------------------------------------------------------------*/
 
-#ifdef ANALOGWRITE
+//#ifdef ANALOGWRITE
 
 // Set the PWM period by writing to the PR2 register.
 // Set the TMR2 prescale value, then enable Timer2 by writing to T2CON.
@@ -301,6 +321,6 @@ void analogwrite(u8 pin, u16 duty)
     PIR1bits.TMR2IF = 0;
 }
 
-#endif /* ANALOGWRITE */
+//#endif /* ANALOGWRITE */
 
 #endif /* __ANALOG_C */

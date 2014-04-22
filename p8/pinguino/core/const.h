@@ -18,16 +18,20 @@
      
     // already defined in common_types.h
     #ifndef FALSE
-    #define FALSE			0
+        #define FALSE		0
     #endif
     #define false			0 
     #define False			0 
     
     #ifndef TRUE
-    #define TRUE			!FALSE
+        #define TRUE		!FALSE
     #endif
     #define true			!false
     #define True			!false
+
+    #ifndef NULL
+      #define NULL          (void *)0
+    #endif
 
     #define INPUT			1
     #define OUTPUT			0

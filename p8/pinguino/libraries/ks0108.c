@@ -11,22 +11,23 @@
  * based on version 1.1 and 2.0 of GLCD library for Arduino.
  */
 
-#ifndef	KS0108_H
-#define KS0108_H
+#ifndef	KS0108_C
+#define KS0108_C
 
 #include <ks0108.h>
+#include <typedef.h>
 
 lcdCoord					Coord;
-unsigned char				Inverted=0;
-unsigned char				FontColor;
-const unsigned char*		Font;
+u8				Inverted=0;
+u8				FontColor;
+const u8*		Font;
 
 /* fast HIGH/LOW, this is specific for PORTA */
 #ifndef FAST_DISPLAY
-void fastWriteHigh(unsigned char pin){
+void fastWriteHigh(u8 pin){
     LCD_CMD_PORT=LCD_CMD_PORT | pin;
 }
-void fastWriteLow(unsigned char pin){
+void fastWriteLow(u8 pin){
     LCD_CMD_PORT=LCD_CMD_PORT & (0XFF-pin);
 }
 #endif
@@ -43,24 +44,24 @@ void delay450ns(void){
     __endasm;
 }
 
-void ClearPage(unsigned char page, unsigned char color){
-    unsigned char x;
+void ClearPage(u8 page, u8 color){
+    u8 x;
 	for(x=0; x < DISPLAY_WIDTH; x++){	
 	   GotoXY(x, page * 8);
        WriteData(color);
    }	
 }
 
-void ClearScreen(unsigned char color){
- unsigned char page;
+void ClearScreen(u8 color){
+ u8 page;
     for( page = 0; page < 8; page++){
         GotoXY(0, page * 8);
         ClearPage(page, color);
     }
 }
 
-void DrawLine(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2, unsigned char color) {
-	unsigned char length, i, y, yAlt, xTmp, yTmp;
+void DrawLine(u8 x1, u8 y1, u8 x2, u8 y2, u8 color) {
+	u8 length, i, y, yAlt, xTmp, yTmp;
 	int m;
 	//
 	// vertical line
@@ -160,14 +161,14 @@ void DrawLine(unsigned char x1, unsigned char y1, unsigned char x2, unsigned cha
 	}
 }
 
-void DrawRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char color) {
+void DrawRect(u8 x, u8 y, u8 width, u8 height, u8 color) {
 	DrawHoriLine(x, y, width, color);				// top
 	DrawHoriLine(x, y+height, width, color);		// bottom
 	DrawVertLine(x, y, height, color);			    // left
 	DrawVertLine(x+width, y, height, color);		// right
 }
 
-void DrawRoundRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char radius, unsigned char color) {
+void DrawRoundRect(u8 x, u8 y, u8 width, u8 height, u8 radius, u8 color) {
   	int tSwitch, x1 = 0, y1 = radius;
   	tSwitch = 3 - 2 * radius;
 
@@ -202,8 +203,8 @@ void DrawRoundRect(unsigned char x, unsigned char y, unsigned char width, unsign
 /**
  * Hardware-Functions
  */
-void FillRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height, unsigned char color) {
-	unsigned char mask, pageOffset, h, i, dat;
+void FillRect(u8 x, u8 y, u8 width, u8 height, u8 color) {
+	u8 mask, pageOffset, h, i, dat;
 	height++;
 
 	pageOffset = y%8;
@@ -258,8 +259,8 @@ void FillRect(unsigned char x, unsigned char y, unsigned char width, unsigned ch
 	}
 }
 
-void InvertRect(unsigned char x, unsigned char y, unsigned char width, unsigned char height) {
-	unsigned char mask, pageOffset, h, i, dat, tmpData;
+void InvertRect(u8 x, u8 y, u8 width, u8 height) {
+	u8 mask, pageOffset, h, i, dat, tmpData;
 	height++;
 
 	pageOffset = y%8;
@@ -305,15 +306,15 @@ void InvertRect(unsigned char x, unsigned char y, unsigned char width, unsigned 
 	}
 }
 
-void SetInverted(unsigned char invert) {
+void SetInverted(u8 invert) {
 	if(Inverted != invert) {
 		InvertRect(0,0,DISPLAY_WIDTH-1,DISPLAY_HEIGHT-1);
 		Inverted = invert;
 	}
 }
 
-void SetDot(unsigned char x, unsigned char y, unsigned char color) {
-	unsigned char dat;
+void SetDot(u8 x, u8 y, u8 color) {
+	u8 dat;
 
 	GotoXY(x, y-y%8);					// read data from display memory
 	dat = ReadData();
@@ -330,15 +331,15 @@ void SetDot(unsigned char x, unsigned char y, unsigned char color) {
 /**
  * Font Functions
  */
-void SelectFont(const char* font, unsigned char color) {
+void SelectFont(const char* font, u8 color) {
 	Font = font;	
 	FontColor = color;
 }
 
 /** Print a integer number on LCD */
 void PrintNumber(long n){
-   uchar buf[10];  // prints up to 10 digits  
-   uchar i=0;
+   u8 buf[10];  // prints up to 10 digits  
+   u8 i=0;
    if(n==0)
 	   PutChar('0');
    else{
@@ -357,8 +358,8 @@ void PrintNumber(long n){
 
 /** Print a float number to LCD */
 #ifdef USEFLOAT
-void PrintFloat(float number, unsigned char digits) { 
-  unsigned char i, toPrint;
+void PrintFloat(float number, u8 digits) { 
+  u8 i, toPrint;
   unsigned long int_part;
   float rounding, remainder;
   
@@ -387,7 +388,7 @@ void PrintFloat(float number, unsigned char digits) {
   // Extract digits from the remainder one at a time
   while (digits-- > 0) {
     remainder *= 10.0;
-    toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+    toPrint = (u16)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
     PrintNumber(toPrint);
     remainder -= toPrint; 
   }
@@ -395,18 +396,18 @@ void PrintFloat(float number, unsigned char digits) {
 #endif
 
 int PutChar(char c) {
-	unsigned char width = 0;
-	unsigned char height = *(Font+FONT_HEIGHT);
-	unsigned char bytes = (height+7)/8;
+	u8 width = 0;
+	u8 height = *(Font+FONT_HEIGHT);
+	u8 bytes = (height+7)/8;
 	
-	unsigned char firstChar = *(Font+FONT_FIRST_CHAR);
-	unsigned char charCount = *(Font+FONT_CHAR_COUNT);
+	u8 firstChar = *(Font+FONT_FIRST_CHAR);
+	u8 charCount = *(Font+FONT_CHAR_COUNT);
 	
-	unsigned int index = 0;
-	unsigned char x = Coord.x;
-    unsigned char y = Coord.y;
+	u16 index = 0;
+	u8 x = Coord.x;
+    u8 y = Coord.y;
 	
-    unsigned char i, j;
+    u8 i, j;
     
 	if(c < firstChar || c >= (firstChar+charCount)) {
 		return 1;
@@ -429,9 +430,9 @@ int PutChar(char c) {
 
 	// last but not least, draw the character
 	for(i=0; i<bytes; i++) {
-		unsigned char page = i*width;
+		u8 page = i*width;
 		for(j=0; j<width; j++) {
-			unsigned char dat = *(Font+index+page+j);
+			u8 dat = *(Font+index+page+j);
 		
 			if(height > 8 && height < (i+1)*8) {
 				dat >>= (i+1)*8-height;
@@ -468,10 +469,10 @@ void Puts(char* str) {
 	}
 }
 
-unsigned char CharWidth(char c) {
-	unsigned char width = 0;
-	unsigned char firstChar = *(Font+FONT_FIRST_CHAR);
-	unsigned char charCount = *(Font+FONT_CHAR_COUNT);
+u8 CharWidth(char c) {
+	u8 width = 0;
+	u8 firstChar = *(Font+FONT_FIRST_CHAR);
+	u8 charCount = *(Font+FONT_CHAR_COUNT);
 
 	// read width data
 	if(c >= firstChar && c < (firstChar+charCount)) {
@@ -482,8 +483,8 @@ unsigned char CharWidth(char c) {
 	return width;
 }
 
-unsigned int StringWidth(char* str) {
-	unsigned int width = 0;
+u16 StringWidth(char* str) {
+	u16 width = 0;
 
 	while(*str != 0) {
 		width += CharWidth(*str++);
@@ -493,14 +494,14 @@ unsigned int StringWidth(char* str) {
 }
 
 
-void CursorTo( unsigned char x, unsigned char y){    // 0 based coordinates for fixed width fonts (i.e. systemFont5x7)
+void CursorTo( u8 x, u8 y){    // 0 based coordinates for fixed width fonts (i.e. systemFont5x7)
    GotoXY( x * (*(Font+FONT_FIXED_WIDTH)+1),
 	       y * (*(Font+FONT_HEIGHT)+1)
 		 ) ; 
 }
 
-void GotoXY(unsigned char x, unsigned char y) {
-  unsigned char chip, cmd;
+void GotoXY(u8 x, u8 y) {
+  u8 chip, cmd;
 	
   if( (x > DISPLAY_WIDTH-1) || (y > DISPLAY_HEIGHT-1) )	// exit if coordinates are not legal
     return;
@@ -521,7 +522,7 @@ void GotoXY(unsigned char x, unsigned char y) {
 }
 
 /** Start GLCD... */
-void Init(unsigned char invert) {
+void Init(u8 invert) {
     /*RSTOUT = 0;
     RST = 1;*/
 	Coord.x = 0;
@@ -544,13 +545,13 @@ void Enable(void) {
     fastWriteHigh(EN);					// EN high level width: min. 450ns
 	delay450ns();
 	fastWriteLow(EN);
-//for(volatile unsigned char i=0; i<8; i++);  // big delay loop in Fabian's code, was 5.7us, replaced by call to 450ns delay function
+//for(volatile u8 i=0; i<8; i++);  // big delay loop in Fabian's code, was 5.7us, replaced by call to 450ns delay function
 	delay450ns();	
 }
 
-unsigned char DoReadData(unsigned char first) {
-	unsigned char dat;
-	//unsigned char i;
+u8 DoReadData(u8 first) {
+	u8 dat;
+	//u8 i;
 
 	LCD_DATA_OUT = 0x00;
 	LCD_DATA_DIR = 0xFF;				// data port is input
@@ -576,7 +577,7 @@ unsigned char DoReadData(unsigned char first) {
 	dat = LCD_DATA_IN;					// read Data
 
 	fastWriteLow(EN); 
-//	for(volatile unsigned char i=0; i<8; i++);  // big delay loop in Fabian's code, was 5.7us, replaced by 450ns delay below
+//	for(volatile u8 i=0; i<8; i++);  // big delay loop in Fabian's code, was 5.7us, replaced by 450ns delay below
 	delay450ns();
     
 	LCD_DATA_DIR = 0x00;                 //Output mode?
@@ -588,13 +589,13 @@ unsigned char DoReadData(unsigned char first) {
 	return dat;
 }
 
-unsigned char ReadData(void) {
+u8 ReadData(void) {
 	DoReadData(1);							// dummy read
 	return DoReadData(0);					// "real" read
 }
 
 /** Write a command to chip */
-void WriteCommand(unsigned char cmd, unsigned char chip) {
+void WriteCommand(u8 cmd, u8 chip) {
 	if(chip == CHIP1) {
 		fastWriteLow(CSEL2);			// deselect chip 2
 		fastWriteHigh(CSEL1);			// select chip 1
@@ -612,11 +613,11 @@ void WriteCommand(unsigned char cmd, unsigned char chip) {
 }
 
 /** Write data to chip */
-void WriteData(unsigned char dat) {
-	unsigned char displayData, yOffset, cmdPort;
+void WriteData(u8 dat) {
+	u8 displayData, yOffset, cmdPort;
 
 #ifdef DEBUG
-	unsigned int i;
+	u16 i;
 	for(i=0; i<5000; i++);
 #endif
 
@@ -679,16 +680,16 @@ void WriteData(unsigned char dat) {
 }
 
 /** Loads a Bitmap to GLCD */
-void DrawBitmap(const unsigned char * bitmap, unsigned char x, unsigned char y, unsigned char color){
-unsigned char width, height;
-unsigned char i, j;
+void DrawBitmap(const u8 * bitmap, u8 x, u8 y, u8 color){
+u8 width, height;
+u8 i, j;
 
   width = *(bitmap++); 
   height = *(bitmap++);
   for(j = 0; j < height / 8; j++) {
      GotoXY(x, y + (j*8) );
 	 for(i = 0; i < width; i++) {
-		 unsigned char displayData = *(bitmap++);
+		 u8 displayData = *(bitmap++);
 	   	 if(color == BLACK)
 			WriteData(displayData);
 		 else
@@ -696,4 +697,4 @@ unsigned char i, j;
 	 }
   }
 }
-#endif
+#endif /* KS0108_C */

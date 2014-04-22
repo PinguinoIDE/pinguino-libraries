@@ -4,7 +4,7 @@
     PURPOSE:		One wire driver to use with DS18B20 digital temperature sensor.
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	28 Sep 2010
-    LAST RELEASE:	10 Jun 2013
+    LAST RELEASE:	27 Mar 2014
     ----------------------------------------------------------------------------
     02 Jun 2011	Jean-Pierre Mandon	fixed a bug in decimal part of the measure
     17 Jan 2012	Mark Harper			update to deal correctly with negative temperatures
@@ -12,6 +12,7 @@
     24 Oct 2012 Régis Blanchot      renamed variable num to rom for better understanding
     10 Jun 2013 Moreno Manzini      added DS18B20StartMeasure and DS18B20ReadMeasure
                                     to acquire and read temperature in non-blocking mode
+    27 Mar 2014 Brikker             added reading until CRC is found valid
     ----------------------------------------------------------------------------
     TODO : 
     ----------------------------------------------------------------------------
@@ -129,6 +130,8 @@
     {
         u8 	res, busy = LOW;
         u8 	temp_lsb, temp_msb;
+		u8  c, crc_flag = 0;
+        u8	buffer[];
         u16	temp;
 
         switch (resolution)
@@ -143,77 +146,98 @@
         
         if (!DS18B20Configure(pin, rom, 0, 0, res)) return false; // no alarm
 
-        if (OneWireReset(pin)) return false;
-
-        if (rom == SKIPROM)
+        // read temperature until crc is valid
+        while (crc_flag == 0)
         {
-            // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
+
+            if (OneWireReset(pin)) return false;
+
+            if (rom == SKIPROM)
+            {
+                // Skip ROM, address all devices
+                OneWireWrite(pin, SKIPROM);
+            }
+            else
+            {
+                // Talk to a particular device
+                if (!DS18B20MatchRom(pin, rom)) return false;
+            }
+
+            OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
+
+            while (busy == LOW)					// Wait while busy ( = bus is low)
+                busy = OneWireRead(pin);
+
+            if (OneWireReset(pin)) return false;
+
+            if (rom == SKIPROM)
+            {
+                // Skip ROM, address all devices
+                OneWireWrite(pin, SKIPROM);
+            }
+            else
+            {
+                // Talk to a particular device
+                if (!DS18B20MatchRom(pin, rom)) return false;
+            }
+
+            OneWireWrite(pin, READ_SCRATCHPAD);         // Read scratchpad
+
+            for (c = 0; c < 8; c++) 
+            {
+                buffer[c] = OneWireRead(pin);  			// Receive 8 bytes from DS18B20
+                DS18B20_crc(buffer[c]);
+            }
+            buffer[8] = OneWireRead(pin);				// Receive the 9th byte [CRC] from DS18B20
+            
+            if (dowcrc == buffer[8]) 					// Compare calculated CRC with the 9th byte received
+            {
+                temp_lsb = buffer[0];                   // byte 0 of scratchpad : temperature lsb
+                temp_msb = buffer[1];                   // byte 1 of scratchpad : temperature msb
+                //temp_lsb = OneWireRead(pin);          // byte 0 of scratchpad : temperature lsb
+                //temp_msb = OneWireRead(pin);          // byte 1 of scratchpad : temperature msb
+
+                //if (OneWireReset(pin)) return false;
+
+                // Calculation
+                // ---------------------------------------------------------------------
+                //	Temperature Register Format
+                //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
+                //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
+                //			BIT15	BIT14	BIT13	BIT12	BIT11	BIT10	BIT9	BIT8
+                //	MS BYTE S		S		S		S		S		2^6		2^5 	2^4
+                //	S = SIGN
+
+                temp = temp_msb;				
+                temp = (temp << 8) + temp_lsb;	// combine msb & lsb into 16 bit variable
+                
+                if (temp_msb & 0b11111000)		// test if sign is set, i.e. negative
+                {		
+                    t->sign = 1;
+                    temp = (temp ^ 0xFFFF) + 1;	// 2's complement conversion
+                }
+                else
+                {
+                    t->sign = 0;
+                }
+
+                t->integer = (temp >> 4) & 0x7F;	// fractional part is removed, leaving only integer part
+
+                /*	
+                t->fraction = 0;					// fractional part
+                if (BitRead(temp, 0)) t->fraction +=  625;
+                if (BitRead(temp, 1)) t->fraction += 1250;
+                if (BitRead(temp, 2)) t->fraction += 2500;
+                if (BitRead(temp, 3)) t->fraction += 5000;
+                */
+
+                t->fraction = (temp & 0x0F) * 625;
+                t->fraction /= 100;					// two digits after decimal 
+
+                crc_flag = 1;    					// Flag for good CRC: this will exit the while statement
+            }
+            dowcrc = 0;
         }
-        else
-        {
-            // Talk to a particular device
-            if (!DS18B20MatchRom(pin, rom)) return false;
-        }
-
-        OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
-
-        while (busy == LOW)					// Wait while busy ( = bus is low)
-            busy = OneWireRead(pin);
-
-        if (OneWireReset(pin)) return false;
-
-        if (rom == SKIPROM)
-        {
-            // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
-        }
-        else
-        {
-            // Talk to a particular device
-            if (!DS18B20MatchRom(pin, rom)) return false;
-        }
-
-        OneWireWrite(pin, READ_SCRATCHPAD);// Read scratchpad
-
-        temp_lsb = OneWireRead(pin);		// byte 0 of scratchpad : temperature lsb
-        temp_msb = OneWireRead(pin);		// byte 1 of scratchpad : temperature msb
-
-        if (OneWireReset(pin)) return false;
-
-        // Calculation
-        // ---------------------------------------------------------------------
-        //	Temperature Register Format
-        //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
-        //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
-        //			BIT15	BIT14	BIT13	BIT12	BIT11	BIT10	BIT9	BIT8
-        //	MS BYTE S		S		S		S		S		2^6		2^5 	2^4
-        //	S = SIGN
-
-        temp = temp_msb;				
-        temp = (temp << 8) + temp_lsb;	// combine msb & lsb into 16 bit variable
-        
-        if (temp_msb & 0b11111000)		// test if sign is set, i.e. negative
-        {		
-            t->sign = 1;
-            temp = (temp ^ 0xFFFF) + 1;	// 2's complement conversion
-        }
-        else
-        {
-            t->sign = 0;
-        }
-
-        t->integer = (temp >> 4) & 0x7F;	// fractional part is removed, leaving only integer part
-
-/*	
-        t->fraction = 0;					// fractional part
-        if (BitRead(temp, 0)) t->fraction +=  625;
-        if (BitRead(temp, 1)) t->fraction += 1250;
-        if (BitRead(temp, 2)) t->fraction += 2500;
-        if (BitRead(temp, 3)) t->fraction += 5000;
-*/
-        t->fraction = (temp & 0x0F) * 625;
-        t->fraction /= 100;					// two digits after decimal 
 
         return true;
     }
@@ -472,22 +496,14 @@
 
         dowcrc = 0;
 
-        if(i & 1)
-        dowcrc ^= 0x5e;
-        if(i & 2)
-        dowcrc ^= 0xbc;
-        if(i & 4)
-        dowcrc ^= 0x61;
-        if(i & 8)
-        dowcrc ^= 0xc2;
-        if(i & 0x10)
-        dowcrc ^= 0x9d;
-        if(i & 0x20)
-        dowcrc ^= 0x23;
-        if(i & 0x40)
-        dowcrc ^= 0x46;
-        if(i & 0x80)
-        dowcrc ^= 0x8c;
+        if (i & 0x01) dowcrc ^= 0x5e;
+        if (i & 0x02) dowcrc ^= 0xbc;
+        if (i & 0x04) dowcrc ^= 0x61;
+        if (i & 0x08) dowcrc ^= 0xc2;
+        if (i & 0x10) dowcrc ^= 0x9d;
+        if (i & 0x20) dowcrc ^= 0x23;
+        if (i & 0x40) dowcrc ^= 0x46;
+        if (i & 0x80) dowcrc ^= 0x8c;
 
         return dowcrc;
     }
@@ -495,7 +511,8 @@
 /*	----------------------------------------------------------------------------
     ---------- DS18B20StartMeasure()
     ----------------------------------------------------------------------------
-    * Description:	reads the ds18x20 device on the 1-wire bus and starting the temperature acquisition
+    * Description:	reads the ds18x20 device on the 1-wire bus and
+					starts the temperature acquisition
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     resolution = 9 to 12 bit resolution
@@ -540,10 +557,11 @@
 /*	----------------------------------------------------------------------------
     ---------- DS18B20ReadMeasure()
     ----------------------------------------------------------------------------
-    * Description:	reads the ds18x20 device on the 1-wire bus and returns the temperature previously acquired
+    * Description:	reads the ds18x20 device on the 1-wire bus
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     t = temperature pointer
+	* Return:		the temperature previously acquired
     --------------------------------------------------------------------------*/
 
     u8 DS18B20ReadMeasure(u8 pin, u8 rom, DS18B20_Temperature * t)
@@ -609,5 +627,5 @@
         return TRUE;
     }
 
-#endif
+#endif /* __DS18B20_C */
 

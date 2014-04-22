@@ -13,7 +13,7 @@ Adapted from Nicholas Zambetti Todd Krein's programs
 
 
 #include <stdlib.h>
-#include <serial.c>
+//#include <serial.c>
 
 // i2c buffer length
 #ifndef _I2CBUFFERLENGTH_
@@ -302,29 +302,31 @@ u8 I2C_transmit(const u8* data, u8 length)
   return 0;
 }
 #endif
+
 void I2C_begin(u8 address, u16 speed)
 {
-if (address !=0) {
-//  SSPADD = address; done in I2C_init
-//  I2C_slave((u16)address);
-#ifdef I2CINT
-  i2c_hw_slave_init(address);
-#endif
-}
-  _i2c_rxBufferIndex = 0;
-  _i2c_rxBufferLength = 0;
+    if (address !=0) {
+        //  SSPADD = address; done in I2C_init
+        //  I2C_slave((u16)address);
+        #ifdef I2CINT
+        i2c_hw_slave_init(address);
+        #endif
+    }
+    
+    _i2c_rxBufferIndex = 0;
+    _i2c_rxBufferLength = 0;
 
-  _i2c_txBufferIndex = 0;
-  _i2c_txBufferLength = 0;
+    _i2c_txBufferIndex = 0;
+    _i2c_txBufferLength = 0;
 
-  // initialize state
-  i2c_state = I2C_READY;
-  i2c_sendStop = true;		// default value
-  i2c_inRepStart = false;
-  
-if (address ==0) {
-  I2C_master(speed);
-  }
+    // initialize state
+    i2c_state = I2C_READY;
+    i2c_sendStop = true;		// default value
+    i2c_inRepStart = false;
+
+    if (address ==0) {
+        I2C_master(speed);
+    }
 
 }
 

@@ -529,6 +529,7 @@ void fontSize(char size)
 }
 */
 
+/*
 void drawBitmap(u16 xo, u16 yo, u16 w, u16 h, const u16* bitmap)
 {
     u16 i, j;
@@ -539,14 +540,13 @@ void drawBitmap(u16 xo, u16 yo, u16 w, u16 h, const u16* bitmap)
         {
             //setColor(bitmap[j * w + i + 2]);
             drawPixel(xo+i, yo+j);
-            /*
-            ILI9325_write(WriteDatatoGRAM, bitmap[ ( j * w ) + i + 2]);
-            ILI9325_write(GRAMHorizontalAddressSet, xo + i);
-            ILI9325_write(GRAMVerticalAddressSet,   yo + j);
-            */
+            //ILI9325_write(WriteDatatoGRAM, bitmap[ ( j * w ) + i + 2]);
+            //ILI9325_write(GRAMHorizontalAddressSet, xo + i);
+            //ILI9325_write(GRAMVerticalAddressSet,   yo + j);
         }
     }
 }
+*/
 
 /*
 void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 rox, u16 roy)

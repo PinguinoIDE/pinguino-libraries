@@ -76,7 +76,7 @@
 #include <lcdi2c.h>
 //#include <pcf8574.h>
 #include <stdarg.h>
-#include <delay.c>
+#include <delayms.c>
 #include <i2c.c>
 #include <stdio.c>
 

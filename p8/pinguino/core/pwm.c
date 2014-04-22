@@ -33,14 +33,11 @@
 #ifndef __PWM__
 #define __PWM__
 
-#include <pic18fregs.h>
-#include <typedef.h>
-#include <pin.h>
-#ifndef PINMODE
-#define PINMODE
-#endif
-#include <digitalw.c>
-#include <oscillator.c>
+#include <pic18fregs.h>     // sfr's
+#include <typedef.h>        // u8, u16, u32, ...
+#include <pin.h>            // USERLED
+#include <digitalp.c>       // pinmode
+#include <oscillator.c>     // System_getPeripheralFrequency
 //#include <interrupt.c>    // to save memory space
 
 /*  --------------------------------------------------------------------

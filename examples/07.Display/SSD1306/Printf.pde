@@ -66,7 +66,7 @@ void setup()
     //On Pingino 32MX250 USERLED is on pin 13
     //which is also used by the PMP Data bus 
     //pinMode(USERLED, OUTPUT);
-    SSD1306.init();
+    SSD1306.init(3, 4);
     SSD1306.clearScreen();
     SSD1306.setFont(font6x8);
 }

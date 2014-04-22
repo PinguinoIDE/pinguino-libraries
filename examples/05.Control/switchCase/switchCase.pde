@@ -36,7 +36,7 @@ void loop() {
   int range;
 
   // read the sensor:
-  sensorReading = analogRead(A0);
+  sensorReading = analogRead(0);
   // map the sensor range to a range of four options:
   range = map(sensorReading, sensorMin, sensorMax, 0, 3);
 

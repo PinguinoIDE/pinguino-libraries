@@ -45,8 +45,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef __PCD8544H
 #define __PCD8544H
 
-#include <typedef.h>    // Pinguino's type : u8, u8, ..., and bool
-#include <macro.h>      // BitSet, BitClear
+#include <typedef.h>            // Pinguino's type : u8, u8, ..., and bool
+#include <macro.h>              // BitSet, BitClear
 
 /**	--------------------------------------------------------------------
     Display interfaces
@@ -221,56 +221,42 @@ void PCD8544_drawPixel(u8 x, u8 y);//, u8 color);
 void PCD8544_clearPixel(u8 x, u8 y);//, u8 color);
 u8 PCD8544_getPixel(u8 x, u8 y);
 
-#ifdef _PCD8544_USE_CIRCLE
-void PCD8544_drawCircle(u8 x0, u8 y0, u8 r, u8 color);
-void PCD8544_drawCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
-void PCD8544_fillCircle(u8 x0, u8 y0, u8 r, u8 color);
-void PCD8544_fillCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
-#endif
-
-#ifdef _PCD8544_USE_TRIANGLE
+#ifdef _PCD8544_USE_GRAPHICS
+//LINE
+void PCD8544_drawLine(u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
+void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color);
+void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color);
+//TRIANGLE
 void PCD8544_drawTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
 void PCD8544_fillTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
-#endif
-
-#ifdef _PCD8544_USE_ROUND_RECT
+//RECT
+void PCD8544_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color);
+void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color);
+#define PCD8544_fillScreen(color) PCD8544_fillRect(0, 0,PCD8544.screen.width,PCD8544..screen.height, (color))
+//ROUND_RECT
 void PCD8544_drawRoundRect(u8 x0, u8 y0, u8 w, u8 h,u8 radius, u8 color);
 void PCD8544_fillRoundRect(u8 x, u8 y, u8 w,u8 h, u8 r, u8 color);
-#endif
-
-#ifdef _PCD8544_USE_BITMAP
+//CIRCLE
+void PCD8544_drawCircle(u8 x0, u8 y0, u8 r0);//, u8 color);
+void PCD8544_drawCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
+void PCD8544_fillCircle(u8 x0, u8 y0, u8 r);//, u8 color);
+void PCD8544_fillCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
+//BITMAP
 void PCD8544_drawBitmap(u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color);
 #endif
 
-#ifdef  _PCD8544_USE_TEXT
-void PCD8544_drawChar(u8 x, u8 y, u8, u8 color,u8 bg, u8 size);
 void PCD8544_setCursor(u8 x, u8 y);
+#ifdef  _PCD8544_USE_TEXT
 void PCD8544_setTextColor(u8 c);
 void PCD8544_setTextColor2(u8 c, u8 bg);
 void PCD8544_setTextSize(u8 s);
 #endif
 
-//void PCD8544_setTextWrap(boolean w);
 #ifdef _PCD8544_USE_ORIENTATION
 void PCD8544_setOrientation(u8 r);
+#define PCD8544_getOrientation() (PCD8544.orientation)
 #endif
 
-void PCD8544_drawLine(u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
-void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color);
-void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color);
-
-#ifdef _PCD8544_USE_RECT
-void PCD8544_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-#endif
-
-/*void PCD8544_fillScreen(u8 color);*/
-#ifdef _PCD8544_USE_INVERT
-//void PCD8544_invertDisplay(boolean i);
-#endif
-
-
-//u8 PCD8544_getOrientation();
 #ifdef  _PCD8544_USE_INVERT
 void PCD8544_invertDisplay(bool i);
 #endif
@@ -300,14 +286,6 @@ void PCD8544_printFloat(float number, u8 digits);
 #ifdef _PCD8544_USE_TEXT
 #define PCD8544_setTextWrap(w) PCD8544.wrap = (w)
 #endif 
-
-#ifdef _PCD8544_USE_ORIENTATION
-#define PCD8544_getOrientation() (PCD8544.orientation)
-#endif
-
-#ifdef  _PCD8544_USE_RECT
-#define PCD8544_fillScreen(color) PCD8544_fillRect(0, 0,PCD8544.screen.width,PCD8544..screen.height, (color))
-#endif
 
 #if (PCD8544_INTERFACE & PCD8544_SPISW)
     #if (PCD8544_INTERFACE & PCD8544_PORTB)

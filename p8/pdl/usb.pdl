@@ -1,4 +1,4 @@
-CDC.write CDCputs#include <__cdc.c>#define CDCWRITE
+CDC.write CDCwrite#include <__cdc.c>#define CDCWRITE
 CDC.print CDCprint#include <__cdc.c>#define CDCPRINT
 CDC.println CDCprintln#include <__cdc.c>#define CDCPRINTLN
 CDC.printNumber CDCprintNumber#include <__cdc.c>#define CDCPRINTNUMBER

@@ -61,7 +61,7 @@
 
 void setup()
 {
-    SSD1306.init();
+    SSD1306.init(3, 4);
     SSD1306.clearScreen();
     SSD1306.setFont(font6x8);
     SSD1306.setCursor(0, 4);

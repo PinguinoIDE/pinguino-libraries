@@ -19,16 +19,13 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-// some of this code was written by <cstone@pobox.com> originally; it is in the public domain.
+some of this code was written by <cstone@pobox.com> originally; it is in the public domain.
 */
 
-// #if ARDUINO >= 100
- // #include "Arduino.h"
-// #else
- // #include "WProgram.h"
-// #endif
+#ifndef __ST7565_H
+#define __ST7565_H
 
-#define swap(a, b) { uint8_t t = a; a = b; b = t; }
+#include <typedef.h>
 
 #define BLACK 1
 #define WHITE 0
@@ -75,74 +72,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define CMD_NOP  0xE3
 #define CMD_TEST  0xF0
 
-/* class ST7565 {
- public:
-  ST7565(int8_t SID, int8_t SCLK, int8_t A0, int8_t RST, int8_t CS) :sid(SID), sclk(SCLK), a0(A0), rst(RST), cs(CS) {}
-  ST7565(int8_t SID, int8_t SCLK, int8_t A0, int8_t RST) :sid(SID), sclk(SCLK), a0(A0), rst(RST), cs(-1) {}
+void ST7565_command(u8 c);
+void ST7565_data(u8 c);
+void ST7565_init(u8 SID, u8 SCLK, u8 A0, u8 RST, u8 CS);
+void ST7565_setBrightness(u8 val);
+void ST7565_clearDisplay(void);
+void ST7565_clear();
+void ST7565_refresh();
 
+static void updateBoundingBox(u8 xmin, u8 ymin, u8 xmax, u8 ymax);
+//u8 read_st7565_buffer(u8 pos);
 
-  void st7565_init(void);
-  void begin(uint8_t contrast);
-  void st7565_command(uint8_t c);
-  void st7565_data(uint8_t c);
-  void st7565_set_brightness(uint8_t val);
-  void clear_display(void);
-  void clear();
-  void display();
+void ST7565_setPixel(u8 x, u8 y, u8 color); 
+u8 ST7565_getPixel(u8 x, u8 y);
+void ST7565_fillCircle(u8 x0, u8 y0, u8 r, u8 color);
+void ST7565_drawCircle(u8 x0, u8 y0, u8 r, u8 color);
+void ST7565_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color);
+void ST7565_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color);
+void ST7565_drawLine(u8 x0, u8 y0, u8 x1, u8 y1, u8 color);
+void ST7565_drawChar(u8 x, u8 line, unsigned char c);
+void ST7565_drawString(u8 x, u8 line, unsigned char *c);
+void ST7565_drawString_P(u8 x, u8 line, const unsigned char *c);
 
-  void setpixel(uint8_t x, uint8_t y, uint8_t color);
-  uint8_t getpixel(uint8_t x, uint8_t y);
-  void fillcircle(uint8_t x0, uint8_t y0, uint8_t r, 
-		  uint8_t color);
-  void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, 
-		  uint8_t color);
-  void drawrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, 
-		uint8_t color);
-  void fillrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, 
-		uint8_t color);
-  void drawline(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, 
-		uint8_t color);
-  void drawchar(uint8_t x, uint8_t line, unsigned char c);
-  void drawstring(uint8_t x, uint8_t line, unsigned char *c);
-  void drawstring_P(uint8_t x, uint8_t line, const unsigned char *c);
+void ST7565_drawBitmap(u8 x, u8 y, const u8 *bitmap, u8 w, u8 h, u8 color);
+void ST7565_shiftOut(u8 dataPin, u8 clockPin, u8 bitOrder, u8 val);
 
-  void drawbitmap(uint8_t x, uint8_t y, 
-		  const uint8_t *bitmap, uint8_t w, uint8_t h,
-		  uint8_t color);
+void ST7565_my_setPixel(u8 x, u8 y, u8 color);
 
- private:
-  int8_t sid, sclk, a0, rst, cs;
-  void spiwrite(uint8_t c);
-
-  void my_setpixel(uint8_t x, uint8_t y, uint8_t color);
-
-  //uint8_t buffer[128*64/8]; 
-}; */
-uint8_t read_st7565_buffer(uint8_t pos);
-void glcd(int8_t SID, int8_t SCLK, int8_t A0, int8_t RST, int8_t CS);
-static void updateBoundingBox(uint8_t xmin, uint8_t ymin, uint8_t xmax, uint8_t ymax);
-void st7565_init(void);
-void begin(uint8_t contrast);
-void st7565_command(uint8_t c);
-void st7565_data(uint8_t c);
-void st7565_set_brightness(uint8_t val);
-void clear_display(void);
-void clear();
-void display();
-
-void setpixel(uint8_t x, uint8_t y, uint8_t color); 
-uint8_t getpixel(uint8_t x, uint8_t y);
-void fillcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color);
-void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color);
-void drawrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
-void fillrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
-void drawline(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color);
-void drawchar(uint8_t x, uint8_t line, unsigned char c);
-void drawstring(uint8_t x, uint8_t line, unsigned char *c);
-void drawstring_P(uint8_t x, uint8_t line, const unsigned char *c);
-
-void drawbitmap(uint8_t x, uint8_t y, const uint8_t *bitmap, uint8_t w, uint8_t h, uint8_t color);
-void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val);
-void spiwrite(uint8_t c);
-
-void my_setpixel(uint8_t x, uint8_t y, uint8_t color);
+#endif /* __ST7565_H */

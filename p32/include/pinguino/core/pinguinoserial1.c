@@ -40,6 +40,28 @@ void serial1init(u32 speed)
 	#endif
 }
 
+#ifdef SERIALPRINTLN
+void serial1println(u8 *string)
+{
+    SerialPrintln(UART1, string);
+}
+#endif
+
+#ifdef SERIALPRINTNUMBER
+void serial1printNumber(long value, u8 base)
+{
+    SerialPrintNumber(UART1, value, base);
+}
+#endif
+
+#ifdef SERIALPRINTFLOAT
+void serial1printFloat(float number, u8 digits)
+{
+    SerialPrintFloat(UART1, number, digits);
+}
+#endif
+
+#ifdef SERIALPRINTF
 void serial1printf(char *fmt, ...)		
 {
 	va_list args;
@@ -52,6 +74,7 @@ void serial1printf(char *fmt, ...)
 	#endif
 	va_end(args);
 }
+#endif /* SERIALPRINTF */
 
 /*******************************************************************************
 	And For Compatibility Reasons ....
@@ -59,6 +82,9 @@ void serial1printf(char *fmt, ...)
 	29-10-2011: fixed uncompatible arg. *s - Régis Blanchot
 *******************************************************************************/
 
+#ifdef SERIALPRINT
+
+#ifdef SERIALPRINTF
 void serial1print(char *fmt,...)
 {
 	//	unsigned char *s;
@@ -92,12 +118,15 @@ void serial1print(char *fmt,...)
 			break;
 	}
 }
-
-void serial1println(char *fmt,...)
+#else
+void serial1print(u8 * string)
 {
-	serial1printf(fmt);
-	serial1printf("\r\n");
+    SerialPrint(UART1, string);
 }
+#endif /* SERIALPRINTF */
+
+#endif /* SERIALPRINT */
+
 
 void serial1write(char c)
 {

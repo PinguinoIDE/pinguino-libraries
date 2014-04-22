@@ -23,6 +23,7 @@ void updateMillisReloadValue(void )   /* Call from System_setIntOsc() */
     _reload_val = 0xFFFF - System_getPeripheralFrequency() / 1000 ;
     INTCONbits.TMR0IE = 1;//INT_ENABLE;
 }
+
 void millis_init(void)
 {
 //    intUsed[INT_TMR0] = INT_USED;

@@ -21,17 +21,17 @@ u8	PrevSec = 0;
 void setup(void)
 {
 	Serial.begin(9600);
-	Serial.println("\r\n*  Pinguino DCF77 demo  *");
-	pinMode(12, OUTPUT);
+	Serial.println("*  Pinguino DCF77 demo  *");
+	pinMode(USERLED, OUTPUT);
 	DCF77.start(DCF77Pin);
 }
 
 void loop(void)
 {
 	if (digitalRead(DCF77Pin) == 1)
-		digitalWrite(12, HIGH);
+		digitalWrite(USERLED, HIGH);
 	else
-		digitalWrite(12, LOW);
+		digitalWrite(USERLED, LOW);
 
 	if (RTClock.seconds != PrevSec)
 	{

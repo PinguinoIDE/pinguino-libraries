@@ -2,6 +2,9 @@
  *    LedControl.cpp - A library for controling Leds with a MAX7219/MAX7221
  *    Copyright (c) 2007 Eberhard Fahle
  * 
+ *    Feb. 2014 - Regis Blanchot - adapted to Pinguino 
+ *    Feb. 2014 - Regis Blanchot - added scroll functions 
+ * 
  *    Permission is hereby granted, free of charge, to any person
  *    obtaining a copy of this software and associated documentation
  *    files (the "Software"), to deal in the Software without
@@ -33,8 +36,9 @@
 #include <ledcontrol.h>
 //#include <stdio.h>
 #include <string.h>
-#include <digitalw.c>
-#include <delay.c>
+#include <digitalw.c>       // digitalwrite
+#include <digitalp.c>       // pinmode
+#include <delayms.c>
 
 //the opcodes for the MAX7221 and MAX7219
 #define OP_NOOP   0
@@ -315,7 +319,7 @@ void LedControl_scroll(const char * displayString)
             // matrix = current char shifted by offset
 
             ascii = displayString[curchar]-32;
-            row[r] |= ( alphabetBitmap[ascii][r] >> offset );
+            row[r] |= ( font[ascii][r] >> offset );
 
             // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
             // afficher dans l'octet suivant
@@ -325,7 +329,7 @@ void LedControl_scroll(const char * displayString)
                 ascii = displayString[curchar+1]-32;
                 if (ascii >= 0x20 && ascii <= 0x7F)
                 {
-                    nextchar = alphabetBitmap[ascii][r];
+                    nextchar = font[ascii][r];
                     row[r] |=  nextchar << (8-offset);
                 }
             }
@@ -374,7 +378,7 @@ void LedControl_displayChar(u8 matrix, u8 charIndex)
     if (charIndex >= 0x20 && charIndex <= 0x7F)
     {
         for (i=0; i<8;i++)
-            LedControl_setColumn(matrix, 7-i, alphabetBitmap[charIndex-32][i]);
+            LedControl_setColumn(matrix, 7-i, font[charIndex-32][i]);
     }
 }
 #endif

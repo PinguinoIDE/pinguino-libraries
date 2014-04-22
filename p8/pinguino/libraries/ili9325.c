@@ -33,7 +33,7 @@
 #ifndef DISPLAY_FONT
 #include <fonts/font12x8.h>         // default font
 #endif
-#include <delay.c>
+#include <delayms.c>
 #include <graphics.c>
 #include <digitalw.c>
 #include <stdio.c>

@@ -21,18 +21,26 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-// some of this code was written by <cstone@pobox.com> originally; it is in the public domain.
+Some of this code was written by <cstone@pobox.com> originally; it is in the public domain.
 */
 
-//#include <Wire.h>
-//#include <avr/pgmspace.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <ST7565.h>
-#include <string.h>
+/**
+ *  CHANGELOG :
+ *      RB - Mar. 2014 - Renamed all function names to ST7565_xxxx()
+ *  
+ *  TODO :
+ *      Add print, printf, printNumber, printFloat, setFont, ...
+ *      see : SSD1306, PCD8544, lcdlib, ...
+ **/
 
-#include <digitalw.c>
-#include <delay.c>
+#include <ST7565.h>
+#include <stdlib.h>
+//#include <stdint.h>
+#include <string.h>         // memset
+#include <typedef.h>        // u8
+#include <macro.h>          // swap
+#include <digitalw.c>       // pinmode, digitalwrite
+#include <delayms.c>        // Delayms
 
 #define PROGMEM /* empty */
 #define pgm_read_byte(x) (*((char *)x))
@@ -42,14 +50,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define  MSBFIRST   1
 #define  abs(x) (x>=0)?x:-x
 
-uint8_t is_reversed = 0;
-int8_t sid, sclk, a0, rst, cs;
+u8 is_reversed = 0;
+u8 sid, sclk, dc, rst, cs;
 
 // a handy reference to where the pages are on the screen
-const uint8_t pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
+const u8 pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
 
 // a 5x7 font table.
-const unsigned char font[1275] = { 
+const u8 font[1275] = { 
   0x0, 0x0, 0x0, 0x0, 0x0,       // Ascii 0
   0x7C, 0xDA, 0xF2, 0xDA, 0x7C,  //ASC(01)
   0x7C, 0xD6, 0xF2, 0xD6, 0x7C,  //ASC(02)
@@ -336,7 +344,7 @@ const unsigned char font[1275] = {
 //
 // Be careful with this modification, it's better to make it temporary only for this library.
 
-uint8_t st7565_buffer[1024] = { 
+u8 ST7565_buffer[1024] = { 
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 
@@ -416,19 +424,10 @@ uint8_t st7565_buffer[1024] = {
 #define enablePartialUpdate
 
 #ifdef enablePartialUpdate
-static uint8_t xUpdateMin, xUpdateMax, yUpdateMin, yUpdateMax;
+static u8 xUpdateMin, xUpdateMax, yUpdateMin, yUpdateMax;
 #endif
 
-void glcd(int8_t SID, int8_t SCLK, int8_t A0, int8_t RST, int8_t CS)
-{
-	sid = SID;
-	sclk = SCLK;
-	a0 = A0;
-	rst = RST;
-	cs = CS;
-}
-
-static void updateBoundingBox(uint8_t xmin, uint8_t ymin, uint8_t xmax, uint8_t ymax) {
+static void updateBoundingBox(u8 xmin, u8 ymin, u8 xmax, u8 ymax) {
 #ifdef enablePartialUpdate
   if (xmin < xUpdateMin) xUpdateMin = xmin;
   if (xmax > xUpdateMax) xUpdateMax = xmax;
@@ -437,16 +436,16 @@ static void updateBoundingBox(uint8_t xmin, uint8_t ymin, uint8_t xmax, uint8_t 
 #endif
 }
 
-void drawbitmap(uint8_t x, uint8_t y, const uint8_t *bitmap, uint8_t w, uint8_t h,uint8_t color) 
+void ST7565_drawBitmap(u8 x, u8 y, const u8 *bitmap, u8 w, u8 h,u8 color) 
 {
-	uint8_t j, i;
+	u8 j, i;
   for (j=0; j<h; j++) 
   {
     for (i=0; i<w; i++ ) 
 	{
       if (pgm_read_byte(bitmap + i + (j/8)*w) & _BV(j%8)) 
 	  {
-		my_setpixel(x+i, y+j, color);
+		ST7565_my_setPixel(x+i, y+j, color);
       }
     }
   }
@@ -454,7 +453,7 @@ void drawbitmap(uint8_t x, uint8_t y, const uint8_t *bitmap, uint8_t w, uint8_t 
   updateBoundingBox(x, y, x+w, y+h);
 }
 
-void drawstring(uint8_t x, uint8_t line, unsigned char *c) 
+void ST7565_drawString(u8 x, u8 line, u8 *c) 
 {
   while (c[0] != 0) 
   {
@@ -466,7 +465,7 @@ void drawstring(uint8_t x, uint8_t line, unsigned char *c)
 	}
 	else if((c[0]>127)&&(c[1]>127))
 	{
-    	drawchar(x, line, c[1]+c[0]);
+    	ST7565_drawChar(x, line, c[1]+c[0]);
     	x += 6; // 6 pixels wide
     	if (x + 6 >= LCDWIDTH)
 		{
@@ -477,7 +476,7 @@ void drawstring(uint8_t x, uint8_t line, unsigned char *c)
 	}
 	else
 	{
-		drawchar(x, line, c[0]);
+		ST7565_drawChar(x, line, c[0]);
     	x += 6; // 6 pixels wide
     	if (x + 6 >= LCDWIDTH)
 		{
@@ -492,15 +491,15 @@ void drawstring(uint8_t x, uint8_t line, unsigned char *c)
 }
 
 
-void drawstring_P(uint8_t x, uint8_t line, const unsigned char *str) 
+void ST7565_drawString_P(u8 x, u8 line, const u8 *str) 
 {
-	unsigned char c;
+	u8 c;
   while (1) 
   {
-	c = (unsigned char)pgm_read_byte(str++);
+	c = (u8)pgm_read_byte(str++);
     if (! c)
       return;
-    drawchar(x, line, c);
+    ST7565_drawChar(x, line, c);
     x += 6; // 6 pixels wide
     if (x + 6 >= LCDWIDTH) {
       x = 0;    // ran out of this line
@@ -511,12 +510,12 @@ void drawstring_P(uint8_t x, uint8_t line, const unsigned char *str)
   }
 }
 
-void drawchar(uint8_t x, uint8_t line, unsigned char c) 
+void ST7565_drawChar(u8 x, u8 line, u8 c) 
 {
-	uint8_t i;
+	u8 i;
   for (i =0; i<5; i++ ) 
   {
-    st7565_buffer[x + (line*128) ] = font[(c*5)+i];
+    ST7565_buffer[x + (line*128) ] = font[(c*5)+i];
     x++;
   }
 
@@ -525,10 +524,10 @@ void drawchar(uint8_t x, uint8_t line, unsigned char c)
 
 
 // bresenham's algorithm - thx wikpedia
-void drawline(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color) 
+void ST7565_drawLine(u8 x0, u8 y0, u8 x1, u8 y1, u8 color) 
 {
-  uint8_t dx, dy, steep = abs(y1 - y0) > abs(x1 - x0);
-  int8_t err, ystep;
+  u8 dx, dy, steep = abs(y1 - y0) > abs(x1 - x0);
+  u8 err, ystep;
   if (steep) 
   {
     swap(x0, y0);
@@ -559,9 +558,9 @@ void drawline(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color)
   {
     if (steep) 
 	{
-      my_setpixel(y0, x0, color);
+      ST7565_my_setPixel(y0, x0, color);
     } else {
-      my_setpixel(x0, y0, color);
+      ST7565_my_setPixel(x0, y0, color);
     }
     err -= dy;
     if (err < 0) 
@@ -573,15 +572,15 @@ void drawline(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color)
 }
 
 // filled rectangle
-void fillrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) 
+void ST7565_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color) 
 {
-	uint8_t i, j;
+	u8 i, j;
   // stupidest version - just pixels - but fast with internal buffer!
   for (i=x; i<x+w; i++) 
   {
     for (j=y; j<y+h; j++) 
 	{
-      my_setpixel(i, j, color);
+      ST7565_my_setPixel(i, j, color);
     }
   }
 
@@ -589,28 +588,28 @@ void fillrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color)
 }
 
 // draw a rectangle
-void drawrect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) 
+void ST7565_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color) 
 {
-	uint8_t i;
+	u8 i;
   // stupidest version - just pixels - but fast with internal buffer!
   for (i=x; i<x+w; i++) 
   {
-    my_setpixel(i, y, color);
-    my_setpixel(i, y+h-1, color);
+    ST7565_my_setPixel(i, y, color);
+    ST7565_my_setPixel(i, y+h-1, color);
   }
   for (i=y; i<y+h; i++) 
   {
-    my_setpixel(x, i, color);
-    my_setpixel(x+w-1, i, color);
+    ST7565_my_setPixel(x, i, color);
+    ST7565_my_setPixel(x+w-1, i, color);
   } 
 
   updateBoundingBox(x, y, x+w, y+h);
 }
 
 // draw a circle outline
-void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color) 
+void ST7565_drawCircle(u8 x0, u8 y0, u8 r, u8 color) 
 {
-  int8_t f, ddF_x, ddF_y, x, y;
+  u8 f, ddF_x, ddF_y, x, y;
   
   updateBoundingBox(x0-r, y0-r, x0+r, y0+r);
 
@@ -620,10 +619,10 @@ void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color)
   x = 0;
   y = r;
 
-  my_setpixel(x0, y0+r, color);
-  my_setpixel(x0, y0-r, color);
-  my_setpixel(x0+r, y0, color);
-  my_setpixel(x0-r, y0, color);
+  ST7565_my_setPixel(x0, y0+r, color);
+  ST7565_my_setPixel(x0, y0-r, color);
+  ST7565_my_setPixel(x0+r, y0, color);
+  ST7565_my_setPixel(x0-r, y0, color);
 
   while (x<y) 
   {
@@ -636,15 +635,15 @@ void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color)
     ddF_x += 2;
     f += ddF_x;
   
-    my_setpixel(x0 + x, y0 + y, color);
-    my_setpixel(x0 - x, y0 + y, color);
-    my_setpixel(x0 + x, y0 - y, color);
-    my_setpixel(x0 - x, y0 - y, color);
+    ST7565_my_setPixel(x0 + x, y0 + y, color);
+    ST7565_my_setPixel(x0 - x, y0 + y, color);
+    ST7565_my_setPixel(x0 + x, y0 - y, color);
+    ST7565_my_setPixel(x0 - x, y0 - y, color);
     
-    my_setpixel(x0 + y, y0 + x, color);
-    my_setpixel(x0 - y, y0 + x, color);
-    my_setpixel(x0 + y, y0 - x, color);
-    my_setpixel(x0 - y, y0 - x, color);
+    ST7565_my_setPixel(x0 + y, y0 + x, color);
+    ST7565_my_setPixel(x0 - y, y0 + x, color);
+    ST7565_my_setPixel(x0 + y, y0 - x, color);
+    ST7565_my_setPixel(x0 - y, y0 - x, color);
     
   }
 
@@ -652,10 +651,10 @@ void drawcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color)
 
 }
 
-void fillcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color) 
+void ST7565_fillCircle(u8 x0, u8 y0, u8 r, u8 color) 
 {
-  int8_t f, ddF_x, ddF_y, x, y;
-  uint8_t i;
+  u8 f, ddF_x, ddF_y, x, y;
+  u8 i;
   updateBoundingBox(x0-r, y0-r, x0+r, y0+r);
 
   f = 1 - r;
@@ -666,7 +665,7 @@ void fillcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color)
 
   for (i=y0-r; i<=y0+r; i++) 
   {
-    my_setpixel(x0, i, color);
+    ST7565_my_setPixel(x0, i, color);
   }
 
   while (x<y) 
@@ -683,68 +682,66 @@ void fillcircle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color)
   
     for (i=y0-y; i<=y0+y; i++) 
 	{
-      my_setpixel(x0+x, i, color);
-      my_setpixel(x0-x, i, color);
+      ST7565_my_setPixel(x0+x, i, color);
+      ST7565_my_setPixel(x0-x, i, color);
     } 
     for (i=y0-x; i<=y0+x; i++) 
 	{
-      my_setpixel(x0+y, i, color);
-      my_setpixel(x0-y, i, color);
+      ST7565_my_setPixel(x0+y, i, color);
+      ST7565_my_setPixel(x0-y, i, color);
     }    
   }
 }
 
-void my_setpixel(uint8_t x, uint8_t y, uint8_t color) 
+void ST7565_my_setPixel(u8 x, u8 y, u8 color) 
 {
   if ((x >= LCDWIDTH) || (y >= LCDHEIGHT))
     return;
 
   // x is which column
   if (color) 
-    st7565_buffer[x+ (y/8)*128] |= _BV(7-(y%8));  
+    ST7565_buffer[x+ (y/8)*128] |= _BV(7-(y%8));  
   else
-    st7565_buffer[x+ (y/8)*128] &= ~_BV(7-(y%8)); 
+    ST7565_buffer[x+ (y/8)*128] &= ~_BV(7-(y%8)); 
 }
 
 // the most basic function, set a single pixel
-void setpixel(uint8_t x, uint8_t y, uint8_t color) 
+void ST7565_setPixel(u8 x, u8 y, u8 color) 
 {
   if ((x >= LCDWIDTH) || (y >= LCDHEIGHT))
     return;
 
   // x is which column
   if (color) 
-    st7565_buffer[x+ (y/8)*128] |= _BV(7-(y%8));  
+    ST7565_buffer[x+ (y/8)*128] |= _BV(7-(y%8));  
   else
-    st7565_buffer[x+ (y/8)*128] &= ~_BV(7-(y%8)); 
+    ST7565_buffer[x+ (y/8)*128] &= ~_BV(7-(y%8)); 
 
   updateBoundingBox(x,y,x,y);
 }
 
 
 // the most basic function, get a single pixel
-uint8_t getpixel(uint8_t x, uint8_t y) 
+u8 ST7565_getPixel(u8 x, u8 y) 
 {
   if ((x >= LCDWIDTH) || (y >= LCDHEIGHT))
     return 0;
 
-  return (st7565_buffer[x+ (y/8)*128] >> (7-(y%8))) & 0x1;  
+  return (ST7565_buffer[x+ (y/8)*128] >> (7-(y%8))) & 0x1;  
 }
 
-void begin(uint8_t contrast) 
+void ST7565_init(u8 SID, u8 SCLK, u8 DC, u8 RST, u8 CS) 
 {
-  st7565_init();
-  st7565_command(CMD_DISPLAY_ON);
-  st7565_command(CMD_SET_ALLPTS_NORMAL);
-  st7565_set_brightness(contrast);
-}
+    sid = SID;
+    sclk = SCLK;
+    dc = DC;
+    rst = RST;
+    cs = CS;
 
-void st7565_init(void) 
-{
   // set pin directions
   pinmode(sid, OUTPUT);
   pinmode(sclk, OUTPUT);
-  pinmode(a0, OUTPUT);
+  pinmode(dc, OUTPUT);
   pinmode(rst, OUTPUT);
   pinmode(cs, OUTPUT);
 
@@ -757,31 +754,31 @@ void st7565_init(void)
   digitalwrite(rst, HIGH);
 
   // LCD bias select
-  st7565_command(CMD_SET_BIAS_7);
+  ST7565_command(CMD_SET_BIAS_7);
   // ADC select
-  st7565_command(CMD_SET_ADC_NORMAL);
+  ST7565_command(CMD_SET_ADC_NORMAL);
   // SHL select
-  st7565_command(CMD_SET_COM_NORMAL);
+  ST7565_command(CMD_SET_COM_NORMAL);
   // Initial display line
-  st7565_command(CMD_SET_DISP_START_LINE);
+  ST7565_command(CMD_SET_DISP_START_LINE);
 
   // turn on voltage converter (VC=1, VR=0, VF=0)
-  st7565_command(CMD_SET_POWER_CONTROL | 0x4);
+  ST7565_command(CMD_SET_POWER_CONTROL | 0x4);
   // wait for 50% rising
   Delayms(50);
 
   // turn on voltage regulator (VC=1, VR=1, VF=0)
-  st7565_command(CMD_SET_POWER_CONTROL | 0x6);
+  ST7565_command(CMD_SET_POWER_CONTROL | 0x6);
   // wait >=50ms
   Delayms(50);
 
   // turn on voltage follower (VC=1, VR=1, VF=1)
-  st7565_command(CMD_SET_POWER_CONTROL | 0x7);
+  ST7565_command(CMD_SET_POWER_CONTROL | 0x7);
   // wait
   Delayms(10);
 
   // set lcd operating voltage (regulator resistor, ref voltage resistor)
-  st7565_command(CMD_SET_RESISTOR_RATIO | 0x6);
+  ST7565_command(CMD_SET_RESISTOR_RATIO | 0x6);
 
   // initial display line
   // set page address
@@ -791,11 +788,15 @@ void st7565_init(void)
   // set up a bounding box for screen updates
 
   updateBoundingBox(0, 0, LCDWIDTH-1, LCDHEIGHT-1);
+
+  ST7565_command(CMD_DISPLAY_ON);
+  ST7565_command(CMD_SET_ALLPTS_NORMAL);
+  ST7565_setBrightness(0x18);
 }
 
-void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
+void ST7565_shiftOut(u8 dataPin, u8 clockPin, u8 bitOrder, u8 val)
 {
-        uint8_t i;
+        u8 i;
         for (i = 0; i < 8; i++)  {
                 if (bitOrder == LSBFIRST)
                         digitalwrite(dataPin, !!(val & (1 << i)));
@@ -807,105 +808,28 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
         }
 }
 
-void spiwrite(uint8_t c) 
+void ST7565_command(u8 c) 
 {
-  shiftOut(sid, sclk, MSBFIRST, c);
-  /*
-  int8_t i;
-  for (i=7; i>=0; i--) {
-    SCLK_PORT &= ~_BV(SCLK);
-    if (c & _BV(i))
-      SID_PORT |= _BV(SID);
-    else
-      SID_PORT &= ~_BV(SID);
-    SCLK_PORT |= _BV(SCLK);
-  }
-  */
-
-  /*
-  // loop unwrapped! too fast doesnt work :(
- 
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(7))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(6))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
- 
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(5))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(4))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(3))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(2))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(1))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-
-  SCLK_PORT &= ~_BV(SCLK);
-  if (c & _BV(0))
-    SID_PORT |= _BV(SID);
-  else
-    SID_PORT &= ~_BV(SID);
-  SCLK_PORT |= _BV(SCLK);
-*/
-
-}
-void st7565_command(uint8_t c) 
-{
-  digitalwrite(a0, LOW);
-  spiwrite(c);
+  digitalwrite(dc, LOW);
+  ST7565_shiftOut(sid, sclk, MSBFIRST, c);
 }
 
-void st7565_data(uint8_t c) 
+void ST7565_data(u8 c) 
 {
-  digitalwrite(a0, HIGH);
-
-  spiwrite(c);
+  digitalwrite(dc, HIGH);
+  ST7565_shiftOut(sid, sclk, MSBFIRST, c);
 }
-void st7565_set_brightness(uint8_t val) 
+
+void ST7565_setBrightness(u8 val) 
 {
-    st7565_command(CMD_SET_VOLUME_FIRST);
-    st7565_command(CMD_SET_VOLUME_SECOND | (val & 0x3f));
+    ST7565_command(CMD_SET_VOLUME_FIRST);
+    ST7565_command(CMD_SET_VOLUME_SECOND | (val & 0x3f));
 }
 
 
-void display(void) 
+void ST7565_refresh(void) 
 {
-  uint8_t col, maxcol, p;
+  u8 col, maxcol, p;
 
   /*
   Serial.print("Refresh ("); Serial.print(xUpdateMin, DEC); 
@@ -930,7 +854,7 @@ void display(void)
     }
 #endif
 
-    st7565_command(CMD_SET_PAGE | pagemap[p]);
+    ST7565_command(CMD_SET_PAGE | pagemap[p]);
 
 
 #ifdef enablePartialUpdate
@@ -942,14 +866,14 @@ void display(void)
     maxcol = LCDWIDTH-1;
 #endif
 
-    st7565_command(CMD_SET_COLUMN_LOWER | ((col+ST7565_STARTBYTES) & 0xf));
-    st7565_command(CMD_SET_COLUMN_UPPER | (((col+ST7565_STARTBYTES) >> 4) & 0x0F));
-    st7565_command(CMD_RMW);
+    ST7565_command(CMD_SET_COLUMN_LOWER | ((col+ST7565_STARTBYTES) & 0xf));
+    ST7565_command(CMD_SET_COLUMN_UPPER | (((col+ST7565_STARTBYTES) >> 4) & 0x0F));
+    ST7565_command(CMD_RMW);
     
     for(; col <= maxcol; col++) {
       //uart_putw_dec(col);
       //uart_putchar(' ');
-      st7565_data(st7565_buffer[(128*p)+col]);
+      ST7565_data(ST7565_buffer[(128*p)+col]);
     }
   }
 
@@ -962,17 +886,17 @@ void display(void)
 }
 
 // clear everything
-void clear(void) 
+void ST7565_clear(void) 
 {
-  memset(st7565_buffer, 0, 1024);
+  memset(ST7565_buffer, 0, 1024);
   updateBoundingBox(0, 0, LCDWIDTH-1, LCDHEIGHT-1);
 }
 
 
 // this doesnt touch the buffer, just clears the display RAM - might be handy
-void clear_display(void) 
+void ST7565_clearDisplay(void) 
 {
-  uint8_t p, c;
+  u8 p, c;
   
   for(p = 0; p < 8; p++) {
     /*
@@ -981,13 +905,13 @@ void clear_display(void)
       putstring_nl("");
     */
 
-    st7565_command(CMD_SET_PAGE | p);
+    ST7565_command(CMD_SET_PAGE | p);
     for(c = 0; c < 129; c++) {
       //uart_putw_dec(c);
       //uart_putchar(' ');
-      st7565_command(CMD_SET_COLUMN_LOWER | (c & 0xf));
-      st7565_command(CMD_SET_COLUMN_UPPER | ((c >> 4) & 0xf));
-      st7565_data(0x0);
+      ST7565_command(CMD_SET_COLUMN_LOWER | (c & 0xf));
+      ST7565_command(CMD_SET_COLUMN_UPPER | ((c >> 4) & 0xf));
+      ST7565_data(0x0);
     }     
   }
 }

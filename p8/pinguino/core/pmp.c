@@ -47,7 +47,7 @@
 #include <typedef.h>
 #include <pin.h>
 #include <macro.h>
-#include <delay.c>
+#include <delayms.c>
 //#include <interrupt.h>
 //#include <interrupt.c>
 #include <pmp.h>
@@ -244,7 +244,7 @@ void PMP_init()
     // action is to be taken.
     // In Master mode 2, read and write strobes (PMRD and PMWR)
     // are supplied on separate pins.
-    PMMODEHbits.MODE = _pmp_mode;
+    PMMODEH |= _pmp_mode;
 
     // Select 4 wait cycles before the PMRD/PMWR strobe
     PMMODELbits.WAITB = _pmp_waitB;

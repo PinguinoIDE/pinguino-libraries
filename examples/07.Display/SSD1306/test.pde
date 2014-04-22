@@ -65,7 +65,7 @@ u16 x, y, xo, yo;
 
 void setup()
 {
-    SSD1306.init();  	// init. LCD
+    SSD1306.init(3, 4);  	// init. LCD
     SSD1306.clearScreen();
     SSD1306.setFont(font6x8);
     

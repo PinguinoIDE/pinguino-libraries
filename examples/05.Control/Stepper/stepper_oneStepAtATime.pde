@@ -36,7 +36,7 @@ void loop()
 	Serial.printf("steps: %d\r\n", stepCount);
 	/*
 	Serial.print("steps:" );
-	Serial.println(stepCount);
+	Serial.printNumber(stepCount, DEC);
 	*/
 	stepCount++;
 	delay(500);

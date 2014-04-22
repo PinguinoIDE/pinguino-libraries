@@ -1,9 +1,8 @@
-#include <ST7565.h>
-/*ST7565 library for Pinguino/Arduino, example code with some explanations.
-By Samuel Ureta.
-You can freely distribute, copy, or modify this code.
-  */
-
+/*
+    ST7565 library for Pinguino/Arduino, example code with some explanations.
+    By Samuel Ureta.
+    You can freely distribute, copy, or modify this code.
+*/
 
 // This library allows to control a LCD display with ST7565 interface. 
 // We need 5 control pins and maybe some more for controlling LED backlight.
@@ -42,62 +41,59 @@ int8_t SID = 9, SCLK = 8, RS = 7, RST = 6, CS = 5;
 
 void setup()
 {
-    // First, we have to call this function: "glcd(PinSID, PinSCLK, PinA0orRS, PinRST, PinCS);"
-    glcd(SID, SCLK, RS, RST, CS); 
-    // Now we initialize the LCD with this function, the parameter defines contrast (0x00 to 0xFF). 
-    // Good value = 0x18
-    glcd.begin(0x18);
-    glcd.clear(); // LCD buffer starts being filled with Adafruit logo. We use this function to clear the screen.
-    glcd.display(); // We call this function every time we make a change on the buffer, 
+    // Init. the display
+    ST7565.init(SID, SCLK, RS, RST, CS); 
+    ST7565.clear(); // LCD buffer starts being filled with Adafruit logo. We use this function to clear the screen.
+    ST7565.refresh(); // We call this function every time we make a change on the buffer, 
                    // to actually reflect that change on the screen.
 
-//  To draw a single pixel, we use: glcd.setpixel( x, y, color); The color can be BLACK o WHITE.
-//  glcd.setpixel(10, 10, BLACK);
-//  glcd.display();
+//  To draw a single pixel, we use: ST7565setpixel( x, y, color); The color can be BLACK o WHITE.
+//  ST7565.setPixel(10, 10, BLACK);
+//  ST7565.refresh();
 
   
-//  To draw a circle, we use: glcd.fillcircle( x, y, radio, color); 
+//  To draw a circle, we use: ST7565fillcircle( x, y, radio, color); 
 //  Coordinates are not the center, but the top-left pixel of a square containing the circle.
-//  glcd.fillcircle(32, 32, 10, BLACK);
-//  glcd.display();
+//  ST7565.fillCircle(32, 32, 10, BLACK);
+//  ST7565.refresh();
 
 
-//  To write a single letter, we use: glcd.drawchar(x, line, letter between ' and ')
+//  To write a single letter, we use: ST7565drawchar(x, line, letter between ' and ')
 //  We have VERTICALSIZEOFSCREEN/8 horizontal lines to write, starting from 0.
 //  It starts to write on the x pixel of the chosen line, x>=0.
-//  glcd.drawchar(0, 1, 'a');
-//  glcd.display();
+//  ST7565.drawChar(0, 1, 'a');
+//  ST7565.refresh();
 
 
-//  To write a sentence, we use glcd.drawstring(x, line, sentence between " and ").
+//  To write a sentence, we use ST7565drawstring(x, line, sentence between " and ").
 //  We have VERTICALSIZEOFSCREEN/8 horizontal lines to write, starting from 0.
 //  It starts to write on the x pixel of the chosen line, x>=0.
-//  glcd.drawstring(0, 0, "Hello world.");
-//  glcd.display();
+//  ST7565.drawString(0, 0, "Hello world.");
+//  ST7565.refresh();
 
 
-//  To draw a straight line from (x0,y0) to (x1,y1) we use: glcd.drawline(x0, y0, x1, y1, color);
+//  To draw a straight line from (x0,y0) to (x1,y1) we use: ST7565drawline(x0, y0, x1, y1, color);
 //  It can be used to draw a line from right to left or from botton to top, no problems there.
-//  glcd.drawline(0, 0, 127, 63, BLACK);
-//  glcd.display();
+//  ST7565.drawLine(0, 0, 127, 63, BLACK);
+//  ST7565.refresh();
 
 
 //  To draw a rectangle with no fill which top-left corner were (x0,y0) and which has w of width and h of height,
-//  we use glcd.drawrect(x0, y0, w, h, color).
-//  glcd.drawrect(0, 0, 127, 63, BLACK);
-//  glcd.display();
+//  we use ST7565drawrect(x0, y0, w, h, color).
+//  ST7565.drawRect(0, 0, 127, 63, BLACK);
+//  ST7565.refresh();
 
 
 //  To draw a filled rectangle which top-left corner were (x0,y0) and which has w of width and h of height,
-//  we use glcd.fillrect(x0, y0, w, h, BLACK);
-//  glcd.fillrect(0, 0, 127, 63, BLACK);
-//  glcd.display();
+//  we use ST7565fillrect(x0, y0, w, h, BLACK);
+//  ST7565.fillRect(0, 0, 127, 63, BLACK);
+//  ST7565.refresh();
 
 
 // To draw a bitmap defined on the top of the code starting from point (x,y) to bottom-right, 
-// we use the function glcd.drawbitmap(x, y, picture, pictureheight, picturewidth, color);
-//  glcd.drawbitmap(0, 0, dibujo, ALTURABITMAP, ANCHURABITMAP, BLACK);
-//  glcd.display();
+// we use the function ST7565drawbitmap(x, y, picture, pictureheight, picturewidth, color);
+//  ST7565.drawBitmap(0, 0, dibujo, ALTURABITMAP, ANCHURABITMAP, BLACK);
+//  ST7565.refresh();
 }
 
 void loop()

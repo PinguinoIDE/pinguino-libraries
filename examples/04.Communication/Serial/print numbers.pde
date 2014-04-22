@@ -14,41 +14,41 @@ void loop()
 {
 	number=3200;
 	// Arduino or Pinguino
-	Serial.printf("Decimal 3200=");
-	Serial.print(number,DEC);
-	Serial.printf("\n\r");
+	Serial.print("Decimal 3200=");
+	Serial.printNumber(number,DEC);
+	Serial.println("");
 	// Only Pinguino
 	Serial.printf("Decimal 3200=%d\n\r", number);
 
 	number=253;
 	// Arduino or Pinguino
-	Serial.printf("Hexadecimal 253=");
-	Serial.print(number,HEX);
-	Serial.printf("\n\r");
+	Serial.print("Hexadecimal 253=");
+	Serial.printNumber(number,HEX);
+	Serial.println("");
 	// Only Pinguino
 	Serial.printf("Hexadecimal 253=%x\n\r", number);
 
 	number=156;
 	// Arduino or Pinguino
-	Serial.printf("Binary 156=");
-	Serial.print(number,BIN);
-	Serial.printf("\n\r");
+	Serial.print("Binary 156=");
+	Serial.printNumber(number,BIN);
+	Serial.println("\n\r");
 	// Only Pinguino
 	Serial.printf("Binary 156=%b\n\r", number);
 
 	number=236;
 	// Arduino or Pinguino
-	Serial.printf("Octal 236=");
-	Serial.print(number,OCT);
-	Serial.printf("\n\r");
+	Serial.print("Octal 236=");
+	Serial.printNumber(number,OCT);
+	Serial.println("\n\r");
 	// Only Pinguino
 	Serial.printf("Octal 236=%o\n\r", number);
 
 	number=65;
 	// Arduino or Pinguino
-	Serial.printf("Byte 65=");
-	Serial.print(number,BYTE);
-	Serial.printf("\n\r");
+	Serial.print("Byte 65=");
+	Serial.printNumber(number,BYTE);
+	Serial.println("\n\r");
 	// Only Pinguino
 	Serial.printf("Byte 65=%d\n\r", number);
  

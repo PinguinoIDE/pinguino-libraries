@@ -1,21 +1,23 @@
 /*	----------------------------------------------------------------------------
-	FILE:			i2cslave.c
-	PROJECT:		pinguino
-	PURPOSE:		Include functions to handle I2C communication by Slave
-	PROGRAMMER:      A. GENTRIC		
-	FIRST RELEASE:	abr. 2013
-	LAST RELEASE:	
-	----------------------------------------------------------------------------
+    FILE:           i2cslave.c
+    PROJECT:        pinguino
+    PURPOSE:        Include functions to handle I2C communication by Slave
+    PROGRAMMER:     A. GENTRIC		
+    FIRST RELEASE:  apr. 2013
+    LAST RELEASE:
+    ----------------------------------------------------------------------------
 
-Adapted from Sebastien Lelong, Joep Suijs, Albert Faber's programs
+    Adapted from Sebastien Lelong, Joep Suijs, Albert Faber's programs
 
-addresses coded with 10-bits are not allowed
-very important : interrupts (global, peripherals and i2c) are enable
-	---------------------------------------------------------------------------- */
+    10-bit addresses are not allowed
+    very important : interrupts (global, peripherals and i2c) are enable
+    ---------------------------------------------------------------------------- */
+
 #define I2C_BUFFER_SIZE 32
 #define LA7 LATBbits.LATB7
+
 #include <delay.h>
-#include <serial.c>
+//#include <serial.c>
 
 
 u8  i2c_datapresent;   // datapresent flag
@@ -31,7 +33,7 @@ u8 i;
    SSPCON1 = 0b00110110;
    SSPCON1 = SSPCON1 | 0b00001000;   // enable start/stop interrupts
     // I2C slave hardware
-	// This address must not be one bit left-shifted when used for R/W operations
+    // This address must not be one bit left-shifted when used for R/W operations
     SSPADD = height_bits_icaddress;
 
 
@@ -44,12 +46,12 @@ u8 i;
     PIE1bits.SSPIE = 1;
     INTCONbits.GIE = 1;
     INTCONbits.PEIE = 1;
-	
-	_i2c_rxBufferIndex = 0;
-	_i2c_txBufferIndex = 0;
-	_i2c_rxBufferLength = 0;
-	i2c_datapresent=0; //received data
- 	_i2c_txBufferLength = 0;
+    
+    _i2c_rxBufferIndex = 0;
+    _i2c_txBufferIndex = 0;
+    _i2c_rxBufferLength = 0;
+    i2c_datapresent=0; //received data
+    _i2c_txBufferLength = 0;
    for (i=0;i< _I2CBUFFERLENGTH_;i++) {_i2c_rxBuffer[i]=0; _i2c_txBuffer[i]=0;}
 }
 

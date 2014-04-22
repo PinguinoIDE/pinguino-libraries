@@ -74,11 +74,10 @@ void loop()
   inches = microsecondsToInches(duration);
   cm = microsecondsToCentimeters(duration);
   
-  Serial.print(inches,DEC);
-  Serial.printf("in, ");
-  Serial.print(cm,DEC);
-  Serial.printf("cm");
-  Serial.printf("\r\n");
+  Serial.printNumber(inches,DEC);
+  Serial.print("in, ");
+  Serial.printNumber(cm,DEC);
+  Serial.print("cm\r\n");
   
   delay(100);
 }

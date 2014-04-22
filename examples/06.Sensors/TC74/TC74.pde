@@ -34,7 +34,7 @@ char temperature[] = " 000  C";
 
 void setup()
 {
-    pinMode(12, OUTPUT);                // Pinguino 26j50 build-in led is on pin 12
+    pinMode(USERLED, OUTPUT);           // Pinguino build-in led
     I2C.master(I2C_100KHZ);             // or I2C.master(100);
     lcdi2c.init(16, 2, LCDI2C);         // display is 2x16
     lcdi2c.backlight();                 // turns backlight on
@@ -50,7 +50,7 @@ void setup()
 
 void loop()
 {
-    digitalWrite(12, 1);                // Led on
+    digitalWrite(USERLED, 1);                // Led on
     I2C.start();
     if (I2C.write((TC74A3<<1)&0xFE))    // Address + Write bit
     {
@@ -101,6 +101,6 @@ void loop()
     }
 
     I2C.stop();
-    digitalWrite(12, 0);                // Led off
+    digitalWrite(USERLED, 0);                // Led off
     delay(1000);
 }
