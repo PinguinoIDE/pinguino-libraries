@@ -4,6 +4,9 @@
 # Regis Blanchot <rblanchot@gmail.com> 
 # ------------------------------------------------------------------------------
 
+#GCCVERSION=4.8.2
+#ARCH=64
+
 # ------------------------------------------------------------------------------
 # Directories
 # ------------------------------------------------------------------------------
@@ -13,6 +16,7 @@ OSDIR		= linux
 SRCDIR		= $(HOME)/source
 P32DIR		= $(HOME)/p32
 P32CORE		= $(HOME)/$(OSDIR)/p32
+#/$(GCCVERSION)-$(ARCH)
 BINDIR		= $(P32CORE)/bin
 INCDIR		= $(P32DIR)/include
 LKRDIR		= $(P32DIR)/lkr/$(BOARD)
@@ -50,7 +54,7 @@ ifneq (,$(filter $(BOARD),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
 else
 	HEAP_SIZE   = 16384
 	CDCLIBRARY  = libcdc.a
-	__MIPS16_ENABLE__ = true
+	__MIPS16_ENABLE__ =
 	BADRECORD   ='^:040000059D006000FA'
 endif
 
@@ -76,9 +80,11 @@ MV			  = mv
 # flags
 # ------------------------------------------------------------------------------
 
-ifeq (__MIPS16_ENABLE__, true)
-	MIPS16_INTER= -minterlink-mips16
+ifdef __MIPS16_ENABLE__
+	# Generate MIPS16 code.
 	MIPS16_OPT  = -mips16
+	# non-MIPS16 code will be link-compatible with MIPS16 code.
+	MIPS16_INTER= -minterlink-mips16
 endif
 
 #-fdollars-in-identifiers for ISRwrapper.S
@@ -87,15 +93,17 @@ CFLAGS			= -fdollars-in-identifiers $(INCLUDEDIRS)
 LDFLAGS			= $(LIBDIRS) $(LIBS)
 
 # -Os option leads to errors when non-zero initialized static variable are defined
-ELF_FLAGS		= -EL -O3 -march=24kc -msoft-float $(MIPS16_INTER)\
-				  -ffunction-sections\
-				  -fdata-sections\
-				  -Wl,--gc-sections\
-				  -Wl,-L$(OBJDIR)\
-				  -Wl,--defsym,_min_heap_size=$(HEAP_SIZE)\
-				  -Wl,-Map=$(SRCDIR)/output.map\
-				  -D __PIC32MX__ -D __$(PROC)__ -D $(BOARD)\
-				  -T$(LKRDIR)/procdefs.ld\
+ELF_FLAGS		= -EL -O3 -march=24kc -msoft-float $(MIPS16_INTER) \
+				  -ffunction-sections \
+				  -fdata-sections \
+				  -Wl,--gc-sections \
+				  -Wl,-L$(OBJDIR) \
+				  -Wl,--defsym,_min_heap_size=$(HEAP_SIZE) \
+				  -Wl,-Map=$(SRCDIR)/output.map \
+				  -D __PIC32MX__ \
+				  -D __$(PROC)__ \
+				  -D $(BOARD) \
+				  -T$(LKRDIR)/procdefs.ld \
 				  -T$(LKRDIR)/elf32pic32mx.x
 
 #-------------------------------------------------------------------------------

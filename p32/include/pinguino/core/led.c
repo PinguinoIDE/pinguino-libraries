@@ -6,7 +6,6 @@
 #include <typedef.h>
 #include <digitalw.c>
 
-
 Led::Led(u8 pin)
 {
 	_pin = pin;

@@ -31,7 +31,7 @@
 #define __SYSTEM_C
 
 #include <p32xxxx.h>
-#include <const.h>
+#include <const.h>              // MIPS32
 #include <typedef.h>
 
 #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)

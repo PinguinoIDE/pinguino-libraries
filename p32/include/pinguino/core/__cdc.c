@@ -185,9 +185,7 @@ void USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event_usb)
 void CDC_init()
 {
     USBDeviceInit();		// Initializes USB module SFRs and firmware
-    #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-        // nothing to do
-    #else
+    #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
         USBDeviceAttach();
     #endif
     Delayms(1500);

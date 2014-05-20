@@ -3,7 +3,7 @@
    ==============================================================================================
 
     Version      : 4.2
-    Autor        : Jesús Carmona Esteban
+    Author       : Jesús Carmona Esteban
     Last change  : 15/11/2013
 
     This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 
 // NOTES:
 // - Xtal must be 20 Mhz. Thus the resulting clock after PLL will be
-//   of 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this libraty.
+//   of 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this library.
 // - This library allows 250 positions for a servo.
 //   Those 1-250 values are mapped from 0-180 degrees,
 //   which is the input value by user at servo.write function.
@@ -66,7 +66,7 @@
 
 //Includes for functions used internally in this lib.
 //#include <stdlib.h>
-#include <digitalw.c>  //includes ports and mask definitions.
+#include <digital.h>  //includes ports and mask definitions.
 
 // Max and Min values that correspond to 2000 usec and 1000 usec. 
 #define DefaultSERVOMAX 192

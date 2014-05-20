@@ -100,20 +100,6 @@
 
 #define __STEPPER__
 
-/*
-#ifndef ANALOGWRITE
-#define ANALOGWRITE
-#endif
-
-#ifndef DIGITALWRITE
-#define DIGITALWRITE
-#endif
-
-#ifndef PINMODE
-#define PINMODE
-#endif
-*/
-
 #include <system.c>                 // oscillator routines
 #include <digitalp.c>               // pinmode
 #include <digitalw.c>               // digitalwrite
@@ -125,7 +111,6 @@
 #endif
 
 #include <interrupt.c>              // interrupts routines
-//#include <trigo.c>                  // sine table * 256
 
 int this_direction;                 // direction of rotation
 int this_steps_per_rev;             // total number of steps this motor can take
@@ -301,7 +286,6 @@ void Stepper_setMicrostep(int microsteps)
     this_number_of_steps = this_steps_per_rev * this_number_of_microsteps;
 }
 #endif
-
 
 /**--------------------------------------------------------------------
     Sets the speed in revs per minute
@@ -507,6 +491,7 @@ void Stepper_stepMotor(int thisStep)
     millis  uses Timer0
     servos  uses Timer1
     pwm     uses Timer2
+    dcf77   uses Timer3
     stepper uses Timer3
     ------------------------------------------------------------------*/
 

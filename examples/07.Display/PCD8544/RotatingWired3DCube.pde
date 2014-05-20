@@ -190,7 +190,7 @@ void setup()
     // if PCD8544_INTERFACE == PCD8544_SPIHW
     PCD8544.init(NOKIA_DC, NOKIA_RST);
  
-    PCD8544.setContrast(60); // 0 to 127
+    PCD8544.setContrast(40); // 0 to 127
     //PCD8544.setFont(font6x8);
     PCD8544.clearScreen();
     

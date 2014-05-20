@@ -75,6 +75,10 @@ int main()
     RTCC_init();
     #endif    
     
+    #ifdef SERVOSLIBRARY
+    servos_init();
+    #endif    
+
     setup();
 
     while (1)
@@ -104,30 +108,33 @@ void Serial2Interrupt(void)
     Nop();    
 }
 #else
-#ifndef ENABLE_UART3
-void Serial3Interrupt(void)
-{
-    Nop();
-}
-#endif
-#ifndef ENABLE_UART4
-void Serial4Interrupt(void)
-{
-    Nop();
-}
-#endif
-#ifndef ENABLE_UART5
-void Serial5Interrupt(void)
-{
-    Nop();
-}
-#endif
-#ifndef ENABLE_UART6
-void Serial6Interrupt(void)
-{
-    Nop();
-}
-#endif
+    #ifndef ENABLE_UART3
+    void Serial3Interrupt(void)
+    {
+        Nop();
+    }
+    #endif
+
+    #ifndef ENABLE_UART4
+    void Serial4Interrupt(void)
+    {
+        Nop();
+    }
+    #endif
+
+    #ifndef ENABLE_UART5
+    void Serial5Interrupt(void)
+    {
+        Nop();
+    }
+    #endif
+
+    #ifndef ENABLE_UART6
+    void Serial6Interrupt(void)
+    {
+        Nop();
+    }
+    #endif
 #endif // __SERIAL__
 
 #ifndef __MILLIS__

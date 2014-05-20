@@ -62,7 +62,10 @@ void IOsetDigital()
 
 void IOsetSpecial()
 {
+    #if !defined(__32MX440F256H__) && !defined(__32MX795F512H__)
     TRISA  = 0;
+    #endif
+    
     TRISB  = 0;
 
     #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)

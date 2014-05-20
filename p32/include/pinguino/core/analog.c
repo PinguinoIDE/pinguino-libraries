@@ -1,6 +1,6 @@
 /*	----------------------------------------------------------------------------
 	FILE:			analog.c
-	PROJECT:		pinguinoX
+	PROJECT:		pinguino
 	PURPOSE:		
 	PROGRAMER:		jean-pierre mandon <jp.mandon@gmail.com>
 	FIRST RELEASE:	19 feb. 2011

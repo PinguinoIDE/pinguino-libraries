@@ -117,15 +117,18 @@ SECTIONS
     KEEP(*(.vector_15))
   } > exception_mem
   ASSERT (_vector_spacing == 0 || SIZEOF(.vector_15) <= (_vector_spacing << 5), "function at exception vector 15 too large")
+  
   .vector_16 _ebase_address + 0x200 + (_vector_spacing << 5) * 16 :
   {
     KEEP(*(.vector_16))
   } > exception_mem
   ASSERT (_vector_spacing == 0 || SIZEOF(.vector_16) <= (_vector_spacing << 5), "function at exception vector 16 too large")
+  
   .vector_17 _ebase_address + 0x200 + (_vector_spacing << 5) * 17 :
   {
     KEEP(*(.vector_17))
   } > exception_mem
+  
   ASSERT (_vector_spacing == 0 || SIZEOF(.vector_17) <= (_vector_spacing << 5), "function at exception vector 17 too large")
   .vector_18 _ebase_address + 0x200 + (_vector_spacing << 5) * 18 :
   {
