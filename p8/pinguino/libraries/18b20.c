@@ -13,6 +13,8 @@
     10 Jun 2013 Moreno Manzini      added DS18B20StartMeasure and DS18B20ReadMeasure
                                     to acquire and read temperature in non-blocking mode
     27 Mar 2014 Brikker             added reading until CRC is found valid
+    28 May 2014 Régis Blanchot      fixed OneWireRead  -> OneWireReadByte
+                                    fixed OneWireWrite -> OneWireWriteByte
     ----------------------------------------------------------------------------
     TODO : 
     ----------------------------------------------------------------------------
@@ -155,7 +157,7 @@
             if (rom == SKIPROM)
             {
                 // Skip ROM, address all devices
-                OneWireWrite(pin, SKIPROM);
+                OneWireWriteByte(pin, SKIPROM);
             }
             else
             {
@@ -163,17 +165,17 @@
                 if (!DS18B20MatchRom(pin, rom)) return false;
             }
 
-            OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
+            OneWireWriteByte(pin, CONVERT_T);		// Start temperature conversion
 
             while (busy == LOW)					// Wait while busy ( = bus is low)
-                busy = OneWireRead(pin);
+                busy = OneWireReadByte(pin);
 
             if (OneWireReset(pin)) return false;
 
             if (rom == SKIPROM)
             {
                 // Skip ROM, address all devices
-                OneWireWrite(pin, SKIPROM);
+                OneWireWriteByte(pin, SKIPROM);
             }
             else
             {
@@ -181,21 +183,21 @@
                 if (!DS18B20MatchRom(pin, rom)) return false;
             }
 
-            OneWireWrite(pin, READ_SCRATCHPAD);         // Read scratchpad
+            OneWireWriteByte(pin, READ_SCRATCHPAD);         // Read scratchpad
 
             for (c = 0; c < 8; c++) 
             {
-                buffer[c] = OneWireRead(pin);  			// Receive 8 bytes from DS18B20
+                buffer[c] = OneWireReadByte(pin);  			// Receive 8 bytes from DS18B20
                 DS18B20_crc(buffer[c]);
             }
-            buffer[8] = OneWireRead(pin);				// Receive the 9th byte [CRC] from DS18B20
+            buffer[8] = OneWireReadByte(pin);				// Receive the 9th byte [CRC] from DS18B20
             
             if (dowcrc == buffer[8]) 					// Compare calculated CRC with the 9th byte received
             {
                 temp_lsb = buffer[0];                   // byte 0 of scratchpad : temperature lsb
                 temp_msb = buffer[1];                   // byte 1 of scratchpad : temperature msb
-                //temp_lsb = OneWireRead(pin);          // byte 0 of scratchpad : temperature lsb
-                //temp_msb = OneWireRead(pin);          // byte 1 of scratchpad : temperature msb
+                //temp_lsb = OneWireReadByte(pin);          // byte 0 of scratchpad : temperature lsb
+                //temp_msb = OneWireReadByte(pin);          // byte 1 of scratchpad : temperature msb
 
                 //if (OneWireReset(pin)) return false;
 
@@ -261,17 +263,17 @@
         if (rom == SKIPROM)
         {
             // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
+            OneWireWriteByte(pin, SKIPROM);
         }
         else
         {
             // Talk to a particular device
             DS18B20MatchRom(pin, rom);
         }
-        OneWireWrite(pin, WRITE_SCRATCHPAD);	// Allows the master to write 3 bytes of data to the scratchpad
-        OneWireWrite(pin, TH);				// The first data byte is written into the TH register (byte 2 of the scratchpad)
-        OneWireWrite(pin, TL);				// The second byte is written into the TL register (byte 3)
-        OneWireWrite(pin, config);			// The third byte is written into the configuration register (byte 4)
+        OneWireWriteByte(pin, WRITE_SCRATCHPAD);	// Allows the master to write 3 bytes of data to the scratchpad
+        OneWireWriteByte(pin, TH);				// The first data byte is written into the TH register (byte 2 of the scratchpad)
+        OneWireWriteByte(pin, TL);				// The second byte is written into the TL register (byte 3)
+        OneWireWriteByte(pin, config);			// The third byte is written into the configuration register (byte 4)
         return true;
     }
 
@@ -293,9 +295,9 @@
     {
         u8 i;
         if (OneWireReset(pin)) return false;
-        OneWireWrite(pin, MATCHROM);	// Match Rom
+        OneWireWriteByte(pin, MATCHROM);	// Match Rom
         for (i = 0; i < 8; i++)			// Send the Address ROM Code.
-            OneWireWrite(pin, DS18B20Rom[rom][i]);
+            OneWireWriteByte(pin, DS18B20Rom[rom][i]);
         return true;
     }
 
@@ -317,9 +319,9 @@
         u8 i;
         if (!OneWireReset(pin))
         {
-            OneWireWrite(pin, READROM);
+            OneWireWriteByte(pin, READROM);
             for (i = 0; i < 8; i++)		// Reads the ROM Code from a device
-                romcode[i] = OneWireRead(pin);
+                romcode[i] = OneWireReadByte(pin);
         }
     }
 
@@ -397,7 +399,7 @@
             return false;
         }
         // send SearchROM command for all eight bytes
-        OneWireWrite(pin, SEARCHROM);
+        OneWireWriteByte(pin, SEARCHROM);
         do {
             x = 0;
             if(OneWireReadBit(pin) == 1) x = 2;
@@ -542,7 +544,7 @@
         if (rom == SKIPROM)
         {
             // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
+            OneWireWriteByte(pin, SKIPROM);
         }
         else
         {
@@ -550,7 +552,7 @@
             if (!DS18B20MatchRom(pin, rom)) return FALSE;
         }
 
-        OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
+        OneWireWriteByte(pin, CONVERT_T);		// Start temperature conversion
         return TRUE;
     }
 
@@ -575,7 +577,7 @@
         if (rom == SKIPROM)
         {
             // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
+            OneWireWriteByte(pin, SKIPROM);
         }
         else
         {
@@ -583,10 +585,10 @@
             if (!DS18B20MatchRom(pin, rom)) return FALSE;
         }
 
-        OneWireWrite(pin, READ_SCRATCHPAD);// Read scratchpad
+        OneWireWriteByte(pin, READ_SCRATCHPAD);// Read scratchpad
 
-        temp_lsb = OneWireRead(pin);		// byte 0 of scratchpad : temperature lsb
-        temp_msb = OneWireRead(pin);		// byte 1 of scratchpad : temperature msb
+        temp_lsb = OneWireReadByte(pin);		// byte 0 of scratchpad : temperature lsb
+        temp_msb = OneWireReadByte(pin);		// byte 1 of scratchpad : temperature msb
 
         if (OneWireReset(pin)) return FALSE;
 

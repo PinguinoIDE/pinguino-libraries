@@ -1224,11 +1224,11 @@ void MIPS32 IntConfigureSystem(u8 mode)
     {
         case INT_SYSTEM_CONFIG_MULT_VECTOR:
             // Set the CP0 registers for multi-vector interrupt
-            INTCONSET = 0x1000; // Set MVEC bit
+            INTCONSET = 0x1000; // Set MVEC bit (bit 12 : 1<<12=0x1000)
         break;
         case INT_SYSTEM_CONFIG_SINGLE_VECTOR:
             // Set the CP0 registers for single-vector interrupt
-            INTCONCLR = 0x1000; // Clear MVEC bit
+            INTCONCLR = 0x1000; // Clear MVEC bit (bit 12 : 1<<12=0x1000)
         break;	
     }
 
