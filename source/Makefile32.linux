@@ -1,39 +1,42 @@
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Makefile32.linux
 # Linux Makefile for 32-bit Pinguino
 # Regis Blanchot <rblanchot@gmail.com> 
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-#GCCVERSION=4.8.2
-#ARCH=64
-
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Directories
-# ------------------------------------------------------------------------------
-# HOME, PDEDIR, PROC & BOARD are defined in pinguino.py
+# ----------------------------------------------------------------------
+# cf. qtgui/pinguino_api/pinguino_tools.py
+# _IDE_PROC_
+# _IDE_BOARD_
 
-OSDIR		= linux
-SRCDIR		= $(HOME)/source
-P32DIR		= $(HOME)/p32
-P32CORE		= $(HOME)/$(OSDIR)/p32
-#/$(GCCVERSION)-$(ARCH)
-BINDIR		= $(P32CORE)/bin
-INCDIR		= $(P32DIR)/include
-LKRDIR		= $(P32DIR)/lkr/$(BOARD)
-OBJDIR		= $(P32DIR)/obj/non-free
+# _IDE_PDEDIR_
+# _IDE_BINDIR_ (default /usr/bin)
+# _IDE_P32DIR_ (default /usr/share/pinguino-11/p32)
+# _IDE_SRCDIR_
+# _IDE_HEAP_SIZE_
+# _IDE_MIPS16_ENABLE_
+# _IDE_OPTIMIZATION_
+#-I$(_IDE_SRCDIR_)\
+#			  
+
+INCDIR		= $(_IDE_P32DIR_)/include
+LKRDIR		= $(_IDE_P32DIR_)/lkr/$(_IDE_BOARD_)
+OBJDIR		= $(_IDE_P32DIR_)/obj/non-free
 
 INCLUDEDIRS	= -I$(INCDIR)/non-free\
 			  -I$(INCDIR)/pinguino/core\
 			  -I$(INCDIR)/pinguino/libraries\
 			  -I$(LKRDIR)\
-			  -I$(PDEDIR)\
+			  -I$(_IDE_PDEDIR_)\
 			  -I$(OBJDIR)
 
 LIBDIRS		= -L$(OBJDIR)/usb
 
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Various options
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # - heap size / Regis Blanchot 2012
 # - cdc library / Jean-pierre Mandon 2012
 # - MIPS16/MIPS32 option (MIPS16 option could drastically reduce code size) / ??? 2013 
@@ -44,47 +47,43 @@ LIBDIRS		= -L$(OBJDIR)/usb
 #		9D004000 : address where the user program should start
 #				 : _RESET_ADDR (see lkr/procdefs.ld)
 #		1A		 : checksum
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-ifneq (,$(filter $(BOARD),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
-	HEAP_SIZE   = 512
+ifneq (,$(filter $(_IDE_BOARD_),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
 	CDCLIBRARY  = libcdc220.a
-	__MIPS16_ENABLE__ = true
 	BADRECORD   = '^:040000059D0040001A'
 else
-	HEAP_SIZE   = 16384
 	CDCLIBRARY  = libcdc.a
-	__MIPS16_ENABLE__ =
 	BADRECORD   ='^:040000059D006000FA'
 endif
 
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # commands
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 ifdef CPLUPLUS
-	CC		  = $(BINDIR)/mips-elf-g++
+	CC		  = $(_IDE_BINDIR_)/p32-g++
 	LIBS	  = -lstdc++ -lm -lgcc -lc
 else
-	CC		  = $(BINDIR)/mips-elf-gcc
+	CC		  = $(_IDE_BINDIR_)/p32-gcc
 	LIBS	  = -lm -lgcc -lc
 endif
 
-OBJC		  = $(BINDIR)/mips-elf-objcopy
+OBJC		  = $(_IDE_BINDIR_)/p32-objcopy
 
 RM			  = rm -f -v
 CP			  = cp
 MV			  = mv
 
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # flags
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-ifdef __MIPS16_ENABLE__
+ifeq "$(_IDE_MIPS16_ENABLE_)" "true"
 	# Generate MIPS16 code.
-	MIPS16_OPT  = -mips16
-	# non-MIPS16 code will be link-compatible with MIPS16 code.
-	MIPS16_INTER= -minterlink-mips16
+	MIPS16_OPT=-mips16
+	# makes non-MIPS16 and MIPS16 code link-compatible.
+	MIPS16_INTER=-minterlink-mips16
 endif
 
 #-fdollars-in-identifiers for ISRwrapper.S
@@ -92,50 +91,51 @@ CFLAGS			= -fdollars-in-identifiers $(INCLUDEDIRS)
 
 LDFLAGS			= $(LIBDIRS) $(LIBS)
 
-# -Os option leads to errors when non-zero initialized static variable are defined
-ELF_FLAGS		= -EL -O3 -march=24kc -msoft-float $(MIPS16_INTER) \
+ELF_FLAGS		= -EL $(_IDE_OPTIMIZATION_) -march=24kc -msoft-float $(MIPS16_INTER) \
 				  -ffunction-sections \
 				  -fdata-sections \
 				  -Wl,--gc-sections \
 				  -Wl,-L$(OBJDIR) \
-				  -Wl,--defsym,_min_heap_size=$(HEAP_SIZE) \
-				  -Wl,-Map=$(SRCDIR)/output.map \
+				  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
+				  -Wl,-Map=$(_IDE_SRCDIR_)/output.map \
 				  -D __PIC32MX__ \
-				  -D __$(PROC)__ \
-				  -D $(BOARD) \
+				  -D __$(_IDE_PROC_)__ \
+				  -D $(_IDE_BOARD_) \
 				  -T$(LKRDIR)/procdefs.ld \
 				  -T$(LKRDIR)/elf32pic32mx.x
 
-#-------------------------------------------------------------------------------
-#	rules
-#-------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# rules
+# ----------------------------------------------------------------------
 
-all: clean copy compile exec correct
+all: clean copy compile convert correct
+#all: clean copy compile convert
+#all: clean copy compile
 
 clean:
-	#---------------------------------------------------------------------------
-	#	cleaning all build files
-	#---------------------------------------------------------------------------
-	$(RM) $(SRCDIR)/main32.o
-	$(RM) $(SRCDIR)/main32.elf
-	$(RM) $(SRCDIR)/main32.hex
+	# ------------------------------------------------------------------
+	# cleaning all build files
+	# ------------------------------------------------------------------
+	$(RM) $(_IDE_SRCDIR_)/main32.o
+	$(RM) $(_IDE_SRCDIR_)/main32.elf
+	$(RM) $(_IDE_SRCDIR_)/main32.hex
 	$(RM) $(OBJDIR)/processor.o
 
 copy:
-	#---------------------------------------------------------------------------
-	#	adding proc. definitions
-	#---------------------------------------------------------------------------
-	$(CP) $(OBJDIR)/$(PROC).o $(OBJDIR)/processor.o
+	# ------------------------------------------------------------------
+	# adding proc. definitions
+	# ------------------------------------------------------------------
+	$(CP) $(OBJDIR)/$(_IDE_PROC_).o $(OBJDIR)/processor.o
 
 compile:
-	#---------------------------------------------------------------------------
-	#	compiling and linking
-	#---------------------------------------------------------------------------
-	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(SRCDIR)/main32.elf $(SRCDIR)/main32.c
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(SRCDIR)/main32.c > $(SRCDIR)/main32.lst
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(SRCDIR)/main32.o $(SRCDIR)/main32.c
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(SRCDIR)/main32.elf\
-		$(SRCDIR)/main32.o\
+	# ------------------------------------------------------------------
+	# compiling and linking
+	# ------------------------------------------------------------------
+	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\
+		$(_IDE_SRCDIR_)/main32.o\
 		$(OBJDIR)/crt0.S\
 		$(OBJDIR)/processor.o\
 		$(OBJDIR)/usb/$(CDCLIBRARY)\
@@ -144,15 +144,15 @@ compile:
 		$(INCDIR)/non-free/p32xxxx.h\
 		$(LIBS)
 
-exec:
-	#---------------------------------------------------------------------------
-	#	translating elf to hex
-	#---------------------------------------------------------------------------
-	$(OBJC) -O ihex $(SRCDIR)/main32.elf $(SRCDIR)/main32.hex
+convert:
+	# ------------------------------------------------------------------
+	# converting elf to hex
+	# ------------------------------------------------------------------
+	$(OBJC) -O ihex $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.hex
 
 correct:
-	#---------------------------------------------------------------------------
-	#	fixing bad record
-	#---------------------------------------------------------------------------
-	grep --binary --invert-match $(BADRECORD) $(SRCDIR)/main32.hex > $(SRCDIR)/temp.hex
-	$(MV) $(SRCDIR)/temp.hex $(SRCDIR)/main32.hex	  
+	# ------------------------------------------------------------------
+	# fixing bad record
+	# ------------------------------------------------------------------
+	grep --binary --invert-match $(BADRECORD) $(_IDE_SRCDIR_)/main32.hex > $(_IDE_SRCDIR_)/temp.hex
+	$(MV) $(_IDE_SRCDIR_)/temp.hex $(_IDE_SRCDIR_)/main32.hex	  
