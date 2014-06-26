@@ -138,7 +138,7 @@ const unsigned char mask[30]={
 const unsigned char port[30]={
                     pB, pB, pB, pB, pB, pB, pB, pB,
                     pA, pA, pA, pA, pA, pA, pA, pA,
-                    pC, pC, pC, pC, pC, pC, pC, pC
+                    pC, pC, pC, pC, pC, pC, pC, pC,
                     pD, pD, pD, pD, pD, pD, pD, pD,
                     pE, pE, pE, pE
                     };
