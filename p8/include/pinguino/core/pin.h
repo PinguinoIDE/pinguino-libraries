@@ -4,10 +4,11 @@
 	PURPOSE:		pins name definition
 	PROGRAMERS:		regis blanchot <rblanchot@gmail.com>
 	FIRST RELEASE:	10 Nov 2010
-	LAST RELEASE:	09 Feb 2012
+	LAST RELEASE:	26 Jun 2014
 	----------------------------------------------------------------------------
 	CHANGELOG:
- 	- rblanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
+	- rblanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
+	26 Jun 2014 - rblanchot - added Pinguino 45K50
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -398,7 +399,7 @@
         #define CCP2        11
         
 /**********************************************************************/
-    #elif defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PINGUINO4455)
+    #elif defined(PINGUINO4455) || defined(PINGUINO4550)
 /**********************************************************************/
     
         #define A4          29
@@ -408,6 +409,18 @@
         #define USERLED     29
         #define CCP1        12
         #define CCP2        11
+
+/**********************************************************************/
+    #elif defined(PINGUINO45K50)
+/**********************************************************************/
+    
+        #define A4          12
+        //#define RA4       29
+        #define RUNLED      12
+        #define LED1        12
+        #define USERLED     12
+        #define CCP1        18  // RC2
+        #define CCP2        17  // RC1
         
 /**********************************************************************/
     #elif defined(PINGUINO26J50) || defined(PINGUINO27J53)
