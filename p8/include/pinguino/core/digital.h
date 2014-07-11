@@ -127,7 +127,7 @@ const unsigned char port[30]={
 #elif defined(PINGUINO45K50)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[35]={
+const unsigned char mask[36]={
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 00 - 07
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 08 - 15
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 16 - 23
@@ -135,7 +135,7 @@ const unsigned char mask[35]={
                     _0,_1,_2,_3						// 32 - 35
                     };
 
-const unsigned char port[35]={
+const unsigned char port[36]={
                     pB, pB, pB, pB, pB, pB, pB, pB,
                     pA, pA, pA, pA, pA, pA, pA, pA,
                     pC, pC, pC, pC, pC, pC, pC, pC,
