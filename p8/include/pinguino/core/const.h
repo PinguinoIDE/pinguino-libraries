@@ -6,6 +6,9 @@
 #ifndef __CONST_H
     #define __CONST_H
 
+    #define PINGUINO_MAJOR_VERSION 11
+    #define PINGUINO_MINOR_VERSION 1
+
     // already defined in math.h
     //#define PI        3.1415926535897932384626433832795
     //#define HALF_PI   1.5707963267948966192313216916398
