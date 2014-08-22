@@ -15,6 +15,7 @@
                                 in SPI_clock() identified by dk (KiloOne)
     01 Mar 2014 - fcapozzi   -  added SPI32_init function
     15 Mar 2014 - rblanchot  -  fixed compatibility with 8-bit Pinguino SPI library 
+    22 Aug 2014 - rblanchot  -  fixed SPI2 bug 
      ----------------------------------------------------------------------------
     TODO : !!! SLAVE MODE !!!
     ----------------------------------------------------------------------------
@@ -93,6 +94,7 @@
     #define STATTX		SPI2STATbits.SPITBF	// Transmit buffer full
     #define SPICONF		SPI2CON
     #define SPICONCLR	SPI2CONCLR
+        #define SPICONSET   SPI2CONSET
     #define SPIENHBUF	SPI2CONbits.ENHBUF
     #define CLKSPD		SPI2BRG
     #define PULLUPS		0xF00 //Use CNPUE = PULLUPS for enable internal pullups 8,9,10,11
@@ -100,6 +102,10 @@
     #define INTTXDONE 	INT_SPI2_TRANSFER_DONE
     #define INTRXDONE 	INT_SPI2_RECEIVE_DONE
     #define INTVECTOR 	INT_SPI2_VECTOR
+        #define CKP         SPI2CONbits.CKP
+        #define CKE         SPI2CONbits.CKE
+        #define SMP         SPI2CONbits.SMP
+        #define MSTEN       SPI2CONbits.MSTEN
 #endif
 
 //Only 795 boards have SPI3 and SPI4
