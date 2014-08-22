@@ -52,28 +52,28 @@ char mount(unsigned char pin) {
 
 	// 0. init the I/Os
 #ifdef SD_DEBUG
-	CDCprintln("Initializing I/Os... ");
+	CDCprintf("Initializing I/Os...\r\n ");
 #endif
 	initSD();
 
 #ifdef SD_DEBUG
-	CDCprintf("Looking for SD slot... ");
+	CDCprintf("Looking for SD slot...\r\n ");
 #endif
 	// 1. check if the card is in the slot
 	if (!getCD()) {
 		FError = FE_NOT_PRESENT;
 #ifdef SD_DEBUG
-		CDCprintln("Failed!");
+		CDCprintf("Failed!\r\n");
 #endif
 		return False;
 	}
 #ifdef SD_DEBUG
-	CDCprintln("OK");
+	CDCprintf("OK\r\n");
 #endif
 
 	// 2. initialize the card
 #ifdef SD_DEBUG
-	CDCprintf("Initializing SD card... ");
+	CDCprintf("Initializing SD card...\r\n ");
 #endif
 	initMedia();
 
@@ -85,37 +85,37 @@ char mount(unsigned char pin) {
 
 	// Mount media
 #ifdef SD_DEBUG
-	CDCprintf("Mounting FAT filesystem... ");
+	CDCprintf("Mounting FAT filesystem...\r\n ");
 #endif
 	r = f_mount(0, Fat);
 	if (r != FR_OK) {
 		FError = r;
 #ifdef SD_DEBUG
-		CDCprintln("Failed!");
+		CDCprintf("Failed!\r\n");
 #endif
 		//free(Fat);
 		return False;
 	}
 #ifdef SD_DEBUG
-	CDCprintln("OK");
+	CDCprintf("OK\r\n");
 #endif
 
 #ifdef SD_DEBUG
-	CDCprintf("Checking FAT filesystem... ");
+	CDCprintf("Checking FAT filesystem...\r\n ");
 #endif
 	const TCHAR * pth = "/";
 	r = chk_mounted(&pth, &Fat, 0);
 	if (r != FR_OK) {
 		FError = r;
 #ifdef SD_DEBUG
-		CDCprintln("Failed!");
+		CDCprintf("Failed!\r\n");
 		put_rc(r);
 #endif
 		unmount();
 		return False;
 	}
 #ifdef SD_DEBUG
-	CDCprintln("OK");
+	CDCprintf("OK\r\n");
 #endif
 
 	return True;
@@ -171,11 +171,11 @@ unsigned listDir(const char *path) {
 
 	res = f_opendir(&dir, "/");
 #ifdef SD_DEBUG
-	CDCprintf("f_opendir? ");
+	CDCprintf("f_opendir?\r\n ");
 	put_rc(res);
 #endif
 	p1 = s1 = s2 = 0;
-	CDCprintln("\nf_readdir('%s'): ", path);
+	CDCprintf("\nf_readdir('%s'): ", path);
 	for (;;) {
 		res = f_readdir(&dir, &Finfo);
 #ifdef SD_DEBUG
