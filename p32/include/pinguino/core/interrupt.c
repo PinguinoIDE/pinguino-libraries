@@ -625,8 +625,13 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
         case INT_FCE_VECTOR:
             break;
         case INT_USB_VECTOR:
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
             IPC7bits.USBIP = pri;
             IPC7bits.USBIS = sub;
+        #else
+            IPC11bits.USBIP = pri;
+            IPC11bits.USBIS = sub;
+        #endif
             break;
    #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
         case INT_CAN1_VECTOR:
