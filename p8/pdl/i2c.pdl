@@ -14,7 +14,6 @@ I2C.sendAck I2C_sendAck#include <i2c.c>
 I2C.onRequest I2C_onRequest#include <i2c.c>#define I2CINT
 I2C.onReceive I2C_onReceive#include <i2c.c>#define I2CINT
 
-
 Wire.begin I2C_begin#include <i2c.c>#define WIRE
 Wire.write I2C_inBuffer#include <i2c.c>
 Wire.writeS I2C_inBufferS#include <i2c.c>
