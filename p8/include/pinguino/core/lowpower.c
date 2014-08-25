@@ -69,6 +69,7 @@ void System_run()
 }
 #endif
 
+#if defined(SYSTEMDEEPSLEEPSAVECONTEXT) || defined(SYSTEMDEEPSLEEPRESTORECONTEXT) || defined(SYSTEMDEEPSLEEP) || defined(SYSTEMDEEPSLEEPWAKEUP)
 
 #if defined(__18f26j50) || defined(__18f46j50) || \
     defined(__18f26j53) || defined(__18f46j53) || \
@@ -201,5 +202,7 @@ u8 System_deepSleepWakeUp()
         #error "****************************************************"
 
 #endif /* defined(__18f26j50) || defined(__18f46j50) etc ..*/
+
+#endif /* defined(SYSTEMDEEPSLEEPSAVECONTEXT) || defined(SYSTEMDEEPSLEEPRESTORECONTEXT) || defined(SYSTEMDEEPSLEEP) || defined(SYSTEMDEEPSLEEPWAKEUP) */
 
 #endif /* __LOWPOWER_C */
