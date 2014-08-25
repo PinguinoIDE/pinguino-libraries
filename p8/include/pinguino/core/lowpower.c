@@ -40,12 +40,21 @@
 #define POWERONWAKEUP          1<<0
 
 /*  ----------------------------------------------------------------------------
-    Device and on-chip regulator enter sleep mode on SLEEP instruction
     --------------------------------------------------------------------------*/
 #ifdef SYSTEMSLEEP
 void System_sleep()
 {
+	// This bit has no effect if the Configuration bit, WDTEN, is enabled.
+    WDTCONbits.SWDTEN = 1;   // turn on the watch dog timer
+
+	#if defined(__18f26j50) || defined(__18f46j50) || \
+		defined(__18f26j53) || defined(__18f46j53) || \
+		defined(__18f27j53) || defined(__18f47j53)
+    // Device and on-chip regulator enter sleep mode on SLEEP instruction
     WDTCONbits.REGSLP = 1;
+	#endif
+
+	//Device enters Sleep mode (not Idle mode) on SLEEP instruction
     OSCCONbits.IDLEN = 0;
     sleep();
 }
