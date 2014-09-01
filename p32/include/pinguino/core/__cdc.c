@@ -8,12 +8,15 @@
 // 18 Jun. 2013 added CDC.USBIsConnected to check if USB cable is connected Moreno manzini
 // 13 Mar. 2014 added printNumber, printFloat (r. blanchot)
 //              updated print, println, getKey and getString to spare memory on small memory PIC
+// 28 Aug. 2014 added #include <string.h> to use strlen
 
 #ifndef __USBCDC
 #define __USBCDC
 
 #include <stdarg.h>
-
+#if defined(CDCPRINT) || defined(CDCPRINTLN)
+#include <string.h>			// strlen
+#endif
 #include <typedef.h>
 #include <system.c>
 #include <interrupt.c>
