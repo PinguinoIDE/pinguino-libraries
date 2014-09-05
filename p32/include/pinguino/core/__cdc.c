@@ -123,7 +123,8 @@ void INTEnableInterrupts()
     IntEnable(INT_USB);
 }
 
-#if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
+#if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \ 
+	!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
 
 // this is the Set Line coding CallBack function
 void mySetLineCodingHandler()
@@ -188,7 +189,9 @@ void USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event_usb)
 void CDC_init()
 {
     USBDeviceInit();		// Initializes USB module SFRs and firmware
-    #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
+    #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
+		!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+		
         USBDeviceAttach();
     #endif
     Delayms(1500);
@@ -207,7 +210,9 @@ void CDCputs(u8 *buffer, u8 length)
     {
         if (mUSBUSARTIsTxTrfReady())
             break;
-        #if defined(__32MX220F032D__)||defined(__32MX250F128B__) || defined(__32MX270F256B__)||defined(__32MX220F032B__)
+        #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+			defined(__32MX250F128B__) || defined(__32MX270F256B__)
+			
             USB_Service();
         #else
             CDCTxService();
@@ -216,7 +221,8 @@ void CDCputs(u8 *buffer, u8 length)
     if (i > 0)
     {
         putUSBUSART(buffer, length);
-        #if defined(__32MX220F032D__)||defined(__32MX250F128B__) || defined(__32MX270F256B__)||defined(__32MX220F032B__)
+        #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+			defined(__32MX250F128B__) || defined(__32MX270F256B__)
             USB_Service();
         #else
             CDCTxService();
@@ -234,7 +240,8 @@ u8 CDCgets(u8 *buffer)
 {
     u8 numBytesRead;
         
-    #if defined(__32MX220F032D__)||defined(__32MX250F128B__) || defined(__32MX270F256B__)||defined(__32MX220F032B__)
+	#if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+		defined(__32MX250F128B__) || defined(__32MX270F256B__)
         USB_Service();
         numBytesRead = USB_Service_CDC_GetString( buffer );
     #else
