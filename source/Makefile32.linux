@@ -49,7 +49,7 @@ LIBDIRS		= -L$(OBJDIR)/usb
 #		1A		 : checksum
 # ----------------------------------------------------------------------
 
-ifneq (,$(filter $(_IDE_BOARD_),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250))
+ifneq (,$(filter $(_IDE_BOARD_),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250 PINGUINO32MX270))
 	CDCLIBRARY  = libcdc220.a
 	BADRECORD   = '^:040000059D0040001A'
 else
@@ -110,8 +110,6 @@ ELF_FLAGS		= -EL $(_IDE_OPTIMIZATION_) -march=24kc -msoft-float $(MIPS16_INTER) 
 # ----------------------------------------------------------------------
 
 all: clean copy compile convert correct
-#all: clean copy compile convert
-#all: clean copy compile
 
 clean:
 	# ------------------------------------------------------------------

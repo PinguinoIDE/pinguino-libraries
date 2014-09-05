@@ -27,115 +27,107 @@ INCLUDEDIRS	=	-I$(INCDIR)/non-free\
 
 LIBDIRS		=	-L$(OBJDIR)/usb
 
-# ------------------------------------------------------------------------------
-# unsupported record in hex file / Jean-pierre Mandon 2012
-# 04       : 4 bytes
-# 0000     : address
-# 05       : record type = Start_Linear_Address_Record
-# 9D004000 : address where the user program should start
-#          : _RESET_ADDR (see lkr/procdefs.ld)
-# 1A       : checksum
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# Various options
+# ----------------------------------------------------------------------
+# - heap size / Regis Blanchot 2012
+# - cdc library / Jean-pierre Mandon 2012
+# - MIPS16/MIPS32 option (MIPS16 option could drastically reduce code size) / ??? 2013
+# - unsupported record in hex file / Jean-pierre Mandon 2012
+#		04		 : 4 bytes
+#		0000	 : address
+#		05		 : record type = Start_Linear_Address_Record
+#		9D004000 : address where the user program should start
+#				 : _RESET_ADDR (see lkr/procdefs.ld)
+#		1A		 : checksum
+# ----------------------------------------------------------------------
 
-BADRECORD='^:040000059D006000FA'
-ifeq ($(BOARD),PIC32_PINGUINO_220)
-	BADRECORD = '^:040000059D0040001A'
-endif
-ifeq ($(BOARD),PINGUINO32MX250)
-	BADRECORD = '^:040000059D0040001A'
-endif
-ifeq ($(BOARD),PINGUINO32MX220)
-	BADRECORD = '^:040000059D0040001A'
-endif
-
-REMOVE = grep --binary --invert-match $(BADRECORD) $(SRCDIR)/main32.hex > $(SRCDIR)/temp.hex
-
-# ------------------------------------------------------------------------------
-# heap size / Regis Blanchot 2012
-# ------------------------------------------------------------------------------
-
-HEAP_SIZE=16384
-ifeq ($(BOARD),PIC32_PINGUINO_220)
-	HEAP_SIZE = 512
-endif
-ifeq ($(BOARD),PINGUINO32MX220)
-	HEAP_SIZE = 512
+ifneq (,$(filter $(_IDE_BOARD_),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250 PINGUINO32MX270))
+	CDCLIBRARY  = libcdc220.a
+	BADRECORD   = '^:040000059D0040001A'
+else
+	CDCLIBRARY  = libcdc.a
+	BADRECORD   ='^:040000059D006000FA'
 endif
 
-# ------------------------------------------------------------------------------
-# select the cdc library / Jean-pierre Mandon 2012
-# ------------------------------------------------------------------------------
-
-CDCLIBRARY = libcdc.a
-ifeq ($(BOARD),PIC32_PINGUINO_220)
-	CDCLIBRARY = libcdc220.a
-endif
-ifeq ($(BOARD),PINGUINO32MX250)
-	CDCLIBRARY = libcdc220.a
-endif
-ifeq ($(BOARD),PINGUINO32MX220)
-	CDCLIBRARY = libcdc220.a
-endif
-
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # commands
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
-CC				=	$(BINDIR)/mips-elf-gcc
-OBJC			=	$(BINDIR)/avr-objcopy
-LIBS			=	-lm -lgcc -lc
-#CC				=	$(BINDIR)/mips-elf-g++
-#LIBS			=	-lstdc++ -lm -lgcc -lc
-RM				=	rm -f -v
-CP				=	cp
-MV				=	mv
+ifdef CPLUPLUS
+	CC		  = $(_IDE_BINDIR_)/p32-g++
+	LIBS	  = -lstdc++ -lm -lgcc -lc
+else
+	CC		  = $(_IDE_BINDIR_)/p32-gcc
+	#LIBS	  = -lm -lgcc -lc
+	LIBS	  = -lm -lgcc
+endif
 
-# ------------------------------------------------------------------------------
+OBJC		  = $(_IDE_BINDIR_)/p32-objcopy
+
+RM			  = rm -f -v
+CP			  = cp
+MV			  = mv
+
+# ----------------------------------------------------------------------
 # flags
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
+ifeq "$(_IDE_MIPS16_ENABLE_)" "true"
+	# Generate MIPS16 code.
+	MIPS16_OPT=-mips16
+	# makes non-MIPS16 and MIPS16 code link-compatible.
+	MIPS16_INTER=-minterlink-mips16
+endif
 
 #-fdollars-in-identifiers for ISRwrapper.S
-CFLAGS		=	-fdollars-in-identifiers $(INCLUDEDIRS)
+CFLAGS			= -fdollars-in-identifiers $(INCLUDEDIRS)
 
-LDFLAGS		=	$(LIBDIRS) $(LIBS)
+LDFLAGS			= $(LIBDIRS) $(LIBS)
 
-# -Os option leads to errors when non-zero initialized static variable are defined
-ELF_FLAGS	=	-EL -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections -march=24kc\
-					-msoft-float\
-                    -minterlink-mips16\
-					-Wl,--defsym,_min_heap_size=$(HEAP_SIZE)\
-					-Wl,-Map=$(SRCDIR)/output.map\
-					-Wl,-L$(OBJDIR)/\
-					-D __PIC32MX__ -D __$(PROC)__ -D $(BOARD)\
-					-T$(LKRDIR)/procdefs.ld\
-					-T$(LKRDIR)/elf32pic32mx.x
+ELF_FLAGS		= -EL $(_IDE_OPTIMIZATION_) -march=24kc -msoft-float $(MIPS16_INTER) \
+				  -ffunction-sections \
+				  -fdata-sections \
+				  -Wl,--gc-sections \
+				  -Wl,-L$(OBJDIR) \
+				  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
+				  -Wl,-Map=$(_IDE_SRCDIR_)/output.map \
+				  -D __PIC32MX__ \
+				  -D __$(_IDE_PROC_)__ \
+				  -D $(_IDE_BOARD_) \
+				  -T$(LKRDIR)/procdefs.ld \
+				  -T$(LKRDIR)/elf32pic32mx.x
 
-#-------------------------------------------------------------------------------
-#	rules
-#-------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# rules
+# ----------------------------------------------------------------------
 
-all: clean copy link exec correct
+all: clean copy compile convert correct
 
 clean:
-	#----------------------------------------------------------------------------
-	#	clean
-	#----------------------------------------------------------------------------
-	$(RM) $(SRCDIR)/main32.o
-	$(RM) $(SRCDIR)/main32.elf
-	$(RM) $(SRCDIR)/main32.hex
+	# ------------------------------------------------------------------
+	# cleaning all build files
+	# ------------------------------------------------------------------
+	$(RM) $(_IDE_SRCDIR_)/main32.o
+	$(RM) $(_IDE_SRCDIR_)/main32.elf
+	$(RM) $(_IDE_SRCDIR_)/main32.hex
 	$(RM) $(OBJDIR)/processor.o
 
 copy:
-	#----------------------------------------------------------------------------
-	#	copy
-	#----------------------------------------------------------------------------
-	cp $(OBJDIR)/$(PROC).o $(OBJDIR)/processor.o
+	# ------------------------------------------------------------------
+	# adding proc. definitions
+	# ------------------------------------------------------------------
+	$(CP) $(OBJDIR)/$(_IDE_PROC_).o $(OBJDIR)/processor.o
 
-link:
-	#----------------------------------------------------------------------------
-	#	compile and link
-	#----------------------------------------------------------------------------
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(SRCDIR)/main32.elf $(SRCDIR)/main32.c\
+compile:
+	# ------------------------------------------------------------------
+	# compiling and linking
+	# ------------------------------------------------------------------
+	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\
+		$(_IDE_SRCDIR_)/main32.o\
 		$(OBJDIR)/crt0.S\
 		$(OBJDIR)/processor.o\
 		$(OBJDIR)/usb/$(CDCLIBRARY)\
@@ -144,16 +136,15 @@ link:
 		$(INCDIR)/non-free/p32xxxx.h\
 		$(LIBS)
 
-exec:
-	#----------------------------------------------------------------------------
-	#	exec
-	#----------------------------------------------------------------------------
-	$(OBJC) -O ihex $(SRCDIR)/main32.elf $(SRCDIR)/main32.hex
+convert:
+	# ------------------------------------------------------------------
+	# converting elf to hex
+	# ------------------------------------------------------------------
+	$(OBJC) -O ihex $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.hex
 
 correct:
-	#----------------------------------------------------------------------------
-	#	correct
-	#----------------------------------------------------------------------------
-	${REMOVE}
-	mv $(SRCDIR)/temp.hex $(SRCDIR)/main32.hex      
-
+	# ------------------------------------------------------------------
+	# fixing bad record
+	# ------------------------------------------------------------------
+	grep --binary --invert-match $(BADRECORD) $(_IDE_SRCDIR_)/main32.hex > $(_IDE_SRCDIR_)/temp.hex
+	$(MV) $(_IDE_SRCDIR_)/temp.hex $(_IDE_SRCDIR_)/main32.hex
