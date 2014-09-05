@@ -59,7 +59,7 @@
 
 #if defined(UBW32_460) || defined(EMPEROR460) || \
     defined(PIC32_PINGUINO_220) || \
-    defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
 
     #if (SPIx == 1)
         #define BUFFER		SPI1BUF
@@ -78,7 +78,7 @@
         #define CKE         SPI1CONbits.CKE
         #define SMP         SPI1CONbits.SMP
         #define MSTEN       SPI1CONbits.MSTEN
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
         // RB7 is defined as SS1 pin (cf. io.c)
         #define SPI_select()    LATBCLR = 1 << 7 // device selection
         #define SPI_deselect()  LATBSET = 1 << 7 // it stops device selection
@@ -443,7 +443,7 @@ void SPI_begin()
 
     if (this_role != SPI_SLAVE)
     {
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
             TRISBCLR = 1<<7;            // RB7 is defined as SS1 pin (cf. io.c)
         #endif
     }

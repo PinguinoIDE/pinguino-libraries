@@ -103,7 +103,7 @@ u16 __bufmask[]=		{0x0018,0x001C,0x0008,0x000C,0x0010,0x0014,0x0000,0x0000,
 						0x0008,0x000C,0x0010,0x0014,0x0000,0x0000};
 #endif
 
-#if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
 
 u16 __analogmask[]=    	{_15,_14,_13,nil,nil,nil,nil,nil,
 						nil,_3,_2,_1,_0,nil,nil,nil,
@@ -167,8 +167,8 @@ void SetAnalog(u8 pin)
 	if ((pin==4)||(pin==18)) TRISDbits.TRISD9=1;   // analog input 18 is shared with I2C
 	if ((pin==5)||(pin==19)) TRISDbits.TRISD10=1;  // analog input 19 is shared with I2C
 	#endif
-	#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
-		#if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+	#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+		#if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
 			ANSELBSET=__analogmask[pin];
 			TRISBSET=__analogmask[pin];
 		#else
@@ -190,8 +190,8 @@ void SetAnalog(u8 pin)
 
 u8 IsDigital(u8 pin)
 {
-	#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
-		#if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+	#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+		#if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
 			if (ANSELB&__analogmask[pin]) return 1;
 			else return 0;
 		#else

@@ -78,7 +78,7 @@ void PMP_setMode(u8 mode)
  
 void PMP_setWidth(u8 width)
 {
-    #if !defined(PINGUINO32MX250) && !defined(PINGUINO32MX220)
+    #if !defined(PINGUINO32MX250) || defined(PINGUINO32MX270) && !defined(PINGUINO32MX220)
     if ( (width==16) || (width==PMP_MODE_16BIT) )
         _pmp_width = PMP_MODE_16BIT;
     else
@@ -228,7 +228,7 @@ void PMP_init()
     }
     
     // Select 8- or 16-bit Data mode: MODE16 bit (PMMODE<10>).
-    #if !defined(PINGUINO32MX250) && !defined(PINGUINO32MX220)
+    #if !defined(PINGUINO32MX250) || defined(PINGUINO32MX270) && !defined(PINGUINO32MX220)
     PMMODEbits.MODE16 = _pmp_width;
     #endif
     
@@ -278,7 +278,7 @@ void PMP_init()
         PMCONbits.PTRDEN = 0;		// PMRD/PMWR strobe disable
     
     // Enable PMCS1 Chip Selects: CSF<1:0> bits (PMCON<7:6>)
-    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
     if ( _pmp_control & PMCS1 )
         PMCONbits.CSF = PMP_CS1;
     else
@@ -298,7 +298,7 @@ void PMP_init()
     PMCONbits.ALP  = _pmp_polarity;
     
     // CS pin polarity
-    #if !defined(PINGUINO32MX250) && !defined(PINGUINO32MX220)
+    #if !defined(PINGUINO32MX250) || defined(PINGUINO32MX270) && !defined(PINGUINO32MX220)
     PMCONbits.CS2P = _pmp_polarity;
     #endif
     PMCONbits.CS1P = _pmp_polarity;
@@ -316,7 +316,7 @@ void PMP_init()
     if ( _pmp_control & PMCS1 )
         PMAENSET = PMCS1;
 
-    #if !defined(PINGUINO32MX250) && !defined(PINGUINO32MX220)
+    #if !defined(PINGUINO32MX250) || defined(PINGUINO32MX270) && !defined(PINGUINO32MX220)
     if ( _pmp_control & PMCS2 )    
         PMAENSET = PMCS2;
     #endif

@@ -45,7 +45,8 @@
     #define INT_DISABLED					0
 
     // INTERRUPT VECTOR LOCATION
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX220) || \
+		defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
 
         #define INT_CORE_TIMER_VECTOR			0
         #define INT_CORE_SOFTWARE0_VECTOR		1
@@ -157,7 +158,7 @@
     #endif
 
     // IRQ NUMBER = INTERRUPT NUMBER (IFSx, IECx and IPSx registers)
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
 
         #define INT_CORE_TIMER					0
         #define INT_CORE_SOFTWARE0				1
@@ -525,7 +526,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;  
 #endif
         case INT_UART1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS1bits.U1TXIF = 0;
             IFS1bits.U1RXIF = 0;
             IFS1bits.U1EIF  = 0;
@@ -540,7 +541,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
 #endif
             break; 
         case INT_I2C1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS1bits.I2C1MIF = 0;
             IFS1bits.I2C1SIF = 0;
             IFS1bits.I2C1BIF  = 0;
@@ -578,7 +579,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IFS1bits.SPI2EIF = 0;
             IFS1bits.SPI2TXIF = 0;
             IFS1bits.SPI2RXIF  = 0;
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC9bits.SPI2IP = pri;
             IPC9bits.SPI2IS = sub;
 #else
@@ -591,7 +592,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IFS1bits.U2TXIF = 0;
             IFS1bits.U2RXIF = 0;
             IFS1bits.U2EIF  = 0;
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC9bits.U2IP = pri;
             IPC9bits.U2IS = sub;
 #else
@@ -604,7 +605,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
         case INT_FSCM_VECTOR:
             break;
         case INT_RTCC_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS0bits.RTCCIF = 0;
             IPC6bits.RTCCIP = pri;
             IPC6bits.RTCCIS = sub;
@@ -625,7 +626,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
         case INT_FCE_VECTOR:
             break;
         case INT_USB_VECTOR:
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC7bits.USBIP = pri;
             IPC7bits.USBIS = sub;
         #else
@@ -738,7 +739,7 @@ unsigned int IntGetVectorPriority(u8 vector)
         case INT_SPI1_VECTOR:
             break;  
         case INT_UART1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             pri = IPC8bits.U1IP;
 #else
             pri = IPC6bits.U1IP;
@@ -765,7 +766,7 @@ unsigned int IntGetVectorPriority(u8 vector)
             break;
 #endif
         case INT_UART2_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             pri = IPC9bits.U2IP;
 #else
             pri = IPC8bits.U2IP;
@@ -776,7 +777,7 @@ unsigned int IntGetVectorPriority(u8 vector)
         case INT_FSCM_VECTOR:
             break;
         case INT_RTCC_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             pri = IPC6bits.RTCCIP;
 #else
             pri = IPC8bits.RTCCIP;
@@ -888,7 +889,7 @@ unsigned int IntGetVectorSubPriority(u8 vector)
         case INT_SPI1_VECTOR:
             break;  
         case INT_UART1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC8bits.U1IS;
 #else
             sub = IPC6bits.U1IS;
@@ -915,7 +916,7 @@ unsigned int IntGetVectorSubPriority(u8 vector)
             break;
 #endif
         case INT_UART2_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC9bits.U2IS;
 #else
             sub = IPC8bits.U2IS;
@@ -926,7 +927,7 @@ unsigned int IntGetVectorSubPriority(u8 vector)
         case INT_FSCM_VECTOR:
             break;
         case INT_RTCC_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC6bits.RTCCIS;
 #else
             sub = IPC8bits.RTCCIS;
@@ -1212,7 +1213,7 @@ void MIPS32 IntConfigureSystem(u8 mode)
     temp = _CP0_GET_STATUS(); // Get Status
     temp |= 0x00400000; // Set BEV bit
     _CP0_SET_STATUS(temp); // Update Status
-    #if defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
     _CP0_SET_EBASE(0xBD003000); // Set an EBase value of 0xBD003000	
     #else
     _CP0_SET_EBASE(0xBD005000); // Set an EBase value of 0xBD005000	

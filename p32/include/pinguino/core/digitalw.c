@@ -156,7 +156,7 @@ const int pinmask[]={	_8,_9,_2,_3,_4,_5,_6,_7,	// D0-D7	: C8,C9,C2,C3,C4,C5,C6,C
 
 //----------------------------------------------------------------------
 
-#elif defined(PINGUINO32MX220) || defined(PINGUINO32MX250)
+#elif defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
 
 const int portmask[]={	pB,pB,pB,pB,pB,pB,pB,pA,	// D0-D7	: B15,B14,B13,B9,B8,B7,B5,A4
                         pB,pB,pB,pB,pB,pA,			// D8-D13	: B4,B3,B2,B1,B0,A0
@@ -243,14 +243,14 @@ void pinmode(int pin, int state)
             else TRISBCLR=pinmask[pin];
             break;
 
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC:
             if (state) TRISCSET=pinmask[pin];
             else TRISCCLR=pinmask[pin];
             break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD:
             if (state) TRISDSET=pinmask[pin];
@@ -284,11 +284,11 @@ void output(int pin)
 
         case pB: TRISBCLR=pinmask[pin]; break;
 
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: TRISCCLR=pinmask[pin]; break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: TRISDCLR=pinmask[pin]; break;
         case pE: TRISECLR=pinmask[pin]; break;
@@ -310,11 +310,11 @@ void input(int pin)
 
         case pB: TRISBSET=pinmask[pin]; break;
 
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: TRISCSET=pinmask[pin]; break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: TRISDSET=pinmask[pin]; break;
         case pE: TRISESET=pinmask[pin]; break;
@@ -392,14 +392,14 @@ void digitalwrite(int pin, int state)
             else PORTBCLR=pinmask[pin];
             break;
             
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC:
             if (state) PORTCSET=pinmask[pin];
             else PORTCCLR=pinmask[pin];
             break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD:
             if (state) PORTDSET=pinmask[pin];
@@ -433,11 +433,11 @@ void high(int pin)
         
         case pB: PORTBSET=pinmask[pin]; break;
             
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: PORTCSET=pinmask[pin]; break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: PORTDSET=pinmask[pin]; break;
         case pE: PORTESET=pinmask[pin]; break;
@@ -459,11 +459,11 @@ void low(int pin)
         
         case pB: PORTBCLR=pinmask[pin]; break;
             
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: PORTCCLR=pinmask[pin]; break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: PORTDCLR=pinmask[pin]; break;
         case pE: PORTECLR=pinmask[pin]; break;
@@ -527,12 +527,12 @@ void toggle(int pin)
 
         case pB: PORTBINV=pinmask[pin]; break;
 
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: PORTCINV=pinmask[pin]; break;
         #endif
 
         #if !defined(__32MX220F032B__) && !defined(__32MX220F032D__) && \
-            !defined(__32MX250F128B__)
+            !defined(__32MX250F128B__) || defined(__32MX270F256B__)
         case pD: PORTDINV=pinmask[pin]; break;
         case pE: PORTEINV=pinmask[pin]; break;
         case pF: PORTFINV=pinmask[pin]; break;
