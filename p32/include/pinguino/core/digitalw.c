@@ -456,7 +456,7 @@ void low(int pin)
         case pC: PORTCCLR=pinmask[pin]; break;
         #endif
 
-        #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \		
+        #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
 			!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
         case pD: PORTDCLR=pinmask[pin]; break;
         case pE: PORTECLR=pinmask[pin]; break;
@@ -482,7 +482,7 @@ u8 digitalread(int pin)
             case pC: return((PORTC&pinmask[pin])!=0);
                     break;
         #endif
-        #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \		
+        #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
 			!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
 			case pD: return((PORTD&pinmask[pin])!=0);
 					break;
