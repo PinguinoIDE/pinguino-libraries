@@ -28,6 +28,7 @@
 	** CS - pin 0   (RB0)
 */
 #include <stdlib.h>
+#define SPIINIT
 #define SERIAL_PRINT // to add if you use MMC.printSector or MMC.list and serial communication
 
 // Following get_line function allows to enter commands from a serial terminal

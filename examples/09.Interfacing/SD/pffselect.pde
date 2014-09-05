@@ -27,6 +27,7 @@
 	** CS - pin 0   (RB0)
 */
 #include <stdlib.h>
+#define SPIINIT
 #define CDC_PRINT // to add if you use MMC.printSector or MMC.list and CDC communication
 
 // Following get_line function allows to enter commands from a serial terminal
@@ -138,7 +139,7 @@ void loop()
           // printf() needs a C-string (NULL terminated)
               data_buffer_32[br] = 0;
               CDC.printf("%s",data_buffer_32);
-              if( br < 32) CDC.printf("\r\n");
+              if( br < 32) CDC.printf("\r\nSuccessful dump\r\n");
             }
           else
           {
