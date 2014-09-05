@@ -51,6 +51,8 @@
 #include <proc/p32mx230f064d.h>
 #elif defined(__32MX250F128B__)
 #include <proc/p32mx250f128b.h>
+#elif defined(__32MX270F256B__)
+#include <proc/p32mx270f256b.h>
 #elif defined(__32MX250F128C__)
 #include <proc/p32mx250f128c.h>
 #elif defined(__32MX250F128D__)
