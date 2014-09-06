@@ -27,6 +27,9 @@
 #ifndef __CONST_H
     #define __CONST_H
 
+    #define PINGUINO_MAJOR_VERSION 11
+    #define PINGUINO_MINOR_VERSION 1
+
     // Tell the compiler the next function must be MIPS32.
     // Typically needed by all functions such as interrupt handlers
     // which cannot be MIPS16 functions when -mips16 option is enabled.

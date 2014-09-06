@@ -37,6 +37,7 @@
 */
 #include <stdlib.h>
 #define SERIAL_PRINT // to add if you use CDC.printSector or CDC.list and serial communication
+#define SPIINIT
 SDFatfs fs; // FATFS alias
 FIL Fil;			// File object
 u8 Buff[65];		// File read buffer

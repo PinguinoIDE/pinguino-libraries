@@ -170,10 +170,10 @@ static void ServosPulseDown()
             PORTA ^= timings[timingindex][pA];
             #endif
             PORTB ^= timings[timingindex][pB];
-            #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+            #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
             PORTC ^= timings[timingindex][pC];
             #endif
-            #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+            #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                 !defined(__32MX220F032B__)
             PORTD ^= timings[timingindex][pD];
             PORTE ^= timings[timingindex][pE];
@@ -213,10 +213,10 @@ static void ServosPulseUp()
     PORTA |= activatedservos[pA];
     #endif
     PORTB |= activatedservos[pB];
-    #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+    #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
     PORTC |= activatedservos[pC];
     #endif
-    #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+    #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
         !defined(__32MX220F032B__)
     PORTD |= activatedservos[pD];
     PORTE |= activatedservos[pE];
@@ -240,10 +240,10 @@ static void SortServoTimings()
         timings[t][pA]=0x00;
         #endif
         timings[t][pB]=0x00;
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         timings[t][pC]=0x00;
         #endif
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         timings[t][pD]=0x00;
         timings[t][pE]=0x00;
@@ -279,10 +279,10 @@ static void SortServoTimings()
                         timings[t][pA]=pinmask[s];
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=0x00;
@@ -308,10 +308,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=pinmask[s];
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=0x00;
@@ -326,7 +326,7 @@ static void SortServoTimings()
                     }
                     break;
 
-                #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                 case pC:
                     if (pinmask[s] & mascaratotal[pC] & activatedservos[pC]){
                         break;
@@ -337,10 +337,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=pinmask[s];
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=0x00;
@@ -356,7 +356,7 @@ static void SortServoTimings()
                     break;
                 #endif
 
-                #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                     !defined(__32MX220F032B__)
                 case pD:
                     if (pinmask[s] & mascaratotal[pD] & activatedservos[pD]){
@@ -368,10 +368,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=pinmask[s];
                         timings[t][pE]=0x00;
@@ -396,10 +396,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=pinmask[s];
@@ -424,10 +424,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=0x00;
@@ -452,10 +452,10 @@ static void SortServoTimings()
                         timings[t][pA]=0x00;
                         #endif
                         timings[t][pB]=0x00;
-                        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+                        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
                         timings[t][pC]=0x00;
                         #endif
-                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+                        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
                             !defined(__32MX220F032B__)
                         timings[t][pD]=0x00;
                         timings[t][pE]=0x00;
@@ -477,10 +477,10 @@ static void SortServoTimings()
         mascaratotal[pA] |= timings[t][pA];
         #endif
         mascaratotal[pB] |= timings[t][pB];
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         mascaratotal[pC] |= timings[t][pC];
         #endif
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         mascaratotal[pD] |= timings[t][pD];
         mascaratotal[pE] |= timings[t][pE];
@@ -511,13 +511,13 @@ void ServoAttach(unsigned int pin)
                 activatedservos[pB] |= pinmask[pin];  // list pin as servo driver.
                 TRISBCLR = pinmask[pin];// set as output pin
                 break;
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: 
                 activatedservos[pC] |= pinmask[pin];  // list pin as servo driver.
                 TRISCCLR = pinmask[pin];// set as output pin
                 break;
         #endif
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: 
                 activatedservos[pD] |= pinmask[pin];  // list pin as servo driver.
@@ -549,10 +549,10 @@ void ServoDetach(unsigned int pin)
         case pA: activatedservos[pA] ^= pinmask[pin]; break;
         #endif
         case pB: activatedservos[pB] ^= pinmask[pin]; break;
-        #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+        #if !defined(__32MX250F128B__) || defined(__32MX270F256B__) && !defined(__32MX220F032B__)
         case pC: activatedservos[pC] ^= pinmask[pin]; break;
         #endif
-        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && \
+        #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) || defined(__32MX270F256B__) && \
             !defined(__32MX220F032B__)
         case pD: activatedservos[pD] ^= pinmask[pin]; break;
         case pE: activatedservos[pE] ^= pinmask[pin]; break;

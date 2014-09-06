@@ -55,7 +55,7 @@
 #define PMP_MODE_ESLAVE             0b01    // Enhanced
 #define PMP_MODE_SLAVE              0b00    // Legacy
 
-#if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+#if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
     #define PMP_MUX_8X8             0b11    // Lower 8 bits of address are multiplexed on PMD<7:0> pins; upper 8 bits are not used
     #define PMP_MUX_16X8            0b10    // All 16 bits of address are multiplexed on PMD<7:0> pins
     #define PMP_MUX_16X16           0b01    // Lower 8 bits of address are multiplexed on PMD<7:0> pins, upper bits are on PMA<10:8> and PMA<14>
@@ -67,7 +67,7 @@
     #define PMP_MUX_OFF             0b00    // Demultiplexed (separate data and address lines)
 #endif
 
-#if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+#if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
     #define PMP_CS1                 0b10    // PMCS1 as CS
     #define PMP_CS_OFF              0b00    // PMCS1 as bit address
 #else

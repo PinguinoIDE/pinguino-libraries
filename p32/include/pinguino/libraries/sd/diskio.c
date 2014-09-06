@@ -640,5 +640,5 @@ void put_rc(FRESULT rc) {
 		while (*str++)
 			;
 	}
-	CDCprintln("rc=%u FR_%s", (UINT) rc, str);
+	CDCprintf("rc=%u FR_%s\r\n", (UINT) rc, str);
 }

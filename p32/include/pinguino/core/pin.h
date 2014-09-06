@@ -157,7 +157,7 @@
             // OLIMEX build-in buttons
             #define USERBUTTON              2       //PORTDbits.RD0 = user button
 
-    #elif defined(PINGUINO32MX220) || defined(PINGUINO32MX250)
+    #elif defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
 
             #define USERBUTTON      14
             #define USERLED         13

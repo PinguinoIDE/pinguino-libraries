@@ -43,7 +43,8 @@
  
 void IOsetDigital()
 {
-    #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+    #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+		defined(__32MX250F128B__) || defined(__32MX270F256B__)
         CFGCONbits.JTAGEN=0;    // Disable the JTAG port, Port A as Digital Port
         ANSELA = 0;
         ANSELB = 0;
@@ -68,7 +69,9 @@ void IOsetSpecial()
     
     TRISB  = 0;
 
-    #if !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+    #if !defined(__32MX220F032B__) && \
+		!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+		
         TRISC  = 0;
         #if !defined(__32MX220F032D__)
             TRISD  = 0;
@@ -124,7 +127,7 @@ void IOsetRemap()
     #endif
 
     // Thanks to danirobin
-    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
         SystemUnlock();
         CFGCONbits.IOLOCK=0;			// unlock configuration
         CFGCONbits.PMDLOCK=0;

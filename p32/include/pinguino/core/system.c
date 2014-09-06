@@ -34,7 +34,7 @@
 #include <const.h>              // MIPS32
 #include <typedef.h>
 
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     #define CPUCOREMAXFREQUENCY	40000000L	// 40 MHz
 #else
     #define CPUCOREMAXFREQUENCY	80000000L	// 80 MHz
@@ -433,7 +433,7 @@ void SystemClocksWriteSettings(const SystemClocksSettings *s)
     OSCCONbits.PBDIV = s->PBDIV;
 
     // Set wait states
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     // TODO
     //PMMODEbits.WAITB = 0b00;								// Data wait of 1 TPB
     #else
@@ -473,7 +473,7 @@ u32 GetPeripheralClock()
 void SetFlashWaitStates_old()
 {
     SystemUnlock();
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     //PMMODEbits.WAITB = 0b00;					// Data wait of 1 TPB
     #else
     CHECON = (GetSystemClock() / 20) - 1;		// FlashWaitStates

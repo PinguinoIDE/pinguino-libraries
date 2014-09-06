@@ -15,6 +15,7 @@
                                 in SPI_clock() identified by dk (KiloOne)
     01 Mar 2014 - fcapozzi   -  added SPI32_init function
     15 Mar 2014 - rblanchot  -  fixed compatibility with 8-bit Pinguino SPI library 
+    22 Aug 2014 - rblanchot  -  fixed SPI2 bug 
      ----------------------------------------------------------------------------
     TODO : !!! SLAVE MODE !!!
     ----------------------------------------------------------------------------
@@ -58,7 +59,7 @@
 
 #if defined(UBW32_460) || defined(EMPEROR460) || \
     defined(PIC32_PINGUINO_220) || \
-    defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
 
     #if (SPIx == 1)
         #define BUFFER		SPI1BUF
@@ -77,7 +78,7 @@
         #define CKE         SPI1CONbits.CKE
         #define SMP         SPI1CONbits.SMP
         #define MSTEN       SPI1CONbits.MSTEN
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
         // RB7 is defined as SS1 pin (cf. io.c)
         #define SPI_select()    LATBCLR = 1 << 7 // device selection
         #define SPI_deselect()  LATBSET = 1 << 7 // it stops device selection
@@ -93,6 +94,7 @@
     #define STATTX		SPI2STATbits.SPITBF	// Transmit buffer full
     #define SPICONF		SPI2CON
     #define SPICONCLR	SPI2CONCLR
+        #define SPICONSET   SPI2CONSET
     #define SPIENHBUF	SPI2CONbits.ENHBUF
     #define CLKSPD		SPI2BRG
     #define PULLUPS		0xF00 //Use CNPUE = PULLUPS for enable internal pullups 8,9,10,11
@@ -100,6 +102,10 @@
     #define INTTXDONE 	INT_SPI2_TRANSFER_DONE
     #define INTRXDONE 	INT_SPI2_RECEIVE_DONE
     #define INTVECTOR 	INT_SPI2_VECTOR
+        #define CKP         SPI2CONbits.CKP
+        #define CKE         SPI2CONbits.CKE
+        #define SMP         SPI2CONbits.SMP
+        #define MSTEN       SPI2CONbits.MSTEN
 #endif
 
 //Only 795 boards have SPI3 and SPI4
@@ -437,7 +443,7 @@ void SPI_begin()
 
     if (this_role != SPI_SLAVE)
     {
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
             TRISBCLR = 1<<7;            // RB7 is defined as SS1 pin (cf. io.c)
         #endif
     }

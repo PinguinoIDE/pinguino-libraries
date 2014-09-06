@@ -25,6 +25,7 @@
 	** CS - pin 0   (RB0)
 */
 #include <stdlib.h>
+#define SPIINIT
 #define CDC_PRINT // to add if you use SD.printSector and CDC communication
 
 SDFatfs fs; // FATFS alias

@@ -8,12 +8,15 @@
 // 18 Jun. 2013 added CDC.USBIsConnected to check if USB cable is connected Moreno manzini
 // 13 Mar. 2014 added printNumber, printFloat (r. blanchot)
 //              updated print, println, getKey and getString to spare memory on small memory PIC
+// 28 Aug. 2014 added #include <string.h> to use strlen
 
 #ifndef __USBCDC
 #define __USBCDC
 
 #include <stdarg.h>
-
+#if defined(CDCPRINT) || defined(CDCPRINTLN)
+#include <string.h>			// strlen
+#endif
 #include <typedef.h>
 #include <system.c>
 #include <interrupt.c>
@@ -120,7 +123,8 @@ void INTEnableInterrupts()
     IntEnable(INT_USB);
 }
 
-#if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+#if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \ 
+	!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
 
 // this is the Set Line coding CallBack function
 void mySetLineCodingHandler()
@@ -185,7 +189,9 @@ void USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event_usb)
 void CDC_init()
 {
     USBDeviceInit();		// Initializes USB module SFRs and firmware
-    #if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
+    #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
+		!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+		
         USBDeviceAttach();
     #endif
     Delayms(1500);
@@ -204,7 +210,9 @@ void CDCputs(u8 *buffer, u8 length)
     {
         if (mUSBUSARTIsTxTrfReady())
             break;
-        #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+        #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+			defined(__32MX250F128B__) || defined(__32MX270F256B__)
+			
             USB_Service();
         #else
             CDCTxService();
@@ -213,7 +221,8 @@ void CDCputs(u8 *buffer, u8 length)
     if (i > 0)
     {
         putUSBUSART(buffer, length);
-        #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+        #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+			defined(__32MX250F128B__) || defined(__32MX270F256B__)
             USB_Service();
         #else
             CDCTxService();
@@ -231,7 +240,8 @@ u8 CDCgets(u8 *buffer)
 {
     u8 numBytesRead;
         
-    #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+	#if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+		defined(__32MX250F128B__) || defined(__32MX270F256B__)
         USB_Service();
         numBytesRead = USB_Service_CDC_GetString( buffer );
     #else

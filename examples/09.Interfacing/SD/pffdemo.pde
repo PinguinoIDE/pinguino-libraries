@@ -24,6 +24,7 @@
 	** CLK - pin 2  (RB2)
 	** CS - pin 0   (RB0)
 */
+#define SPIINIT
 #define CDC_PRINT // to add if you use MMC.printSector or MMC.list and CDC communication
 
 void setup()

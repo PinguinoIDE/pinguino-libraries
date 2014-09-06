@@ -71,11 +71,11 @@
 
 	// Read bit #n from octet
 	#define BitRead(octet, n) \
-		(octet = (octet >> n) & 1)
+		((octet) = ((octet) >> (n)) & 1)
 
 	// Set bit #n from octet
 	#define BitSet(octet, n) \
-		(octet |= (1 << n))
+		((octet) |= (1 << (n)))
 
 	// Clear (0) bit #n from octet
 	#define BitClear(octet, n) \
@@ -83,7 +83,7 @@
 
 	// Inverse bit #n from octet
 	#define BitInv(octet, n) \
-		(octet ^= (1 << n))
+		((octet) ^= (1 << (n)))
 
 	#define BitWrite(value, bit, bitvalue) \
 		(bitvalue ? BitSet(value, bit) : BitClear(value, bit))
@@ -92,6 +92,6 @@
 		(1 << (b))
 
     #define Not(b) \
-        (255 - b)
+        (255 - (b))
         
 #endif

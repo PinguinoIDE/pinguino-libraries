@@ -26,11 +26,11 @@
 
 	// Lire le bit n de octet
 	#define BitRead(byte, n) \
-		(byte = byte >> n & 1)
+		((byte) = (byte) >> (n) & 1)
 
 	// Met le bit n à 1 dans octet
 	#define BitSet(byte, n) \
-		(byte |= (1 << n))
+		((byte) |= (1 << (n)))
 
 	// Met le bit n à 0 dans octet
 	#define BitClear(octet, n) \
@@ -43,7 +43,7 @@
 		(1 << (b))
 
 	#define BitTest(byte,n) \
-	    ((byte&(1<<n))!=0)
+	    (((byte) & (1 << (n)))!=0)
 
 	/// MATH
 

@@ -36,6 +36,7 @@ sp <format> (%  omitted) <numeric value or char or string> according <format>
 in the 4 above cases the result depends on the file pointer position.
 -----------------------------------------------------*/
 #include <stdlib.h>
+#define SPIINIT
 SDFatfs fs; // FATFS alias
 extern static u16 CardType;
 
@@ -251,7 +252,7 @@ void loop() {
               else {		// Type the data
                   Buff[br] = 0;
                   CDC.printf("%s",Buff);
-                  if( br < lgcorbuff) CDC.printf("\r\n");
+                  if( br < lgcorbuff) CDC.printf("\r\nSuccessful dump\r\n");
               }
           } while (br == lgcorbuff);
           if (rc) die(rc);

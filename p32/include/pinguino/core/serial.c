@@ -477,7 +477,7 @@ void SerialPinConfigure(u8 port)
             TRISBbits.TRISB4 = OUTPUT;	// RB4 / U1TX output
             TRISAbits.TRISA4 = INPUT;	// RA4 / U1RX input
         #endif			
-        #if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             TRISBbits.TRISB2=INPUT;		// RB2 is input ( RX )
             TRISBbits.TRISB3=OUTPUT;	// RB3 is output ( TX )
         #endif
@@ -487,7 +487,7 @@ void SerialPinConfigure(u8 port)
             TRISCbits.TRISC9 = OUTPUT;	// RC9 / U2TX output
             TRISCbits.TRISC8 = INPUT;	// RC8 / U2RX input				
         #else
-            #if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+            #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             TRISBbits.TRISB1=INPUT;		// RB1 is input ( RX )
             TRISBbits.TRISB0=OUTPUT;	// RB0 is output ( TX )
             #else
@@ -541,7 +541,7 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
     switch (port)
     {
         case UART1:
-            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
                 IPC8bits.U1IP = priority;
                 IPC8bits.U1IS = subpriority;
                 IEC1bits.U1RXIE=1;
@@ -551,7 +551,7 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
             #endif
             break;
         case UART2:
-            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
                 IPC9bits.U2IP = priority;
                 IPC9bits.U2IS = subpriority;
                 IEC1bits.U2RXIE=1;
@@ -1123,7 +1123,7 @@ void Serial1Interrupt(void)
     char    Dummy;
 
     // Is this an RX interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U1RXIF)
     #else	
     if (IntGetFlag(INT_UART1_RECEIVER))
@@ -1140,7 +1140,7 @@ void Serial1Interrupt(void)
        SerialGetDataBuffer(UART1);
      }
     while (U1STAbits.URXDA != 0);
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U1RXIF=0;
         #else	
         IntClearFlag(INT_UART1_RECEIVER);
@@ -1148,13 +1148,13 @@ void Serial1Interrupt(void)
     }
 
     // Is this an TX interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U1TXIF)
     #else		
     if (IntGetFlag(INT_UART1_TRANSMITTER))
     #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U1TXIF=0;
         #else			
         IntClearFlag(INT_UART1_TRANSMITTER);
@@ -1162,13 +1162,13 @@ void Serial1Interrupt(void)
     }
 
     // Is this an ERROR interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U1EIF)
     #else	
     if (IntGetFlag(INT_UART1_ERROR))
     #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U1EIF=0;
         #else	
         IntClearFlag(INT_UART1_ERROR);
@@ -1183,7 +1183,7 @@ void Serial2Interrupt(void)
     char    Dummy;
 
     // Is this an RX interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U2RXIF)
     #else
     if (IntGetFlag(INT_UART2_RECEIVER))
@@ -1202,33 +1202,33 @@ void Serial2Interrupt(void)
      }
     while (U2STAbits.URXDA != 0);
         //Toggle(REDLED);			// Toggle LED to indicate UART activity
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U2RXIF=0;
         #else		
         IntClearFlag(INT_UART2_RECEIVER);
         #endif
     }
     // Is this an TX interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U2TXIF)
     #else	
     if (IntGetFlag(INT_UART2_TRANSMITTER))
     #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U2TXIF=0;
         #else	
         IntClearFlag(INT_UART2_TRANSMITTER);
         #endif
     }
     // Is this an ERROR interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     if (IFS1bits.U2EIF)
     #else	
     if (IntGetFlag(INT_UART2_ERROR))
     #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         IFS1bits.U2EIF=0;
         #else	
         IntClearFlag(INT_UART2_ERROR);

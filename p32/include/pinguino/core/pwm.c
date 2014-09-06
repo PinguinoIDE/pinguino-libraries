@@ -113,7 +113,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
     }
     #endif
 
-    #if defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
+    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
     // D0-D7	: B15,B14,B13,B9,B8,B7,B5,A4
     // D8-D13	: B4,B3,B2,B1,B0,A0
     // D14 		: A1
