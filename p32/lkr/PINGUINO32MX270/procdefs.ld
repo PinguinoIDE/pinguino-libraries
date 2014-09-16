@@ -13,7 +13,7 @@ INPUT("processor.o")
 PROVIDE(_vector_spacing = 0x00000001);
 
 /* base address of interrupt vector table */
-_ebase_address = 0x9D000000;
+_ebase_address = 0x9D03F000;
 
 /*************************************************************************
  * Memory Address Equates
@@ -73,18 +73,18 @@ MEMORY
 {
   /* interrupt vector table in PROGRAM FLASH starting at ebase */
   /* 64 vectors * 4 bytes = 256 */
-  exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x100
+  exception_mem              : ORIGIN = 0x9D03F000, LENGTH = 0x1000
 
   /* Startup code in BOOT FLASH, only 0xBEF bytes available */
-  kseg0_boot_mem             : ORIGIN = 0x9FC00000, LENGTH = 0xBEF
+  kseg0_boot_mem             : ORIGIN = 0x9FC00010, LENGTH = 0xBE0
 
   /* Reset vector in BOOT FLASH, length ? */
-  kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0xBEF
+  kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x10
 
   /* User's Program is in PROGRAM FLASH after the bootloader */
-  /* Bootloader waits user'program to start at 0x9D003000    */
+  /* Bootloader waits user'program to start at 0x9D005000    */
   /* PIC32MX270F256B = 256 KB flash = 0x40000                */
-  kseg0_program_mem    (rx)  : ORIGIN = 0x9D003000, LENGTH = 0x3D000
+  kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3EB00
   
   /* we don't use debug supporting code
   debug_exec_mem             : ORIGIN = 0x9FC00490, LENGTH = 0x760
