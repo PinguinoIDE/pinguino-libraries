@@ -73,26 +73,25 @@ MEMORY
 {
 
 /***********************************************************************
- * interrupt vector table in PROGRAM FLASH
- * 64 vectors * 4 bytes = 256 bytes,  starting at ebase
+ * interrupt vector table in PROGRAM FLASH starting at ebase
  **********************************************************************/
 
 exception_mem              : ORIGIN = 0x9D03F000, LENGTH = 0x1000
 
-
 /***********************************************************************
  * Startup code in BOOT FLASH
- * only 0xBEF bytes available on PIC32MX2xx 
+ * only 0xBEF bytes available on PIC32MX2xx
+ * 0xBEF - 0x390 (Reset & Boot vectors) = 0x860
  **********************************************************************/
 
-kseg0_boot_mem             : ORIGIN = 0x9FC00010, LENGTH = 0xBE0
+kseg0_boot_mem             : ORIGIN = 0x9FC00390, LENGTH = 0x860
 
 /***********************************************************************
- * Reset vector in BOOT FLASH
- * length 0x10 ?
+ * Reset vector (0x0) and Boot exception vector (0x380) in BOOT FLASH
+ * vector's length = 0x10 ?
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x10
+kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x390
 
 /***********************************************************************
  * Bootloader is in PROGRAM FLASH
