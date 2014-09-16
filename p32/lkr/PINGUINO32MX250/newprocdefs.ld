@@ -1,5 +1,5 @@
 /*************************************************************************
- * PIC32MX270F256B object file
+ * PIC32MX250F128B object file
  * Contains Memory Regions definitions
  * 2014-09-10 Régis Blanchot
  *************************************************************************/
@@ -30,14 +30,14 @@ _RESET_ADDR              = 0xBFC00000;
 
 /* map _BEV_EXCPT_ADDR to kseg1_boot_mem */ 
 /* we don't use boot exception vector
-_BEV_EXCPT_ADDR          = ;
+_BEV_EXCPT_ADDR          = (0x9D000000 + 0x1000 + 0x970 + 0x380);
 */
 
 /* map _DBG_EXCPT_ADDR to kseg1_boot_mem */ 
 /* we don't use debug supporting code
-_DBG_EXCPT_ADDR          = ;
-_DBG_CODE_ADDR           = ;
-_DBG_CODE_SIZE           = ;
+_DBG_EXCPT_ADDR          = (0xBD000000 + 0x1000 + 0x970 + 0x480);
+_DBG_CODE_ADDR           = 0x9FC00490;
+_DBG_CODE_SIZE           = 0x760     ;
 */
 
 _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
@@ -63,11 +63,11 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  * - configuration words (non-cacheable)
  *************************************************************************
  * Cacheable (KSEG0) and non-cacheable (KSEG1)
- * KSEG0 PROGRAM FLASH [0x9D000000:0x9D03FFFF]
- * KSEG1 PROGRAM FLASH [0xBD000000:0xBD03FFFF]
+ * KSEG0 PROGRAM FLASH [0x9D000000:0x9D01FFFF]
+ * KSEG1 PROGRAM FLASH [0xBD000000:0xBD01FFFF]
  * KSEG0    BOOT FLASH [0x9FC00000:0x9FC00BEF]
  * KSEG1    BOOT FLASH [0xBFC00000:0xBFC00BEF]
- * KSEG1           RAM [0xA0000000:0xA000FFFF]
+ * KSEG1           RAM [0xA0000000:0xA0007FFF]
  *************************************************************************/
 MEMORY
 {
@@ -82,9 +82,8 @@ MEMORY
   kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0xBEF
 
   /* User's Program is in PROGRAM FLASH after the bootloader */
-  /* Bootloader waits user'program to start at 0x9D003000    */
-  /* PIC32MX270F256B = 256 KB flash = 0x40000                */
-  kseg0_program_mem    (rx)  : ORIGIN = 0x9D003000, LENGTH = 0x3D000
+  /* PIC32MX250F128B = 128 KB flash = 0x20000 */
+  kseg0_program_mem    (rx)  : ORIGIN = 0x9D002800, LENGTH = 0x1D800
   
   /* we don't use debug supporting code
   debug_exec_mem             : ORIGIN = 0x9FC00490, LENGTH = 0x760
@@ -100,7 +99,7 @@ MEMORY
   /* all SFRS */
   sfrs                       : ORIGIN = 0xBF800000, LENGTH = 0x100000
 
-  /* PIC32MX250F128B has 64 KB RAM, or 0x10000 */
-  kseg1_data_mem       (w!x) : ORIGIN = 0xA0000000, LENGTH = 64K
+  /* PIC32MX250F128B has 32 KB RAM, or 0x8000 */
+  kseg1_data_mem       (w!x) : ORIGIN = 0xA0000000, LENGTH = 32K
 
 }

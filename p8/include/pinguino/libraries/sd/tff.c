@@ -54,8 +54,8 @@
 #include <pic18fregs.h>
 #include <stdio.h>
 #include <string.h>
-#include <sd\tff.h>		/* Tiny-FatFs declarations */
-#include <sd\diskio.c>		/* Include file for user provided disk functions */
+#include <sd/tff.h>		/* Tiny-FatFs declarations */
+#include <sd/diskio.c>		/* Include file for user provided disk functions */
 //#include <serial.c>
 
 static

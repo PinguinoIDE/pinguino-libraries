@@ -59,8 +59,7 @@ ifdef CPLUPLUS
 	LIBS	  = -lstdc++ -lm -lgcc -lc
 else
 	CC		  = $(_IDE_BINDIR_)/p32-gcc
-	#LIBS	  = -lm -lgcc -lc
-	LIBS	  = -lm -lgcc
+	LIBS	  = -lm -lgcc -lc
 endif
 
 OBJC		  = $(_IDE_BINDIR_)/p32-objcopy

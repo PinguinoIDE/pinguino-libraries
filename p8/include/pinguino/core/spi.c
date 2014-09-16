@@ -4,7 +4,7 @@
 #ifndef SPI
 #define SPI
 #endif
-
+#define SPIINIT // requested because V11 IDE doesn't generate #define from .pde applications
 #include <spi.h>
 #include <delayms.c>
 

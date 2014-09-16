@@ -19,10 +19,6 @@ _ebase_address  = 0x9D003000;
  * _DBG_CODE_ADDR                 -- In-circuit Debug Executive address
  * _DBG_CODE_SIZE                 -- In-circuit Debug Executive size
  * _GEN_EXCPT_ADDR                -- General Exception Vector
-_RESET_ADDR              = 0x9D004000;
-_BEV_EXCPT_ADDR          = 0x9D004380;
-_DBG_EXCPT_ADDR          = 0x9D004480;
-_DBG_CODE_ADDR           = 0xBFC02000;
  *************************************************************************/
 _RESET_ADDR                    = 0x9D004000;
 _BEV_EXCPT_ADDR                = 0x9D004380;
