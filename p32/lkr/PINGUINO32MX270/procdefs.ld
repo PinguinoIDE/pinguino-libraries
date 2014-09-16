@@ -39,11 +39,11 @@ _RESET_ADDR              = 0xBFC00000;
 _BEV_EXCPT_ADDR          = 0xBFC00000 + 0x380;
 
 /***********************************************************************
- * map _DBG_EXCPT_ADDR to kseg1_boot_mem */ 
+ * map _DBG_EXCPT_ADDR to kseg1_boot_mem
  * we don't use debug supporting code
- _DBG_EXCPT_ADDR          = ;
- _DBG_CODE_ADDR           = ;
- _DBG_CODE_SIZE           = ;
+ * _DBG_EXCPT_ADDR          = ;
+ * _DBG_CODE_ADDR           = ;
+ * _DBG_CODE_SIZE           = ;
  **********************************************************************/
 
 /***********************************************************************
