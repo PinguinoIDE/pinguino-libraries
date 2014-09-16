@@ -29,12 +29,10 @@ SECTIONS
     KEEP(*(.reset))
   } > kseg1_boot_mem
 
-  /*
   .bev_excpt _BEV_EXCPT_ADDR :
   {
     KEEP(*(.bev_handler))
   } > kseg1_boot_mem
-  */
   
   .startup ORIGIN(kseg0_boot_mem) :
   {

@@ -37,9 +37,7 @@ LIBDIRS		= -L$(OBJDIR)/usb
 # ----------------------------------------------------------------------
 # Various options
 # ----------------------------------------------------------------------
-# - heap size / Regis Blanchot 2012
 # - cdc library / Jean-pierre Mandon 2012
-# - MIPS16/MIPS32 option (MIPS16 option could drastically reduce code size) / ??? 2013
 # - unsupported record in hex file / Jean-pierre Mandon 2012
 #		04		 : 4 bytes
 #		0000	 : address
@@ -109,7 +107,8 @@ ELF_FLAGS		= -EL -march=24kc -msoft-float \
 # rules
 # ----------------------------------------------------------------------
 
-all: clean copy compile convert correct
+all: clean copy compile convert
+#all: clean copy compile convert correct
 
 clean:
 	# ------------------------------------------------------------------
