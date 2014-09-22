@@ -67,7 +67,6 @@ SECTIONS
    *** Debug Sections
    ********************************************************************/
 
-  /*
   .dbg_excpt _DBG_EXCPT_ADDR (NOLOAD) :
   {
     . += (DEFINED (_DEBUGGER) ? 0x8 : 0x0);
@@ -82,7 +81,6 @@ SECTIONS
   {
     KEEP(*(.gen_handler))
   } > exception_mem
-  */
 
   /*********************************************************************
    *** Vector Sections
