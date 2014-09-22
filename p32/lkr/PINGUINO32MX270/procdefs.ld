@@ -8,10 +8,11 @@ INPUT("processor.o")
 
 /***********************************************************************
  * For interrupt vector handling
- * base address of interrupt vector table
- * placed at the end of flash memory
+ * base address of interrupt vector table (length = 0x1000)
+ * placed at the end of flash memory (0x40000 - 0x1000 = 0x3F000)
+ * _ebase_address value MUST BE same as the ORIGIN value of exception_mem
  **********************************************************************/
- 
+
 PROVIDE(_vector_spacing = 0x00000001);
 
 _ebase_address = 0x9D03F000;
@@ -27,24 +28,32 @@ _ebase_address = 0x9D03F000;
  **********************************************************************/
 
 /***********************************************************************
- * match reset address to ORIGIN of kseg1_boot_mem
+ * _RESET_ADDR value MUST BE same as the ORIGIN value of kseg1_boot_mem
+ * When the PIC is reset, it goes to the reset address 0xBFC00000,
+ * which is the location of the boot flash, and executes the code there:
+ * crt0.S which takes care of some initialization tasks,
+ * then calls the code for the bootloader,
+ * which resides in the KSEG0 program flash (kseg0_program_mem) memory block. 
  **********************************************************************/
- 
+
 _RESET_ADDR              = 0xBFC00000;
 
 /***********************************************************************
  * map boot exception vector to kseg1_boot_mem
+ * Place _BEV_EXCPT_ADDR at an offset of 0x380 to _RESET_ADDR
  **********************************************************************/
 
 _BEV_EXCPT_ADDR          = 0xBFC00000 + 0x380;
 
 /***********************************************************************
  * map _DBG_EXCPT_ADDR to kseg1_boot_mem
+ * Place _DBG_EXCPT_ADDR at an offset of 0x480 to _RESET_ADDR
  * we don't use debug supporting code
- * _DBG_EXCPT_ADDR          = ;
- * _DBG_CODE_ADDR           = ;
- * _DBG_CODE_SIZE           = ;
  **********************************************************************/
+
+_DBG_EXCPT_ADDR          = 0xBFC00000 + 0x480;
+_DBG_CODE_ADDR           = 0x9FC00000 + 0x490;
+_DBG_CODE_SIZE           = 0x560;
 
 /***********************************************************************
  * 
@@ -73,38 +82,46 @@ MEMORY
 {
 
 /***********************************************************************
+ * User Program code
+ * in cacheable PROGRAM FLASH
+ * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
+ * Bootloader is placed between 0x9D000000 and 0x9D005000
+ * Interrupt Vector Table is placed between 0x9D03F000 to 0x9D040000
+ * 0x3F000 - 0x5000 = 0x3A000 bytes free
+ **********************************************************************/
+
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3A000
+  
+/***********************************************************************
  * interrupt vector table in PROGRAM FLASH starting at ebase
+ * exception_mem value MUST BE same as value of _ebase_address
  **********************************************************************/
 
 exception_mem              : ORIGIN = 0x9D03F000, LENGTH = 0x1000
 
 /***********************************************************************
- * Startup code in BOOT FLASH
- * only 0xBEF bytes available on PIC32MX2xx
- * 0xBEF - 0x390 (Reset & Boot vectors) = 0x860
- **********************************************************************/
-
-kseg0_boot_mem             : ORIGIN = 0x9FC00390, LENGTH = 0x860
-
-/***********************************************************************
- * Reset vector (0x0) and Boot exception vector (0x380) in BOOT FLASH
+ * Reset (0x0), Boot (0x380) and Debug (0x480) vectors
+ * kseg1_boot_mem value MUST BE same as the _RESET_ADDR value 
+ * in non-cacheable BOOT FLASH
  * vector's length = 0x10 ?
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x390
+kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x490
 
 /***********************************************************************
- * Bootloader is in PROGRAM FLASH
- * Bootloader length < 0x5000 bytes
- * PIC32MX250F128B = 256 KB flash = 0x40000
+ * Startup code (about 0x200 bytes long)
+ * in cacheable BOOT FLASH
+ * only 0xBF0 bytes available on PIC32MX2xx
+ * 0xBF0 - 0x490 (Reset, Boot & Debug vectors) = 0x760
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3EB00
-  
+kseg0_boot_mem             : ORIGIN = 0x9FC00490, LENGTH = 0x200
+
 /***********************************************************************
  * we don't use debug supporting code
- * debug_exec_mem             : ORIGIN = 0x9FC00490, LENGTH = 0x760
  **********************************************************************/
+
+debug_exec_mem             : ORIGIN = 0x9FC00690, LENGTH = 0x560
 
 /***********************************************************************
  * Device Configuration Registers (configuration bits)
