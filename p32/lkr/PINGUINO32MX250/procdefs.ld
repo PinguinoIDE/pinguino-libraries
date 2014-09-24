@@ -97,7 +97,7 @@ exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
  * 0x20000 - 0x1000 - 0x5000 = 0x1A000 bytes free
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x1A000
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D006000, LENGTH = 0x1A000
   
 /***********************************************************************
  * Reset (0x0), Boot (0x380) and Debug (0x480) vectors
