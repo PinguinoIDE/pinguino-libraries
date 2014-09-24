@@ -15,7 +15,7 @@ INPUT("processor.o")
 
 PROVIDE(_vector_spacing = 0x00000001);
 
-_ebase_address = 0x9D01F000;
+_ebase_address = 0x9D000000;
 
 /***********************************************************************
  * Memory Address Equates
@@ -82,23 +82,23 @@ MEMORY
 {
 
 /***********************************************************************
- * User Program code
- * in cacheable PROGRAM FLASH
- * from 0x9D000000 to 0x9D020000 (PIC32MX250F128B = 128 KB flash = 0x20000) 
- * Bootloader is placed between 0x9D000000 and 0x9D005000
- * Interrupt Vector Table is placed between 0x9D01F000 to 0x9D020000
- * 0x1F000 - 0x5000 = 0x1A000 bytes free
- **********************************************************************/
-
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x1A000
-  
-/***********************************************************************
  * interrupt vector table in PROGRAM FLASH starting at ebase
  * exception_mem value MUST BE same as value of _ebase_address
  **********************************************************************/
 
-exception_mem              : ORIGIN = 0x9D01F000, LENGTH = 0x1000
+exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
 
+/***********************************************************************
+ * User Program code
+ * in cacheable PROGRAM FLASH
+ * from 0x9D000000 to 0x9D020000 (PIC32MX250F128B = 128 KB flash = 0x20000) 
+ * Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
+ * Bootloader is placed between 0x9D001000 and 0x9D006000
+ * 0x20000 - 0x1000 - 0x5000 = 0x1A000 bytes free
+ **********************************************************************/
+
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x1A000
+  
 /***********************************************************************
  * Reset (0x0), Boot (0x380) and Debug (0x480) vectors
  * kseg1_boot_mem value MUST BE same as the _RESET_ADDR value 
