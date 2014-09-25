@@ -62,7 +62,7 @@
 #if defined(__18f25k50) || defined(__18f45k50) || \
     defined(__18f26j53) || defined(__18f46j53) || \
     defined(__18f27j53) || defined(__18f47j53)
-    #define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSP1STATbits.R_W))
+    #define I2C_idle() while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W))
 #else
     #define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
 #endif
