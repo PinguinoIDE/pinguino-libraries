@@ -4,9 +4,33 @@
 	PURPOSE:		Include all functions to handle I2C communication for Master and Slave
 	PROGRAMER:		Régis Blanchot
 	FIRST RELEASE:	03 Apr. 2010
-	LAST RELEASE:	26 Sep. 2014
+	LAST RELEASE:	06 Nov. 2012
 	----------------------------------------------------------------------------
-	26 Sep. 2014    regis blanchot - fixed x550 support 
+	TODO :
+    * Slave Mode Managment
+    * PIC18F with more than 1 I2C port
+    * Arduino Compatibility
+
+	begin() initializes pinguino as an I2C master
+	begin(address) initializes pinguino as a slave at address address. 
+
+	done    void beginTransmission(uint8_t);
+	done    void beginTransmission(int);
+
+	done    uint8_t endTransmission(void);
+
+	todo	uint8_t requestFrom(uint8_t, uint8_t);
+	todo	uint8_t requestFrom(int, int);
+
+	done    void send(uint8_t);
+            void send(uint8_t*, uint8_t);
+            void send(int);
+            void send(char*);
+
+	todo	uint8_t available(void);
+	done  	uint8_t receive(void);
+	todo	void onReceive( void (*)(int) );
+	todo	void onRequest( void (*)(void) );
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -59,18 +83,12 @@
 #define I2C_400KHZ		400
 #define I2C_1MHZ		1000
 
-#if defined(__18f25k50) || defined(__18f45k50) || \
-    defined(__18f26j53) || defined(__18f46j53) || \
-    defined(__18f27j53) || defined(__18f47j53)
-    #define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSP1STATbits.R_W))
-#else
-    #define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
-#endif
+#define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
 
 /*
 #if defined(__18f2550) || defined(__18f4550) || \
     defined(__18f26j50) || defined(__18f46j50)
-#define SSPCONF1 SSPCON1
+#define SSPCONF1 SSPCON1	
 #define SSPCONF2 SSPCON2
 #define SSPAD    SSPADD
 #define SSPBF	 SSPBUF
@@ -79,10 +97,10 @@
 #define SSPACKEN SSPCON2bits.ACKEN
 #define SSPACKST SSPCON2bits.ACKSTAT
 #define SSPACKDT SSPCON2bits.ACKDT
-#define SSPPEN   SSPCON2bits.PEN
-#define SSPRCEN  SSPCON2bits.RCEN
-#define SSPRSEN  SSPCON2bits.RSEN
-#define SSPSEN   SSPCON2bits.SEN
+#define SSPPEN SSPCON2bits.PEN
+#define SSPRCEN SSPCON2bits.RCEN
+#define SSPRSEN SSPCON2bits.RSEN
+#define SSPSEN SSPCON2bits.SEN
 
 #elif defined(__18f25k50) || defined(__18f45k50)
 #define SSPCONF1 SSP1CON1	
@@ -144,20 +162,16 @@ void I2C_slave(u16 DeviceID)
     * u16 sora = means s(peed) or a(ddress)
                = speed (100, 400 or 1000 KHz) in master mode
                = address in slave mode
-    TODO Slave 10-bit address
 	--------------------------------------------------------------------------*/
 
 void I2C_init(u8 mode, u16 sora)
 {
-    u8 conf;
-    
     // In Slave mode, the SCL and SDA pins must be configured as inputs
     #if defined(__18f26j50) || defined(__18f46j50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     TRISBbits.TRISB5 = INPUT;			// SDA = INPUT
     TRISBbits.TRISB4 = INPUT;			// SCL = INPUT
-    #else // x550 and x5k50
+    #else
     TRISBbits.TRISB0 = INPUT;			// SDA = INPUT
     TRISBbits.TRISB1 = INPUT;			// SCL = INPUT
 
@@ -171,94 +185,44 @@ void I2C_init(u8 mode, u16 sora)
             //INTCONbits.PEIE=1;
             //INTCONbits.GIE=1;
             if (sora > 0x80)
-                conf = 0b00101111;	// Slave mode, 10-bit address with Start and Stop bit interrupts enabled
+                SSPCON1= 0b00101111;	// Slave mode, 10-bit address with Start and Stop bit interrupts enabled
             else
-                conf = 0b00101110;	// 00101110Slave mode,  7-bit address with Start and Stop bit interrupts enabled
-
-            #if defined(__18f25k50) || defined(__18f45k50) || \
-                defined(__18f26j53) || defined(__18f46j53) || \
-                defined(__18f27j53) || defined(__18f47j53)
-            SSP1CON1 = conf;
-            SSP1ADD = sora;				// Slave 7-bit address
-            #else
-            SSPCON1 = conf;
-            SSPADD = sora;				// Slave 7-bit address
-            #endif
+                SSPCON1= 0b00101110;	// 00101110Slave mode,  7-bit address with Start and Stop bit interrupts enabled
+    /*------------------------------------------------------------------------*/
+            SSPADD= sora;				// Slave 7-bit address
+            // TODO						// Slave 10-bit address
+    /*------------------------------------------------------------------------*/
             break;
 
         case I2C_MASTER_MODE:
         default:// I2C_MASTER_MODE
-            #if defined(__18f25k50) || defined(__18f45k50) || \
-                defined(__18f26j53) || defined(__18f46j53) || \
-                defined(__18f27j53) || defined(__18f47j53)
-            SSP1CON1= 0b00101000;		// Master Mode, clock = FOSC/(4 * (SSPADD + 1))
-            #else
             SSPCON1= 0b00101000;		// Master Mode, clock = FOSC/(4 * (SSPADD + 1))
-            #endif
             // datasheet p208
             switch (sora)
             {
                 case I2C_1MHZ:
                     // SMP = 1 = Slew rate control disabled for Standard Speed mode (100 kHz and 1 MHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
-                        defined(__18f26j53) || defined(__18f46j53) || \
-                        defined(__18f27j53) || defined(__18f47j53)
-                    SSP1STATbits.SMP = 1;   // Slew Mode Off
-                    SSP1ADD= 11;            // 1MHz = FOSC/(4 * (SSPADD + 1))
-                    #else
                     SSPSTATbits.SMP = 1;    // Slew Mode Off
-                    SSPADD= 11;             // 1MHz = FOSC/(4 * (SSPADD + 1))
-                    #endif
-                                            // SSPADD = 48 000 / (4*1000) - 1
-                    break;
+                    SSPADD= 11;            // 1MHz = FOSC/(4 * (SSPADD + 1))
+                    break;                  // SSPADD = 48 000 / (4*1000) - 1
                     
                 case I2C_400KHZ:
                     // SMP = 0 = Slew rate control enabled for High-Speed mode (400 kHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
-                        defined(__18f26j53) || defined(__18f46j53) || \
-                        defined(__18f27j53) || defined(__18f47j53)
-                    SSP1STATbits.SMP = 0;    // Slew Mode On
-                    SSP1ADD= 29;             // 400kHz = FOSC/(4 * (SSPADD + 1))
-                    #else
                     SSPSTATbits.SMP = 0;    // Slew Mode On
-                    SSPADD= 29;             // 400kHz = FOSC/(4 * (SSPADD + 1))
-                    #endif
-                                            // SSPADD = 48 000 / (4*400) - 1
-                    break;
-
+                    SSPADD= 29;            // 400kHz = FOSC/(4 * (SSPADD + 1))
+                    break;           // SSPADD = 48 000 / (4*400) - 1
                 case I2C_100KHZ:
                 default:
                     // SMP = 1 = Slew rate control disabled for Standard Speed mode (100 kHz and 1 MHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
-                        defined(__18f26j53) || defined(__18f46j53) || \
-                        defined(__18f27j53) || defined(__18f47j53)
-                    SSP1STATbits.SMP = 1;    // Slew Mode Off
-                    SSP1ADD= 119;            // 100kHz = FOSC/(4 * (SSPADD + 1))
-                    #else
                     SSPSTATbits.SMP = 1;    // Slew Mode Off
-                    SSPADD= 119;            // 100kHz = FOSC/(4 * (SSPADD + 1))
-                    #endif
-                                            // SSPADD = 48 000 / (4*100) - 1
-                    break;
+                    SSPADD= 119;           // 100kHz = FOSC/(4 * (SSPADD + 1))
+                    break;                  // SSPADD = 48 000 / (4*100) - 1
             }
             break;
     }
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2= 0;
-    #else
     SSPCON2= 0;
-    #endif
-
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    PIR1bits.SSP1IF = 0; // MSSP Interrupt Flag
-    PIR2bits.BCL1IF = 0; // Bus Collision Interrupt Flag
-    #else
     PIR1bits.SSPIF = 0; // MSSP Interrupt Flag
     PIR2bits.BCLIF = 0; // Bus Collision Interrupt Flag
-    #endif
     //Delayms(1000);
 }
 
@@ -292,13 +256,7 @@ void I2C_init(u8 mode, u16 sora)
 u8 I2C_write(u8 value)
 {
     I2C_idle();                     // Wait the MSSP module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1BUF = value;                 // Write byte to SSPBUF (BF is set to 1)
-    #else
     SSPBUF = value;                 // Write byte to SSPBUF (BF is set to 1)
-    #endif
     I2C_idle();                     // Wait the MSSP module is inactive
 /*
     while (SSPCON1bits.WCOL)        // Send again if write collision occurred 
@@ -310,13 +268,7 @@ u8 I2C_write(u8 value)
 */
 //    while (SSPSTATbits.BF);         // Wait until buffer is empty (BF set to 0)
     // ACKSTAT can be returned now because it was loaded before BF was cleared
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    return (!SSP1CON2bits.ACKSTAT);  // 1 if Ack, 0 if NAck
-    #else
     return (!SSPCON2bits.ACKSTAT);  // 1 if Ack, 0 if NAck
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -337,37 +289,26 @@ u8 I2C_write(u8 value)
 
 u8 I2C_read()
 {
-    I2C_idle();                 // Wait the MSSP module is inactive
-
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2bits.RCEN = 1;       // Initiate reception of byte
-    #else
-    SSPCON2bits.RCEN = 1;       // Initiate reception of byte
-    #endif
+//rz    u8 r;
     
+    I2C_idle();                 // Wait the MSSP module is inactive
+    //PIR1bits.SSPIF = 0;         // Clear SSP interrupt flag
+    SSPCON2bits.RCEN = 1;       // Initiate reception of byte
+    //while (!PIR1bits.SSPIF);    // Wait the interrupt flag is set
 
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    PIR1bits.SSP1IF = 0;         // Clear SSP interrupt flag
-    while (!PIR1bits.SSP1IF);    // Wait the interrupt flag is set
-    PIR1bits.SSP1IF=0;           // ROlf clear SSPIF
-    PIR1bits.SSP1IF=0;           // ROlf clear SSPIF
-    #else
     PIR1bits.SSPIF = 0;         // Clear SSP interrupt flag
+	
+//rz	r = SSPBUF;
+	
     while (!PIR1bits.SSPIF);    // Wait the interrupt flag is set
-    PIR1bits.SSPIF=0;           // ROlf clear SSPIF
-    PIR1bits.SSPIF=0;           // ROlf clear SSPIF
-    #endif
+    PIR1bits.SSPIF=0; // ROlf clear SSPIF
+//rz    r = SSPBUF;
+	PIR1bits.SSPIF=0; // ROlf clear SSPIF
+    //while (!SSPSTATbits.BF);    // Wait until buffer is full
+    //while (SSPCON2bits.RCEN);    // Wait until RCEN is cleared
 
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    return SSP1BUF;
-    #else
-    return SSPBUF;
-    #endif
+//rz    return r;
+	return SSPBUF;
 }
 
 /*	----------------------------------------------------------------------------
@@ -388,14 +329,8 @@ u8 I2C_read()
 
 void I2C_wait()
 {
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
-    PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
-    #else
     while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
     PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -451,19 +386,10 @@ u8 I2C_waitAck()
 void I2C_start()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    SSP1CON2bits.SEN = 1;            // Send start bit
-    while (SSP1CON2bits.SEN);        // Wait until SEN is cleared 
-    //while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #else
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
     SSPCON2bits.SEN = 1;            // Send start bit
     while (SSPCON2bits.SEN);        // Wait until SEN is cleared 
     //while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -477,19 +403,10 @@ void I2C_start()
 void I2C_stop()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    SSP1CON2bits.PEN = 1;            // Send stop bit
-    while (SSP1CON2bits.PEN);        // Wait until PEN is cleared 
-    //while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #else
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
     SSPCON2bits.PEN = 1;            // Send stop bit
     while (SSPCON2bits.PEN);        // Wait until PEN is cleared 
     //while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -501,19 +418,10 @@ void I2C_stop()
 void I2C_restart()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    SSP1CON2bits.RSEN = 1;           // Send restart bit
-    while (SSP1CON2bits.RSEN);       // Wait until RSEN is cleared  
-    //while (!PIR1bits.SS1PIF);        // Wait the interrupt flag is set
-    #else
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
     SSPCON2bits.RSEN = 1;           // Send restart bit
     while (SSPCON2bits.RSEN);       // Wait until RSEN is cleared  
     //while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -526,36 +434,10 @@ void I2C_restart()
 void I2C_sendAck()
 {
     I2C_idle();                     // Wait module is inactive
-
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2bits.ACKDT = 0;          // We want an Ack
-    #else
     SSPCON2bits.ACKDT = 0;          // We want an Ack
-    #endif
-    
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
-    #else
     PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    #endif
-    
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2bits.ACKEN = 1;          // Send it now
-    #else
     SSPCON2bits.ACKEN = 1;          // Send it now
-    #endif
-
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
-    #else
     while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #endif
 }
 
 /*	----------------------------------------------------------------------------
@@ -568,36 +450,10 @@ void I2C_sendAck()
 void I2C_sendNack()
 {
     I2C_idle();                     // Wait module is inactive
-
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2bits.ACKDT = 1;          // We want a no Ack
-    #else
-    SSPCON2bits.ACKDT = 1;          // We want a no Ack
-    #endif
-    
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
-    #else
+    SSPCON2bits.ACKDT = 1;          // We want a No Ack
     PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
-    #endif
-    
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    SSP1CON2bits.ACKEN = 1;          // Send it now
-    #else
     SSPCON2bits.ACKEN = 1;          // Send it now
-    #endif
-
-    #if defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
-    while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
-    #else
     while (!PIR1bits.SSPIF);        // Wait the interrupt flag is set
-    #endif
 }
 
 #endif
