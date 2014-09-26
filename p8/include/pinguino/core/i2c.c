@@ -417,9 +417,9 @@ void I2C_idle()
     #if defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
-    while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W))
+    while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W));
     #else
-    while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
+    while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W));
     #endif
 }
 
