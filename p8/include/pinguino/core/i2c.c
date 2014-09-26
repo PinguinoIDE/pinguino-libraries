@@ -1,27 +1,31 @@
 /*	----------------------------------------------------------------------------
-	FILE:			i2c.c
-	PROJECT:		pinguino
-	PURPOSE:		Include all functions to handle I2C communication for Master and Slave
-	PROGRAMER:		Régis Blanchot
-	FIRST RELEASE:	03 Apr. 2010
-	LAST RELEASE:	26 Sep. 2014
-	----------------------------------------------------------------------------
-	26 Sep. 2014    regis blanchot - fixed x550 support 
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    FILE:			i2c.c
+    PROJECT:		pinguino
+    PURPOSE:		Include all functions to handle I2C communication for Master and Slave
+    PROGRAMER:		Régis Blanchot
+    FIRST RELEASE:	03 Apr. 2010
+    LAST RELEASE:	26 Sep. 2014
+    ----------------------------------------------------------------------------
+    26 Sep. 2014    regis blanchot - fixed x5k50 and xxj53 support 
+    ----------------------------------------------------------------------------
+    TODO
+    * Slave 10-bit address
+    * I2C2
+    ----------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	--------------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    --------------------------------------------------------------------------*/
 
 #ifndef __PINGUINO_I2C_C
 #define __PINGUINO_I2C_C
@@ -58,14 +62,6 @@
 #define I2C_100KHZ		100
 #define I2C_400KHZ		400
 #define I2C_1MHZ		1000
-
-#if defined(__18f25k50) || defined(__18f45k50) || \
-    defined(__18f26j53) || defined(__18f46j53) || \
-    defined(__18f27j53) || defined(__18f47j53)
-    #define I2C_idle() while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W))
-#else
-    #define I2C_idle() while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
-#endif
 
 /*
 #if defined(__18f2550) || defined(__18f4550) || \
@@ -112,40 +108,40 @@ void I2C_init(u8, u16);
 u8 I2C_write(u8);
 u8 I2C_read();
 void I2C_wait();
-//void I2C_idle();
+void I2C_idle();
 //u8 I2C_waitAck();
 void I2C_start();
 void I2C_stop();
 void I2C_restart();
 void I2C_sendNack();
 void I2C_sendAck();
+
 /*	----------------------------------------------------------------------------
-	---------- Initialisation Functions for Master and Slave
-	--------------------------------------------------------------------------*/
+    ---------- Initialisation Functions for Master and Slave
+    --------------------------------------------------------------------------*/
 
 void I2C_master(u16 speed)   
 {
-	I2C_init(I2C_MASTER_MODE, speed);
+    I2C_init(I2C_MASTER_MODE, speed);
 }
 
 void I2C_slave(u16 DeviceID)   
 {
-	I2C_init(I2C_SLAVE_MODE, DeviceID);
+    I2C_init(I2C_SLAVE_MODE, DeviceID);
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Open the I2C bus
-	----------------------------------------------------------------------------
-	SSPSTAT.SMP: Slew Rate Control bit
-	In Master or Slave mode:
-	1 = Slew Mode Off = Standard Speed mode (100 kHz and 1 MHz)
-	0 = Slew Mode On = High-Speed mode (400 kHz)
+    ---------- Open the I2C bus
+    ----------------------------------------------------------------------------
+    SSPSTAT.SMP: Slew Rate Control bit
+    In Master or Slave mode:
+    1 = Slew Mode Off = Standard Speed mode (100 kHz and 1 MHz)
+    0 = Slew Mode On = High-Speed mode (400 kHz)
     * u8 mode = I2C_MASTER_MODE or I2C_SLAVE_MODE
     * u16 sora = means s(peed) or a(ddress)
                = speed (100, 400 or 1000 KHz) in master mode
                = address in slave mode
-    TODO Slave 10-bit address
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_init(u8 mode, u16 sora)
 {
@@ -155,9 +151,12 @@ void I2C_init(u8 mode, u16 sora)
     #if defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
+
     TRISBbits.TRISB5 = INPUT;			// SDA = INPUT
     TRISBbits.TRISB4 = INPUT;			// SCL = INPUT
+
     #else // x550 and x5k50
+
     TRISBbits.TRISB0 = INPUT;			// SDA = INPUT
     TRISBbits.TRISB1 = INPUT;			// SCL = INPUT
 
@@ -263,8 +262,8 @@ void I2C_init(u8 mode, u16 sora)
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Send byte and return ack bit
-	----------------------------------------------------------------------------
+    ---------- Send byte and return ack bit
+    ----------------------------------------------------------------------------
     WCOL: Write Collision Detect bit, in Master Transmit mode:
     1 = A write to the SSPxBUF register was attempted while the I2C conditions
     were not valid for a transmission to be started (must be cleared in software)
@@ -320,8 +319,8 @@ u8 I2C_write(u8 value)
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Get a byte from the slave
-	----------------------------------------------------------------------------
+    ---------- Get a byte from the slave
+    ----------------------------------------------------------------------------
     RCEN = Receive Enable bit
     The MSSP module must be in an inactive state before the RCEN bit is set
     or the RCEN bit will be disregarded.
@@ -333,7 +332,7 @@ u8 I2C_write(u8 value)
     Datasheet, figure 19-24
     
     Fixed by Rolf Ziegler
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 u8 I2C_read()
 {
@@ -371,8 +370,8 @@ u8 I2C_read()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Wait for the slave to finish its last action
-	----------------------------------------------------------------------------
+    ---------- Wait for the slave to finish its last action
+    ----------------------------------------------------------------------------
     Application note AN245 page 5, Note 1:
     The master needs to wait for I2C bus idle to indicate that the MSSP
     has finished its last task. The SSPIF interrupt could be used
@@ -384,7 +383,7 @@ u8 I2C_read()
     - Repeated Start
     - Data transfer byte transmitted/received
     - Acknowledge transmitted
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_wait()
 {
@@ -399,8 +398,8 @@ void I2C_wait()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Wait until module is no longuer active
-	----------------------------------------------------------------------------
+    ---------- Wait until module is no longuer active
+    ----------------------------------------------------------------------------
     This function waits until 
     * all the five low bits of SSPCON2 (SEN, RSEN, PEN, RCEN or ACKEN) are 0
     AND
@@ -411,23 +410,29 @@ void I2C_wait()
 
     Source = Datasheet : ORing R_W bit with SEN, RSEN, PEN, RCEN or ACKEN
     will indicate if the MSSP is in Active mode
-	--------------------------------------------------------------------------*/
-/*
+    --------------------------------------------------------------------------*/
+
 void I2C_idle()
 {
-    while (((SSPCON2& 0x1F) > 0) | (SSPSTATbits.R_W));
+    #if defined(__18f25k50) || defined(__18f45k50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
+    while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W))
+    #else
+    while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W))
+    #endif
 }
-*/
+
 /*	----------------------------------------------------------------------------
-	---------- Wait for Acknowledge (Ack) from the slave
-	----------------------------------------------------------------------------
+    ---------- Wait for Acknowledge (Ack) from the slave
+    ----------------------------------------------------------------------------
     In Transmit mode, the ACKSTAT bit (SSPxCON2<6>)
     is cleared when the slave has sent an Acknowledge
     (ACK = 0) and is set when the slave does not Acknowl-
     edge (ACK = 1). A slave sends an Acknowledge when
     it has recognized its address (including a general call),
     or when the slave has properly received its data.
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 /*
 u8 I2C_waitAck()
 {
@@ -441,12 +446,13 @@ u8 I2C_waitAck()
     return 1;
 }
 */
+
 /*	----------------------------------------------------------------------------
-	---------- Send start bit
-	----------------------------------------------------------------------------
+    ---------- Send start bit
+    ----------------------------------------------------------------------------
     Start condition is issued to indicate the beginning of a serial transfer.
     If the I2C module is active, this bit may not be set.
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_start()
 {
@@ -467,12 +473,12 @@ void I2C_start()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Send stop bit
-	----------------------------------------------------------------------------
+    ---------- Send stop bit
+    ----------------------------------------------------------------------------
     Stop condition is issued to indicate the end of a serial transfer.
     If the I2C module is active, this bit may not be set.
     When the PEN bit is cleared, the SSPIF bit is set. 
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_stop()
 {
@@ -493,10 +499,10 @@ void I2C_stop()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Send restart bit
-	----------------------------------------------------------------------------
+    ---------- Send restart bit
+    ----------------------------------------------------------------------------
     If the I2C module is active, this bit may not be set.
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_restart()
 {
@@ -517,11 +523,11 @@ void I2C_restart()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Send an Acknowledge (Ack) to the slave
-	----------------------------------------------------------------------------
+    ---------- Send an Acknowledge (Ack) to the slave
+    ----------------------------------------------------------------------------
     If the I2C module is active, this bit may not be set.
     NB: the ACKEN bit is automatically cleared
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_sendAck()
 {
@@ -559,11 +565,11 @@ void I2C_sendAck()
 }
 
 /*	----------------------------------------------------------------------------
-	---------- Send a Not Acknowledge (NAck) to the slave
-	----------------------------------------------------------------------------
+    ---------- Send a Not Acknowledge (NAck) to the slave
+    ----------------------------------------------------------------------------
     If the I2C module is active, this bit may not be set.
     NB: the ACKEN bit is automatically cleared
-	--------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 void I2C_sendNack()
 {
