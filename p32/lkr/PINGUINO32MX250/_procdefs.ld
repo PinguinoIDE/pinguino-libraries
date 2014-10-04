@@ -1,5 +1,5 @@
 /***********************************************************************
- * PIC32MX270F256B object file
+ * PIC32MX250F128B object file
  * Contains Memory Regions definitions
  * 2014-09-10 Régis Blanchot
  **********************************************************************/
@@ -9,7 +9,7 @@ INPUT("processor.o")
 /***********************************************************************
  * For interrupt vector handling
  * base address of interrupt vector table (length = 0x1000)
- * placed at the end of flash memory (0x40000 - 0x1000 = 0x3F000)
+ * placed at the end of flash memory (0x20000 - 0x1000 = 0x1F000)
  * _ebase_address value MUST BE same as the ORIGIN value of exception_mem
  **********************************************************************/
 
@@ -71,8 +71,8 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  * - configuration words (non-cacheable)
  ***********************************************************************
  * Cacheable (KSEG0) and non-cacheable (KSEG1)
- * KSEG0 PROGRAM FLASH [0x9D000000:0x9D03FFFF]
- * KSEG1 PROGRAM FLASH [0xBD000000:0xBD03FFFF]
+ * KSEG0 PROGRAM FLASH [0x9D000000:0x9D01FFFF]
+ * KSEG1 PROGRAM FLASH [0xBD000000:0xBD01FFFF]
  * KSEG0    BOOT FLASH [0x9FC00000:0x9FC00BEF]
  * KSEG1    BOOT FLASH [0xBFC00000:0xBFC00BEF]
  * KSEG1           RAM [0xA0000000:0xA000FFFF]
@@ -91,13 +91,13 @@ exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
 /***********************************************************************
  * User Program code
  * in cacheable PROGRAM FLASH
- * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
+ * from 0x9D000000 to 0x9D020000 (PIC32MX250F128B = 128 KB flash = 0x20000) 
  * Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
  * Bootloader is placed between 0x9D001000 and 0x9D006000
- * 0x40000 - 0x6000 = 0x3A000 bytes free
+ * 0x20000 - 0x1000 - 0x5000 = 0x1A000 bytes free
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D006000, LENGTH = 0x3A000
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D006000, LENGTH = 0x1A000
   
 /***********************************************************************
  * Reset (0x0), Boot (0x380) and Debug (0x480) vectors
@@ -140,9 +140,9 @@ configsfrs                 : ORIGIN = 0xBFC00BF0, LENGTH = 0x10
 sfrs                       : ORIGIN = 0xBF800000, LENGTH = 0x100000
 
 /***********************************************************************
- * PIC32MX270F256B has 64 KB RAM, or 0x10000
+ * PIC32MX250F128B has 32 KB RAM, or 0x8000
  **********************************************************************/
 
-kseg1_data_mem       (w!x) : ORIGIN = 0xA0000000, LENGTH = 64K
+kseg1_data_mem       (w!x) : ORIGIN = 0xA0000000, LENGTH = 32K
 
 }
