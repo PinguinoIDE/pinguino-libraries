@@ -4,7 +4,7 @@ Serial.available Serial_available#include <serial.c>
 Serial.flush Serial_flush#include <serial.c>
 Serial.write Serial_putchar#include <serial.c>
 Serial.read Serial_read#include <serial.c>#define SERIALREAD
-Serial.print Serial_print#include <serial.c>#define SERIALPRINT
+Serial.print Serial_print#include <serial.c>#define SERIALPRINTSTRING
 Serial.println Serial_println#include <serial.c>#define SERIALPRINTLN
 Serial.printNumber Serial_printNumber#include <serial.c>#define SERIALPRINTNUMBER
 Serial.printFloat Serial_printFloat#include <serial.c>#define SERIALPRINTFLOAT

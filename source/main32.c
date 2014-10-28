@@ -24,37 +24,43 @@
 #include <p32xxxx.h>			// always in first place to avoid conflict with const.h ON
 #include <typedef.h>			// Pinguino's types definitions
 #include <const.h>				// Pinguino's constants definitions
-#include <pin.h>				// Pinguino's pins definitions
+#include <pin.h>				// Pinguino's pin definitions
 #include <macro.h>				// Pinguino's macros definitions
 #include <system.c>				// PIC32 System Core Functions
 #include "define.h"				// Pinguino Sketch Constants
 #include <io.c>					// Pinguino Boards Peripheral Remappage and IOs configurations
 
 /*
-#if !defined(__32MX220F032D__) && !defined(__32MX250F128B__) && !defined(__32MX220F032B__)
-#include <newlib.c>
-#endif
+#if !defined(__32MX220F032D__) && \
+    !defined(__32MX220F032B__) && \
+    !defined(__32MX250F128B__) && \
+    !defined(__32MX270F256B__)
+    #include <newlib.c>
+#endif	
 */
 
 #ifdef __USBCDC
-#include <cdc.h>
-#endif
+    #include <cdc.h>
+#endif	
 
 #include "user.c"				// Pinguino User's Sketch
 
 int main()
 {
     // default peripheral freq. is CPUCoreFrequency / 2 (cf. system.c)
-    #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
-        SystemConfig(40000000);	    // default clock frequency is 40Mhz
+    #if defined(__32MX220F032D__) || \
+        defined(__32MX220F032B__) || \
+        defined(__32MX250F128B__) || \
+        defined(__32MX270F256B__)
+        SystemConfig(40000000);	// default clock frequency is 40Mhz
     #else
-        SystemConfig(80000000);	    // default clock frequency is 80Mhz
+        SystemConfig(80000000);	// default clock frequency is 80Mhz
     #endif
 
     IOsetDigital();
     IOsetSpecial();
     IOsetRemap();
-    
+
     #ifdef __ANALOG__
     analog_init();
     #endif
@@ -84,7 +90,10 @@ int main()
     while (1)
     {
         #ifdef __USBCDC
-            #if defined(__32MX220F032D__)||defined(__32MX250F128B__)||defined(__32MX220F032B__)
+            #if defined(__32MX220F032D__) || \
+                defined(__32MX220F032B__) || \
+                defined(__32MX250F128B__) || \
+                defined(__32MX270F256B__)
                 USB_Service( );
             #else
                 CDCTxService();

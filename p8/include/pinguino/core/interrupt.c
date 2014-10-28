@@ -246,7 +246,8 @@ void IntSetEnable(u8 inter, u8 enable)
         #if defined(CMINT)
             case INT_CM:
             #if defined(__18f2455) || defined(__18f4455) || \
-                defined(__18f2550) || defined(__18f4550)
+                defined(__18f2550) || defined(__18f4550) || \
+                defined(__18f25k50) || defined(__18f45k50)
                 PIE2bits.CMIE = enable;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -258,7 +259,8 @@ void IntSetEnable(u8 inter, u8 enable)
 
             
         #if defined(__18f2455) || defined(__18f4455) || \
-            defined(__18f2550) || defined(__18f4550)
+            defined(__18f2550) || defined(__18f4550) || \
+            defined(__18f25k50) || defined(__18f45k50)
             #if defined(EEINT)
             case INT_EE:
                 PIE2bits.EEIE = enable;
@@ -269,7 +271,8 @@ void IntSetEnable(u8 inter, u8 enable)
         #if defined(BCLINT)
             case INT_BCL:
                 #if defined(__18f2455) || defined(__18f4455) || \
-                    defined(__18f2550) || defined(__18f4550)
+                    defined(__18f2550) || defined(__18f4550) || \
+                    defined(__18f25k50) || defined(__18f45k50)
                 PIE2bits.BCLIE = enable;
                 #elif defined(__18f26j50) || defined(__18f46j50) || \
                       defined(__18f26j53) || defined(__18f46j53) || \
@@ -282,7 +285,8 @@ void IntSetEnable(u8 inter, u8 enable)
         #if defined(HLVDINT)
             case INT_HLVD:
                 #if defined(__18f2455) || defined(__18f4455) || \
-                    defined(__18f2550) || defined(__18f4550)
+                    defined(__18f2550) || defined(__18f4550) || \
+                    defined(__18f25k50) || defined(__18f45k50)
                 PIE2bits.HLVDIE = enable;
                 #elif defined(__18f26j50) || defined(__18f46j50) || \
                       defined(__18f26j53) || defined(__18f46j53) || \
@@ -480,7 +484,8 @@ void IntClearFlag(u8 inter)
         #if defined(CMINT)
             case INT_CM:
             #if defined(__18f2455) || defined(__18f4455) || \
-                defined(__18f2550) || defined(__18f4550)
+                defined(__18f2550) || defined(__18f4550) || \
+                defined(__18f25k50) || defined(__18f45k50)
                 PIR2bits.CMIF = 0;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -491,7 +496,8 @@ void IntClearFlag(u8 inter)
         #endif
         
         #if defined(__18f2455) || defined(__18f4455) || \
-            defined(__18f2550) || defined(__18f4550)
+            defined(__18f2550) || defined(__18f4550) || \
+            defined(__18f25k50) || defined(__18f45k50)
             #if defined(EEINT)
             case INT_EE: PIR2bits.EEIF = 0; break;
             #endif
@@ -500,7 +506,8 @@ void IntClearFlag(u8 inter)
         #if defined(BCLINT)
             case INT_BCL:
             #if defined(__18f2455) || defined(__18f4455) || \
-                defined(__18f2550) || defined(__18f4550)
+                defined(__18f2550) || defined(__18f4550) || \
+                defined(__18f25k50) || defined(__18f45k50)
                 PIR2bits.BCLIF = 0;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -513,7 +520,8 @@ void IntClearFlag(u8 inter)
         #if defined(HLVDINT)
             case INT_HLVD:
             #if defined(__18f2455) || defined(__18f4455) || \
-                defined(__18f2550) || defined(__18f4550)
+                defined(__18f2550) || defined(__18f4550) || \
+                defined(__18f25k50) || defined(__18f45k50)
                 PIR2bits.HLVDIF = 0;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -669,8 +677,9 @@ u8 IntIsFlagSet(u8 inter)
 
         #if defined(CMINT)
             case INT_CM:
-            #if   defined(__18f2455) || defined(__18f4550) || \
-                  defined(__18f2550) || defined(__18f4550)
+            #if   defined(__18f2455) || defined(__18f4455) || \
+                  defined(__18f2550) || defined(__18f4550) || \
+                  defined(__18f25k50) || defined(__18f45k50)
                 return PIR2bits.CMIF;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -679,8 +688,9 @@ u8 IntIsFlagSet(u8 inter)
             #endif
         #endif
 
-        #if   defined(__18f2455) || defined(__18f4550) || \
-              defined(__18f2550) || defined(__18f4550)
+        #if   defined(__18f2455) || defined(__18f4455) || \
+              defined(__18f2550) || defined(__18f4550) || \
+              defined(__18f25k50) || defined(__18f45k50)
             #if defined(EEINT)
             case INT_EE:	return PIR2bits.EEIF;
             #endif
@@ -688,8 +698,9 @@ u8 IntIsFlagSet(u8 inter)
        
         #if defined(BCLINT)
             case INT_BCL:
-            #if   defined(__18f2455) || defined(__18f4550) || \
-                  defined(__18f2550) || defined(__18f4550)
+            #if   defined(__18f2455) || defined(__18f4455) || \
+                  defined(__18f2550) || defined(__18f4550) || \
+                  defined(__18f25k50) || defined(__18f45k50)
                 return PIR2bits.BCLIF;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -700,8 +711,9 @@ u8 IntIsFlagSet(u8 inter)
 
         #if defined(HLVDINT)
             case INT_HLVD:
-            #if   defined(__18f2455) || defined(__18f4550) || \
-                  defined(__18f2550) || defined(__18f4550)
+            #if   defined(__18f2455) || defined(__18f4455) || \
+                  defined(__18f2550) || defined(__18f4550) || \
+                  defined(__18f25k50) || defined(__18f45k50)
                 return PIR2bits.HLVDIF;
             #elif defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
@@ -1024,7 +1036,8 @@ u8 OnTimer1(callback func, u8 timediv, u16 delay)
 void OnRTCC(callback func, u16 delay)
 {
     #if defined(__18f2455) || defined(__18f4455) || \
-        defined(__18f2550) || defined(__18f4550)
+        defined(__18f2550) || defined(__18f4550) || \
+        defined(__18f25k50) || defined(__18f45k50)
 
         u8 _t1con = 0;
 
@@ -1047,7 +1060,12 @@ void OnRTCC(callback func, u16 delay)
             // T1SYNC  = 0	When TMR1CS = 1, Synchronize external clock input
             // TMR1CS  = 1	External clock from RC0/T1OSO/T13CKI pin (on the rising edge)
             // TMR1ON  = 0	Stops Timer1
-            _t1con = T1_OFF | T1_16BIT | T1_PS_1_1 | T1_RUN_FROM_ANOTHER | T1_OSC_ON | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
+            #if defined(__18f25k50) || defined(__18f45k50)
+            _t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_ON | T1_SOSC_ON | T1_PS_1_1 | T1_RUN_FROM_OSC;
+            #else
+            _t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_ON  | T1_OSC_ON | T1_PS_1_1 | T1_RUN_FROM_ANOTHER | T1_SOURCE_EXT;
+          //_t1con = T1_OFF | T1_16BIT | T1_SYNC_EXT_OFF | T1_OSC_OFF | T1_PS_1_8 | T1_RUN_FROM_OSC;
+            #endif
             // 18F26J50 -> _t1con = T1_OFF | T1_16BIT | T1_PS_1_1 | T1_OSC_ON | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
 
             IPR1bits.TMR1IP = INT_LOW_PRIORITY;

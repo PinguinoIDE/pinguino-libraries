@@ -29,13 +29,13 @@ SECTIONS
     KEEP(*(.reset))
   } > kseg1_boot_mem
 
-  /*
+/*
   .bev_excpt _BEV_EXCPT_ADDR :
   {
     KEEP(*(.bev_handler))
   } > kseg1_boot_mem
-  */
-  
+*/
+
   .startup ORIGIN(kseg0_boot_mem) :
   {
     KEEP(*(.startup))
@@ -69,7 +69,7 @@ SECTIONS
    *** Debug Sections
    ********************************************************************/
 
-  /*
+/*
   .dbg_excpt _DBG_EXCPT_ADDR (NOLOAD) :
   {
     . += (DEFINED (_DEBUGGER) ? 0x8 : 0x0);
@@ -79,12 +79,12 @@ SECTIONS
   {
     . += (DEFINED (_DEBUGGER) ? 0xFF0 : 0x0);
   } > debug_exec_mem
-  */
-
+  
   .app_excpt _GEN_EXCPT_ADDR :
   {
     KEEP(*(.gen_handler))
   } > exception_mem
+*/
 
   /*********************************************************************
    *** Vector Sections

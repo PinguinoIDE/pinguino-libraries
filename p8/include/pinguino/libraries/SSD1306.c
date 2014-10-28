@@ -60,7 +60,9 @@ BS2     0       1       1       0       0
 #if (DISPLAY & SSD1306_128X64)
     #include <logo/pinguino128x64.h>
 #else
-    #include <logo/pinguino128x32.h>        // to do
+    //#include <logo/pinguino128x32.h>        // to do
+    //#pragma udata largeram logo
+    u8 logo[128*4];
 #endif
 
 // Pinguino standards
@@ -83,7 +85,10 @@ BS2     0       1       1       0       0
 #endif
 
 // Graphics Library
+#ifdef SSD1306GRAPHICS
     #include <graphics.c>
+#endif
+
 /*
 #if defined(SSD1306DRAWLINE)   || defined(SSD1306DRAWLINE) || \
     defined(SSD1306DRAWCIRCLE) || defined(SSD1306FILLCIRCLE)
@@ -177,6 +182,16 @@ void SSD1306_sendCommand(u8 val)
 
 		    High(CS);           // Chip deselected
 
+        #elif (DISPLAY & SSD1306_I2C)
+
+            I2C_start();
+            if (I2C_write(SSD1306_i2c_address | I2C_WRITE))
+            {
+                I2C_write(0x00); // Co = 0, D/C = 0
+                I2C_write(val);
+            }
+            I2C_stop();
+
         #endif
 
     #endif
@@ -226,6 +241,16 @@ void SSD1306_sendData(u8 val)
 		    Low(E);             // A rising edge of WR enables Write mode
 
 		    High(CS);           // Chip deselected
+
+        #elif (DISPLAY & SSD1306_I2C)
+
+            I2C_start();
+            if (I2C_write(SSD1306_i2c_address | I2C_WRITE))
+            {
+                I2C_write(0x40); // Co = 0, D/C = 1
+                I2C_write(val);
+            }
+            I2C_stop();
 
         #endif
 
@@ -414,7 +439,10 @@ void SSD1306_setChargePumpEnable(u8 enable)
 
 #elif (DISPLAY & SSD1306_I2C)
 
-    // TODO
+        void SSD1306_init(u8 addr)
+        {
+            SSD1306_i2c_address = addr;
+            I2C_init(I2C_MASTER_MODE, I2C_100KHZ);
 
 #endif
 
@@ -445,9 +473,11 @@ void SSD1306_setChargePumpEnable(u8 enable)
         9. Normal display mode (Equivalent to A4h command)
     **/
 
+    #if !(DISPLAY & SSD1306_I2C)
     digitalwrite(res, LOW);    // initialized the chip
     Delayus(50);               // for at least 3us
     digitalwrite(res, HIGH);
+    #endif
 
     SSD1306_displayOn();
     Delayms(100);               // wait for SEG/COM to be ON
@@ -641,7 +671,7 @@ void SSD1306_scrollDown()
 /// Print functions
 ///	--------------------------------------------------------------------
 
-void SSD1306_setFont(u8 *font)
+void SSD1306_setFont(const u8 *font)
 {
     SSD1306.font.address = font;
     //SSD1306.font.width   = SSD1306_getFontWidth()+1;
@@ -864,6 +894,7 @@ void SSD1306_setCursor(u8 x, u8 y)
     SSD1306.cursor.page = x & DISPLAY_ROW_MASK;  // current page
 }
 
+#ifdef SSD1306GRAPHICS
 /*	--------------------------------------------------------------------
     DESCRIPTION:
         Draws a pixel with current color.
@@ -959,5 +990,6 @@ void SSD1306_drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 {
     drawLine(x0, y0, x1, y1);
 }
+#endif // SSD1306GRAPHICS
 
 #endif /* __SSD1306_C */

@@ -231,7 +231,7 @@ void analogwrite_init()
     CCPTMRS0 = 0;
     CCPTMRS1 = 0;                       // assign Timer2 to all CCP pins
     CCPTMRS2 = 0;
-  
+
     #endif
 
     PR2 = 0xFF;                         // set PWM period to the max. to get 10-bit res.

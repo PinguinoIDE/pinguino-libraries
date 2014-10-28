@@ -8,9 +8,10 @@
 
 	/// ASM
 
-	#define interrupts()	asm("ei")
-	#define noInterrupts()	asm("di")
-	#define nop()			asm("nop")
+	#define interrupts()	asm volatile("ei")
+	#define noInterrupts()	asm volatile("di")
+    
+	#define nop()		asm volatile("nop")
 
 	/// BYTES
 

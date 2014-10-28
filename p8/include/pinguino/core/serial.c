@@ -147,7 +147,7 @@ void Serial_begin(unsigned long baudrate)
 
 unsigned char Serial_available()
 {
-    return(wpointer!=rpointer);
+    return (wpointer!=rpointer);
 }
 
 /***********************************************************************
@@ -269,7 +269,7 @@ unsigned char Serial_read()
  * write a string on SERIAL port
  **********************************************************************/
 
-#if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
+#if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 
 void Serial_print(char *string)
@@ -278,7 +278,7 @@ void Serial_print(char *string)
     for( i=0; string[i]; i++)
         Serial_putchar(string[i]);
 }
-#endif /* SERIALPRINT */
+#endif /* SERIALPRINTSTRING */
 
 /* Avrin : 
  * Serial_print() function can not correctly support
@@ -288,7 +288,7 @@ void Serial_print(char *string)
  */
 
 #if 0
-#if defined(SERIALPRINT) || defined(SERIALPRINTLN)
+#if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN)
 #define Serial_print(m,type)	{ Serial_print_##type(m);  }
 #define Serial_println(m,type)	{ Serial_print_##type(m);  Serial_printf("\r\n"); }
 void Serial_print_FLOAT(float m){ Serial_printf("%f",m); }

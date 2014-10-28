@@ -44,10 +44,10 @@ SSD1306.printNumber SSD1306_printNumber#include <SSD1306.c>#define SSD1306PRINTN
 SSD1306.printFloat SSD1306_printFloat#include <SSD1306.c>#define SSD1306PRINTFLOAT
 SSD1306.printf SSD1306_printf#include <SSD1306.c>#define SSD1306PRINTF
 SSD1306.setCursor SSD1306_setCursor#include <SSD1306.c>
-SSD1306.drawPixel SSD1306_drawPixel#include <SSD1306.c>
-SSD1306.clearPixel SSD1306_clearPixel#include <SSD1306.c>
-SSD1306.getColor SSD1306_getColor#include <SSD1306.c>
-SSD1306.drawBitmap SSD1306_drawBitmap#include <SSD1306.c>
-SSD1306.drawCircle SSD1306_drawCircle#include <SSD1306.c>
-SSD1306.fillCircle SSD1306_fillCircle#include <SSD1306.c>
-SSD1306.drawLine SSD1306_drawLine#include <SSD1306.c>
+SSD1306.drawPixel SSD1306_drawPixel#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.clearPixel SSD1306_clearPixel#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.getColor SSD1306_getColor#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.drawBitmap SSD1306_drawBitmap#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.drawCircle SSD1306_drawCircle#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.fillCircle SSD1306_fillCircle#include <SSD1306.c>#define SSD1306GRAPHICS
+SSD1306.drawLine SSD1306_drawLine#include <SSD1306.c>#define SSD1306GRAPHICS

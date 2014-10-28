@@ -32,7 +32,8 @@
 #include <typedef.h>
 //#include <macro.h>
 //#include <system.c>
-#include <delay.h>
+#include <delay.h>                  // SDCC delay function
+#include <oscillator.c>             // System_getPeripheralFrequency
 
 /**
     the delayNNtcy family of functions performs a delay of NN cycles.
@@ -68,12 +69,12 @@ void Delayms(u16 p)
 }
 */
 
-void Delayms(unsigned int milliseconds)
+void Delayms(u16 milliseconds)
 {
-    unsigned int i;
+    u16 nktcy = System_getPeripheralFrequency() / 1000000UL;
     
-    for (i=0; i<milliseconds; i++)
-        delay1ktcy(12);
+    while (milliseconds--)
+        delay1ktcy(nktcy);
 }
 
 #endif /* __DELAYMS_C__ */

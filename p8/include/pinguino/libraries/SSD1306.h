@@ -140,7 +140,7 @@
     {
         u8 width;
         u8 height;
-        u8 *address;
+        const u8 *address;
     } font_t;
 
     typedef struct
@@ -194,7 +194,7 @@
 #elif (DISPLAY & SSD1306_SPI3) || (DISPLAY & SSD1306_SPI4)
     // TODO
 #elif (DISPLAY & SSD1306_I2C)
-    // TODO
+        void SSD1306_init(u8 addr);
 #endif
 
 void SSD1306_sendCommand(u8 _cmd);
@@ -230,7 +230,7 @@ void SSD1306_scrollRight();
 void SSD1306_scrollLeft();
 void SSD1306_scrollUp();
 void SSD1306_scrollDown();
-void SSD1306_setFont(u8 *font);
+void SSD1306_setFont(const u8 *font);
 void SSD1306_printChar(u8 c);
 void SSD1306_print(u8 *string);
 void SSD1306_println(u8 *string);
@@ -330,7 +330,7 @@ u8* SSD1306_bufferptr;
     
     #elif (DISPLAY & SSD1306_I2C)
 
-        // TODO
+        u8 SSD1306_i2c_address;
 
     #endif
 

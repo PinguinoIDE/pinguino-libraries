@@ -127,7 +127,7 @@ void IOsetRemap()
     #endif
 
     // Thanks to danirobin
-    #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
+    #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
         SystemUnlock();
         CFGCONbits.IOLOCK=0;			// unlock configuration
         CFGCONbits.PMDLOCK=0;

@@ -349,8 +349,7 @@ void DCF77_start(u8 dcfPin)
         TMR3L = TMR_PRELOADL;
         #if defined(__18f2550) || defined(__18f4550)
             T3CON = T3_ON | T3_16BIT | T3_PS_1_8 | T3_SOURCE_INT;
-        #endif
-        #if defined(__18f26j50) || defined(__18f46j50)
+        #elif defined(__18f26j50) || defined(__18f46j50)
             T3CON = T3_ON | T3_16BIT | T3_PS_1_8 | T3_SOURCE_INT;// | T3_SOURCE_T1OFF;
         #endif
 //    }
