@@ -8,8 +8,7 @@
 
 	/// ASM
 
-	#define interrupts()	asm volatile("ei")
-	#define noInterrupts()	asm volatile("di")
+	/* TODO check if nop() is not already defined somewhere */
     
 	#define nop()		asm volatile("nop")
 

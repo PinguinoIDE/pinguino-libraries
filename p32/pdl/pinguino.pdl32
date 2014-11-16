@@ -36,8 +36,8 @@ bitClear BitClear#include <macro.h>
 bit Bit#include <macro.h>
 lowByte low8#include <macro.h>
 highByte high8#include <macro.h>
-interrupts interrupts#include <macro.h>
-noInterrupts noInterrupts#include <macro.h>
+interrupts EnableInterrupt#include <mips.h>
+noInterrupts DisableInterrupt#include <mips.h>
 itoa itoa#include <itoa.c>
 utoa utoa#include <itoa.c>
 ultoa ultoa#include <itoa.c>

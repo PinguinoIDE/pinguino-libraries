@@ -1371,62 +1371,62 @@ BOOL ClearRxError(u8 port)
     switch (port)
     {
         case UART1:
-    if (U1STAbits.OERR != 0)
-     {
-      U1STAbits.OERR = 0;
-      return(FALSE);
-     }
-    break;
+            if (U1STAbits.OERR != 0)
+            {
+                U1STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
 
         case UART2:
-    if (U2STAbits.OERR != 0)
-     {
-      U2STAbits.OERR = 0;
-      return(FALSE);
-     }
-        break;
+            if (U2STAbits.OERR != 0)
+            {
+                U2STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
 
-#ifdef ENABLE_UART3
+        #ifdef ENABLE_UART3
         case UART3:
-    if (U3STAbits.OERR != 0)
-     {
-      U3STAbits.OERR = 0;
-      return(FALSE);
-     }
-        break;
-#endif
+            if (U3STAbits.OERR != 0)
+            {
+                U3STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
+        #endif
 
-#ifdef ENABLE_UART4
+        #ifdef ENABLE_UART4
         case UART4:
-    if (U4STAbits.OERR != 0)
-     {
-      U4STAbits.OERR = 0;
-      return(FALSE);
-     }
-        break;
-#endif
+            if (U4STAbits.OERR != 0)
+            {
+                U4STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
+        #endif
 
-#ifdef ENABLE_UART5
+        #ifdef ENABLE_UART5
         case UART5:
-    if (U5STAbits.OERR != 0)
-     {
-      U5STAbits.OERR = 0;
-      return(FALSE);
-     }
-        break;
-#endif
+            if (U5STAbits.OERR != 0)
+            {
+                U5STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
+        #endif
 
-#ifdef ENABLE_UART6
+        #ifdef ENABLE_UART6
         case UART6:
-    if (U6STAbits.OERR != 0)
-     {
-      U6STAbits.OERR = 0;
-      return(FALSE);
-     }
-        break;
-#endif
+            if (U6STAbits.OERR != 0)
+            {
+                U6STAbits.OERR = 0;
+                return(FALSE);
+            }
+            break;
+        #endif
     }
- return(TRUE);
+    return(TRUE);
 }
 
 //IFS0CLR = UART1_ALL_INTERRUPT;			// clear any existing event
