@@ -1,5 +1,5 @@
 SHELL		=	cmd.exe
-OSARCH		=	$(_IDE_OSARCH_)
+
 INCDIR		=	$(_IDE_P32DIR_)\include
 LKRDIR		=	$(_IDE_P32DIR_)\lkr\$(_IDE_BOARD_)
 OBJDIR		=	$(_IDE_P32DIR_)\obj\non-free
@@ -22,14 +22,14 @@ else
 endif
 
 ifdef CPLUPLUS
-	ifeq "$(OSARCH)" "32bit"
+	ifeq "$(_IDE_OSARCH_)" "32bit"
 		CC	= $(_IDE_BINDIR_)\mips-g++.exe
 	else
 		CC	= $(_IDE_BINDIR_)\p32-g++.exe
 	endif
 	LIBS	= -lstdc++ -lm -lgcc -lc
 else
-	ifeq "$(OSARCH)" "32bit"
+	ifeq "$(_IDE_OSARCH_)" "32bit"
 		CC	= $(_IDE_BINDIR_)\mips-gcc.exe
 	else
 		CC	= $(_IDE_BINDIR_)\p32-gcc.exe
@@ -37,7 +37,7 @@ else
 	LIBS	= -lm -lgcc -lc
 endif
 
-ifeq "$(OSARCH)" "32bit"
+ifeq "$(_IDE_OSARCH_)" "32bit"
 	OBJC	= $(_IDE_BINDIR_)\mips-objcopy.exe
 else
 	OBJC	= $(_IDE_BINDIR_)\p32-objcopy.exe
