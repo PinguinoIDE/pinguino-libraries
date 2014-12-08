@@ -977,7 +977,7 @@ unsigned int IntGetVectorSubPriority(u8 vector)
     IntClearFlag
     ----------------------------------------------------------------------------
     IFSx: Interrupt Flag Status Registers
-    16-05-2014 : RB replaced BitClear macro with register clear instruction
+    16-05-2014 : RB replaced BitClear macro with atomic instructions
     --------------------------------------------------------------------------*/
 
 void IntClearFlag(u8 numinter)
@@ -1039,7 +1039,7 @@ unsigned int IntGetFlag(u8 numinter)
     ----------------------------------------------------------------------------
     Enables the interrupt.
     IECx: Interrupt Enable Control Registers
-    16-05-2014 : RB replaced BitSet macro with register set instruction
+    16-05-2014 : RB replaced BitSet macro with atomic instructions
     --------------------------------------------------------------------------*/
 
 void IntEnable(u8 numinter)
@@ -1069,7 +1069,7 @@ void IntEnable(u8 numinter)
     ----------------------------------------------------------------------------
     Disables the interrupt.
     IECx: Interrupt Enable Control Registers
-    16-05-2014 : RB replaced BitClear macro with register clear instruction
+    16-05-2014 : RB replaced BitClear macro with atomic instructions
     --------------------------------------------------------------------------*/
 
 void IntDisable(u8 numinter)
@@ -1183,8 +1183,7 @@ void MIPS32 IntRestoreInterrupts(unsigned int intStatus)
     Parameters:
         ebase_address   - The address of the EBASE.
         * must be be located in KSEG0 or KSEG1
-        * must be 4KB aligned
-    NB : EBASE at 0xBD000000 (microchip) or 0xBD005000 (jean-pierre mandon)
+        * must be 4KB aligned (1KB aligned for PIC32MX1 or 2 family)
     --------------------------------------------------------------------------*/
 
 void MIPS32 IntSetEBASE(unsigned int ebase_address)
@@ -1202,7 +1201,6 @@ void MIPS32 IntSetEBASE(unsigned int ebase_address)
         config      - The interrupt configuration to set.
         IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
         IntConfigureSystem(INT_SYSTEM_CONFIG_SINGLE_VECTOR);
-    NB : Place EBASE at 0xBD000000 (microchip) or 0xBD005000 (jean-pierre mandon)
     --------------------------------------------------------------------------*/
 
 void MIPS32 IntConfigureSystem(u8 mode)
@@ -1210,18 +1208,26 @@ void MIPS32 IntConfigureSystem(u8 mode)
     unsigned int temp;
 
     asm("di"); // Disable all interrupts
+
     temp = _CP0_GET_STATUS(); // Get Status
     temp |= 0x00400000; // Set BEV bit
     _CP0_SET_STATUS(temp); // Update Status
-    #if defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
-    _CP0_SET_EBASE(0xBD003000); // Set an EBase value of 0xBD003000	
+    
+    // Set eBase value
+    #if defined(PINGUINO32MX270)
+        _CP0_SET_EBASE(0xBD000000);
+    #elif defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+        _CP0_SET_EBASE(0xBD003000);
     #else
-    _CP0_SET_EBASE(0xBD005000); // Set an EBase value of 0xBD005000	
+        _CP0_SET_EBASE(0xBD005000);
     #endif
+
     _CP0_SET_INTCTL(0x00000020); // Set the Vector Spacing to non-zero value
+
     temp = _CP0_GET_CAUSE(); // Get Cause
     temp |= 0x00800000; // Set IV
     _CP0_SET_CAUSE(temp); // Update Cause
+
     temp = _CP0_GET_STATUS(); // Get Status
     temp &= 0xFFBFFFFD; // Clear BEV and EXL
     _CP0_SET_STATUS(temp); // Update Status

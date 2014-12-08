@@ -9,12 +9,14 @@
     - use of GetSystemClock() function to fit to every CPU configuration
     Modified RB 12/02/2011
     - use of Core Timer (GetCP0Count() function)
+    Modified RB 29/11/2014
+    - fixed unexpected stop when CP0 overroll
     --------------------------------------------------------------------------*/
 
 #ifndef __DELAY_C
-    #define __DELAY_C
+#define __DELAY_C
 
-//#include <typedef.h>
+#include <typedef.h>
 #include <system.c>
 
 /*	--------------------------------------------------------------------
@@ -22,29 +24,23 @@
     Uses CP0 Count register which counts at half the CPU rate
     ------------------------------------------------------------------*/
 
-void Delayus(int us)
+void Delayus(u32 us)
 {
-    // get start ticks
-    int start = GetCP0Count();
-
     // CP0Count counts at half the CPU rate
-    int Fcp0 = GetSystemClock() / 1000000 / 2;		// max = 40 for 80MHz
+    u32 Fcp0 = GetSystemClock() / 1000000 / 2;		// max = 40 for 80MHz
 
     // calculate last tick number for the given number of microseconds
-    int stop = start + us * Fcp0;
+    u32 stop = GetCP0Count() + us * Fcp0;
 
     // wait until count reaches the stop value
-    if (stop > start)
-        while (GetCP0Count() < stop);
-    else
-        while (GetCP0Count() > start || GetCP0Count() < stop); 
+    while ((int) (GetCP0Count() - stop) < 0);
 } 
 
 /*	--------------------------------------------------------------------
     Wait ms milliseconds
     ------------------------------------------------------------------*/
 
-void Delayms(int ms)
+void Delayms(u32 ms)
 {
     do
     {

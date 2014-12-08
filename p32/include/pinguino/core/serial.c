@@ -496,7 +496,7 @@ void SerialPinConfigure(u8 port)
             #endif
         #endif
             break;
-        //32MX4xx not have UART3,4,5 AND 6
+        //32MX4xx do not have UART3,4,5 AND 6
         #ifdef ENABLE_UART3
         case UART3:
             TRISGbits.TRISG8 = OUTPUT;	// RG8 / U3TX output

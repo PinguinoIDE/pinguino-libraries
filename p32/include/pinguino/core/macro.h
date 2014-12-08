@@ -8,8 +8,11 @@
 
 	/// ASM
 
-	/* TODO check if nop() is not already defined somewhere */
-    
+	//Already defined
+	//#define interrupts()	asm volatile("ei")
+	//#define noInterrupts()	asm volatile("di")
+	
+	//Already defined ???
 	#define nop()		asm volatile("nop")
 
 	/// BYTES

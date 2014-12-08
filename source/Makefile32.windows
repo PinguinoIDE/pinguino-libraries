@@ -22,26 +22,14 @@ else
 endif
 
 ifdef CPLUPLUS
-	ifeq "$(_IDE_OSARCH_)" "32bit"
-		CC	= $(_IDE_BINDIR_)\mips-g++.exe
-	else
-		CC	= $(_IDE_BINDIR_)\p32-g++.exe
-	endif
+	CC	= $(_IDE_BINDIR_)\p32-g++.exe
 	LIBS	= -lstdc++ -lm -lgcc -lc
 else
-	ifeq "$(_IDE_OSARCH_)" "32bit"
-		CC	= $(_IDE_BINDIR_)\mips-gcc.exe
-	else
-		CC	= $(_IDE_BINDIR_)\p32-gcc.exe
-	endif
+	CC	= $(_IDE_BINDIR_)\p32-gcc.exe
 	LIBS	= -lm -lgcc -lc
 endif
 
-ifeq "$(_IDE_OSARCH_)" "32bit"
-	OBJC	= $(_IDE_BINDIR_)\mips-objcopy.exe
-else
-	OBJC	= $(_IDE_BINDIR_)\p32-objcopy.exe
-endif
+OBJC	= $(_IDE_BINDIR_)\p32-objcopy.exe
 
 RM			= @del
 CP			= @copy

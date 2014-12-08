@@ -2,30 +2,23 @@
  * PIC32MX270F256B object file
  * Contains Memory Regions definitions
  * 2014-09-10 Régis Blanchot
+ * more info :
+ * https://sourceware.org/binutils/docs-2.23.1/ld/File-Commands.html#File-Commands
  **********************************************************************/
 
 INPUT("processor.o")
+OUTPUT_FORMAT("elf32-littlemips")
+OUTPUT_ARCH(mips)
+ENTRY(_reset)
 
 /***********************************************************************
- * For interrupt vector handling
- * base address of interrupt vector table (length = 0x1000)
- * placed at the end of flash memory (0x40000 - 0x1000 = 0x3F000)
- * _ebase_address value MUST BE same as the ORIGIN value of exception_mem
+ * Base address of interrupt vector table (length = 0x1000)
+ * _ebase_address value MUST BE the same as the ORIGIN value of exception_mem
  **********************************************************************/
 
 PROVIDE(_vector_spacing = 0x00000001);
-
-_ebase_address = 0x9D000000;
-
-/***********************************************************************
- * Memory Address Equates
- * _RESET_ADDR      -- Reset Vector
- * _BEV_EXCPT_ADDR  -- Boot exception Vector
- * _DBG_EXCPT_ADDR  -- In-circuit Debugging Exception Vector
- * _DBG_CODE_ADDR   -- In-circuit Debug Executive address
- * _DBG_CODE_SIZE   -- In-circuit Debug Executive size
- * _GEN_EXCPT_ADDR  -- General Exception Vector
- **********************************************************************/
+_ebase_address           = 0x9D000000;
+_GEN_EXCPT_ADDR          = _ebase_address + 0x180;
 
 /***********************************************************************
  * _RESET_ADDR value MUST BE same as the ORIGIN value of kseg1_boot_mem
@@ -33,37 +26,10 @@ _ebase_address = 0x9D000000;
  * which is the location of the boot flash, and executes the code there:
  * crt0.S which takes care of some initialization tasks,
  * then calls the code for the bootloader,
- * which resides in the KSEG0 program flash (kseg0_program_mem) memory block. 
+ * which resides in the KSEG0 program flash (kseg0_program_mem) memory block.
  **********************************************************************/
 
-_RESET_ADDR              = 0xBFC00210;
-
-/***********************************************************************
- * map boot exception vector to kseg1_boot_mem
- * Place _BEV_EXCPT_ADDR at an offset of 0x380 to _RESET_ADDR
- **********************************************************************/
-
-/*
-_BEV_EXCPT_ADDR          = 0xBFC00000 + 0x380;
-*/
-
-/***********************************************************************
- * map _DBG_EXCPT_ADDR to kseg1_boot_mem
- * Place _DBG_EXCPT_ADDR at an offset of 0x480 to _RESET_ADDR
- * we don't use debug supporting code
- **********************************************************************/
-
-/*
-_DBG_EXCPT_ADDR          = 0xBFC00000 + 0x480;
-_DBG_CODE_ADDR           = 0x9FC00000 + 0x490;
-_DBG_CODE_SIZE           = 0x560;
-*/
-
-/***********************************************************************
- * 
- **********************************************************************/
-
-_GEN_EXCPT_ADDR          = _ebase_address + 0x180;
+_RESET_ADDR              = 0x9D003800;
 
 /***********************************************************************
  * Memory Regions
@@ -73,36 +39,13 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  * - kseg0_boot_mem contains C startup module (cacheable)
  * - debug_exec_mem containing debug supporting code for running ICD3/RealICE during a debug session (non-cacheable)
  * - configuration words (non-cacheable)
- ***********************************************************************
- * Cacheable (KSEG0) and non-cacheable (KSEG1)
- * KSEG0 PROGRAM FLASH [0x9D000000:0x9D03FFFF]
- * KSEG1 PROGRAM FLASH [0xBD000000:0xBD03FFFF]
- * KSEG0    BOOT FLASH [0x9FC00000:0x9FC00BEF]
- * KSEG1    BOOT FLASH [0xBFC00000:0xBFC00BEF]
- * KSEG1           RAM [0xA0000000:0xA000FFFF]
  **********************************************************************/
 
 MEMORY
 {
 
-/***********************************************************************
- * interrupt vector table in PROGRAM FLASH starting at ebase
- * exception_mem value MUST BE same as value of _ebase_address
- **********************************************************************/
-
 exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
 
-/***********************************************************************
- * User Program code
- * in cacheable PROGRAM FLASH
- * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
- * Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
- * Bootloader is placed between 0x9D001000 and 0x9D006000
- * 0x40000 - 0x6000 = 0x3A000 bytes free
- **********************************************************************/
-
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D006000, LENGTH = 0x3A000
-  
 /***********************************************************************
  * Reset (0x0), Boot (0x380) and Debug (0x480) vectors
  * kseg1_boot_mem value MUST BE same as the _RESET_ADDR value 
@@ -110,31 +53,27 @@ kseg0_program_mem    (rx)  : ORIGIN = 0x9D006000, LENGTH = 0x3A000
  * vector's length = 0x10 ?
  **********************************************************************/
 
-/*
-kseg1_boot_mem             : ORIGIN = 0xBFC00000, LENGTH = 0x490
-*/
-kseg1_boot_mem             : ORIGIN = 0xBFC00210, LENGTH = 0x10
+kseg1_boot_mem             : ORIGIN = 0x9D003800, LENGTH = 0x10
 
 /***********************************************************************
  * Startup code (about 0x200 bytes long)
  * in cacheable BOOT FLASH
  * only 0xBF0 bytes available on PIC32MX2xx
- * 0xBF0 - 0x490 (Reset, Boot & Debug vectors) = 0x760
  **********************************************************************/
 
-/*
-kseg0_boot_mem             : ORIGIN = 0x9FC00490, LENGTH = 0x200
-*/
-kseg0_boot_mem             : ORIGIN = 0x9FC00220, LENGTH = 0x200
+kseg0_boot_mem             : ORIGIN = 0x9D003810, LENGTH = 0x200
 
 /***********************************************************************
- * we don't use debug supporting code
+ * User Program code
+ * in cacheable PROGRAM FLASH
+ * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
+ * Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
+ * Bootloader is placed between 0x9D001000 and 0x9D003400
+ * 0x40000 - 0x3400 = 0x3CC00 bytes free
  **********************************************************************/
 
-/*
-debug_exec_mem             : ORIGIN = 0x9FC00690, LENGTH = 0x560
-*/
-
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D003A10, LENGTH = 0x3C5F0
+  
 /***********************************************************************
  * Device Configuration Registers (configuration bits)
  **********************************************************************/

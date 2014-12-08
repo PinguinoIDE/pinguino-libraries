@@ -33,8 +33,7 @@
 // -------------------------------------------------------------------------------------
 
 // NOTES:
-// - Xtal must be 20 Mhz. Thus the resulting clock after PLL will be
-//   of 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this library.
+// - Fosc 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this library.
 // - This library allows 250 positions for a servo.
 //   Those 1-250 values are mapped from 0-180 degrees,
 //   which is the input value by user at servo.write function.
@@ -55,8 +54,8 @@
 // User can change 0 degrees up to 500 us pulse as absolute minumum, 
 // and 180 degrees up to 2500 usec pulse as absolute maximum using the following functions:
 // 
-// - ServoMinimumPulse(unsigned char servo,int min_microseconds)
-// - ServoMaximumPulse(unsigned char servo,int max_microseconds)
+// - ServoMinimumPulse(unsigned char servo, int min_microseconds)
+// - ServoMaximumPulse(unsigned char servo, int max_microseconds)
 //
 // -------------------------------------------------------------------------------------------------------
 
@@ -72,10 +71,9 @@
 #define DefaultSERVOMAX 192
 #define DefaultSERVOMIN  64
 
-#define minMINUS=500;
-#define maxMINUS=1500;
-#define minMAXUS=1500;
-#define maxMAXUS=2500;
+#define MINUS 500
+#define MAXUS 2500
+#define MIDUS ((MINUS+MAXUS)/2)
 
 //library internal variables:
 volatile unsigned char phase=0;
@@ -224,10 +222,9 @@ static void ServosPulseDown()
     }
 }
 
+// This function starts up pulses for all activated servos.
 static void ServosPulseUp()
 {
-// This function starts up pulses for all activated servos.
-
     PORTA = PORTA | activatedservos[pA];
     PORTB = PORTB | activatedservos[pB];
     #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
@@ -242,14 +239,12 @@ static void ServosPulseUp()
 }
 
 
-static void SortServoTimings()
-{
 // This funtion analyses servovalues table and creates and ordered table(timings)
 // from smaller to bigger of all the values, asociating to each
 // position of the table the servos that matches that timing.
-
+static void SortServoTimings()
+{
     volatile unsigned char s,t,totalservos,numservos;
-    
 
     // table initialization:
     for(t=0;t<TotalPICpins;t++)
@@ -422,8 +417,6 @@ static void SortServoTimings()
     needreordering=0;  // This indicates that servo timings are sorted.
 }
 
-
-
 void ServoAttach(unsigned char pin)
 {
     if(pin>=TotalPICpins) return;
@@ -457,7 +450,6 @@ void ServoAttach(unsigned char pin)
                 break;	            	            
         #endif
     }
-    
 }
 
 void ServoDetach(unsigned char pin)
@@ -483,7 +475,6 @@ void ServoDetach(unsigned char pin)
                 break;
         #endif
     }
-
 }
 
 void ServoWrite(unsigned char servo,unsigned char degrees)
@@ -510,8 +501,6 @@ void ServoWrite(unsigned char servo,unsigned char degrees)
     needreordering=1;  // This indicates servo timings must be reordered.
 }
 
-
-
 unsigned char ServoRead(unsigned char servo)
 {
     if(servo>=TotalPICpins)        // test if numservo is valid
@@ -527,11 +516,11 @@ void ServoMinimumPulse(unsigned char servo,int min_microseconds)
         return;
 
     // test if microseconds are within range:
-    if (min_microseconds < minMINUS) min_microseconds = minMINUS;
-    if (min_microseconds > maxMINUS) min_microseconds = maxMINUS;
+    if (min_microseconds < MINUS) min_microseconds = MINUS;
+    if (min_microseconds > MIDUS) min_microseconds = MIDUS;
 
     // The following formula converts min. microseconds to min. timeslot
-    maxminpos[0][servo]=(min_microseconds - minMINUS)>>3;   // 0 < final_min < 125
+    maxminpos[0][servo]=(min_microseconds - MINUS)>>3;   // 0 < final_min < 125
 }
 
 void ServoMaximumPulse(unsigned char servo,int max_microseconds)
@@ -541,12 +530,11 @@ void ServoMaximumPulse(unsigned char servo,int max_microseconds)
         return;
         
     // test if microseconds are within range:
-    if (max_microseconds < minMAXUS) max_microseconds = minMAXUS;
-    if (max_microseconds > maxMAXUS) max_microseconds = maxMAXUS;
+    if (max_microseconds < MIDUS) max_microseconds = MIDUS;
+    if (max_microseconds > MAXUS) max_microseconds = MAXUS;
 
     // The following formula converts max. microseconds to max. timeslot
-    maxminpos[1][servo]=(max_microseconds - minMINUS)>>3;   // 125 < final_max < 250
-
+    maxminpos[1][servo]=(max_microseconds - MINUS)>>3;   // 125 < final_max < 250
 }
 
 //interrupt handler that handles servos
@@ -562,7 +550,7 @@ void servos_interrupt(void)
         {
             ServosPulseUp();
             // Load at TMR1 (65535d - 6000d (-54usec for adjusments ) = 59481d = 0xE859 (after some calibration 0xe959)
-            TMR1H= 0xe9;
+            TMR1H= 0xe9;//0xe9;
             TMR1L= 0x59;
             // timer 1 prescaler 1 source is internal oscillator Fosc/4 (CPU clock or Fosc=48Mhz).
             T1CON=1;
@@ -577,7 +565,7 @@ void servos_interrupt(void)
             ServosPulseDown();
             // After fisrt 2,5 ms we need a delay of 17,5 ms to complete a 20 ms cycle.
             // Loading at TMR1 65535d - (4,375 x 12000(=1ms)=) 52500d = 13035d = 0x32EB => 4,375 ms
-            // This is 4,375ms x 4 (preescaler) = 17,5 ms
+            // This is 4,375ms x 4 (prescaler) = 17,5 ms
             TMR1H= 0x32;
             TMR1L= 0xeb;
             // timer 1 prescaler 1 source is internal oscillator Fosc/4 (recordemos que Fosc=48Mhz).

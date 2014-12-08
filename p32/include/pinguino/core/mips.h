@@ -7,27 +7,28 @@
 #define __MIPS_H
 
 #include <typedef.h>			// Pinguino's types definitions
+#include <const.h>              // MIPS32
 
-u32 __attribute__ ((nomips16)) DisableInterrupt(void)
+u32 MIPS32 DisableInterrupt(void)
 {
     u32 status;
     asm volatile ("di	%0" : "=r" (status));
     return status;
 }
 
-u32 __attribute__ ((nomips16)) EnableInterrupt(void)
+u32 MIPS32 EnableInterrupt(void)
 {
     u32 status;
     asm volatile ("ei	%0" : "=r" (status));
     return status;
 }
 
-void __attribute__((nomips16)) ResetCoreTimer(void)
+void MIPS32 ResetCoreTimer(void)
 {
     asm volatile("mtc0	%0, $9" : : "r" (0));
 }
 
-u32 __attribute__((nomips16)) ReadCoreTimer(void)
+u32 MIPS32 ReadCoreTimer(void)
 {
     u32 timer;
     asm volatile("mfc0	%0, $9" : "=r" (timer));
@@ -55,7 +56,7 @@ do {								                        \
 
 // Restore the hardware interrupt mode using the saved interrupt state.
 
-void __attribute__((nomips16)) RestoreIterruptStatus (u32 x)
+void MIPS32 RestoreIterruptStatus (u32 x)
 {
     /* C0_STATUS */
 	WriteCoreRegister(12, 0, x);
