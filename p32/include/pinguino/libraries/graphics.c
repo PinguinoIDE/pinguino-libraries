@@ -52,7 +52,9 @@
 
 #define _abs_(a) (((a)> 0) ? (a) : -(a))
 
-extern void drawPixel(u16 x, u16 y);
+extern void drawPixel(u16, u16);
+extern void drawVLine(u16, u16, u16);
+extern void drawHLine(u16, u16, u16);
 //extern void setColor(u16 c);
 
 /*	--------------------------------------------------------------------
@@ -157,7 +159,6 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 	}
 }
 
-/*
 void drawRect(u16 x1, u16 y1, u16 x2, u16 y2)
 {
 	u16 tmp;
@@ -226,7 +227,7 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
 		y1=y2;
 		y2=tmp;
 	}
-
+/*
 	if (orient==PORTRAIT)
 	{
 		for (i=0; i<((y2-y1)/2)+1; i++)
@@ -236,6 +237,7 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
 		}
 	}
 	else
+*/
 	{
 		for (i=0; i<((x2-x1)/2)+1; i++)
 		{
@@ -245,7 +247,8 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
 	}
 }
 
-void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
+void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
+{
 	u16 tmp, i;
 
 	if (x1>x2)
@@ -282,252 +285,6 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
 		}
 	}
 }
-
-void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
-	char i,j,ch;
-	unsigned u16 temp;
-	u16 newx,newy;
-	//double radian;
-	//radian=deg*0.0175;  
-
-	fastWriteLow(LCD_CS);   
-	if (fsize==FONT_SMALL)
-	{
-		temp=((c-32)*12); 
-		for(j=0;j<12;j++) 
-		{
-			ch=(SmallFont[temp]); 
-			for(i=0;i<8;i++)
-			{   
-				newx=x+(((i+(pos*8))*cosi(deg))-((j)*sini(deg)));
-				newy=y+(((j)*cosi(deg))+((i+(pos*8))*sini(deg)));
-
-				setXY(newx,newy,newx+1,newy+1);
-				
-				if((ch&(1<<(7-i)))!=0)   
-				{
-					setPixel(fcolorr, fcolorg, fcolorb);
-				} 
-				else  
-				{
-					setPixel(bcolorr, bcolorg, bcolorb);
-				}   
-			}
-			temp++;
-		}
-	}
-#ifndef _NO_BIG_FONT_
-	else{
-		temp=((c-32)*32); 
-		for(j=0;j<16;j++) 
-		{
-			ch=(BigFont[temp]); 
-			for(i=0;i<8;i++)
-			{   
-				newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
-				newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
-
-				setXY(newx,newy,newx+1,newy+1);
-				
-				if((ch&(1<<(7-i)))!=0)   
-				{
-					setPixel(fcolorr, fcolorg, fcolorb);
-				} 
-				else  
-				{
-					setPixel(bcolorr, bcolorg, bcolorb);
-				}   
-			}
-			temp++;
-			ch=(BigFont[temp]); 
-			for(i=8;i<16;i++)
-			{   
-				newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
-				newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
-
-				setXY(newx,newy,newx+1,newy+1);
-				
-				if((ch&(1<<(15-i)))!=0)   
-				{
-					setPixel(fcolorr, fcolorg, fcolorb);
-				} 
-				else  
-				{
-					setPixel(bcolorr, bcolorg, bcolorb);
-				}   
-			}
-			temp++;
-		}
-	}
-#endif
-	fastWriteHigh(LCD_CS);
-}
-
-void myGLCD_print(char *st, u16 x, u16 y, u16 deg)
-{
-	u16 stl, i;
-
-	stl = strlen(st);
-
-	if (fsize==FONT_SMALL)
-	{
-		if (orient==PORTRAIT)
-		{
-		if (x==RIGHT)
-			x=240-(stl*8);
-		if (x==CENTER)
-			x=(240-(stl*8))/2;
-		}
-		else
-		{
-		if (x==RIGHT)
-			x=320-(stl*8);
-		if (x==CENTER)
-			x=(320-(stl*8))/2;
-		}
-	}
-	else
-	{
-		if (orient==PORTRAIT)
-		{
-		if (x==RIGHT)
-			x=240-(stl*16);
-		if (x==CENTER)
-			x=(240-(stl*16))/2;
-		}
-		else
-		{
-		if (x==RIGHT)
-			x=320-(stl*16);
-		if (x==CENTER)
-			x=(320-(stl*16))/2;
-		}
-	}
-
-	for (i=0; i<stl; i++)
-		if (deg==0)
-			printChar(*st++, x + (i*(fsize*8)), y);
-		else
-			rotateChar(*st++, x, y, i, deg);
-}
-
-void printNumI(long num, u16 x, u16 y){
-  char buf[25];
-  char st[27];
-  unsigned char neg=0;
-  u16 i,c=0;
-  
-  if (num==0)
-  {
-	  st[0]=48;
-	  st[1]=0;
-  }
-  else
-  {
-	  if (num<0)
-	  {
-		neg=1;
-		num=-num;
-	  }
-	  
-	  while (num>0)
-	  {
-		buf[c]=48+(num % 10);
-		c++;
-		num=(num-(num % 10))/10;
-	  }
-	  buf[c]=0;
-	  
-	  if (neg)
-	  {
-		st[0]=45;
-	  }
-	  
-	  for (i=0; i<c; i++)
-	  {
-		st[i+neg]=buf[c-i-1];
-	  }
-	  st[c+neg]=0;
-  }
-
-  myGLCD_print(st,x,y,0);
-}
-
-void printNumF(double num, char dec, u16 x, u16 y){
-  char buf[25];
-  char st[27];
-  unsigned char neg=0;
-  u16 i,c=0;
-  u16 c2;
-  unsigned long inum;
-  
-  if (num==0)
-  {
-	  st[0]=48;
-	  st[1]=46;
-	  for (i=0; i<dec; i++)
-		  st[2+i]=48;
-	  st[2+dec]=0;
-  }
-  else
-  {
-	  if (num<0)
-	  {
-		neg=1;
-		num=-num;
-	  }
-	  
-	  if (dec<1)
-		dec=1;
-	  if (dec>5)
-		dec=5;
-	  
-	  inum=(long)(num*powi(10,dec));
-	  
-	  while (inum>0)
-	  {
-		buf[c]=48+(inum % 10);
-		c++;
-		inum=(inum-(inum % 10))/10;
-	  }
-	  if ((num<1) && (num>0))
-	  {
-		  buf[c]=48;
-		  c++;
-	  }
-	  buf[c]=0;
-	  
-	  if (neg)
-	  {
-		st[0]=45;
-	  }
-	  
-	  c2=neg;
-	  for (i=0; i<c; i++)
-	  {
-		st[c2]=buf[c-i-1];
-		c2++;
-		if ((c-(c2-neg))==dec)
-		{
-		  st[c2]=46;
-		  c2++;
-		}
-	  }
-	  st[c2]=0;
-  }
-
-  myGLCD_print(st,x,y,0);
-}
-
-void fontSize(char size)
-{
-#ifdef _NO_BIG_FONT_
-	fsize = FONT_SMALL;
-#else
-	fsize = size;
-#endif
-}
-*/
 
 void drawBitmap(u16 xo, u16 yo, u16 w, u16 h, const u16* bitmap)
 {

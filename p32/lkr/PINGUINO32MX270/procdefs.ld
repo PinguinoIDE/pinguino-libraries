@@ -29,7 +29,7 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  * which resides in the KSEG0 program flash (kseg0_program_mem) memory block.
  **********************************************************************/
 
-_RESET_ADDR              = 0x9D003800;
+_RESET_ADDR              = 0x9D004000;
 
 /***********************************************************************
  * Memory Regions
@@ -53,7 +53,7 @@ exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
  * vector's length = 0x10 ?
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0x9D003800, LENGTH = 0x10
+kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
 
 /***********************************************************************
  * Startup code (about 0x200 bytes long)
@@ -61,7 +61,7 @@ kseg1_boot_mem             : ORIGIN = 0x9D003800, LENGTH = 0x10
  * only 0xBF0 bytes available on PIC32MX2xx
  **********************************************************************/
 
-kseg0_boot_mem             : ORIGIN = 0x9D003810, LENGTH = 0x200
+kseg0_boot_mem             : ORIGIN = 0x9D004010, LENGTH = 0x200
 
 /***********************************************************************
  * User Program code
@@ -72,7 +72,7 @@ kseg0_boot_mem             : ORIGIN = 0x9D003810, LENGTH = 0x200
  * 0x40000 - 0x3400 = 0x3CC00 bytes free
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D003A10, LENGTH = 0x3C5F0
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D004210, LENGTH = 0x3BDF0
   
 /***********************************************************************
  * Device Configuration Registers (configuration bits)

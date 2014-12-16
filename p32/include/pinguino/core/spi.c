@@ -69,7 +69,7 @@
         #define SPICONF		SPI1CON
         #define SPICONCLR	SPI1CONCLR
         #define SPICONSET   SPI1CONSET
-        #define CLKSPD		SPI1BRG
+        #define SPIxBRG		SPI1BRG
         #define INTFAULT	INT_SPI1_FAULT
         #define INTTXDONE 	INT_SPI1_TRANSFER_DONE
         #define INTRXDONE 	INT_SPI1_RECEIVE_DONE
@@ -77,6 +77,8 @@
         #define CKP         SPI1CONbits.CKP
         #define CKE         SPI1CONbits.CKE
         #define SMP         SPI1CONbits.SMP
+        #define MODE16      SPI1CONbits.MODE16
+        #define MODE32      SPI1CONbits.MODE32
         #define MSTEN       SPI1CONbits.MSTEN
         #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
         // RB7 is defined as SS1 pin (cf. io.c)
@@ -94,18 +96,18 @@
     #define STATTX		SPI2STATbits.SPITBF	// Transmit buffer full
     #define SPICONF		SPI2CON
     #define SPICONCLR	SPI2CONCLR
-        #define SPICONSET   SPI2CONSET
+    #define SPICONSET   SPI2CONSET
     #define SPIENHBUF	SPI2CONbits.ENHBUF
-    #define CLKSPD		SPI2BRG
+    #define SPIxBRG		SPI2BRG
     #define PULLUPS		0xF00 //Use CNPUE = PULLUPS for enable internal pullups 8,9,10,11
     #define INTFAULT	INT_SPI2_FAULT
     #define INTTXDONE 	INT_SPI2_TRANSFER_DONE
     #define INTRXDONE 	INT_SPI2_RECEIVE_DONE
     #define INTVECTOR 	INT_SPI2_VECTOR
-        #define CKP         SPI2CONbits.CKP
-        #define CKE         SPI2CONbits.CKE
-        #define SMP         SPI2CONbits.SMP
-        #define MSTEN       SPI2CONbits.MSTEN
+    #define CKP         SPI2CONbits.CKP
+    #define CKE         SPI2CONbits.CKE
+    #define SMP         SPI2CONbits.SMP
+    #define MSTEN       SPI2CONbits.MSTEN
 #endif
 
 //Only 795 boards have SPI3 and SPI4
@@ -118,7 +120,7 @@
         #define STATTX		SPI3STATbits.SPITBF	// transmit buffer full
         #define SPICONF		SPI3CON
         #define SPICONCLR	SPI3CONCLR
-        #define CLKSPD		SPI3BRG
+        #define SPIxBRG		SPI3BRG
         #define INTFAULT	INT_SPI3_FAULT
         #define INTTXDONE 	INT_SPI3_TRANSFER_DONE
         #define INTRXDONE 	INT_SPI3_RECEIVE_DONE
@@ -132,7 +134,7 @@
         #define STATTX		SPI4STATbits.SPITBF	// transmit buffer full
         #define SPICONF		SPI4CON
         #define SPICONCLR	SPI4CONCLR
-        #define CLKSPD		SPI4BRG
+        #define SPIxBRG		SPI4BRG
         #define INTFAULT	INT_SPI4_FAULT
         #define INTTXDONE 	INT_SPI4_TRANSFER_DONE
         #define INTRXDONE 	INT_SPI4_RECEIVE_DONE
@@ -183,7 +185,7 @@ unsigned char SPI_write(unsigned char data_out);
 unsigned char SPI_read(void);
 
 u32 this_mode     = SPI_MODE0;
-u32 this_clock    = SPI_PBCLOCK_DIV64;
+u32 this_divider  = SPI_PBCLOCK_DIV64;
 u32 this_role     = SPI_MASTER;
 u32 this_bitorder = SPI_MSBFIRST;
 u32 this_phase    = SPI_SMPEND;
@@ -215,7 +217,7 @@ void SPI_init(u32 word,u32 speed)
     rData = BUFFER;
     // 4.  Set speed rate
     clk = (Fpb/(2*speed))-1;
-    CLKSPD = clk;
+    SPIxBRG = clk;
     // 5.  Swtich on SPI module with Options added
     SPICONSET = 0x8000 | word; 
 }
@@ -281,30 +283,29 @@ void SPI_setMode(u8 mode)
  * speed must be in bauds
  **/
  
-u32 SPI_setClock(u32 speed)
+u32 SPI_setClock(u32 Fspi)
 {
-    u32 Fpb;
-    u16 clk;
-
-    Fpb = GetPeripheralClock();
-    if (speed > (Fpb / 2))
+    u32 Fpb = GetPeripheralClock();
+    
+    if (Fspi > (Fpb / 2))
     {
-        this_clock = 0;                 // use the maximum baud rate possible
+        this_divider = 0;               // use the maximum baud rate possible
         return (Fpb / 2);               // and return the real speed
     }
     else
     {
-        clk = (Fpb / (2 * speed)) - 1;
+        // divider baudrate
+        this_divider = (Fpb / (2 * Fspi)) - 1;
         
-        if (clk > 511)
+        if (this_divider > 511)
         {
-            this_clock = 511;           // use the minimum baud rate possible
+            this_divider = 511;         // use the minimum baud rate possible
             return (Fpb / 1024);        // and return the real speed
         }
         else                            // ** fix for bug identified by dk=KiloOne
         {
-            this_clock = clk;           // use calculated divider-baud rate
-            return (Fpb / (2*clk+1));             // and return the real speed
+            // return the real speed
+            return ( Fpb / ( 2 * this_divider + 1));
         }
     }
 
@@ -319,10 +320,9 @@ u32 SPI_setClock(u32 speed)
  */
 
 //#ifdef SPISETCLOCKDIVIDER
-void SPI_setClockDivider(u8 clock)
+void SPI_setClockDivider(u8 divider)
 {
-    this_clock = clock/2 - 1;
-    //SPI_begin();
+    this_divider = divider / 2 - 1;
 }
 //#endif
 
@@ -405,7 +405,7 @@ void SPI_begin()
     IntSetVectorPriority(INTVECTOR, 3, 1);
 */
     // 6. Write the Baud Rate register, SPIxBRG.
-    CLKSPD = this_clock; // Default SPI_PBCLOCK_DIV64
+    SPIxBRG = this_divider; // Default SPI_PBCLOCK_DIV64
     
     // 7. Clear the SPIROV bit (SPIxSTAT<6>).
     STATUS = 0;                         // clear the Overflow
@@ -433,7 +433,28 @@ void SPI_begin()
     }
     
     SMP = this_phase;                   // Input data sampled at end of middle of data output time
-    MSTEN = this_role;                  // Master or Slave mode
+
+    switch (this_role)
+    {
+        case SPI_MASTER8:
+            MODE16 = 0;
+            MODE32 = 0;
+            MSTEN  = 1; // Master
+            break;
+        case SPI_MASTER16:
+            MODE16 = 1;
+            MODE32 = 0;
+            MSTEN  = 1; // Master
+            break;
+        case SPI_MASTER32:
+            MODE16 = 0;
+            MODE32 = 1;
+            MSTEN  = 1; // Master
+            break;
+        case SPI_SLAVE:
+            MSTEN  = 0; // Slave
+            break;
+    }
     
     // The SSx pin is not driven by the SPI Master.
     // User have to drive the bit himself and pulse it before the SPI

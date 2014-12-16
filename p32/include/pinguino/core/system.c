@@ -34,8 +34,10 @@
 #include <const.h>              // MIPS32
 #include <typedef.h>
 
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
     #define CPUCOREMAXFREQUENCY	40000000L	// 40 MHz
+#elif defined(PINGUINO32MX270)
+    #define CPUCOREMAXFREQUENCY	64000000L	// 64 MHz (overclock)
 #else
     #define CPUCOREMAXFREQUENCY	80000000L	// 80 MHz
 #endif
