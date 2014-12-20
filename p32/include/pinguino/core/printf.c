@@ -5,9 +5,10 @@
     PROGRAMERS:		regis blanchot <rblanchot@gmail.com>
                     mark harper <markfh@f2s.com>
     FIRST RELEASE:	10 Nov 2010
-    LAST RELEASE:	16 Jan 2012
+    LAST RELEASE:	20 Dec 2014
     ----------------------------------------------------------------------------
-    TODO : floating point support - work in progress
+    Changelog :
+    2014-12-20 - RB - fixed long and float support
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -170,13 +171,14 @@ static u8 pprinti(u8 **out, u32 i, u8 base, u8 sign, u8 width, u8 pad, u8 separa
     --------------------------------------------------------------------------*/
 
 //static u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision)
-static u8 pprintfl(u8 **out, int value, u8 width, u8 pad, u8 separator, u8 precision)
+//static u8 pprintfl(u8 **out, int value, u8 width, u8 pad, u8 separator, u8 precision)
+static u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision)
 {
     union
     {
         float	f;
         //s32		l;
-        int	l;
+        int 	l;
     } helper;
     
     u32 mantissa;
@@ -188,9 +190,9 @@ static u8 pprintfl(u8 **out, int value, u8 width, u8 pad, u8 separator, u8 preci
     u8 count = 0, m, t;
     u8 length = PRINT_BUF_LEN - 1;
 
-    //helper.f = (float)value;
+    helper.f = (float)value;
     //helper.l = (s32)value;
-    helper.l = value;
+    //helper.l = value;
 
     // add negative sign if applicable
     if (helper.l < 0)
@@ -382,8 +384,8 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
 
             if (*format == 'f') 	// float
             {
-                //pc += pprintfl(out, va_arg(args, double), width, pad, separator, precision);
-                pc += pprintfl(out, va_arg(args, int), width, pad, separator, precision);
+                pc += pprintfl(out, va_arg(args, double), width, pad, separator, precision);
+                //pc += pprintfl(out, va_arg(args, int), width, pad, separator, precision);
                 continue;
             }
 
@@ -392,6 +394,12 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
                 char *s = va_arg(args, char*);
                 pc += pprints(out, s?s:"(null)", width, pad);
                 continue;
+            }
+
+            if (*format == 'l')		// long support (only for 8-bit compatibility)
+            {
+                ++format;
+                //islong = 1;
             }
 
             if (*format == 'u')		// unsigned integer
