@@ -1,6 +1,6 @@
-System.getCpuFrequency System_getCpuFrequency#include <oscillator.c>
+etSystem.getCpuFrequency System_getCpuFrequency#include <oscillator.c>
 System.getPeripheralFrequency System_getPeripheralFrequency#include <oscillator.c>
-System.setCpuFrequency System_setCpuFrequency#include <oscillator.c>#define SYSTEMSETCPUFREQUENCY
+System.setCpuFrequency System_setIntOsc#include <oscillator.c>#define SYSTEMSETCPUFREQUENCY
 System.setPeripheralFrequency System_setPeripheralFrequency#include <oscillator.c>#define SYSTEMSETPERIPHERALFREQUENCY
 
 System.setIntOsc System_setIntOsc#include <oscillator.c>#define SYSTEMSETINTOSC

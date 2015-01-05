@@ -1655,7 +1655,7 @@ void OnChangePin0(callback func, u8 config)
         INTCON2bits.INTEDG0 = config;
         INTCON2bits.RBPU = 0;						// PORTB pull-ups are enabled
         TRISBbits.TRISB0 = INPUT;
-        //INTCON3bits.INT0IP = INT_LOW_PRIORITY;
+        //INTCON3bits.INT0IP = INT_LOW_PRIORITY;    // INT0 has always HIGH PRIORITY
         INTCONbits.INT0IE = INT_ENABLE;
         INTCONbits.INT0IF = 0;
     }

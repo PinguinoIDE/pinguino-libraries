@@ -39,8 +39,16 @@
 #define CRYSTAL 8000000L
 #endif
 
-//#define _CONFIG1L_ 0x300000 // CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
-//#define _CONFIG1H_ 0x300001 // CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
+// 2014-09-05 RB -	Last versions of SDCC (>3.4.1) don't have
+//					CONFIG words definition for some PIC ...
+
+#if !defined(__CONFIG1H)
+#define __CONFIG1H 0x300001 // CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
+#endif
+
+#if !defined(__CONFIG1L)
+#define __CONFIG1L 0x300000 // CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
+#endif
 
 u32 _cpu_clock_;
 
@@ -194,20 +202,13 @@ u32 System_getCpuFrequency()
             #if defined(__18f2455)  || defined(__18f4455)  || \
                 defined(__18f2550)  || defined(__18f4550)
                 
-            // 2014-09-05 RB -	Last version of SDCC (3.4.1) doesn't have
-            //					CONFIG words definition anymore
-            // 2014-12-17 RB -	SDCC (3.4.2) works fine
-            
             CPUDIV  = ( System_readFlashMemory(__CONFIG1L) & 0b00011000 ) >> 3;
-            //CPUDIV  = ( System_readFlashMemory(_CONFIG1L_) & 0b00011000 ) >> 3;
             CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
             fosc  = System_readFlashMemory(__CONFIG1H) & 0b00001111;
-            //fosc  = System_readFlashMemory(_CONFIG1L_) & 0b00001111;
 
             #else // xxJ5x
 
             CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
-            //CPUDIV  = System_readFlashMemory(_CONFIG1H_) & 0b00000011;
 
             #endif
 
