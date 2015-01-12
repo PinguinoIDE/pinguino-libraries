@@ -1,11 +1,11 @@
-etSystem.getCpuFrequency System_getCpuFrequency#include <oscillator.c>
+System.getCpuFrequency System_getCpuFrequency#include <oscillator.c>
 System.getPeripheralFrequency System_getPeripheralFrequency#include <oscillator.c>
-System.setCpuFrequency System_setIntOsc#include <oscillator.c>#define SYSTEMSETCPUFREQUENCY
-System.setPeripheralFrequency System_setPeripheralFrequency#include <oscillator.c>#define SYSTEMSETPERIPHERALFREQUENCY
 
+System.setCpuFrequency System_setCpuFrequency#include <oscillator.c>#define SYSTEMSETCPUFREQUENCY
+System.setPeripheralFrequency System_setPeripheralFrequency#include <oscillator.c>#define SYSTEMSETPERIPHERALFREQUENCY
 System.setIntOsc System_setIntOsc#include <oscillator.c>#define SYSTEMSETINTOSC
 System.setExtOsc System_setExtOsc#include <oscillator.c>#define SYSTEMSETEXTOSC
-System.setTimerOsc System_setTimer1Osc#include <oscillator.c>#define SYSTEMSETTIMER1OSC
+System.setTimer1Osc System_setTimer1Osc#include <oscillator.c>#define SYSTEMSETTIMER1OSC
 
 System.unlock System_unlock#include <system.c>#define SYSTEMUNLOCK
 System.lock System_lock#include <system.c>#define SYSTEMLOCK

@@ -11,7 +11,7 @@
 #include <typedef.h>
 //#include <interrupt.h>
 //#include <interrupt.c>
-#include <oscillator.c>         // SystemGetInstructionClock()
+#include <oscillator.c>         // System_getPeripheralFrequency()
 
 volatile u32 _millis;
 volatile u32 _reload_val;

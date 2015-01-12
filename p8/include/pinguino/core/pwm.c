@@ -136,58 +136,58 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
 
         case CCP4:
             CCP4CON  = 0b00001100;
-            CCPR4L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP4CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR4L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP4CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP5:
             CCP5CON  = 0b00001100;
-            CCPR5L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP5CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR5L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP5CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP6:
             CCP6CON  = 0b00001100;
-            CCPR6L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP6CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR6L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP6CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP7:
             CCP7CON  = 0b00001100;
-            CCPR7L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP7CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR7L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP7CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP8:
             CCP8CON  = 0b00001100;
-            CCPR8L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP8CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR8L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP8CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP9:
             CCP9CON  = 0b00001100;
-            CCPR9L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP9CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR9L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP9CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP10:
             CCP10CON  = 0b00001100;
-            CCPR10L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP10CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR10L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP10CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         #else
 
         case CCP1:
             CCP1CON  = 0b00001100;
-            CCPR1L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP1CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR1L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP1CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         case CCP2:
             CCP2CON  = 0b00001100;
-            CCPR2L   = ( duty >> 2 ) & 0xFF; // 8 LSB
-            CCP1CON |= (duty & 0x300) >> 4;  // 2 MSB in <5:4>
+            CCPR2L   = ( duty >> 2 ) & 0xFF; // 8 MSB
+            CCP2CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
             break;
 
         #endif
