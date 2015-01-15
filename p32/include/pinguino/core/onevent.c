@@ -49,7 +49,7 @@
 #define T1CKPS8   0b01  // 1:8   prescale value
 #define T1CKPS1   0b00  // 1:1   prescale value
 
-typedef void (*callback) (void);				// type of: void callback()
+typedef void (*callback) (void); // type of: void callback()
 
 static callback intFunction[INT_NUM];
 u32 intUsed[INT_NUM];
@@ -83,7 +83,7 @@ u32 intUsed[INT_NUM];
 #ifdef TMR1INT
 u32 OnTimer1(callback func, u32 timediv, u32 delay)
 {
-    u32 tckps=0, osc;
+    u32 tckps=0, osc, period;
 
     if (intUsed[INT_TIMER1] == INT_NOT_USED)
     {
@@ -136,17 +136,18 @@ u32 OnTimer1(callback func, u32 timediv, u32 delay)
     }
 }
 
-/*******************************************************************************
+/***********************************************************************
 * Timer 1 interrupt (Vector 4)
-*******************************************************************************/
-// Put the ISR_wrapper in the good place
-void ISR_wrapper_vector_4(void) __attribute__ ((section (".vector_4")));
-
-// ISR_wrapper will call the DCF77_timer1Interrupt()
-void ISR_wrapper_vector_4(void) { Timer1Interrupt(); }
+***********************************************************************/
 
 // Tmr1Interrupt is declared as an interrupt routine
 void Timer1Interrupt(void) __attribute__ ((interrupt));
+
+// Put the ISR_wrapper in the good place
+void ISR_wrapper_vector_4(void) __attribute__ ((section (".vector_4")));
+
+// ISR_wrapper will call the Timer1Interrupt()
+void ISR_wrapper_vector_4(void) { Timer1Interrupt(); }
 
 void Timer1Interrupt()
 {

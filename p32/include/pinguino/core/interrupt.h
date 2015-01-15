@@ -106,7 +106,6 @@
         #define INT_DMA1_VECTOR					41
         #define INT_DMA2_VECTOR					42
         #define INT_DMA3_VECTOR					43
-        #define INT_NUM                         44
      
     #else
   
@@ -169,12 +168,14 @@
         #ifdef ENABLE_UART5
         #define INT_UART5_VECTOR			    51
         #endif
-        #define INT_NUM                         52
 
     #endif
 
     // IRQ NUMBER = INTERRUPT NUMBER (IFSx, IECx and IPSx registers)
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+    #if defined(PIC32_PINGUINO_220) || \
+        defined(PINGUINO32MX220)    || \
+        defined(PINGUINO32MX250)    || \ 
+        defined(PINGUINO32MX270)
 
         #define INT_CORE_TIMER					0
         #define INT_CORE_SOFTWARE0				1
@@ -242,7 +243,7 @@
         #define INT_DMA_CHANNEL_3				63 
         #define INT_NUM                         64
 
-        #else
+    #else
 
         #define INT_CORE_TIMER					0
         #define INT_CORE_SOFTWARE0				1
@@ -358,14 +359,14 @@
     #define I2C1_M_INT_ENABLE			0x80000000
     #define I2C1_S_INT_ENABLE			0x40000000
     #define I2C1_B_INT_ENABLE			0x20000000
-/*	--------------------------------------------------------------------------*/
+    // -----------------------------------------------------------------
     #define UART1_TX_INT_ENABLE			0x10000000
     #define UART1_RX_INT_ENABLE			0x08000000
     #define UART1_ERROR_INT_ENABLE		0x04000000
     #define UART1_ALL_INTERRUPT			0x1C000000
-/*	--------------------------------------------------------------------------*/
+    // -----------------------------------------------------------------
     #define SPI1_RX_INT_ENABLE			0x02000000
-    #define SPI1_TX_INT_ENABLE			0x01000000	
+    #define SPI1_TX_INT_ENABLE			0x01000000
     #define SPI1_ERROR_INT_ENABLE		0x00800000
     #define OUTPUT_COMPARE5_INT_ENABLE	0x00400000
     #define IC5_INT_ENABLE				0x00200000
@@ -403,12 +404,12 @@
     #define I2C2_M_INT_ENABLE			0x00002000
     #define I2C2_S_INT_ENABLE			0x00001000
     #define I2C2_B_INT_ENABLE			0x00000800
-/*	--------------------------------------------------------------------------*/
+    // -----------------------------------------------------------------
     #define UART2_TX_INT_ENABLE			0x00000400
     #define UART2_RX_INT_ENABLE			0x00000200
     #define UART2_ERROR_INT_ENABLE		0x00000100
     #define UART2_ALL_INTERRUPT			0x00000700
-/*	--------------------------------------------------------------------------*/
+    // -----------------------------------------------------------------
     #ifdef ENABLE_UART3
         #define UART3_TX_INT_ENABLE			0x00000080
         #define UART3_RX_INT_ENABLE			0x00000040
