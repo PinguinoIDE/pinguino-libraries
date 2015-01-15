@@ -85,10 +85,10 @@ u32 OnTimer1(callback func, u32 timediv, u32 delay)
 {
     u32 tckps=0, osc;
 
-    if (intUsed[INT_TMR1] == INT_NOT_USED)
+    if (intUsed[INT_TIMER1] == INT_NOT_USED)
     {
-        intUsed[INT_TMR1] = INT_USED;
-        intFunction[INT_TMR1] = func;
+        intUsed[INT_TIMER1] = INT_USED;
+        intFunction[INT_TIMER1] = func;
         intCount[1] = 0;
         intCountLimit[1] = delay;
 
@@ -124,7 +124,7 @@ u32 OnTimer1(callback func, u32 timediv, u32 delay)
         IEC0SET  = 1 << INT_TIMER1_VECTOR;  // enable timer 1 interrupt
         T1CONSET = 0x8000;                  // start timer 1
 
-        return INT_TMR1;
+        return INT_TIMER1;
     }
     
     else
@@ -150,15 +150,15 @@ void Timer1Interrupt(void) __attribute__ ((interrupt));
 
 void Timer1Interrupt()
 {
-    if (IntGetFlag(INT_TMR1))
+    if (IntGetFlag(INT_TIMER1))
     {
-        IntClearFlag(INT_TMR1);
+        IntClearFlag(INT_TIMER1);
         if (intCount[1]++ >= intCountLimit[1])
         {
             // reset the counter
             intCount[1] = 0;
             // call user's routine
-            intFunction[INT_TMR1]();
+            intFunction[INT_TIMER1]();
         }
     }
 }
