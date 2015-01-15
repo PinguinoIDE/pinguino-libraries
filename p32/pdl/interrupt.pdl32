@@ -4,7 +4,9 @@ Int.getVectorSubPriority IntGetVectorSubPriority#include<interrupt.c>
 Int.clearFlag IntClearFlag#include<interrupt.c>
 Int.getFlag IntGetFlag#include<interrupt.c>
 Int.enable IntEnable#include<interrupt.c>
+Int.attach IntEnable#include <interrupt.c>#define INTENABLE
 Int.disable IntDisable#include<interrupt.c>
+Int.detach IntDisable#include <interrupt.c>#define INTDISABLE 
 Int.getInterruptVectorNumber IntGetInterruptVectorNumber#include<interrupt.c>
 Int.getInterruptVectorPriority IntGetInterruptVectorPriority#include<interrupt.c>
 Int.disableAll IntDisableInterrupts#include<interrupt.c>
@@ -13,3 +15,14 @@ Int.restoreAll IntRestoreInterrupts#include<interrupt.c>
 Int.setEBASE IntSetEBASE#include<interrupt.c>
 Int.configureSystem IntConfigureSystem#include<interrupt.c>
 
+INT_TMR1 INT_TMR1#define TMR1INT
+INT_TMR2 INT_TMR2#define TMR2INT
+INT_TMR3 INT_TMR3#define TMR3INT
+INT_TMR4 INT_TMR4#define TMR4INT
+INT_TMR5 INT_TMR5#define TMR5INT
+
+OnTimer1 OnTimer1#include <onevent.c>#define TMR1INT
+OnTimer2 OnTimer2#include <onevent.c>#define TMR2INT
+OnTimer3 OnTimer3#include <onevent.c>#define TMR3INT
+OnTimer4 OnTimer4#include <onevent.c>#define TMR4INT
+OnTimer5 OnTimer5#include <onevent.c>#define TMR5INT

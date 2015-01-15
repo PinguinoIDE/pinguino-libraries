@@ -1,9 +1,19 @@
-/*-------------------------------------------------------------------------
-  main32.c - Application main function for Pinguino 32
+/*  --------------------------------------------------------------------
+    FILE:               main32.c
+    PROJECT:            pinguino 32
+    PURPOSE:            application main function
+    PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
+                        Jean-Pierre Mandon <jp.mandon@gmail.com>
+    FIRST RELEASE:      16 Nov. 2010
+    LAST RELEASE:       14 Jan. 2015
+    --------------------------------------------------------------------
+    CHANGELOG:
 
-             (c) 2010, 2011, 2112 Jean-Pierre Mandon <jp.mandon@gmail.com>
-             (c) 2010, 2011, 2012 Régis Blanchot <rblanchot@gmail.com> 
-
+    22 Sep. 2011        Marcus Fazzi <anunakin@gmail.org>
+                        added UART3,4,5,6 support
+    14 Jan. 2015        Regis Blanchot <rblanchot@gmail.com>
+                        added OnTimerX support
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -17,18 +27,16 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-    
-    * 2011-09-22  Added UART3,4,5,6 support, Marcus Fazzi <anunakin@gmail.org>
--------------------------------------------------------------------------*/
+----------------------------------------------------------------------*/
 
-#include <p32xxxx.h>			// always in first place to avoid conflict with const.h ON
-#include <typedef.h>			// Pinguino's types definitions
-#include <const.h>				// Pinguino's constants definitions
-#include <pin.h>				// Pinguino's pin definitions
-#include <macro.h>				// Pinguino's macros definitions
-#include <system.c>				// PIC32 System Core Functions
-#include "define.h"				// Pinguino Sketch Constants
-#include <io.c>					// Pinguino Boards Peripheral Remappage and IOs configurations
+#include <p32xxxx.h>    // always in first place to avoid conflict with const.h ON
+#include <typedef.h>    // Pinguino's types definitions
+#include <const.h>      // Pinguino's constants definitions
+#include <pin.h>        // Pinguino's pin definitions
+#include <macro.h>      // Pinguino's macros definitions
+#include <system.c>     // PIC32 System Core Functions
+#include "define.h"     // Pinguino Sketch Constants
+#include <io.c>         // Pinguino Boards Peripheral Remappage and IOs configurations
 
 /*
 #if !defined(__32MX220F032D__) && \
@@ -43,18 +51,19 @@
     #include <cdc.h>
 #endif	
 
-#include "user.c"				// Pinguino User's Sketch
+#include "user.c"       // Pinguino User's Sketch
 
 int main()
 {
-    // default peripheral freq. is CPUCoreFrequency / 2 (cf. system.c)
     #if defined(__32MX220F032D__) || \
         defined(__32MX220F032B__) || \
         defined(__32MX250F128B__) || \
         defined(__32MX270F256B__)
-        SystemConfig(40000000);	// default clock frequency is 40Mhz
+        SystemConfig(40000000);	// default clock frequency  is 40Mhz
+                                // default peripheral freq. is 1/2
     #else
         SystemConfig(80000000);	// default clock frequency is 80Mhz
+                                // default peripheral freq. is 1/2
     #endif
 
     IOsetDigital();

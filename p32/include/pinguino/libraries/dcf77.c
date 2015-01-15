@@ -37,8 +37,8 @@
 #include <typedef.h>			// u8, u16, ...
 #include <digitalw.c>			// pinMode, ...
 #ifdef DEBUG					// NB: Turn debugging on or off from the IDE
- #define UART1DEBUG
- #include <debug.c>
+    #define UART1DEBUG
+    #include <debug.c>
 #endif
 #include <interrupt.c>			// interrupts routines
 #include <dcf77.h>

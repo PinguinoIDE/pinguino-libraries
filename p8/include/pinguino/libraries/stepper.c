@@ -119,8 +119,8 @@
     #if !defined(__18f27j53) && !defined(__18f47j53)
         #error "Microstepping is only available on PIC with at least 4 PWM."
     #else
-        #include <analog.c>                 // analogwrite
-        //#include <pwmclose.c>               // PWM_close
+        #include <analog.c>         // analogwrite
+        //#include <pwmclose.c>       // PWM_close
     #endif
 #endif
 

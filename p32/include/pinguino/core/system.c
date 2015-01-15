@@ -360,11 +360,11 @@ void SystemClocksCalcPeripheralClockSettings(SystemClocksSettings *s,
     for (i = 0; i < pbDivsCount; i++) 
     {
       if (cpuFrequency == peripheralFrequency * pbDivs[i]) 
-    {
-      s->PBDIV = i;
-      // Match found
-      return;
-    }
+        {
+          s->PBDIV = i;
+          // Match found
+          return;
+        }
     }
 
     // No match: Use default value
