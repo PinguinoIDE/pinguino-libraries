@@ -4,7 +4,7 @@
     PURPOSE:			interrupts management
     PROGRAMER:			regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:		16 Nov. 2010
-    LAST RELEASE:		14 Jan  2015
+    LAST RELEASE:		16 Jan. 2015
     --------------------------------------------------------------------
     CHANGELOG:
     ???          : Marcus Fazzi <anunakin@gmail.com> added UART3/4/5/6 for PIC32MX795 support
@@ -12,6 +12,7 @@
     10 May  2014 : Joël fixed wrong interrupt vector number for MX1xx and MX2xx family
     16 May  2014 : Régis replaced BitSet and BitClear macro with register set and clear instructions
     14 Jan  2015 : Régis splited interrupt.c in interrupt.c and interrupt.h
+    16 Jan  2015 : Régis updated IntConfigureSystem()
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -35,6 +36,7 @@
     #include <typedef.h>
     #include <macro.h>
     #include <interrupt.h>
+    #include <mips.h>
 
 /*	----------------------------------------------------------------------------
     IntSetPriority
@@ -286,9 +288,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
         interrupt vector's priority
     --------------------------------------------------------------------------*/
 
-unsigned int IntGetVectorPriority(u8 vector)
+u32 IntGetVectorPriority(u8 vector)
 {
-    unsigned int pri = 0;
+    u32 pri = 0;
 
     switch (vector)
     {
@@ -436,9 +438,9 @@ unsigned int IntGetVectorPriority(u8 vector)
         interrupt vector's sub-priority
     --------------------------------------------------------------------------*/
 
-unsigned int IntGetVectorSubPriority(u8 vector)
+u32 IntGetVectorSubPriority(u8 vector)
 {
-    unsigned int sub = 0;
+    u32 sub = 0;
 
     switch (vector)
     {
@@ -490,14 +492,16 @@ unsigned int IntGetVectorSubPriority(u8 vector)
         case INT_OUTPUT_COMPARE5_VECTOR:
             break;
         case INT_SPI1_VECTOR:
-            break;  
+            break;
+              
         case INT_UART1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC8bits.U1IS;
-#else
+        #else
             sub = IPC6bits.U1IS;
-#endif
-            break; 
+        #endif
+            break;
+             
         case INT_I2C1_VECTOR:
             break;
         case INT_INPUT_CHANGE_VECTOR:
@@ -510,32 +514,37 @@ unsigned int IntGetVectorSubPriority(u8 vector)
             break;         
         case INT_COMPARATOR2_VECTOR:
             break;
-#ifdef ENABLE_UART3
+            
+        #ifdef ENABLE_UART3
         case INT_UART3_VECTOR:
             sub = IPC7bits.U2AIS;
             break;
-#else
+        #else
         case INT_SPI2_VECTOR:
             break;
-#endif
+        #endif
+
         case INT_UART2_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC9bits.U2IS;
-#else
+        #else
             sub = IPC8bits.U2IS;
-#endif
+        #endif
             break;
+            
         case INT_I2C2_VECTOR:
             break;
         case INT_FSCM_VECTOR:
             break;
+
         case INT_RTCC_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             sub = IPC6bits.RTCCIS;
-#else
+        #else
             sub = IPC8bits.RTCCIS;
-#endif
+        #endif
             break;
+            
         case INT_DMA0_VECTOR:
             break;
         case INT_DMA1_VECTOR:
@@ -548,30 +557,33 @@ unsigned int IntGetVectorSubPriority(u8 vector)
             break;
         case INT_USB_VECTOR:
             break;
-      #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
 
+        #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
         case INT_CAN1_VECTOR:
             break;
         case INT_CAN2_VECTOR:
             break;
         case INT_ETH_VECTOR:
             break;
-   #endif
-#ifdef ENABLE_UART4
+        #endif
+   
+        #ifdef ENABLE_UART4
         case INT_UART4_VECTOR:
             sub = IPC12bits.U1BIS;
             break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+
+        #ifdef ENABLE_UART5
         case INT_UART5_VECTOR:
             sub = IPC12bits.U3BIS;
             break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+
+        #ifdef ENABLE_UART6
         case INT_UART6_VECTOR:
             sub = IPC12bits.U2BIS;
             break;
-#endif
+        #endif
     }
     return (sub);
 }
@@ -588,19 +600,21 @@ void IntClearFlag(u8 numinter)
     #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
     if (numinter > 63)
     {
-        numinter -= 64;
-        IFS2CLR = 1 << numinter; // BitClear(IFS2, numinter);
+        //numinter -= 64;
+        IFS2CLR = 1 << (numinter-64); // BitClear(IFS2, numinter);
     }
     else if (numinter > 31) 
     #else
     if (numinter > 31)
     #endif
     {
-        numinter -= 32;
-        IFS1CLR = 1 << numinter; // BitClear(IFS1, numinter);
+        //numinter -= 32;
+        IFS1CLR = 1 << (numinter-32); // BitClear(IFS1, numinter);
     }
     else
+    {
         IFS0CLR = 1 << numinter; // BitClear(IFS0, numinter);
+    }
 }
 
 /*	----------------------------------------------------------------------------
@@ -615,21 +629,21 @@ void IntClearFlag(u8 numinter)
         * 1 if the interrupt request flag is set
     --------------------------------------------------------------------------*/
 
-unsigned int IntGetFlag(u8 numinter)
+u32 IntGetFlag(u8 numinter)
 {
     #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
     if (numinter > 63)
     {
-        numinter -= 64;
-        return BitRead(IFS2, numinter);
+        //numinter -= 64;
+        return BitRead(IFS2, numinter-64);
     }
     else if (numinter > 31)
     #else
     if (numinter > 31)
     #endif
-    {		
-        numinter -= 32;
-        return BitRead(IFS1, numinter);
+    {
+        //numinter -= 32;
+        return BitRead(IFS1, numinter-32);
     }
     else
     {
@@ -650,16 +664,17 @@ void IntEnable(u8 numinter)
     #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
     if (numinter > 63)
     {
-        numinter -= 64;
-        IFS2SET = 1 << numinter; // BitSet(IFS2, numinter);
+        //numinter -= 64;
+        //IFS2SET = 1 << (numinter-64); // BitSet(IFS2, numinter);
+        IEC2SET = 1 << (numinter-64); // BitSet(IEC2, numinter);
     }
     else if (numinter > 31) 
     #else
     if (numinter > 31)
     #endif
     {
-        numinter -= 32;
-        IEC1SET = 1 << numinter; // BitSet(IEC1, numinter);
+        //numinter -= 32;
+        IEC1SET = 1 << (numinter-32); // BitSet(IEC1, numinter);
     }
     else
     {
@@ -680,16 +695,17 @@ void IntDisable(u8 numinter)
     #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
     if (numinter > 63)
     {
-        numinter -= 64;
-        IFS2CLR = 1 << numinter; // BitClear(IFS2, numinter);
+        //numinter -= 64;
+        //IFS2CLR = 1 << (numinter-64); // BitClear(IFS2, numinter);
+        IEC2CLR = 1 << (numinter-64); // BitClear(IEC2, numinter);
     }
     else if (numinter > 31) 
     #else
     if (numinter > 31)
     #endif
     {
-        numinter -= 32;
-        IEC1CLR = 1 << numinter; // BitClear(IEC1, numinter);
+        //numinter -= 32;
+        IEC1CLR = 1 << (numinter-32); // BitClear(IEC1, numinter);
     }
     else
     {
@@ -706,9 +722,9 @@ void IntDisable(u8 numinter)
         The pending interrupt vector number.  
     --------------------------------------------------------------------------*/
 
-unsigned int IntGetInterruptVectorNumber(void)
+u32 IntGetInterruptVectorNumber(void)
 {
-    return (unsigned int)(INTSTATbits.VEC);
+    return (u32)(INTSTATbits.VEC);
 }
 
 /*	----------------------------------------------------------------------------
@@ -720,9 +736,9 @@ unsigned int IntGetInterruptVectorNumber(void)
         The pending interrupt vector's priority.
     --------------------------------------------------------------------------*/
 
-unsigned int IntGetInterruptVectorPriority(void)
+u32 IntGetInterruptVectorPriority(void)
 {
-    return (unsigned int)(INTSTATbits.SRIPL);
+    return (u32)(INTSTATbits.SRIPL);
 }
 
 /*	----------------------------------------------------------------------------
@@ -734,16 +750,16 @@ unsigned int IntGetInterruptVectorPriority(void)
     The previous state of the CP0 register Status.IE bit.  The INTRestoreInterrupts 
     function can be used in other routines to restore the system interrupt state.
     --------------------------------------------------------------------------*/
-
-unsigned int MIPS32 IntDisableInterrupts()
+/*
+u32 MIPS32 IntDisableInterrupts()
 {
-    unsigned int intStatus;
+    u32 intStatus;
 
     intStatus = _CP0_GET_STATUS(); // Get Status
     asm("di"); // Disable all interrupts
     return intStatus;
 }
-
+*/
 /*	----------------------------------------------------------------------------
     IntEnableInterrupts
     ----------------------------------------------------------------------------
@@ -754,16 +770,16 @@ unsigned int MIPS32 IntDisableInterrupts()
     The IntRestoreInterrupts function can be used in other routines to restore
     the system interrupt state.
     --------------------------------------------------------------------------*/
-
-unsigned int MIPS32 IntEnableInterrupts()
+/*
+u32 MIPS32 IntEnableInterrupts()
 {
-    unsigned int intStatus;
+    u32 intStatus;
 
     intStatus = _CP0_GET_STATUS(); // Get Status
     asm("ei"); // Enable all interrupts
     return intStatus;
 }
-
+*/
 /*	----------------------------------------------------------------------------
     IntRestoreInterrupts
     ----------------------------------------------------------------------------
@@ -773,7 +789,7 @@ unsigned int MIPS32 IntEnableInterrupts()
         status      - the state of the CP0 register Status.IE
     --------------------------------------------------------------------------*/
 
-void MIPS32 IntRestoreInterrupts(unsigned int intStatus)
+void MIPS32 IntRestoreInterrupts(u32 intStatus)
 {
     _CP0_SET_STATUS(intStatus); // Update Status
 }
@@ -789,7 +805,7 @@ void MIPS32 IntRestoreInterrupts(unsigned int intStatus)
         * must be 4KB aligned (1KB aligned for PIC32MX1 or 2 family)
     --------------------------------------------------------------------------*/
 
-void MIPS32 IntSetEBASE(unsigned int ebase_address)
+void MIPS32 IntSetEBASE(u32 ebase_address)
 {
     _CP0_SET_EBASE(ebase_address);
 }
@@ -797,57 +813,78 @@ void MIPS32 IntSetEBASE(unsigned int ebase_address)
 /*	----------------------------------------------------------------------------
     IntConfigureSystem
     ----------------------------------------------------------------------------
-    Configures the system for  multi-vector or single vectored interrupts.
-    This routine configures the core to receive interrupt requests and configures the 
-    Interrupt module for Multi-vectored or Single Vectored mode.
+    This routine configures  
+    * 1 - the core to receive interrupt requests
+    * 2 - the interrupt module for Multi-vectored or Single Vectored mode 
+
     Parameters:
         config      - The interrupt configuration to set.
+    ex :
         IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
         IntConfigureSystem(INT_SYSTEM_CONFIG_SINGLE_VECTOR);
+    
+    All values must be the same as defined in the file "your_proc".ld
     --------------------------------------------------------------------------*/
 
 void MIPS32 IntConfigureSystem(u8 mode)
 {
-    unsigned int temp;
+    u32 temp;
 
-    asm("di"); // Disable all interrupts
+    /// Disable all interrupts
+    //asm volatile ("di");
+    DisableInterrupt();
 
-    temp = _CP0_GET_STATUS(); // Get Status
-    temp |= 0x00400000; // Set BEV bit
-    _CP0_SET_STATUS(temp); // Update Status
+    /// Set BEV bit
+    temp = _CP0_GET_STATUS();   // Get Status
+    temp |= 0x00400000;         // Set BEV bit <22>
+    _CP0_SET_STATUS(temp);      // Update Status
     
-    // Set eBase value
-    #if defined(PINGUINO32MX270)
-        _CP0_SET_EBASE(0xBD000000);
-    #elif defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX220)
+    /// Set EASE value
+    #if defined(PIC32_PINGUINO_220) || \
+        defined(PINGUINO32MX220)    || \
+        defined(PINGUINO32MX250)
+        
         _CP0_SET_EBASE(0xBD003000);
+
+    #elif defined(PINGUINO32MX270)
+
+        _CP0_SET_EBASE(0xBD004000);
+
     #else
+    
         _CP0_SET_EBASE(0xBD005000);
+
     #endif
 
-    _CP0_SET_INTCTL(0x00000020); // Set the Vector Spacing to non-zero value
+    /// Set the Vector Spacing to non-zero value
+    _CP0_SET_INTCTL(0x00000020);
 
-    temp = _CP0_GET_CAUSE(); // Get Cause
-    temp |= 0x00800000; // Set IV
-    _CP0_SET_CAUSE(temp); // Update Cause
+    /// Set CAUSE IV
+    temp = _CP0_GET_CAUSE();    // Get Cause
+    temp |= 0x00800000;         // Set IV <23>
+    _CP0_SET_CAUSE(temp);       // Update Cause
 
-    temp = _CP0_GET_STATUS(); // Get Status
-    temp &= 0xFFBFFFFD; // Clear BEV and EXL
-    _CP0_SET_STATUS(temp); // Update Status
+    /// Clear BEV bit
+    temp = _CP0_GET_STATUS();   // Get Status
+    temp &= 0xFFBFFFFD;         // Clear BEV and EXL
+    _CP0_SET_STATUS(temp);      // Update Status
 
     switch (mode)
     {
         case INT_SYSTEM_CONFIG_MULT_VECTOR:
             // Set the CP0 registers for multi-vector interrupt
             INTCONSET = 0x1000; // Set MVEC bit (bit 12 : 1<<12=0x1000)
-        break;
+            break;
+            
         case INT_SYSTEM_CONFIG_SINGLE_VECTOR:
             // Set the CP0 registers for single-vector interrupt
             INTCONCLR = 0x1000; // Clear MVEC bit (bit 12 : 1<<12=0x1000)
-        break;	
+            break;
     }
 
-    asm("ei"); // Enable all interrupts
+    /// Enable all interrupts
+    //asm volatile ("ei"); // Enable all interrupts
+    EnableInterrupt();
 }
 
 #endif	/* __INTERRUPT_C */

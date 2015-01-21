@@ -46,7 +46,7 @@ CFLAGS		=	-fdollars-in-identifiers $(INCLUDEDIRS) -msoft-float -ffunction-sectio
 
 LDFLAGS		=	$(LIBDIRS) $(LIBS)
 
-ELF_FLAGS	=	-EL $(_IDE_OPTIMIZATION_) -march=24kc -msoft-float $(MIPS16_INTER) \
+ELF_FLAGS	=	-EL $(_IDE_OPTIMIZATION_) -march=m4k -msoft-float $(MIPS16_INTER) \
 			    -ffunction-sections \
 				-fdata-sections \
 				-Wl,--gc-sections \
@@ -56,7 +56,7 @@ ELF_FLAGS	=	-EL $(_IDE_OPTIMIZATION_) -march=24kc -msoft-float $(MIPS16_INTER) \
 				-D __PIC32MX__ \
 				-D __$(_IDE_PROC_)__ \
 				-D $(_IDE_BOARD_) \
-				-T$(LKRDIR)\procdefs.ld \
+				-T$(LKRDIR)\$(_IDE_PROC_).ld \
 				-T$(LKRDIR)\elf32pic32mx.x
 
 all: clean copy compile convert

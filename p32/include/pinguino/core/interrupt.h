@@ -67,38 +67,38 @@
         #define INT_CORE_SOFTWARE1_VECTOR		2
         #define INT_EXTERNAL0_VECTOR			3
         #define INT_TIMER1_VECTOR				4
-        #define INT_INPUT_CAPTURE1_VECTOR		5  
-        #define INT_OUTPUT_COMPARE1_VECTOR		6   
-        #define INT_EXTERNAL1_VECTOR			7          
-        #define INT_TIMER2_VECTOR				8   
-        #define INT_INPUT_CAPTURE2_VECTOR		9  
-        #define INT_OUTPUT_COMPARE2_VECTOR		10   
-        #define INT_EXTERNAL2_VECTOR			11          
-        #define INT_TIMER3_VECTOR				12   
-        #define INT_INPUT_CAPTURE3_VECTOR		13  
-        #define INT_OUTPUT_COMPARE3_VECTOR		14   
-        #define INT_EXTERNAL3_VECTOR			15          
-        #define INT_TIMER4_VECTOR				16   
-        #define INT_INPUT_CAPTURE4_VECTOR		17  
-        #define INT_OUTPUT_COMPARE4_VECTOR		18   
-        #define INT_EXTERNAL4_VECTOR			19          
-        #define INT_TIMER5_VECTOR				20   
-        #define INT_INPUT_CAPTURE5_VECTOR		21  
+        #define INT_INPUT_CAPTURE1_VECTOR		5
+        #define INT_OUTPUT_COMPARE1_VECTOR		6
+        #define INT_EXTERNAL1_VECTOR			7
+        #define INT_TIMER2_VECTOR				8
+        #define INT_INPUT_CAPTURE2_VECTOR		9
+        #define INT_OUTPUT_COMPARE2_VECTOR		10
+        #define INT_EXTERNAL2_VECTOR			11
+        #define INT_TIMER3_VECTOR				12
+        #define INT_INPUT_CAPTURE3_VECTOR		13
+        #define INT_OUTPUT_COMPARE3_VECTOR		14
+        #define INT_EXTERNAL3_VECTOR			15
+        #define INT_TIMER4_VECTOR				16
+        #define INT_INPUT_CAPTURE4_VECTOR		17
+        #define INT_OUTPUT_COMPARE4_VECTOR		18
+        #define INT_EXTERNAL4_VECTOR			19
+        #define INT_TIMER5_VECTOR				20
+        #define INT_INPUT_CAPTURE5_VECTOR		21
         #define INT_OUTPUT_COMPARE5_VECTOR		22
-        #define INT_ADC1_CONVERT_DONE_VECTOR	23          
+        #define INT_ADC1_CONVERT_DONE_VECTOR	23
         #define INT_FSCM_VECTOR					24
         #define INT_RTCC_VECTOR					25
         #define INT_FCE_VECTOR					26
-        #define INT_COMPARATOR1_VECTOR			27          
-        #define INT_COMPARATOR2_VECTOR			28          
-        #define INT_COMPARATOR3_VECTOR			29 
-        #define INT_USB_VECTOR					30       
-        #define INT_SPI1_VECTOR					31    
-        #define INT_UART1_VECTOR				32    
-        #define INT_I2C1_VECTOR					33    	    
-        #define INT_INPUT_CHANGE_VECTOR			34    
-        #define INT_PARALLEL_MASTER_PORT_VECTOR	35  
-        #define INT_SPI2_VECTOR					36 
+        #define INT_COMPARATOR1_VECTOR			27
+        #define INT_COMPARATOR2_VECTOR			28
+        #define INT_COMPARATOR3_VECTOR			29
+        #define INT_USB_VECTOR					30
+        #define INT_SPI1_VECTOR					31
+        #define INT_UART1_VECTOR				32
+        #define INT_I2C1_VECTOR					33
+        #define INT_INPUT_CHANGE_VECTOR			34
+        #define INT_PARALLEL_MASTER_PORT_VECTOR	35
+        #define INT_SPI2_VECTOR					36
         #define INT_UART2_VECTOR				37
         #define INT_I2C2_VECTOR					38
         #define INT_CTMU_VECTOR					39
@@ -114,37 +114,39 @@
         #define INT_CORE_SOFTWARE1_VECTOR		2
         #define INT_EXTERNAL0_VECTOR			3
         #define INT_TIMER1_VECTOR				4
-        #define INT_INPUT_CAPTURE1_VECTOR		5  
-        #define INT_OUTPUT_COMPARE1_VECTOR		6   
-        #define INT_EXTERNAL1_VECTOR			7          
-        #define INT_TIMER2_VECTOR				8   
-        #define INT_INPUT_CAPTURE2_VECTOR		9  
-        #define INT_OUTPUT_COMPARE2_VECTOR		10   
-        #define INT_EXTERNAL2_VECTOR			11          
-        #define INT_TIMER3_VECTOR				12   
-        #define INT_INPUT_CAPTURE3_VECTOR		13  
-        #define INT_OUTPUT_COMPARE3_VECTOR		14   
-        #define INT_EXTERNAL3_VECTOR			15          
-        #define INT_TIMER4_VECTOR				16   
-        #define INT_INPUT_CAPTURE4_VECTOR		17  
-        #define INT_OUTPUT_COMPARE4_VECTOR		18   
-        #define INT_EXTERNAL4_VECTOR			19          
-        #define INT_TIMER5_VECTOR				20   
-        #define INT_INPUT_CAPTURE5_VECTOR		21  
-        #define INT_OUTPUT_COMPARE5_VECTOR		22   
-        #define INT_SPI1_VECTOR					23    
-        #define INT_UART1_VECTOR				24    
-        #define INT_I2C1_VECTOR					25   
-        #define INT_INPUT_CHANGE_VECTOR			26    
-        #define INT_ADC1_CONVERT_DONE_VECTOR	27          
-        #define INT_PARALLEL_MASTER_PORT_VECTOR	28  
-        #define INT_COMPARATOR1_VECTOR			29          
-        #define INT_COMPARATOR2_VECTOR			30          
+        #define INT_INPUT_CAPTURE1_VECTOR		5
+        #define INT_OUTPUT_COMPARE1_VECTOR		6
+        #define INT_EXTERNAL1_VECTOR			7
+        #define INT_TIMER2_VECTOR				8
+        #define INT_INPUT_CAPTURE2_VECTOR		9
+        #define INT_OUTPUT_COMPARE2_VECTOR		10
+        #define INT_EXTERNAL2_VECTOR			11
+        #define INT_TIMER3_VECTOR				12
+        #define INT_INPUT_CAPTURE3_VECTOR		13
+        #define INT_OUTPUT_COMPARE3_VECTOR		14
+        #define INT_EXTERNAL3_VECTOR			15
+        #define INT_TIMER4_VECTOR				16
+        #define INT_INPUT_CAPTURE4_VECTOR		17
+        #define INT_OUTPUT_COMPARE4_VECTOR		18
+        #define INT_EXTERNAL4_VECTOR			19
+        #define INT_TIMER5_VECTOR				20
+        #define INT_INPUT_CAPTURE5_VECTOR		21
+        #define INT_OUTPUT_COMPARE5_VECTOR		22
+        #define INT_SPI1_VECTOR					23
+        #define INT_UART1_VECTOR				24
+        #define INT_I2C1_VECTOR					25
+        #define INT_INPUT_CHANGE_VECTOR			26
+        #define INT_ADC1_CONVERT_DONE_VECTOR	27
+        #define INT_PARALLEL_MASTER_PORT_VECTOR	28
+        #define INT_COMPARATOR1_VECTOR			29
+        #define INT_COMPARATOR2_VECTOR			30
+        
         #ifdef ENABLE_UART3
         #define INT_UART3_VECTOR			    31
         #else
         #define INT_SPI2_VECTOR					31
         #endif
+        
         #define INT_UART2_VECTOR				32
         #define INT_I2C2_VECTOR					33
         #define INT_FSCM_VECTOR					34
@@ -159,12 +161,15 @@
         #define INT_CAN1_VECTOR					46
         #define INT_CAN2_VECTOR					47
         #define INT_ETH_VECTOR					48
+        
         #ifdef ENABLE_UART4
         #define INT_UART4_VECTOR			    49
         #endif
+        
         #ifdef ENABLE_UART6
         #define INT_UART6_VECTOR			    50
         #endif
+        
         #ifdef ENABLE_UART5
         #define INT_UART5_VECTOR			    51
         #endif
@@ -174,7 +179,7 @@
     // IRQ NUMBER = INTERRUPT NUMBER (IFSx, IECx and IPSx registers)
     #if defined(PIC32_PINGUINO_220) || \
         defined(PINGUINO32MX220)    || \
-        defined(PINGUINO32MX250)    || \ 
+        defined(PINGUINO32MX250)    || \
         defined(PINGUINO32MX270)
 
         #define INT_CORE_TIMER					0
@@ -282,15 +287,17 @@
         #define INT_PARALLEL_MASTER_PORT		34
         #define INT_COMPARATOR1					35
         #define INT_COMPARATOR2					36
+        
         #ifdef ENABLE_UART3
         #define INT_UART3_ERROR					37
         #define INT_UART3_RECEIVER				38
         #define INT_UART3_TRANSMITTER			39
-        #else
+        #else        
         #define INT_SPI2_FAULT					37 
         #define INT_SPI2_TRANSFER_DONE			38 
         #define INT_SPI2_RECEIVE_DONE			39
         #endif
+        
         #define INT_UART2_ERROR					40 
         #define INT_UART2_RECEIVER				41 
         #define INT_UART2_TRANSMITTER			42
@@ -308,21 +315,25 @@
         #define INT_CAN1						58
         #define INT_CAN2						59
         #define INT_ETH							60
+        
         #ifdef ENABLE_UART4
         #define INT_UART4_ERROR					67
         #define INT_UART4_RECEIVER				68
         #define INT_UART4_TRANSMITTER			69
         #endif
+        
         #ifdef ENABLE_UART6
         #define INT_UART6_ERROR					70
         #define INT_UART6_RECEIVER				71
         #define INT_UART6_TRANSMITTER			72
         #endif
+        
         #ifdef ENABLE_UART5
         #define INT_UART5_ERROR					73
         #define INT_UART5_RECEIVER				74
         #define INT_UART5_TRANSMITTER			75
         #endif
+        
         #define INT_NUM                         76
 
     #endif
@@ -420,11 +431,13 @@
         #define SPI2TX_INT_ENABLE			0x00000040
         #define SPI2E_INT_ENABLE			0x00000020
     #endif
-        #define CMP2_INT_ENABLE				0x00000010
-        #define CMP1_INT_ENABLE				0x00000008
-        #define PMP_INT_ENABLE				0x00000004
-        #define AD1_INT_ENABLE				0x00000002
-        #define CN_INT_ENABLE				0x00000001
+
+    #define CMP2_INT_ENABLE				0x00000010
+    #define CMP1_INT_ENABLE				0x00000008
+    #define PMP_INT_ENABLE				0x00000004
+    #define AD1_INT_ENABLE				0x00000002
+    #define CN_INT_ENABLE				0x00000001
+
     //PIC32MX795
     //if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
         #define CAN1_INT_ENABLE				0x04000000
@@ -438,12 +451,14 @@
         #define UART4_ERROR_INT_ENABLE		0x00000008
         #define UART4_ALL_INTERRUPT			0x00000038
     #endif
+
     #ifdef ENABLE_UART5
         #define UART5_TX_INT_ENABLE			0x00000800
         #define UART5_RX_INT_ENABLE			0x00000400
         #define UART5_ERROR_INT_ENABLE		0x00000200
         #define UART5_ALL_INTERRUPT			0x00000E00
     #endif
+
     #ifdef ENABLE_UART6
         #define UART6_TX_INT_ENABLE			0x00000100
         #define UART6_RX_INT_ENABLE			0x00000080

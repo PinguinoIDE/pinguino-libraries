@@ -21,12 +21,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     ------------------------------------------------------------------*/
     
-    // 13 feb.2011 jp mandon added #define for RX/TX pin on 32mx440f256h
-    // 21 set.2011 Marcus Fazzi added support for UART3
-    // 23 set.2011 Marcus Fazzi added support for UART4,5 AND 6
-    // 18 feb.2012 jp mandon added support for PIC32-PIGUINO-220
-    // 19 may.2012 jp mandon added support for PINGUINO32MX250 and PINGUINO32MX220
-  // 11 jun. 2013 MM OERR Gestion on UART 1
+    // 13 feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h
+    // 21 set. 2011 Marcus Fazzi added support for UART3
+    // 23 set. 2011 Marcus Fazzi added support for UART4,5 AND 6
+    // 18 feb. 2012 jp mandon added support for PIC32-PIGUINO-220
+    // 19 may. 2012 jp mandon added support for PINGUINO32MX250 and PINGUINO32MX220
+    // 11 jun. 2013 MM OERR Gestion on UART 1
     
 #ifndef __SERIAL__
 #define __SERIAL__
@@ -58,18 +58,18 @@
 // -------------------------------------------------------------------------
 
 // bit 15 ON: UARTx Enable bit
-#define UART_DISABLE								0x0000
-#define UART_ENABLE								0x8000
+#define UART_DISABLE						0x0000
+#define UART_ENABLE							0x8000
 /*
 #define UART_PERIPHERAL	0x01
 #define UART_RX			0x02	// UART Module receiver
 #define UART_TX			0x04	// UART Module transmitter
 */
 // bit 13 SIDL: Stop in Idle Mode bit
-#define UART_ENABLE_STOP_ON_IDLE				0x2000
+#define UART_ENABLE_STOP_ON_IDLE			0x2000
 
 // bit 12 IREN: IrDA Encoder and Decoder Enable bit
-#define UART_ENABLE_IRDA						0x1000
+#define UART_ENABLE_IRDA					0x1000
 
 // bit 11 RTSMD: Mode Selection for UxRTS Pin bit
 #define UART_RTS_WHEN_RX_NOT_FULL			0x000
@@ -77,15 +77,15 @@
 
 // bit 9-8 UEN<1:0>: UARTx Enable bits
 #define UART_ENABLE_PINS_BIT_CLOCK			0x300 // UxTX, UxRX, and UxBCLK pins are enabled and used; UxCTS pin is controlled by port latches
-#define UART_ENABLE_PINS_CTS_RTS				0x200 // UxTX, UxRX, UxCTS, and UxRTS pins are enabled and used
-#define UART_ENABLE_PINS_RTS					0x100 // UxTX, UxRX and UxRTS pins are enabled and used; UxCTS pin is controlled by port latches
+#define UART_ENABLE_PINS_CTS_RTS			0x200 // UxTX, UxRX, UxCTS, and UxRTS pins are enabled and used
+#define UART_ENABLE_PINS_RTS				0x100 // UxTX, UxRX and UxRTS pins are enabled and used; UxCTS pin is controlled by port latches
 #define UART_ENABLE_PINS_TX_RX_ONLY			0x000 // UxTX and UxRX pins are enabled and used; UxCTS and UxRTS/UxBCLK pins are controlled by port latches
 
 // bit 7 WAKE: Enable Wake-up on Start bit Detect During Sleep mode bit
 #define UART_ENABLE_WAKE_ON_START			0x80
 
 // bit 6 LPBACK: UARTx Loopback Mode Select bit
-#define UART_ENABLE_LOOPBACK					0x40
+#define UART_ENABLE_LOOPBACK				0x40
 
 // bit 5 ABAUD: Auto-Baud Enable bit
 
@@ -99,14 +99,14 @@
 
 // bit 2-1 PDSEL<1:0>: Parity and Data Selection bits
  
-#define UART_9_BITS_NO_PARITY					0x06
+#define UART_9_BITS_NO_PARITY				0x06
 #define UART_8_BITS_ODD_PARITY				0x04
 #define UART_8_BITS_EVEN_PARITY				0x02
-#define UART_8_BITS_NO_PARITY					0x00
+#define UART_8_BITS_NO_PARITY				0x00
 
 // bit 0 STSEL: Stop Selection bit
-#define UART_STOP_BITS_2						0x01	// Enables generation of 2 stop bits per frame.
-#define UART_STOP_BITS_1						0x00	// Enables generation of 1 stop bit per frame (default).
+#define UART_STOP_BITS_2					0x01	// Enables generation of 2 stop bits per frame.
+#define UART_STOP_BITS_1					0x00	// Enables generation of 1 stop bit per frame (default).
 
 // -------------------------------------------------------------------------
 // UxSTA
@@ -123,16 +123,16 @@
 #define UART_INVERT_TRANSMIT_POLARITY		0x2000
 
 // bit 12 URXEN: Receiver Enable bit
-#define UART_RX_ENABLED							0x1000	// UARTx receiver is enabled, UxRX pin controlled by UARTx (if ON = 1)
-#define UART_RX_DISABLED						0x0000	// UARTx receiver is disabled, the UxRX pin is ignored by the UARTx module. UxRX pin controlled by PORT.
+#define UART_RX_ENABLED						0x1000	// UARTx receiver is enabled, UxRX pin controlled by UARTx (if ON = 1)
+#define UART_RX_DISABLED					0x0000	// UARTx receiver is disabled, the UxRX pin is ignored by the UARTx module. UxRX pin controlled by PORT.
 
 // bit 11 UTXBRK: Transmit Break bit
 
 // bit 10 UTXEN: Transmit Enable bit
-#define UART_TX_ENABLED							0x400		// UARTx transmitter enabled, UxTX pin controlled by UARTx (if ON = 1)
-#define UART_TX_DISABLED						0x000		// UARTx transmitter disabled, any pending transmission is aborted and buffer is reset. UxTX pin controlled by PORT.
+#define UART_TX_ENABLED						0x400		// UARTx transmitter enabled, UxTX pin controlled by UARTx (if ON = 1)
+#define UART_TX_DISABLED					0x000		// UARTx transmitter disabled, any pending transmission is aborted and buffer is reset. UxTX pin controlled by PORT.
 
-#define UART_RX_TX_ENABLED						0x1400
+#define UART_RX_TX_ENABLED					0x1400
 
 // bit 7-6 URXISEL<1:0>: Receive Interrupt Mode Selection bit
 #define UART_INTERRUPT_ON_RX_FULL			0xC0
@@ -142,19 +142,19 @@
 // bit 5 ADDEN: Address Character Detect (bit 8 of received data = 1)
 
 // UART_CONFIGURATION
-#define UART_SUPPORT_IEEE_485					0x00000900
+#define UART_SUPPORT_IEEE_485				0x00000900
 
 // UART_LINE_STATUS;
 #define UART_TRANSMITTER_NOT_FULL			0x00000200	// The transmitter is able to accept data to transmit.
 #define UART_TRANSMITTER_EMPTY				0x00000100	// The transmitter is empty (no data is available to transmit).
-#define UART_RECEIVER_IDLE						0x00000010	// The receiver is currently idle.
-#define UART_PARITY_ERROR						0x00000008	// A received data parity error was detected.
-#define UART_FRAMING_ERROR						0x00000004	// Data was received that violated the framing protocol
-#define UART_OVERRUN_ERROR						0x00000002	// The UART has received more data than it can buffer.  Data has been lost.
-#define UART_DATA_READY							0x00000001	// UART data has been received and is avaiable in the FIFO.
+#define UART_RECEIVER_IDLE					0x00000010	// The receiver is currently idle.
+#define UART_PARITY_ERROR					0x00000008	// A received data parity error was detected.
+#define UART_FRAMING_ERROR					0x00000004	// Data was received that violated the framing protocol
+#define UART_OVERRUN_ERROR					0x00000002	// The UART has received more data than it can buffer.  Data has been lost.
+#define UART_DATA_READY						0x00000001	// UART data has been received and is avaiable in the FIFO.
 
 //#ifndef SERIAL_BUFFERLENGTH
-    #define SERIAL_BUFFERLENGTH 				128				// rx buffer length
+    #define SERIAL_BUFFERLENGTH 			128				// rx buffer length
 //#endif
 
 volatile unsigned char UART1SerialBuffer[SERIAL_BUFFERLENGTH];	// UART1 buffer
@@ -531,7 +531,7 @@ void SerialPinConfigure(u8 port)
     ----------------------------------------------------------------------------
     @param		port		1 (UART1), 2 (UART2), 3 (UART3) ...
     @param		baudrate	baud rate
-    @return		baudrate
+    @return		none
     ------------------------------------------------------------------*/
 
 void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
@@ -541,24 +541,24 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
     switch (port)
     {
         case UART1:
-            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-                IPC8bits.U1IP = priority;
-                IPC8bits.U1IS = subpriority;
-                IEC1bits.U1RXIE=1;
-            #else		
+            //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+            //    IPC8bits.U1IP = priority;
+            //    IPC8bits.U1IS = subpriority;
+            //    IEC1bits.U1RXIE=1;
+            //#else		
             IntSetVectorPriority(INT_UART1_VECTOR, priority, subpriority);
             IntEnable(INT_UART1_RECEIVER);
-            #endif
+            //#endif
             break;
         case UART2:
-            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-                IPC9bits.U2IP = priority;
-                IPC9bits.U2IS = subpriority;
-                IEC1bits.U2RXIE=1;
-            #else
+            //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+            //    IPC9bits.U2IP = priority;
+            //    IPC9bits.U2IS = subpriority;
+            //    IEC1bits.U2RXIE=1;
+            //#else
             IntSetVectorPriority(INT_UART2_VECTOR, priority, subpriority);
             IntEnable(INT_UART2_RECEIVER);
-            #endif
+            //#endif
             break;
         #ifdef ENABLE_UART3
         case UART3:
@@ -1040,6 +1040,7 @@ void SerialGetDataBuffer(u8 port)
 
             //return UART2SerialBuffer;
             break;
+            
         #ifdef ENABLE_UART3
         case UART3:
             caractere = U2ARXREG;							// read received char
@@ -1057,6 +1058,7 @@ void SerialGetDataBuffer(u8 port)
             //return UART3SerialBuffer;
             break;
         #endif
+        
         #ifdef ENABLE_UART4
         case UART4:
             caractere = U1BRXREG;							// read received char
@@ -1074,6 +1076,7 @@ void SerialGetDataBuffer(u8 port)
             //return UART4SerialBuffer;
             break;
         #endif
+        
         #ifdef ENABLE_UART5
         case UART5:
             caractere = U3BRXREG;							// read received char
@@ -1091,6 +1094,7 @@ void SerialGetDataBuffer(u8 port)
             //return UART5SerialBuffer;
             break;
         #endif
+        
         #ifdef ENABLE_UART6
         case UART6:
             caractere = U2BRXREG;							// read received char
@@ -1114,7 +1118,7 @@ void SerialGetDataBuffer(u8 port)
 
 /*	--------------------------------------------------------------------
     SerialInterrupt
-    TODO: move this to interrupt library and add it to main32.c
+    TODO: move this to interrupt library and add it to main32.c ?
     ------------------------------------------------------------------*/
 
 // vector 24 or 32 (PIC32_PINGUINO_220)
@@ -1123,58 +1127,65 @@ void Serial1Interrupt(void)
     char    Dummy;
 
     // Is this an RX interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U1RXIF)
-    #else	
+    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+    //if (IFS1bits.U1RXIF)
+    //#else	
     if (IntGetFlag(INT_UART1_RECEIVER))
-    #endif
+    //#endif
     {
-   if (U1STAbits.OERR != 0)
-    U1STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U1STAbits.FERR != 0) || (U1STAbits.PERR != 0))
-       Dummy = U1RXREG;
-      else
-       SerialGetDataBuffer(UART1);
-     }
-    while (U1STAbits.URXDA != 0);
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U1RXIF=0;
-        #else	
+        if (U1STAbits.OERR != 0)
+        {
+            U1STAbits.OERR = 0;
+        }
+        else
+        {
+            do
+            {
+                if ((U1STAbits.FERR != 0) || (U1STAbits.PERR != 0))
+                {
+                    Dummy = U1RXREG;
+                }
+                else
+                {
+                    SerialGetDataBuffer(UART1);
+                }
+            }
+            while (U1STAbits.URXDA != 0);
+        }
+        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        //IFS1bits.U1RXIF=0;
+        //#else	
         IntClearFlag(INT_UART1_RECEIVER);
-        #endif
+        //#endif
     }
 
     // Is this an TX interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U1TXIF)
-    #else		
+    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+    //if (IFS1bits.U1TXIF)
+    //#else		
     if (IntGetFlag(INT_UART1_TRANSMITTER))
-    #endif
+    //#endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U1TXIF=0;
-        #else			
+        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        //IFS1bits.U1TXIF=0;
+        //#else			
         IntClearFlag(INT_UART1_TRANSMITTER);
-        #endif
+        //#endif
     }
 
     // Is this an ERROR interrupt from UART1 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U1EIF)
-    #else	
+    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+    //if (IFS1bits.U1EIF)
+    //#else	
     if (IntGetFlag(INT_UART1_ERROR))
-    #endif
+    //#endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U1EIF=0;
-        #else	
+        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        //IFS1bits.U1EIF=0;
+        //#else	
         IntClearFlag(INT_UART1_ERROR);
-        #endif
-    }		
-
+        //#endif
+    }
 }
 
 // vector 32 or 37 (PIC32_PINGUINO_220)
@@ -1367,7 +1378,6 @@ void Serial6Interrupt(void)
 
 BOOL ClearRxError(u8 port)
 {
-
     switch (port)
     {
         case UART1:

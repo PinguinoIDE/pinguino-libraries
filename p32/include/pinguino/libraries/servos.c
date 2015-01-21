@@ -60,8 +60,8 @@
 // -------------------------------------------------------------------------------------------------------
 
 
-#ifndef SERVOSLIBRARY
-#define SERVOSLIBRARY
+#ifndef __SERVOS__
+#define __SERVOS__
 
 //Includes for functions used internally in this lib.
 //#include <stdlib.h>
@@ -625,7 +625,7 @@ void ServoMaximumPulse(unsigned int servo,int max_microseconds)
  * Interrupt handler that handles servos
  * Timer 2 interrupt (Vector 8)
  **********************************************************************/
-
+/*
 // Put the ISR_wrapper in the good place
 void MIPS32 ISR_wrapper_vector_8(void) __attribute__ ((section (".vector_8")));
 
@@ -637,9 +637,9 @@ void MIPS32 ISR_wrapper_vector_8(void)
 {
     servo_interrupt();
 }
-
+*/
 //void servo_interrupt()
-void MIPS32 servo_interrupt(void)
+void Timer2Interrupt(void)
 {
     // is this an TMR1 interrupt ?
     if (IntGetFlag(INT_TIMER2))

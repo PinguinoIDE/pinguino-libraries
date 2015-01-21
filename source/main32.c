@@ -90,7 +90,7 @@ int main()
     RTCC_init();
     #endif    
     
-    #ifdef SERVOSLIBRARY
+    #ifdef __SERVOS__
     servos_init();
     #endif    
 
@@ -116,16 +116,16 @@ int main()
 }
 
 #ifndef __SERIAL__
-void Serial1Interrupt(void)
-{
-    Nop();    
-}
+    void Serial1Interrupt(void)
+    {
+        Nop();    
+    }
 
-void Serial2Interrupt(void)
-{
-    Nop();    
-}
-#else
+    void Serial2Interrupt(void)
+    {
+        Nop();    
+    }
+
     #ifndef ENABLE_UART3
     void Serial3Interrupt(void)
     {
@@ -155,21 +155,71 @@ void Serial2Interrupt(void)
     #endif
 #endif // __SERIAL__
 
+
+//#ifndef ONEVENT
+    #ifndef TMR1INT
+    void Timer1Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+    #if !defined(TMR2INT) && !defined(__MILLIS__) && !defined(__SERVOS__)
+    void Timer2Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+    #ifndef TMR3INT
+    void Timer3Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+    #ifndef TMR4INT
+    void Timer4Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+    #ifndef TMR5INT
+    void Timer5Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+//#endif // ONEVENT
+
+/*
 #ifndef __MILLIS__
-void Tmr2Interrupt(void)
+void Timer2Interrupt(void)
 {
     Nop();    
 }
 #endif // __MILLIS__
 
-#ifndef __SPI__
-void SPIxInterrupt(void)
+#ifndef __SERVOS__
+void Timer2Interrupt(void)
 {
     Nop();    
 }
+#endif // __SERVOS__
+*/
+
+#ifndef __SPI__
+    #if (SPIx != 1)
+    void SPI1Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
+    #if (SPIx != 2)
+    void SPI2Interrupt(void)
+    {
+        Nop();    
+    }
+    #endif
 #endif // __SPI__
 
-// vector 35
 #ifndef __RTCC__
 void RTCCInterrupt(void)
 {

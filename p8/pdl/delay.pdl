@@ -1,2 +1,2 @@
-delay Delayms#include <delayms.c>
 delayMicroseconds Delayus#include <delayus.c>
+delay Delayms#include <delayms.c>

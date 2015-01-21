@@ -4,9 +4,6 @@
 # Regis Blanchot <rblanchot@gmail.com>
 # ----------------------------------------------------------------------
 
-# ----------------------------------------------------------------------
-# Directories
-# ----------------------------------------------------------------------
 # cf. qtgui/pinguino_api/pinguino_tools.py
 # _IDE_PROC_
 # _IDE_BOARD_
@@ -21,8 +18,12 @@
 #-I$(_IDE_SRCDIR_)\
 #
 
+# ----------------------------------------------------------------------
+# Directories
+# ----------------------------------------------------------------------
+
 INCDIR		= $(_IDE_P32DIR_)/include
-LKRDIR		= $(_IDE_P32DIR_)/lkr/$(_IDE_BOARD_)
+LKRDIR		= $(_IDE_P32DIR_)/lkr
 OBJDIR		= $(_IDE_USERHOMEDIR_)/source/obj/non-free
 
 INCLUDEDIRS	= -I$(INCDIR)/non-free\
@@ -106,7 +107,7 @@ ELF_FLAGS		= -march=m4k \
 				  -D __PIC32MX__ \
 				  -D __$(_IDE_PROC_)__ \
 				  -D $(_IDE_BOARD_) \
-				  -T$(LKRDIR)/procdefs.ld \
+				  -T$(LKRDIR)/$(_IDE_PROC_).ld \
 				  -T$(LKRDIR)/elf32pic32mx.x
 
 # ----------------------------------------------------------------------

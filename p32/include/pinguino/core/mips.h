@@ -1,7 +1,7 @@
 /*	----------------------------------------------------------------------------
-	mips.h
-	Régis Blanchot
-	--------------------------------------------------------------------------*/
+    mips.h
+    Régis Blanchot
+    --------------------------------------------------------------------------*/
 
 #ifndef __MIPS_H
 #define __MIPS_H
@@ -38,20 +38,20 @@ u32 MIPS32 ReadCoreTimer(void)
 // Read C0 coprocessor register.
 
 #define ReadCoreRegister(reg,sel)				    \
-	({ u32 __value;						            \
-	asm volatile (					            	\
-	"mfc0	%0, $%1, %2"					        \
-	: "=r" (__value) : "K" (reg), "K" (sel));		\
-	__value;						                \
+    ({ u32 __value;						            \
+    asm volatile (					            	\
+    "mfc0	%0, $%1, %2"					        \
+    : "=r" (__value) : "K" (reg), "K" (sel));		\
+    __value;						                \
 })
 
 // Write C0 coprocessor register.
 
 #define WriteCoreRegister(reg, sel, value)			        \
 do {								                        \
-	asm volatile (						                    \
-	"mtc0	%z0, $%1, %2 \n	ehb"                            \
-	: : "r" ((u32) (value)), "K" (reg), "K" (sel));\
+    asm volatile (						                    \
+    "mtc0	%z0, $%1, %2 \n	ehb"                            \
+    : : "r" ((u32) (value)), "K" (reg), "K" (sel));\
 } while (0)
 
 // Restore the hardware interrupt mode using the saved interrupt state.
@@ -59,7 +59,7 @@ do {								                        \
 void MIPS32 RestoreIterruptStatus (u32 x)
 {
     /* C0_STATUS */
-	WriteCoreRegister(12, 0, x);
+    WriteCoreRegister(12, 0, x);
 }
 
 #endif	/* __MIPS_H */
