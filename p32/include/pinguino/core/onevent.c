@@ -28,6 +28,7 @@
 
 #include <p32xxxx.h>
 #include <typedef.h>
+#include <const.h>
 #include <macro.h>
 #include <interrupt.h>
 #include <interrupt.c>
@@ -123,7 +124,7 @@ u32 OnTimer1(callback func, u32 timediv, u32 delay)
         PR1      = period;                  // load period register
         T1CONSET = 0x8000;                  // start timer 1
 
-        return INT_NOT_USED;
+        return INT_TIMER1;
     }
     
     else
@@ -131,7 +132,7 @@ u32 OnTimer1(callback func, u32 timediv, u32 delay)
         #ifdef DEBUG
         debug("Error : TIMER1 interrupt is already used !");
         #endif
-        return INT_USED;
+        return false;
     }
 }
 
@@ -190,7 +191,7 @@ u32 OnTimer2(callback func, u32 timediv, u32 delay)
             case INT_MICROSEC: period = freqhz / 1000000; break;
         }
 
-        // Timer2 period is 16-bit, only 4 prescaler values
+        // Timer2 period is 16-bit, 8 prescaler values
         while ((period > 0xFFFF) & (tckps <= 8))
         {
             tckps += 1;
@@ -215,7 +216,7 @@ u32 OnTimer2(callback func, u32 timediv, u32 delay)
         PR2      = period;                  // load period register
         T2CONSET = 0x8000;                  // start timer 1
 
-        return INT_NOT_USED;
+        return INT_TIMER2;
     }
     
     else
@@ -223,7 +224,7 @@ u32 OnTimer2(callback func, u32 timediv, u32 delay)
         #ifdef DEBUG
         debug("Error : TIMER2 interrupt is already used !");
         #endif
-        return INT_USED;
+        return false;
     }
 }
 
@@ -282,7 +283,7 @@ u32 OnTimer3(callback func, u32 timediv, u32 delay)
             case INT_MICROSEC: period = freqhz / 1000000; break;
         }
 
-        // Timer3 period is 16-bit, only 4 prescaler values
+        // Timer3 period is 16-bit, 8 prescaler values
         while ((period > 0xFFFF) & (tckps <= 8))
         {
             tckps += 1;
@@ -307,7 +308,7 @@ u32 OnTimer3(callback func, u32 timediv, u32 delay)
         PR3      = period;                  // load period register
         T3CONSET = 0x8000;                  // start timer 1
 
-        return INT_NOT_USED;
+        return INT_TIMER3;
     }
     
     else
@@ -315,7 +316,7 @@ u32 OnTimer3(callback func, u32 timediv, u32 delay)
         #ifdef DEBUG
         debug("Error : TIMER3 interrupt is already used !");
         #endif
-        return INT_USED;
+        return false;
     }
 }
 
@@ -374,7 +375,7 @@ u32 OnTimer4(callback func, u32 timediv, u32 delay)
             case INT_MICROSEC: period = freqhz / 1000000; break;
         }
 
-        // Timer2 period is 16-bit, only 4 prescaler values
+        // Timer2 period is 16-bit, 8 prescaler values
         while ((period > 0xFFFF) & (tckps <= 8))
         {
             tckps += 1;
@@ -399,7 +400,7 @@ u32 OnTimer4(callback func, u32 timediv, u32 delay)
         PR4      = period;                  // load period register
         T4CONSET = 0x8000;                  // start timer 1
 
-        return INT_NOT_USED;
+        return INT_TIMER4;
     }
     
     else
@@ -407,7 +408,7 @@ u32 OnTimer4(callback func, u32 timediv, u32 delay)
         #ifdef DEBUG
         debug("Error : TIMER4 interrupt is already used !");
         #endif
-        return INT_USED;
+        return false;
     }
 }
 
@@ -466,7 +467,7 @@ u32 OnTimer5(callback func, u32 timediv, u32 delay)
             case INT_MICROSEC: period = freqhz / 1000000; break;
         }
 
-        // Timer5 period is 16-bit, only 4 prescaler values
+        // Timer5 period is 16-bit, 8 prescaler values
         while ((period > 0xFFFF) & (tckps <= 8))
         {
             tckps += 1;
@@ -491,7 +492,7 @@ u32 OnTimer5(callback func, u32 timediv, u32 delay)
         PR5      = period;                  // load period register
         T5CONSET = 0x8000;                  // start timer 1
 
-        return INT_NOT_USED;
+        return INT_TIMER5;
     }
     
     else
@@ -499,7 +500,7 @@ u32 OnTimer5(callback func, u32 timediv, u32 delay)
         #ifdef DEBUG
         debug("Error : TIMER5 interrupt is already used !");
         #endif
-        return INT_USED;
+        return false;
     }
 }
 

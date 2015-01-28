@@ -44,32 +44,40 @@
     !defined(__32MX250F128B__) && \
     !defined(__32MX270F256B__)
     #include <newlib.c>
-#endif	
+#endif
 */
 
 #ifdef __USBCDC
     #include <cdc.h>
-#endif	
+#endif
 
-#include "user.c"       // Pinguino User's Sketch
+/**********************************************************************/
+#include "user.c"               // Pinguino User's Sketch
+/**********************************************************************/
 
 int main()
 {
+    // Set default clock frequency
+    // Note : default peripheral freq. is 1/2 clock frequency
     #if defined(__32MX220F032D__) || \
         defined(__32MX220F032B__) || \
         defined(__32MX250F128B__) || \
         defined(__32MX270F256B__)
-        SystemConfig(40000000);	// default clock frequency  is 40Mhz
-                                // default peripheral freq. is 1/2
+
+        SystemConfig(40000000);
+
     #else
-        SystemConfig(80000000);	// default clock frequency is 80Mhz
-                                // default peripheral freq. is 1/2
+
+        SystemConfig(80000000);
+
     #endif
 
+    // Configure pins
     IOsetDigital();
     IOsetSpecial();
     IOsetRemap();
 
+    // Different init.
     #ifdef __ANALOG__
     analog_init();
     #endif
@@ -94,6 +102,8 @@ int main()
     servos_init();
     #endif    
 
+/** USER'S SKETCH *****************************************************/
+
     setup();
 
     while (1)
@@ -103,7 +113,7 @@ int main()
                 defined(__32MX220F032B__) || \
                 defined(__32MX250F128B__) || \
                 defined(__32MX270F256B__)
-                USB_Service( );
+                USB_Service();
             #else
                 CDCTxService();
             #endif
@@ -111,9 +121,13 @@ int main()
  
         loop();
     }
+/**********************************************************************/
 
-    return(0);    
-}
+    return(0);
+    
+} // end of main
+
+/** INTERRUPTS ********************************************************/
 
 #ifndef __SERIAL__
     void Serial1Interrupt(void)
@@ -226,3 +240,10 @@ void RTCCInterrupt(void)
     Nop();    
 }
 #endif // __RTCC__
+
+#if !defined(__USBCDC__) || !defined(__USBCDCINTERRUPT__)
+void USBInterrupt(void)
+{
+    Nop();    
+}
+#endif // __USBCDC__

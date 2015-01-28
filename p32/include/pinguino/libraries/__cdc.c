@@ -14,9 +14,11 @@
 #define __USBCDC
 
 #include <stdarg.h>
+
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
 #include <string.h>			// strlen
 #endif
+
 #include <typedef.h>
 #include <system.c>
 #include <interrupt.c>
@@ -26,14 +28,18 @@
 #include <printf.c>
 #endif
 
+// usb_device.c
+extern void USBDeviceInit();
+extern void USBTask();
+extern void USBDeviceAttach();
+
+// usb_function_cdc.c
 extern void USBCheckCDCRequest();
 extern void CDCInitEP();
-extern void USBTask();
-extern void USBDeviceInit();
-extern void USBDeviceAttach();
 extern void putUSBUSART(char*, char);
 extern char getsUSBUSART(char*, char);
 extern void CDCTxService();
+
 extern unsigned char cdc_trf_state;
 extern u8 USBDeviceState;
 
@@ -123,8 +129,8 @@ void INTEnableInterrupts()
     IntEnable(INT_USB);
 }
 
-#if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \ 
-	!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+#if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
+    !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
 
 // this is the Set Line coding CallBack function
 void mySetLineCodingHandler()
@@ -173,6 +179,7 @@ void USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event_usb)
         case EVENT_EP0_REQUEST:
             USBCheckCDCRequest();
             break;
+            
         case EVENT_CONFIGURED: 
             CDCInitEP();
             break;
@@ -189,11 +196,14 @@ void USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event_usb)
 void CDC_init()
 {
     USBDeviceInit();		// Initializes USB module SFRs and firmware
+
     #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
-		!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
-		
+        !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+
         USBDeviceAttach();
+
     #endif
+
     Delayms(1500);
 }
 
@@ -206,26 +216,37 @@ void CDC_init()
 void CDCputs(u8 *buffer, u8 length)
 {
     u16 i;
+
     for (i = 1000; i > 0; --i)
     {
         if (mUSBUSARTIsTxTrfReady())
             break;
+            
         #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
-			defined(__32MX250F128B__) || defined(__32MX270F256B__)
-			
+            defined(__32MX250F128B__) || defined(__32MX270F256B__)
+            
             USB_Service();
+
         #else
+
             CDCTxService();
+
         #endif
     }
+    
     if (i > 0)
     {
         putUSBUSART(buffer, length);
+        
         #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
-			defined(__32MX250F128B__) || defined(__32MX270F256B__)
+            defined(__32MX250F128B__) || defined(__32MX270F256B__)
+
             USB_Service();
+
         #else
+
             CDCTxService();
+
         #endif
     }
 }
@@ -240,15 +261,20 @@ u8 CDCgets(u8 *buffer)
 {
     u8 numBytesRead;
         
-	#if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
-		defined(__32MX250F128B__) || defined(__32MX270F256B__)
+    #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+        defined(__32MX250F128B__) || defined(__32MX270F256B__)
+
         USB_Service();
         numBytesRead = USB_Service_CDC_GetString( buffer );
+
     #else
+
         CDCTxService();
         numBytesRead = getsUSBUSART(buffer, 64);
+
     #endif
-        return numBytesRead;
+
+    return numBytesRead;
 /*
     if (mUSBUSARTIsTxTrfReady())
     {
@@ -413,41 +439,41 @@ void CDCprintNumber(long value, u8 base)
 #if defined(CDCPRINTFLOAT)
 void CDCprintFloat(float number, u8 digits)
 { 
-	u8 i, toPrint;
-	u16 int_part;
-	float rounding, remainder;
+    u8 i, toPrint;
+    u16 int_part;
+    float rounding, remainder;
 
-	// Handle negative numbers
-	if (number < 0.0)
-	{
-		CDCputs('-', 1);
-		number = -number;
-	}
+    // Handle negative numbers
+    if (number < 0.0)
+    {
+        CDCputs('-', 1);
+        number = -number;
+    }
 
-	// Round correctly so that print(1.999, 2) prints as "2.00"  
-	rounding = 0.5;
-	for (i=0; i<digits; ++i)
-		rounding /= 10.0;
+    // Round correctly so that print(1.999, 2) prints as "2.00"  
+    rounding = 0.5;
+    for (i=0; i<digits; ++i)
+        rounding /= 10.0;
 
-	number += rounding;
+    number += rounding;
 
-	// Extract the integer part of the number and print it  
-	int_part = (u16)number;
-	remainder = number - (float)int_part;
-	CDCprintNumber(int_part, 10);
+    // Extract the integer part of the number and print it  
+    int_part = (u16)number;
+    remainder = number - (float)int_part;
+    CDCprintNumber(int_part, 10);
 
-	// Print the decimal point, but only if there are digits beyond
-	if (digits > 0)
-		CDCputs('.', 1); 
+    // Print the decimal point, but only if there are digits beyond
+    if (digits > 0)
+        CDCputs('.', 1); 
 
-	// Extract digits from the remainder one at a time
-	while (digits-- > 0)
-	{
-		remainder *= 10.0;
-		toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-		CDCprintNumber(toPrint, 10);
-		remainder -= toPrint; 
-	}
+    // Extract digits from the remainder one at a time
+    while (digits-- > 0)
+    {
+        remainder *= 10.0;
+        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+        CDCprintNumber(toPrint, 10);
+        remainder -= toPrint; 
+    }
 }
 #endif
 

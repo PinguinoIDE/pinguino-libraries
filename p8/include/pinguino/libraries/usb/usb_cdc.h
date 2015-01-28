@@ -7,8 +7,6 @@
 
 /**
 This file contains the definitinos for the USB cdc examples
-TODO:
- Try if we can use linux/usb_ch9.h und linux/usb_cdc.h
 **/
 
 /* conventional codes for class-specific descriptors */

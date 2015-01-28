@@ -67,7 +67,6 @@ typedef union __attribute__ ((packed)) _BD_STAT
         unsigned    PID1    :1;
         unsigned    PID2    :1;
         unsigned    PID3    :1;
-
     };
     struct __attribute__ ((packed)){
         unsigned            :2;
@@ -143,7 +142,7 @@ static inline void *ConvertToPhysicalAddress (volatile void *addr)
 	U1CON = 0;\
 	U1IE = 0;\
 	U1OTGIE = 0;\
-	U1PWR |= PIC32_U1PWR_USBPWR;\
+	U1PWR |= _U1PWRC_USBPWR_MASK; //PIC32_U1PWR_USBPWR;\
 	usb_device_state = DETACHED_STATE;\
 }
 #endif

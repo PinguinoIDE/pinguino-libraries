@@ -25,8 +25,9 @@
  * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
  */
-#ifndef CDC_H
-#define CDC_H
+
+#ifndef USBFUNCTIONCDC_H
+#define USBFUNCTIONCDC_H
 
 /*
  * Default CDC configuration.
@@ -391,6 +392,7 @@ typedef union __attribute__((packed)) _CDC_NOTICE
 /*
  * E X T E R N S
  */
+
 extern unsigned cdc_rx_len;
 extern unsigned cdc_tx_len;
 extern unsigned cdc_trf_state;
@@ -400,10 +402,12 @@ extern LINE_CODING cdc_line_coding;
 /*
  * Public Prototypes
  */
-void cdc_check_request (void);
-void cdc_init_ep (void);
-void cdc_tx_service (void);
-int cdc_putc (int c);
-int cdc_consume (void (*func) (int));
+void usb_check_cdc_request(void);
+void cdc_init_ep(void);
+int cdc_consume(void (*func) (int));
+int cdc_gets(unsigned char *buffer);
+int cdc_putc(unsigned char c);
+void cdc_puts(unsigned char *buffer, int length);
+void cdc_tx_service(void);
 
-#endif //CDC_H
+#endif //USBFUNCTIONCDC_H

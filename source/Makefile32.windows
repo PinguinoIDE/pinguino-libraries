@@ -1,7 +1,7 @@
 SHELL		=	cmd.exe
 
 INCDIR		=	$(_IDE_P32DIR_)\include
-LKRDIR		=	$(_IDE_P32DIR_)\lkr\$(_IDE_BOARD_)
+LKRDIR		=	$(_IDE_P32DIR_)\lkr
 OBJDIR		=	$(_IDE_P32DIR_)\obj\non-free
 
 INCLUDEDIRS	=	-I$(INCDIR)\non-free \

@@ -325,7 +325,6 @@ void CDC_interrupt(void)
         ProcessUSBTransactions();
         UIRbits.SOFIF = 0;
         UIRbits.URSTIF = 0;
-
         UEIR = 0;
     }
 }

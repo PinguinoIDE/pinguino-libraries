@@ -38,9 +38,7 @@ LIBDIRS		= -L$(OBJDIR)/usb
 # ----------------------------------------------------------------------
 # Various options
 # ----------------------------------------------------------------------
-# - heap size / Regis Blanchot 2012
 # - cdc library / Jean-pierre Mandon 2012
-# - MIPS16/MIPS32 option (MIPS16 option could drastically reduce code size) / ??? 2013
 # - unsupported record in hex file / Jean-pierre Mandon 2012
 #		04		 : 4 bytes
 #		0000	 : address
@@ -77,7 +75,8 @@ CP			  = cp
 MV			  = mv
 
 # ----------------------------------------------------------------------
-# flags
+# MIPS16/MIPS32 option
+# MIPS16 option reduce code size and speed about 30%
 # ----------------------------------------------------------------------
 
 ifeq "$(_IDE_MIPS16_ENABLE_)" "true"
@@ -87,28 +86,38 @@ ifeq "$(_IDE_MIPS16_ENABLE_)" "true"
 	MIPS16_INTER=-minterlink-mips16
 endif
 
+# ----------------------------------------------------------------------
+# Compilation flags
+# https://gcc.gnu.org/onlinedocs/gcc/MIPS-Options.html
+# -v -Wall : verbose compilation
+# -march=m4k : target are PIC32MX with MIPS M4K Core
+# -EL : generate code for a processor running in little-endian mode
+# -msoft-float : generate output containing library calls (newlib) for floating point
+# -nostdlib -static
+# -ffunction-sections, -fdata-sections : place each function or data item into its own section in the output file
+# -Wl,--gc-sections : tells linker to use link-time garbage collection (except when KEEP is defined)
+# ----------------------------------------------------------------------
+
 #-fdollars-in-identifiers for ISRwrapper.S
 CFLAGS			= -fdollars-in-identifiers $(INCLUDEDIRS)
 
 LDFLAGS			= $(LIBDIRS) $(LIBS)
 
-#-march=24kc
-#-Wl,--gc-sections : tells linker to use link-time garbage collection (except when KEEP is defined)
-
-ELF_FLAGS		= -march=m4k \
-				  -EL -msoft-float -nostdlib -static \
-				  $(_IDE_OPTIMIZATION_) $(MIPS16_INTER) \
-				  -ffunction-sections \
-				  -fdata-sections \
-				  -Wl,--gc-sections \
-				  -Wl,-L$(OBJDIR) \
-				  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
-				  -Wl,-Map=$(_IDE_SRCDIR_)/output.map \
-				  -D __PIC32MX__ \
-				  -D __$(_IDE_PROC_)__ \
-				  -D $(_IDE_BOARD_) \
-				  -T$(LKRDIR)/$(_IDE_PROC_).ld \
-				  -T$(LKRDIR)/elf32pic32mx.x
+ELF_FLAGS		= \
+			  -march=m4k \
+			  -EL -msoft-float -nostdlib -static \
+			  $(_IDE_OPTIMIZATION_) $(MIPS16_INTER) \
+			  -ffunction-sections \
+			  -fdata-sections \
+			  -Wl,--gc-sections \
+			  -Wl,-L$(OBJDIR) \
+			  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
+			  -Wl,-Map=$(_IDE_SRCDIR_)/output.map \
+			  -D __PIC32MX__ \
+			  -D __$(_IDE_PROC_)__ \
+			  -D $(_IDE_BOARD_) \
+			  -T$(LKRDIR)/$(_IDE_PROC_).ld \
+			  -T$(LKRDIR)/elf32pic32mx.x
 
 # ----------------------------------------------------------------------
 # rules
@@ -138,6 +147,8 @@ compile:
 	# compiling and linking
 	# ------------------------------------------------------------------
 	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)/main32.S $(_IDE_SRCDIR_)/main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.pp
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\

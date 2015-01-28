@@ -27,8 +27,14 @@
 #ifndef USBDEVICE_H
 #define USBDEVICE_H
 
-#include <machine/usb_ch9.h>
-#include <machine/usb_hal_pic32.h>
+#include <typedef.h>
+#include <usb/usb_ch9.h>
+#include <usb/usb_hal_pic32.h>
+
+#define USB_MAX_EP_NUMBER                   1
+#define USB_NUM_STRING_DESCRIPTORS          3
+// PIC32 supports only full ping-pong mode.
+#define USB_PING_PONG_MODE USB_PING_PONG__FULL_PING_PONG
 
 /*
  * USB Endpoint Definitions
@@ -213,8 +219,8 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
 } CTRL_TRF_SETUP;
 
 // Defintion of the PIPE structure
-//  This structure is used to keep track of data that is sent out
-//  of the stack automatically.
+// This structure is used to keep track of data that is sent out
+// of the stack automatically.
 typedef struct __attribute__ ((packed))
 {
     union __attribute__ ((packed))
@@ -226,6 +232,7 @@ typedef struct __attribute__ ((packed))
         unsigned short *wRam;
         const unsigned short *wRom;
     } pSrc;
+    
     union __attribute__ ((packed))
     {
         struct __attribute__ ((packed))
@@ -241,11 +248,13 @@ typedef struct __attribute__ ((packed))
         } bits;
         unsigned char Val;
     } info;
+    
     unsigned short wCount;
 } IN_PIPE;
 
 #define CTRL_TRF_RETURN void
 #define CTRL_TRF_PARAMS void
+
 typedef struct __attribute__ ((packed))
 {
     union __attribute__ ((packed))
@@ -255,6 +264,7 @@ typedef struct __attribute__ ((packed))
         unsigned char *bRam;
         unsigned short *wRam;
     } pDst;
+    
     union __attribute__ ((packed))
     {
         struct __attribute__ ((packed))
@@ -265,6 +275,7 @@ typedef struct __attribute__ ((packed))
         } bits;
         unsigned char Val;
     } info;
+    
     unsigned short wCount;
     CTRL_TRF_RETURN (*pFunc)(CTRL_TRF_PARAMS);
 } OUT_PIPE;
@@ -383,9 +394,6 @@ typedef struct __attribute__ ((packed))
 // to NULL so that they are in a known state during their first usage.
 #define USB_HANDLE volatile BDT_ENTRY*
 
-// PIC32 supports only full ping-pong mode.
-#define USB_PING_PONG_MODE USB_PING_PONG__FULL_PING_PONG
-
 /* Size of buffer for end-point EP0.
  * Valid Options: 8, 16, 32, or 64 bytes.
  * Using larger options take more SRAM, but
@@ -408,46 +416,46 @@ typedef struct __attribute__ ((packed))
 // Definitions for the BDT
 extern volatile BDT_ENTRY usb_buffer[(USB_MAX_EP_NUMBER + 1) * 4];
 
-// Device descriptor
+// Device descriptor (cf. usb_descriptor.c)
 extern const USB_DEVICE_DESCRIPTOR usb_device;
 
-// Array of configuration descriptors
+// Array of configuration descriptors (cf. usb_descriptor.c)
 extern const unsigned char *const usb_config[];
 extern const unsigned char usb_config1_descriptor[];
 
-// Array of string descriptors
+// Array of string descriptors (cf. usb_descriptor.c)
 extern const unsigned char *const usb_string[];
 
 // Buffer for control transfers
 extern volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 
 /* Control Transfer States */
-#define WAIT_SETUP		0
-#define CTRL_TRF_TX		1
-#define CTRL_TRF_RX		2
+#define WAIT_SETUP          0
+#define CTRL_TRF_TX         1
+#define CTRL_TRF_RX         2
 
 /* v2.1 fix - Short Packet States - Used by Control Transfer Read  - CTRL_TRF_TX */
-#define SHORT_PKT_NOT_USED	0
-#define SHORT_PKT_PENDING	1
-#define SHORT_PKT_SENT		2
+#define SHORT_PKT_NOT_USED  0
+#define SHORT_PKT_PENDING   1
+#define SHORT_PKT_SENT      2
 
 /* USB PID: Token Types - See chapter 8 in the USB specification */
-#define SETUP_TOKEN		0x0D    // 0b00001101
-#define OUT_TOKEN		0x01    // 0b00000001
-#define IN_TOKEN		0x09    // 0b00001001
+#define SETUP_TOKEN         0x0D    // 0b00001101
+#define OUT_TOKEN           0x01    // 0b00000001
+#define IN_TOKEN            0x09    // 0b00001001
 
 /* bmRequestType Definitions */
-#define HOST_TO_DEV		0
-#define DEV_TO_HOST		1
+#define HOST_TO_DEV         0
+#define DEV_TO_HOST         1
 
-#define STANDARD		0x00
-#define CLASS			0x01
-#define VENDOR			0x02
+#define STANDARD            0x00
+#define CLASS               0x01
+#define VENDOR              0x02
 
-#define RCPT_DEV		0
-#define RCPT_INTF		1
-#define RCPT_EP			2
-#define RCPT_OTH		3
+#define RCPT_DEV            0
+#define RCPT_INTF           1
+#define RCPT_EP             2
+#define RCPT_OTH            3
 
 extern unsigned usb_device_state;
 extern unsigned usb_active_configuration;
@@ -708,7 +716,7 @@ void usb_device_init(void);
   Remarks:
     None
  */
-#define usb_is_device_suspended() (U1PWRC & PIC32_U1PWRC_USUSPEND)
+#define usb_is_device_suspended() (U1PWRC & _U1PWRC_USUSPEND_MASK)
 
 void usb_ctrl_ep_service (void);
 void usb_ctrl_trf_setup_handler (void);
@@ -784,6 +792,7 @@ void usb_configure_endpoint (unsigned EPNum, unsigned direction);
 
     Remark: None
   */
+
 void usbcb_suspend (void);
 
 /*
@@ -820,6 +829,7 @@ void usbcb_suspend (void);
 
  Remarks:       None
  */
+
 void usbcb_wake_from_suspend (void);
 
 /*
@@ -851,6 +861,7 @@ void usbcb_wake_from_suspend (void);
   Remarks:
     None
  */
+
 void usbcb_sof_handler (void);
 
 /*
@@ -896,6 +907,7 @@ void usbcb_sof_handler (void);
     Nevertheless, this callback function is provided, such as
     for debugging purposes.
  */
+
 void usbcb_error_handler (void);
 
 /*
@@ -931,6 +943,7 @@ void usbcb_error_handler (void);
   Remarks:
     None
   */
+
 void usbcb_check_other_req (void);
 
 /*
@@ -958,6 +971,7 @@ void usbcb_check_other_req (void);
 
   Remark:            None
  */
+
 void usbcb_std_set_dsc_handler (void);
 
 /*
@@ -986,6 +1000,7 @@ void usbcb_std_set_dsc_handler (void);
   Remarks:
     None
   */
+
 void usbcb_init_ep (void);
 
 /*
@@ -1067,6 +1082,7 @@ void usbcb_init_ep (void);
       * A timer can be used in place of the blocking loop if desired.
 
 */
+
 void usbcb_send_resume (void);
 
 /*
@@ -1101,6 +1117,7 @@ void usbcb_send_resume (void);
   Remarks:
     None
 */
+
 void usbcb_ep0_data_received (void);
 
 
@@ -1735,6 +1752,6 @@ void usb_stall_endpoint(unsigned ep, unsigned dir);
     #error "No ping pong mode defined."
 #endif
 
-extern int usb_remote_wakeup;
+//extern int usb_remote_wakeup;
 
-#endif //USBD_H
+#endif //USBDEVICE_H

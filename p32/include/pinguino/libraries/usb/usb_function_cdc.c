@@ -21,9 +21,13 @@
  * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
  */
-#include <machine/pic32mx.h>
-#include <machine/usb_device.h>
-#include <machine/usb_function_cdc.h>
+
+#ifndef USBFUNCTIONCDC_C
+#define USBFUNCTIONCDC_C
+
+#include <p32xxxx.h>
+#include <usb/usb_device.h>
+#include <usb/usb_function_cdc.h>
 
 unsigned cdc_trf_state;         // States are defined cdc.h
 unsigned cdc_tx_len;            // total tx length
@@ -35,8 +39,8 @@ static USB_HANDLE data_in;
 
 static CONTROL_SIGNAL_BITMAP control_signal_bitmap;
 
-static volatile unsigned char cdc_data_rx [CDC_DATA_OUT_EP_SIZE];
-static volatile unsigned char cdc_data_tx [CDC_DATA_IN_EP_SIZE];
+static volatile unsigned char cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+static volatile unsigned char cdc_data_tx[CDC_DATA_IN_EP_SIZE];
 
 /*
  * SEND_ENCAPSULATED_COMMAND and GET_ENCAPSULATED_RESPONSE are required
@@ -46,13 +50,13 @@ static volatile unsigned char cdc_data_tx [CDC_DATA_IN_EP_SIZE];
  */
 #define DUMMY_LENGTH    0x08
 
-static unsigned char dummy_encapsulated_cmd_response [DUMMY_LENGTH];
+static unsigned char dummy_encapsulated_cmd_response[DUMMY_LENGTH];
 
 /*
  * This routine checks the setup data packet to see if it
  * knows how to handle it.
  */
-void cdc_check_request()
+void usb_check_cdc_request()
 {
     /*
      * If request recipient is not an interface then return
@@ -76,38 +80,38 @@ void cdc_check_request()
 
     switch (usb_setup_pkt.bRequest)
     {
-    case SEND_ENCAPSULATED_COMMAND:
-        // send the packet
-        usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
-        usb_in_pipe[0].wCount = DUMMY_LENGTH;
-        usb_in_pipe[0].info.bits.ctrl_trf_mem = USB_INPIPES_RAM;
-        usb_in_pipe[0].info.bits.busy = 1;
-        break;
+        case SEND_ENCAPSULATED_COMMAND:
+            // send the packet
+            usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
+            usb_in_pipe[0].wCount = DUMMY_LENGTH;
+            usb_in_pipe[0].info.bits.ctrl_trf_mem = USB_INPIPES_RAM;
+            usb_in_pipe[0].info.bits.busy = 1;
+            break;
 
-    case GET_ENCAPSULATED_RESPONSE:
-        // Populate dummy_encapsulated_cmd_response first.
-        usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
-        usb_in_pipe[0].info.bits.busy = 1;
-        break;
+        case GET_ENCAPSULATED_RESPONSE:
+            // Populate dummy_encapsulated_cmd_response first.
+            usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
+            usb_in_pipe[0].info.bits.busy = 1;
+            break;
 
-    case SET_LINE_CODING:
-        usb_out_pipe[0].wCount = usb_setup_pkt.wLength;
-        usb_out_pipe[0].pDst.bRam = (unsigned char*) &cdc_line_coding._byte[0];
-        usb_out_pipe[0].pFunc = 0;
-        usb_out_pipe[0].info.bits.busy = 1;
-        break;
+        case SET_LINE_CODING:
+            usb_out_pipe[0].wCount = usb_setup_pkt.wLength;
+            usb_out_pipe[0].pDst.bRam = (unsigned char*) &cdc_line_coding._byte[0];
+            usb_out_pipe[0].pFunc = 0;
+            usb_out_pipe[0].info.bits.busy = 1;
+            break;
 
-    case GET_LINE_CODING:
-        usb_ep0_send_ram_ptr ((unsigned char*) &cdc_line_coding,
-            LINE_CODING_LENGTH, USB_EP0_INCLUDE_ZERO);
-        break;
+        case GET_LINE_CODING:
+            usb_ep0_send_ram_ptr ((unsigned char*) &cdc_line_coding,
+                LINE_CODING_LENGTH, USB_EP0_INCLUDE_ZERO);
+            break;
 
-    case SET_CONTROL_LINE_STATE:
-        control_signal_bitmap._byte = (unsigned char)usb_setup_pkt.W_Value;
-        CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
-        CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
-        usb_in_pipe[0].info.bits.busy = 1;
-        break;
+        case SET_CONTROL_LINE_STATE:
+            control_signal_bitmap._byte = (unsigned char)usb_setup_pkt.W_Value;
+            CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
+            CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
+            usb_in_pipe[0].info.bits.busy = 1;
+            break;
     }
 }
 
@@ -130,10 +134,10 @@ void cdc_check_request()
 void cdc_init_ep()
 {
     // Abstract line coding information
-    cdc_line_coding.dwDTERate = 115200;	// baud rate
-    cdc_line_coding.bCharFormat = 0;	// 1 stop bit
-    cdc_line_coding.bParityType = 0;	// None
-    cdc_line_coding.bDataBits = 8;	// 5,6,7,8, or 16
+    cdc_line_coding.dwDTERate   = 115200;   // baud rate
+    cdc_line_coding.bCharFormat = 0;        // 1 stop bit
+    cdc_line_coding.bParityType = 0;        // No parity
+    cdc_line_coding.bDataBits   = 8;        // 5,6,7,8, or 16
 
     cdc_trf_state = CDC_TX_READY;
     cdc_tx_len = 0;
@@ -149,13 +153,16 @@ void cdc_init_ep()
      *          be known right before the data is
      *          sent.
      */
+     
     usb_enable_endpoint (CDC_COMM_EP, USB_IN_ENABLED |
         USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
+
     usb_enable_endpoint (CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED |
         USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
 
     data_out = usb_rx_one_packet (CDC_DATA_EP,
         (unsigned char*) &cdc_data_rx, sizeof(cdc_data_rx));
+
     data_in = 0;
 }
 
@@ -169,21 +176,38 @@ int cdc_consume (void (*func) (int))
     if (! data_out || usb_handle_busy (data_out))
         return 0;
 
-    /*
-     * Pass received data to user function.
-     */
+    // Pass received data to user function.
     len = usb_handle_get_length (data_out);
-    if (func != 0) {
+    if (func != 0)
+    {
         unsigned n;
         for (n=0; n<len; n++)
             func (cdc_data_rx[n]);
     }
 
-    /*
-     * Prepare dual-ram buffer for next OUT transaction
-     */
+    // Prepare dual-ram buffer for next OUT transaction
     data_out = usb_rx_one_packet (CDC_DATA_EP,
             (unsigned char*) &cdc_data_rx, sizeof(cdc_data_rx));
+
+    return len;
+}
+
+/*
+ * Get received data.
+ */
+int cdc_gets(unsigned char *buffer)
+{
+    unsigned len;
+
+    if (! data_out || usb_handle_busy (data_out))
+        return 0;
+
+    len = usb_handle_get_length (data_out);
+    *buffer = *cdc_data_rx;
+
+    data_out = usb_rx_one_packet (CDC_DATA_EP,
+            (unsigned char*) &cdc_data_rx, sizeof(cdc_data_rx));
+
     return len;
 }
 
@@ -201,13 +225,31 @@ int cdc_consume (void (*func) (int))
  *   cdc_is_tx_ready() must return TRUE. This indicates that the last
  *   transfer is complete and is ready to receive a new block of data.
  */
-int cdc_putc (int c)
+int cdc_putc(unsigned char c)
 {
     if (cdc_trf_state != CDC_TX_READY || cdc_tx_len >= sizeof(cdc_data_tx))
         return 0;
 
     cdc_data_tx [cdc_tx_len++] = c;
+    
     return sizeof(cdc_data_tx) - cdc_tx_len;
+}
+
+/*
+ * Send a string to the USB.
+ * Régis Blanchot 23-01-2015 
+ */
+void cdc_puts(unsigned char *buffer, int length)
+{
+    int space; // number of free bytes in transmit buffer
+    
+    if (cdc_is_tx_ready())
+    {
+        while (length--)
+        {
+            cdc_putc(*buffer++);
+        }
+    }
 }
 
 /*
@@ -241,7 +283,7 @@ void cdc_tx_service()
 {
     // Check that USB connection is established.
     if (usb_device_state < CONFIGURED_STATE ||
-        (U1PWRC & PIC32_U1PWRC_USUSPEND))
+        (U1PWRC & _U1PWRC_USUSPEND_MASK))
         return;
 
     if (usb_handle_busy(data_in))
@@ -251,14 +293,13 @@ void cdc_tx_service()
      * By having this stage, user can always check cdc_trf_state,
      * and not having to call mCDCUsartTxIsBusy() directly.
      */
-    if (cdc_trf_state == CDC_TX_COMPLETING) {
+    if (cdc_trf_state == CDC_TX_COMPLETING)
+    {
         cdc_trf_state = CDC_TX_READY;
         cdc_tx_len = 0;
     }
 
-    /*
-     * If CDC_TX_BUSY_ZLP state, send zero length packet
-     */
+    // If CDC_TX_BUSY_ZLP state, send zero length packet
     if (cdc_trf_state == CDC_TX_BUSY_ZLP)
     {
         data_in = usb_tx_one_packet (CDC_DATA_EP, 0, 0);
@@ -266,10 +307,9 @@ void cdc_tx_service()
         return;
     }
 
-    /*
-     * Send a next packet.
-     */
-    if (cdc_trf_state == CDC_TX_READY && cdc_tx_len > 0) {
+    // Send a next packet.
+    if (cdc_trf_state == CDC_TX_READY && cdc_tx_len > 0)
+    {
         /*
          * Determine if a zero length packet state is necessary.
          * See explanation in USB Specification 2.0: Section 5.8.3
@@ -282,3 +322,5 @@ void cdc_tx_service()
         data_in = usb_tx_one_packet (CDC_DATA_EP, (unsigned char*)&cdc_data_tx, cdc_tx_len);
     }
 }
+
+#endif /* USBFUNCTIONCDC_C */

@@ -160,6 +160,8 @@ vector_\_XX\()_ISR_wrapper:
     
     ISR_wrapper 25,RTCCInterrupt      # RTCC
 
+    ISR_wrapper 30,USBInterrupt       # USB
+
     #else
     
     ISR_wrapper 36,SPI2Interrupt      # SPI 2
@@ -174,4 +176,6 @@ vector_\_XX\()_ISR_wrapper:
 
     ISR_wrapper 35,RTCCInterrupt      # RTCC
     
+    ISR_wrapper 45,USBInterrupt       # USB
+
     #endif
