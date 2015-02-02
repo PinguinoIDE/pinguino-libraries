@@ -4,8 +4,16 @@
     PURPOSE:		
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	10 nov. 2010
-    LAST RELEASE:	11 jun. 2013
-    ----------------------------------------------------------------------------
+    LAST RELEASE:	29 Jan. 2015
+    --------------------------------------------------------------------
+    13 Feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h
+    21 Set. 2011 Marcus Fazzi added support for UART3
+    23 Set. 2011 Marcus Fazzi added support for UART4,5 AND 6
+    18 Feb. 2012 jp mandon added support for PIC32-PIGUINO-220
+    19 May. 2012 jp mandon added support for PINGUINO32MX250 and PINGUINO32MX220
+    11 Jun. 2013 MM OERR Gestion on UART 1
+    29 Jan. 2015 R. Blanchot - Cleaned up SerialxInterrupt for PIC32MXxx family
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -20,14 +28,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
     ------------------------------------------------------------------*/
-    
-    // 13 feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h
-    // 21 set. 2011 Marcus Fazzi added support for UART3
-    // 23 set. 2011 Marcus Fazzi added support for UART4,5 AND 6
-    // 18 feb. 2012 jp mandon added support for PIC32-PIGUINO-220
-    // 19 may. 2012 jp mandon added support for PINGUINO32MX250 and PINGUINO32MX220
-    // 11 jun. 2013 MM OERR Gestion on UART 1
-    
+
 #ifndef __SERIAL__
 #define __SERIAL__
 
@@ -35,27 +36,31 @@
 #include <system.c>
 #include <interrupt.c>
 #include <digitalw.c>
-#include <printf.c>
 
-#define UART1			1
-#define UART2			2
+#ifdef SERIALPRINTF
+#include <printf.c>
+#endif
+
+#define UART1                               1
+#define UART2                               2
 //UART3 is shared with SPI2
 //32MX4xx do not have UART3,4,5 AND 6
 #ifdef ENABLE_UART3
-#define UART3			3
+#define UART3                               3
 #endif
 #ifdef ENABLE_UART4
-#define UART4			4
+#define UART4                               4
 #endif
 #ifdef ENABLE_UART5
-#define UART5			5
+#define UART5                               5
 #endif
 #ifdef ENABLE_UART6
-#define UART6			6
+#define UART6                               6
 #endif
-// -------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
 // UxMODE
-// -------------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 // bit 15 ON: UARTx Enable bit
 #define UART_DISABLE						0x0000
@@ -108,9 +113,9 @@
 #define UART_STOP_BITS_2					0x01	// Enables generation of 2 stop bits per frame.
 #define UART_STOP_BITS_1					0x00	// Enables generation of 1 stop bit per frame (default).
 
-// -------------------------------------------------------------------------
+// ---------------------------------------------------------------------
 // UxSTA
-// -------------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 // bit 24 ADM_EN: Automatic Address Detect Mode Enable bit
 
@@ -186,13 +191,14 @@ volatile long UART5wpointer, UART5rpointer;				// write and read pointer
 #ifdef ENABLE_UART6
 volatile long UART6wpointer, UART6rpointer;				// write and read pointer
 #endif
+
 /*	--------------------------------------------------------------------
     SerialSetDataRate()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     @param		port		1 (UART1) or 2 (UART2)
     @param		baudrate	baud rate
-    @return		baudrate
-    ----------------------------------------------------------------------------
+    @return		none
+    --------------------------------------------------------------------
     BRGH: High Baud Rate Enable bit
     if BRGH = 1 = High-Speed mode - 4x baud clock enabled
         then UxBRG = ((FPB/Desired Baud Rate)/ 4) - 1
@@ -208,13 +214,14 @@ void SerialSetDataRate(u8 port, u32 baudrate)
     u32 pbclock;
 
     pbclock = GetPeripheralClock();
-    max1 = pbclock / 4;
-    min1 = max1 / 65536;
-    max2 = pbclock / 16;
-    min2 = max2 / 65536;
+    max1 = pbclock / 4;     // >> 2
+    min1 = max1 / 65536;    // >> 16
+    max2 = pbclock / 16;    // >> 4
+    min2 = max2 / 65536;    // >> 16
     if (baudrate > max1) baudrate = max1;
     if (baudrate < min2) baudrate = min2;
     max = (min1 + max2) / 2;
+    //not necessary :
     //if (baudrate > min2 && baudrate < max) speed = UART_ENABLE_STANDARD_SPEED;
     if (baudrate > max && baudrate < max1) speed = UART_ENABLE_HIGH_SPEED;
 
@@ -229,6 +236,7 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U1BRG = ((pbclock / baudrate) / 16) - 1;
             break;
+
         case UART2:
             if (speed == UART_ENABLE_HIGH_SPEED)
             {
@@ -238,7 +246,8 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U2BRG = ((pbclock / baudrate) / 16) - 1;
             break;
-#ifdef ENABLE_UART3
+
+        #ifdef ENABLE_UART3
         case UART3:
             if (speed == UART_ENABLE_HIGH_SPEED)
             {
@@ -248,8 +257,9 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U2ABRG = ((pbclock / baudrate) / 16) - 1;
             break;
-#endif
-#ifdef ENABLE_UART4
+        #endif
+
+        #ifdef ENABLE_UART4
         case UART4:
             if (speed == UART_ENABLE_HIGH_SPEED)
             {
@@ -259,8 +269,9 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U1BBRG = ((pbclock / baudrate) / 16) - 1;
             break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+
+        #ifdef ENABLE_UART5
         case UART5:
             if (speed == UART_ENABLE_HIGH_SPEED)
             {
@@ -270,8 +281,9 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U3BBRG = ((pbclock / baudrate) / 16) - 1;
             break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+
+        #ifdef ENABLE_UART6
         case UART6:
             if (speed == UART_ENABLE_HIGH_SPEED)
             {
@@ -281,7 +293,7 @@ void SerialSetDataRate(u8 port, u32 baudrate)
             else
                 U2BBRG = ((pbclock / baudrate) / 16) - 1;
             break;
-#endif
+        #endif
     }
 }
 
@@ -308,6 +320,7 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U1BRG + 1));
             break;
+
         case UART2:
             speed = U2MODEbits.BRGH;
             if (speed == UART_ENABLE_HIGH_SPEED)
@@ -315,7 +328,8 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U2BRG + 1));
             break;
-#ifdef ENABLE_UART3
+
+        #ifdef ENABLE_UART3
         case UART3:
             speed = U2AMODEbits.BRGH;
             if (speed == UART_ENABLE_HIGH_SPEED)
@@ -323,8 +337,9 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U2ABRG + 1));
             break;
-#endif
-#ifdef ENABLE_UART4
+        #endif
+
+        #ifdef ENABLE_UART4
         case UART4:
             speed = U1BMODEbits.BRGH;
             if (speed == UART_ENABLE_HIGH_SPEED)
@@ -332,8 +347,9 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U1BBRG + 1));
             break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+
+        #ifdef ENABLE_UART5
         case UART5:
             speed = U3BMODEbits.BRGH;
             if (speed == UART_ENABLE_HIGH_SPEED)
@@ -341,8 +357,9 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U3BBRG + 1));
             break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+
+        #ifdef ENABLE_UART6
         case UART6:
             speed = U2BMODEbits.BRGH;
             if (speed == UART_ENABLE_HIGH_SPEED)
@@ -350,7 +367,8 @@ u32 SerialGetDataRate(u8 port)
             else
                 baudrate = pbclock / (16 * (U2BBRG + 1));
             break;
-#endif
+        #endif
+
         default:
             baudrate = 0;
     }
@@ -371,18 +389,18 @@ void SerialEnable(u8 port, u32 config)
     {
         case UART1: U1STASET = config; break;
         case UART2:	U2STASET = config; break;
-#ifdef ENABLE_UART3
+        #ifdef ENABLE_UART3
         case UART3:	U2ASTASET = config; break;
-#endif
-#ifdef ENABLE_UART4
+        #endif
+        #ifdef ENABLE_UART4
         case UART4:	U1BSTASET = config; break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+        #ifdef ENABLE_UART5
         case UART5:	U3BSTASET = config; break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+        #ifdef ENABLE_UART6
         case UART6:	U2BSTASET = config; break;
-#endif
+        #endif
     }
 }
 
@@ -398,18 +416,18 @@ void SerialSetLineControl(u8 port, u32 config)
     {
         case UART1: U1MODESET = config; break;
         case UART2: U2MODESET = config;	break;
-#ifdef ENABLE_UART3
+        #ifdef ENABLE_UART3
         case UART3: U2AMODESET = config; break;
-#endif
-#ifdef ENABLE_UART4
+        #endif
+        #ifdef ENABLE_UART4
         case UART4: U1BMODESET = config; break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+        #ifdef ENABLE_UART5
         case UART5: U3BMODESET = config; break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+        #ifdef ENABLE_UART6
         case UART6: U2BMODESET = config; break;
-#endif
+        #endif
     }
 }
 
@@ -425,28 +443,33 @@ void SerialFlush(u8 port)
             UART1wpointer = 1;
             UART1rpointer = 1;
             break;
+            
         case UART2:
             UART2wpointer = 1;
             UART2rpointer = 1;
             break;
+            
         #ifdef ENABLE_UART3
         case UART3:
             UART3wpointer = 1;
             UART3rpointer = 1;
             break;
         #endif
+        
         #ifdef ENABLE_UART4
         case UART4:
             UART4wpointer = 1;
             UART4rpointer = 1;
             break;
         #endif
+        
         #ifdef ENABLE_UART5
         case UART5:
             UART5wpointer = 1;
             UART5rpointer = 1;
             break;
         #endif
+        
         #ifdef ENABLE_UART6
         case UART6:
             UART6wpointer = 1;
@@ -477,7 +500,7 @@ void SerialPinConfigure(u8 port)
             TRISBbits.TRISB4 = OUTPUT;	// RB4 / U1TX output
             TRISAbits.TRISA4 = INPUT;	// RA4 / U1RX input
         #endif			
-        #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBbits.TRISB2=INPUT;		// RB2 is input ( RX )
             TRISBbits.TRISB3=OUTPUT;	// RB3 is output ( TX )
         #endif
@@ -487,7 +510,7 @@ void SerialPinConfigure(u8 port)
             TRISCbits.TRISC9 = OUTPUT;	// RC9 / U2TX output
             TRISCbits.TRISC8 = INPUT;	// RC8 / U2RX input				
         #else
-            #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+            #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBbits.TRISB1=INPUT;		// RB1 is input ( RX )
             TRISBbits.TRISB0=OUTPUT;	// RB0 is output ( TX )
             #else
@@ -550,6 +573,7 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
             IntEnable(INT_UART1_RECEIVER);
             //#endif
             break;
+            
         case UART2:
             //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             //    IPC9bits.U2IP = priority;
@@ -560,24 +584,28 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
             IntEnable(INT_UART2_RECEIVER);
             //#endif
             break;
+            
         #ifdef ENABLE_UART3
         case UART3:
             IntSetVectorPriority(INT_UART3_VECTOR, priority, subpriority);
             IntEnable(INT_UART3_RECEIVER);
             break;
         #endif
+        
         #ifdef ENABLE_UART4
         case UART4:	
             IntSetVectorPriority(INT_UART4_VECTOR, priority, subpriority);
             IntEnable(INT_UART4_RECEIVER);
             break;
         #endif
+        
         #ifdef ENABLE_UART5
         case UART5:
             IntSetVectorPriority(INT_UART5_VECTOR, priority, subpriority);
             IntEnable(INT_UART5_RECEIVER);
             break;
         #endif
+        
         #ifdef ENABLE_UART6
         case UART6:
             IntSetVectorPriority(INT_UART6_VECTOR, priority, subpriority);
@@ -900,6 +928,7 @@ char SerialAvailable(u8 port)
         case UART6:	return (UART6wpointer != UART6rpointer); break;
         #endif
     }
+    return (-1);
 }
 
 /*	--------------------------------------------------------------------
@@ -990,7 +1019,7 @@ char * SerialGetString(u8 port)
     
     do {
         c = SerialGetKey(port);
-        SerialPrintf(port, "%c", c);
+        SerialPrintf(port, (unsigned char *)"%c", c);
         buffer[i++] = c;
     } while (c != '\r');
     buffer[i] = '\0';
@@ -1118,133 +1147,96 @@ void SerialGetDataBuffer(u8 port)
 
 /*	--------------------------------------------------------------------
     SerialInterrupt
-    TODO: move this to interrupt library and add it to main32.c ?
     ------------------------------------------------------------------*/
 
 // vector 24 or 32 (PIC32_PINGUINO_220)
 void Serial1Interrupt(void)
 {
-    char    Dummy;
+    //char Dummy;
 
     // Is this an RX interrupt from UART1 ?
-    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    //if (IFS1bits.U1RXIF)
-    //#else	
     if (IntGetFlag(INT_UART1_RECEIVER))
-    //#endif
     {
-        if (U1STAbits.OERR != 0)
+        if (!(U1STA & _U1STA_OERR_MASK)) //(U1STAbits.OERR != 0)
         {
-            U1STAbits.OERR = 0;
+            U1STACLR = _U1STA_OERR_MASK;
         }
         else
         {
             do
             {
-                if ((U1STAbits.FERR != 0) || (U1STAbits.PERR != 0))
+                //if ((U1STAbits.FERR != 0) || (U1STAbits.PERR != 0))
+                if (!(U1STA & _U1STA_FERR_MASK) || !(U1STA & _U1STA_PERR_MASK))
                 {
-                    Dummy = U1RXREG;
+                    //Dummy = U1RXREG;
+                    U1RXREG;
                 }
                 else
                 {
                     SerialGetDataBuffer(UART1);
                 }
             }
-            while (U1STAbits.URXDA != 0);
+            while (!(U1STA & _U1STA_URXDA_MASK));//(U1STAbits.URXDA != 0);
         }
-        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        //IFS1bits.U1RXIF=0;
-        //#else	
         IntClearFlag(INT_UART1_RECEIVER);
-        //#endif
     }
 
     // Is this an TX interrupt from UART1 ?
-    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    //if (IFS1bits.U1TXIF)
-    //#else		
     if (IntGetFlag(INT_UART1_TRANSMITTER))
-    //#endif
     {
-        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        //IFS1bits.U1TXIF=0;
-        //#else			
         IntClearFlag(INT_UART1_TRANSMITTER);
-        //#endif
     }
 
     // Is this an ERROR interrupt from UART1 ?
-    //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    //if (IFS1bits.U1EIF)
-    //#else	
     if (IntGetFlag(INT_UART1_ERROR))
-    //#endif
     {
-        //#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        //IFS1bits.U1EIF=0;
-        //#else	
         IntClearFlag(INT_UART1_ERROR);
-        //#endif
     }
 }
 
 // vector 32 or 37 (PIC32_PINGUINO_220)
 void Serial2Interrupt(void)
 {
-    char    Dummy;
+    //char Dummy;
 
     // Is this an RX interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U2RXIF)
-    #else
     if (IntGetFlag(INT_UART2_RECEIVER))
-    #endif
-    
     {
-   if (U2STAbits.OERR != 0)
-    U2STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U2STAbits.FERR != 0) || (U2STAbits.PERR != 0))
-       Dummy = U2RXREG;
-      else
-       SerialGetDataBuffer(UART2);
-     }
-    while (U2STAbits.URXDA != 0);
-        //Toggle(REDLED);			// Toggle LED to indicate UART activity
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U2RXIF=0;
-        #else		
+        if (!(U2STA & _U2STA_OERR_MASK)) //(U2STAbits.OERR != 0)
+        {
+            U2STACLR = _U2STA_OERR_MASK;
+        }
+        else
+        {
+            do
+            {
+                //if ((U2STAbits.FERR != 0) || (U2STAbits.PERR != 0))
+                if (!(U2STA & _U2STA_FERR_MASK) || !(U2STA & _U2STA_PERR_MASK))
+                {
+                    //Dummy = U2RXREG;
+                    U2RXREG;
+                }
+                else
+                {
+                    SerialGetDataBuffer(UART2);
+                }
+            }
+            while (!(U2STA & _U2STA_URXDA_MASK));//(U2STAbits.URXDA != 0);
+        }
         IntClearFlag(INT_UART2_RECEIVER);
-        #endif
     }
+
     // Is this an TX interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U2TXIF)
-    #else	
     if (IntGetFlag(INT_UART2_TRANSMITTER))
-    #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U2TXIF=0;
-        #else	
         IntClearFlag(INT_UART2_TRANSMITTER);
-        #endif
     }
+
     // Is this an ERROR interrupt from UART2 ?
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    if (IFS1bits.U2EIF)
-    #else	
     if (IntGetFlag(INT_UART2_ERROR))
-    #endif
     {
-        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-        IFS1bits.U2EIF=0;
-        #else	
-        IntClearFlag(INT_UART2_ERROR);
-        #endif
-    }	
+        IntClearFlag(INT_UART1_ERROR);
+    }
 }
 
 #ifdef ENABLE_UART3

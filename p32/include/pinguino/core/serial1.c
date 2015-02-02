@@ -8,6 +8,7 @@
     --------------------------------------------------------------------
     18 Feb. 2012 jp mandon added support for PIC32-PINGUINO-220
     15 Jan. 2015 regis blanchot - renamed _PINGUINOSERIAL1_C_ in __SERIAL1__
+    29 Jan. 2015 regis blanchot - fixed PIC32_PINGUINO_220 support
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -44,21 +45,33 @@ void serial1init(u32 speed)
 #ifdef SERIALPRINTLN
 void serial1println(u8 *string)
 {
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintln(UART2, string);
+    #else
     SerialPrintln(UART1, string);
+    #endif
 }
 #endif
 
 #ifdef SERIALPRINTNUMBER
 void serial1printNumber(long value, u8 base)
 {
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintNumber(UART2, value, base);
+    #else
     SerialPrintNumber(UART1, value, base);
+    #endif
 }
 #endif
 
 #ifdef SERIALPRINTFLOAT
 void serial1printFloat(float number, u8 digits)
 {
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintFloat(UART2, number, digits);
+    #else
     SerialPrintFloat(UART1, number, digits);
+    #endif
 }
 #endif
 
@@ -69,9 +82,9 @@ void serial1printf(char *fmt, ...)
 
     va_start(args, fmt);
     #ifdef PIC32_PINGUINO_220
-        pprintf(SerialUART2WriteChar, fmt, args);
+        pprintf(SerialUART2WriteChar, (const u8 *)fmt, args);
     #else
-        pprintf(SerialUART1WriteChar, fmt, args);
+        pprintf(SerialUART1WriteChar, (const u8 *)fmt, args);
     #endif
     va_end(args);
 }
@@ -122,7 +135,11 @@ void serial1print(char *fmt,...)
 #else
 void serial1print(u8 * string)
 {
+    #ifdef PIC32_PINGUINO_220
+    SerialPrint(UART2, string);
+    #else
     SerialPrint(UART1, string);
+    #endif
 }
 #endif /* SERIALPRINTF */
 

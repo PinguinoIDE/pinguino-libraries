@@ -142,7 +142,7 @@ static inline void *ConvertToPhysicalAddress (volatile void *addr)
 	U1CON = 0;\
 	U1IE = 0;\
 	U1OTGIE = 0;\
-	U1PWR |= _U1PWRC_USBPWR_MASK; //PIC32_U1PWR_USBPWR;\
+	U1PWR |= _U1PWRC_USBPWR_MASK;\
 	usb_device_state = DETACHED_STATE;\
 }
 #endif

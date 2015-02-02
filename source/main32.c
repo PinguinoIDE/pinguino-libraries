@@ -177,24 +177,28 @@ int main()
         Nop();    
     }
     #endif
+    
     #if !defined(TMR2INT) && !defined(__MILLIS__) && !defined(__SERVOS__)
     void Timer2Interrupt(void)
     {
         Nop();    
     }
     #endif
+    
     #ifndef TMR3INT
     void Timer3Interrupt(void)
     {
         Nop();    
     }
     #endif
+    
     #ifndef TMR4INT
     void Timer4Interrupt(void)
     {
         Nop();    
     }
     #endif
+    
     #ifndef TMR5INT
     void Timer5Interrupt(void)
     {
@@ -226,6 +230,7 @@ void Timer2Interrupt(void)
         Nop();    
     }
     #endif
+    
     #if (SPIx != 2)
     void SPI2Interrupt(void)
     {

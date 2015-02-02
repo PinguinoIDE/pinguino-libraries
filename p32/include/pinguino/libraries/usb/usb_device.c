@@ -33,26 +33,26 @@
     #error "PIC32 only supports full ping pong mode."
 #endif
 
-unsigned usb_device_state;
-unsigned usb_active_configuration;
-static unsigned char usb_alternate_interface[USB_MAX_NUM_INT];
+static USBVOLATILE unsigned char usb_alternate_interface[USB_MAX_NUM_INT];
 static volatile BDT_ENTRY *pBDTEntryEP0OutCurrent;
 static volatile BDT_ENTRY *pBDTEntryEP0OutNext;
 static volatile BDT_ENTRY *pBDTEntryOut[USB_MAX_EP_NUMBER+1];
 static volatile BDT_ENTRY *pBDTEntryIn[USB_MAX_EP_NUMBER+1];
-static unsigned short_packet_status;
-static unsigned control_transfer_state;
-static unsigned ustat_saved;
-IN_PIPE usb_in_pipe[1];
-OUT_PIPE usb_out_pipe[1];
-int usb_remote_wakeup;
+static USBVOLATILE unsigned short_packet_status;
+static USBVOLATILE unsigned control_transfer_state;
+static USBVOLATILE unsigned ustat_saved;
+USBVOLATILE unsigned usb_device_state;
+USBVOLATILE unsigned usb_active_configuration;
+USBVOLATILE IN_PIPE usb_in_pipe[1];
+USBVOLATILE OUT_PIPE usb_out_pipe[1];
+USBVOLATILE int usb_remote_wakeup;
 
 /*
  * Section A: Buffer Descriptor Table
  * - 0x400 - 0x4FF(max)
  * - USB_MAX_EP_NUMBER is defined in usb_device.h
  */
-volatile BDT_ENTRY usb_buffer [(USB_MAX_EP_NUMBER + 1) * 4] __attribute__ ((aligned (512)));
+volatile BDT_ENTRY usb_buffer[(USB_MAX_EP_NUMBER + 1) * 4] __attribute__ ((aligned (512)));
 
 /*
  * Section B: EP0 Buffer Space
@@ -60,7 +60,7 @@ volatile BDT_ENTRY usb_buffer [(USB_MAX_EP_NUMBER + 1) * 4] __attribute__ ((alig
 volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 
 // Buffer for control transfer data
-static volatile unsigned char ctrl_trf_data [USB_EP0_BUFF_SIZE];
+static volatile unsigned char ctrl_trf_data[USB_EP0_BUFF_SIZE];
 
 //extern void bzero (void *dst, unsigned nbytes);
 void bzero (void *dst, unsigned nbytes)
@@ -80,38 +80,53 @@ void bzero (void *dst, unsigned nbytes)
 void usb_device_init(void)
 {
     unsigned i;
+    unsigned phyaddrusbbuf = (unsigned)usb_buffer & 0x1fffffff;
+
+    #ifdef DEBUG
+    serial1printf("\r\nDEVICE INIT.\r\n");
+    #endif
 
     // Clear all USB error flags
-    U1EIR = 0xFF;
-
-    // Clears all USB interrupts
     U1IR = 0xFF;
-
-    // Enable all USB error interrupts
-    U1EIE = 0xFF; //0x9F;
-     
-    // Enable all USB interrupt except SOF
-    U1IE = 0xFB; // 0x9F;
-    
-    // Enable everything
+    U1EIR = 0xFF;
     U1OTGIR = 0xFF;
-    U1OTGIE = 0xFF;
 
-    // Power up the module
-    U1PWRCSET = _U1PWRC_USBPWR_MASK; // PIC32_U1PWRC_USBPWR;
+    // Unmask interrupts
+    U1IE    = _U1IE_STALLIE_MASK | _U1IE_IDLEIE_MASK  | _U1IE_TRNIE_MASK   | \
+              _U1IE_SOFIE_MASK   | _U1IE_UERRIE_MASK  | _U1IE_URSTIE_MASK;
 
-    // Set the address of the BDT (if applicable)
-    U1BDTP1 = (unsigned) usb_buffer >> 8;
+    U1OTGIE = _U1OTGIE_ACTVIE_MASK ;
+
+    U1EIE   = 0x9F;
+
+    // Initialize EP0 as a Ctrl EP
+    U1EP0 = EP_CTRL | USB_HANDSHAKE_ENABLED;
+    U1EP1 = 0; // as USB_MAX_EP_NUMBER == 1;
+
+    // Set the physical address of the BDT
+    U1BDTP1 = phyaddrusbbuf >> 8;
+    U1BDTP2 = phyaddrusbbuf >> 16;
+    U1BDTP3 = phyaddrusbbuf >> 24;
+
+    // Make sure packet processing is enabled (PKTDIS=0)
+    U1CONCLR = _U1CON_PKTDIS_MASK;
 
     // Reset all of the Ping Pong buffers
-    U1CONSET = _U1CON_PPBRST_MASK; // PIC32_U1CON_PPBRST;
-    U1CONCLR = _U1CON_PPBRST_MASK; // PIC32_U1CON_PPBRST;
+    U1CONSET = _U1CON_PPBRST_MASK;
+    U1CONCLR = _U1CON_PPBRST_MASK;
 
     // Reset to default address
     U1ADDR = 0x00;
 
-    // Clear all of the endpoint control registers
-    bzero((void*) &U1EP1, USB_MAX_EP_NUMBER - 1);
+    // Enable Pull-ups, define as USB device (no OTG or HOST) 
+    U1OTGCON = _U1OTGCON_VBUSDIS_MASK | _U1OTGCON_VBUSON_MASK | \
+               _U1OTGCON_DMPULUP_MASK | _U1OTGCON_DPPULUP_MASK;
+
+    // Reset configuration
+    U1CNFG1 = 0;
+
+    // Power up the module
+    U1PWRCSET = _U1PWRC_USBPWR_MASK;
 
     // Clear all of the BDT entries
     for (i=0; i<(sizeof(usb_buffer)/sizeof(BDT_ENTRY)); i++)
@@ -119,13 +134,9 @@ void usb_device_init(void)
        usb_buffer[i].Val = 0x00;
     }
 
-    // Initialize EP0 as a Ctrl EP
-    U1EP0 = EP_CTRL | USB_HANDSHAKE_ENABLED;
-
     // Flush any pending transactions
     while (U1IR & _U1IR_TRNIF_MASK)
     {
-        // Write a 1 to this bit to clear the interrupt
         U1IR |= _U1IR_TRNIF_MASK;
     }
 
@@ -133,9 +144,6 @@ void usb_device_init(void)
     usb_in_pipe[0].info.Val = 0;
     usb_out_pipe[0].info.Val = 0;
     usb_out_pipe[0].wCount = 0;
-
-    // Make sure packet processing is enabled
-    U1CONCLR = _U1CON_PKTDIS_MASK; // PIC32_U1CON_PKTDIS;
 
     // Get ready for the first packet
     pBDTEntryIn[0] = (volatile BDT_ENTRY*) &usb_buffer[EP0_IN_EVEN];
@@ -165,6 +173,10 @@ void usb_device_tasks(void)
 {
     unsigned i;
 
+    //#ifdef DEBUG
+    //serial1printf("usb_device_tasks\r\n");
+    //#endif
+
     // if we are in the detached state
     if (usb_device_state == DETACHED_STATE)
     {
@@ -175,7 +187,6 @@ void usb_device_tasks(void)
         U1IE = 0;
 
         // Enable module & attach to bus
-        // PIC32_U1CON_USBEN
         while (!(U1CON & _U1CON_USBEN_MASK))
         {
             U1CONSET = _U1CON_USBEN_MASK;
@@ -183,47 +194,41 @@ void usb_device_tasks(void)
 
         // moved to the attached state
         usb_device_state = ATTACHED_STATE;
-
-        // Enable/set things like: pull ups, full/low-speed mode,
-        // set the ping pong mode, and set internal transceiver
-        SetConfigurationOptions();
     }
 
     if (usb_device_state == ATTACHED_STATE)
     {
-        /*
-         * After enabling the USB module, it takes some time for the
-         * voltage on the D+ or D- line to rise high enough to get out
-         * of the SE0 condition. The USB Reset interrupt should not be
-         * unmasked until the SE0 condition is cleared. This helps
-         * prevent the firmware from misinterpreting this unique event
-         * as a USB bus reset from the USB host.
-         */
-
         // Clear all USB interrupts
         U1IR = 0xFF;
         
-        // Mask all USB interrupts except RESET and IDLE
+        // Enable RESET and IDLE interrupts
         U1IE = _U1IE_URSTIE_MASK | _U1IE_IDLEIE_MASK;
 
         usb_device_state = POWERED_STATE;
     }
 
-    /*
-     * Task A: Service USB Activity Interrupt
-     */
-
-    if ((U1OTGIR & _U1OTGIR_ACTVIF_MASK) && (U1OTGIE & _U1OTGIE_ACTVIE_MASK))
+    // If the USB became active then wake up from suspend
+    if (U1OTGIE & _U1OTGIE_ACTVIE_MASK)
     {
-        usb_wake_from_suspend();
+        if (U1OTGIR & _U1OTGIR_ACTVIF_MASK)
+        {  
+            #ifdef DEBUG
+            serial1printf("ACTIVITY DETECTED\r\n");
+            #endif
+            // Clear flag
+            U1OTGIR |= _U1OTGIR_ACTVIF_MASK;
+            usb_wake_from_suspend();
+        }
     }
-
-    /*
-     * Pointless to continue servicing if the device is in suspend mode.
-     */
-
+    
+    // Pointless to continue servicing if the device is in suspend mode.
     if (U1PWRC & _U1PWRC_USUSPEND_MASK)
     {
+        #ifdef DEBUG
+        serial1printf("DEVICE SUSPENDED\r\n");
+        #endif
+        // Clear USB interrupt
+        IEC1CLR = _IEC1_USBIE_MASK;
         return;
     }
 
@@ -238,89 +243,120 @@ void usb_device_tasks(void)
      * cause a USB reset event during these two states.
      */
 
-    if ((U1IR & _U1IR_URSTIF_MASK) && (U1IE & _U1IE_URSTIE_MASK))
+    // Bus Reset
+    if (U1IE & _U1IE_URSTIE_MASK)
     {
-        usb_device_init();
-        usb_device_state = DEFAULT_STATE;
-
-        /*
-         * Bug Fix: Feb 26, 2007 v2.1 (#F1)
-         *********************************************************************
-         * In the original firmware, if an OUT token is sent by the host
-         * before a SETUP token is sent, the firmware would respond with an ACK.
-         * This is not a correct response, the firmware should have sent a STALL.
-         * This is a minor non-compliance since a compliant host should not
-         * send an OUT before sending a SETUP token. The fix allows a SETUP
-         * transaction to be accepted while stalling OUT transactions.
-         * */
-
-        usb_buffer[EP0_OUT_EVEN].ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-        usb_buffer[EP0_OUT_EVEN].CNT = USB_EP0_BUFF_SIZE;
-        usb_buffer[EP0_OUT_EVEN].STAT.Val &= ~_STAT_MASK;
-        usb_buffer[EP0_OUT_EVEN].STAT.Val |= _USIE|_DAT0|_DTSEN|_BSTALL;
-    }
-
-    /*
-     * Task C: Service other USB interrupts
-     */
-
-    if ((U1IR & _U1IR_IDLEIF_MASK) && (U1IE & _U1IE_IDLEIE_MASK))
-    {
-        usb_suspend();
-        U1IR |= _U1IR_IDLEIF_MASK;
-    }
-
-    if (U1IR & _U1IR_SOFIF_MASK)
-    {
-        if (U1IE & _U1IE_SOFIE_MASK)
-            usbcb_sof_handler();    // Required callback, see usbcallbacks.c
-        U1IR |= _U1IR_SOFIF_MASK;
-    }
-
-    if ((U1IR & _U1IR_STALLIF_MASK) && (U1IE & _U1IE_STALLIE_MASK))
-    {
-        usb_stall_handler();
-    }
-
-    if ((U1IR & _U1IR_UERRIF_MASK) && (U1IE & _U1IE_UERRIE_MASK))
-    {
-        usbcb_error_handler();  // Required callback, see usbcallbacks.c
-        U1EIR = 0xFF;           // This clears UERRIF
-    }
-
-    /*
-     * Pointless to continue servicing if the host has not sent a bus reset.
-     * Once bus reset is received, the device transitions into the DEFAULT
-     * state and is ready for communication.
-     */
-
-    if (usb_device_state < DEFAULT_STATE)
-        return;
-
-    /*
-     * Task D: Servicing USB Transaction Complete Interrupt
-     */
-
-    if (U1IE & _U1IE_TRNIE_MASK)
-    {
-        // Drain or deplete the USAT FIFO entries.
-        // If the USB FIFO ever gets full, USB bandwidth
-        // utilization can be compromised, and the device
-        // won't be able to receive SETUP packets.
-        for (i = 0; i < 4; i++)
+        if (U1IR & _U1IR_URSTIF_MASK)
         {
-            if (! (U1IR & _U1IR_TRNIF_MASK))
-                break;                      // USTAT FIFO must be empty.
+            #ifdef DEBUG
+            serial1printf("RESET\r\n");
+            #endif
 
-            ustat_saved = U1STAT;
-            U1IR |= _U1IR_TRNIF_MASK;
+            usb_device_init();
+            usb_device_state = DEFAULT_STATE;
 
             /*
-             * usb_ctrl_ep_service only services transactions over EP0.
-             * It ignores all other EP transactions.
-             */
+             * Bug Fix: Feb 26, 2007 v2.1 (#F1)
+             *********************************************************************
+             * In the original firmware, if an OUT token is sent by the host
+             * before a SETUP token is sent, the firmware would respond with an ACK.
+             * This is not a correct response, the firmware should have sent a STALL.
+             * This is a minor non-compliance since a compliant host should not
+             * send an OUT before sending a SETUP token. The fix allows a SETUP
+             * transaction to be accepted while stalling OUT transactions.
+             * */
 
-            usb_ctrl_ep_service();
+            usb_buffer[EP0_OUT_EVEN].ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
+            usb_buffer[EP0_OUT_EVEN].CNT = USB_EP0_BUFF_SIZE;
+            usb_buffer[EP0_OUT_EVEN].STAT.Val &= ~_STAT_MASK;
+            usb_buffer[EP0_OUT_EVEN].STAT.Val |= _USIE|_DAT0|_DTSEN|_BSTALL;
+            
+            // Clear flag
+            U1IR |= _U1IR_URSTIF_MASK;
+        }
+    }
+
+    // No bus activity for a while - suspend the firmware
+    if (U1IE & _U1IE_IDLEIE_MASK)
+    {
+        if (U1IR & _U1IR_IDLEIF_MASK)
+        {
+            #ifdef DEBUG
+            serial1printf("DEVICE IDLE\r\n");
+            #endif
+            usb_suspend();
+            U1IR |= _U1IR_IDLEIF_MASK;
+        }
+    }
+
+    // Start Of Frame
+    /*
+    if (U1IE & _U1IE_SOFIE_MASK)
+    {
+        if (U1IR & _U1IR_SOFIF_MASK)
+        {
+            #ifdef DEBUG
+            serial1printf("Start Of Frame.\r\n");
+            #endif
+            usbcb_sof_handler();
+            U1IR |= _U1IR_SOFIF_MASK;
+        }
+    }
+    */
+    
+    // Stall
+    if (U1IE & _U1IE_STALLIE_MASK)
+    {
+        if (U1IR & _U1IR_STALLIF_MASK)
+        {
+            #ifdef DEBUG
+            serial1printf("DEVICE STALL\r\n");
+            #endif
+            usb_stall_handler();
+            U1IR |= _U1IR_STALLIF_MASK;
+        }
+    }
+
+    // Error
+    if (U1IE & _U1IE_UERRIE_MASK)
+    {
+        if (U1IR & _U1IR_UERRIF_MASK)
+        {
+            #ifdef DEBUG
+            serial1printf("ERROR %d DETECTED\r\n", U1EIR);
+            #endif
+            usbcb_error_handler();
+            // Clears UERRIF
+            U1EIR = 0xFF;
+            U1IR |= _U1IR_UERRIF_MASK;
+        }
+    }
+
+    // Stop servicing if the host has not sent a bus reset.
+    if (usb_device_state < DEFAULT_STATE)
+    {
+        // Clear USB interrupt
+        //IEC1CLR = _IEC1_USBIE_MASK;
+        return;
+    }
+    
+    // A transaction has finished
+    if (U1IE & _U1IE_TRNIE_MASK)
+    {
+        for (i = 0; i < 4; i++)
+        {
+            if (U1IR & _U1IR_TRNIF_MASK)
+            {
+                #ifdef DEBUG
+                serial1printf("TRANSACTION COMPLETE\r\n");
+                #endif
+                // Processing of current token is complete
+                // A read of the U1STAT register will provide endpoint information
+                ustat_saved = U1STAT;
+                U1IR |= _U1IR_TRNIF_MASK;
+                // Try default processing on endpoint 0
+                usb_ctrl_ep_service();
+            }
         }
     }
 }
@@ -330,6 +366,10 @@ void usb_device_tasks(void)
  */
 void usb_stall_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_stall_handler\r\n");
+    #endif
+
     /*
      * Does not really have to do anything here,
      * even for the control endpoint.
@@ -353,48 +393,23 @@ void usb_stall_handler(void)
         // Clear stall status
         U1EP0CLR = _U1EP0_EPSTALL_MASK;
     }
-
-    U1IR |= _U1IR_STALLIF_MASK;
 }
 
 /*
  * This function handles if the host tries to suspend the device
+ * NOTE: Do not clear UIR_ACTVIF here!
  */
 void usb_suspend(void)
 {
-    /*
-     * NOTE: Do not clear UIR_ACTVIF here!
-     * Reason:
-     * ACTVIF is only generated once an IDLEIF has been generated.
-     * This is a 1:1 ratio interrupt generation.
-     * For every IDLEIF, there will be only one ACTVIF regardless of
-     * the number of subsequent bus transitions.
-     *
-     * If the ACTIF is cleared here, a problem could occur when:
-     * [       IDLE       ][bus activity ->
-     * <--- 3 ms ----->     ^
-     *                ^     ACTVIF=1
-     *                IDLEIF=1
-     *  #           #           #           #   (#=Program polling flags)
-     *                          ^
-     *                          This polling loop will see both
-     *                          IDLEIF=1 and ACTVIF=1.
-     *                          However, the program services IDLEIF first
-     *                          because ACTIVIE=0.
-     *                          If this routine clears the only ACTIVIF,
-     *                          then it can never get out of the suspend
-     *                          mode.
-     */
+    #ifdef DEBUG
+    serial1printf("> usb_suspend\r\n");
+    #endif
 
     U1OTGIESET = _U1OTGIE_ACTVIE_MASK;	// Enable bus activity interrupt
     U1IR |= _U1IR_IDLEIF_MASK;
 
-    /*
-     * At this point the PIC can go into sleep,idle, or
-     * switch to a slower clock, etc.  This should be done in the
-     * usbcb_suspend() if necessary.
-     */
-    usbcb_suspend();             // Required callback, see usbcallbacks.c
+    // Now the PIC can go into sleep,idle, or switch to a slower clock.
+    usbcb_suspend();
 }
 
 /*
@@ -402,27 +417,13 @@ void usb_suspend(void)
  */
 void usb_wake_from_suspend(void)
 {
-    /*
-     * If using clock switching, the place to restore the original
-     * microcontroller core clock frequency is in the usbcb_wake_from_suspend() callback
-     */
-    usbcb_wake_from_suspend(); // Required callback, see usbcallbacks.c
+    #ifdef DEBUG
+    serial1printf("> usb_wake_from_suspend\r\n");
+    #endif
 
+    // Place to restore the original CPU clock frequency for ex.
+    usbcb_wake_from_suspend();
     U1OTGIECLR = _U1OTGIE_ACTVIE_MASK;
-
-    /*
-    Bug Fix: Feb 26, 2007 v2.1
-    *********************************************************************
-    The ACTVIF bit cannot be cleared immediately after the USB module wakes
-    up from Suspend or while the USB module is suspended. A few clock cycles
-    are required to synchronize the internal hardware state machine before
-    the ACTIVIF bit can be cleared by firmware. Clearing the ACTVIF bit
-    before the internal hardware is synchronized may not have an effect on
-    the value of ACTVIF. Additonally, if the USB module uses the clock from
-    the 96 MHz PLL source, then after clearing the SUSPND bit, the USB
-    module may not be immediately operational while waiting for the 96 MHz
-    PLL to lock.
-    */
     U1OTGIR |= _U1OTGIR_ACTVIF_MASK;
 }
 
@@ -438,6 +439,10 @@ void usb_wake_from_suspend(void)
  */
 void usb_ctrl_ep_service(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_ep_service\r\n");
+    #endif
+
     // If the last packet was a EP0 OUT packet
     if ((ustat_saved & USTAT_EP0_PP_MASK) == USTAT_EP0_OUT_EVEN)
     {
@@ -448,7 +453,7 @@ void usb_ctrl_ep_service(void)
         // Set the next out to the current out packet
         pBDTEntryEP0OutNext = pBDTEntryEP0OutCurrent;
 
-        // Toggle it to the next ping pong buffer (if applicable)
+        // Toggle it to the next ping pong buffer
         *(unsigned char*)&pBDTEntryEP0OutNext ^= USB_NEXT_EP0_OUT_PING_PONG;
 
         // If the current EP0 OUT buffer has a SETUP token
@@ -505,6 +510,10 @@ void usb_ctrl_ep_service(void)
  */
 void usb_ctrl_trf_setup_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_trf_setup_handler\r\n");
+    #endif
+
     //if the SIE currently owns the buffer
     if (pBDTEntryIn[0]->STAT.UOWN != 0)
     {
@@ -524,7 +533,8 @@ void usb_ctrl_trf_setup_handler(void)
 
     /* Stage 2 */
     usb_check_std_request();
-    usbcb_check_other_req();   // Required callback, see usbcallbacks.c
+    //usbcb_check_other_req();
+    usb_check_cdc_request();
 
     /* Stage 3 */
     usb_ctrl_ep_service_complete();
@@ -541,6 +551,12 @@ void usb_ctrl_trf_setup_handler(void)
  */
 void usb_ctrl_trf_out_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_trf_out_handler\r\n");
+    Delayus(500);
+    return;
+    #endif
+
     if (control_transfer_state == CTRL_TRF_RX)
     {
         usb_ctrl_trf_rx_service();
@@ -566,6 +582,12 @@ void usb_ctrl_trf_out_handler(void)
 void usb_ctrl_trf_in_handler(void)
 {
     unsigned lastDTS;
+
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_trf_in_handler\r\n");
+    Delayus(500);
+    return;
+    #endif
 
     lastDTS = pBDTEntryIn[0]->STAT.DTS;
 
@@ -624,8 +646,11 @@ void usb_ctrl_trf_in_handler(void)
  */
 void usb_prepare_for_next_setup_trf(void)
 {
-    /*
-    Bug Fix: Feb 26, 2007 v2.1
+    #ifdef DEBUG
+    serial1printf("> usb_prepare_for_next_setup_trf\r\n");
+    #endif
+    
+    /* Bug Fix: Feb 26, 2007 v2.1
     *********************************************************************
     Facts:
     A Setup Packet should never be stalled. (USB 2.0 Section 8.5.3)
@@ -647,6 +672,7 @@ void usb_prepare_for_next_setup_trf(void)
     Check for the problem as described above and copy the Setup data from
     ctrl_trf_data to usb_setup_pkt.
     */
+    
     if ((control_transfer_state == CTRL_TRF_RX) &&
        (U1CON & _U1CON_PKTDIS_MASK) &&
        (pBDTEntryEP0OutCurrent->CNT == sizeof(CTRL_TRF_SETUP)) &&
@@ -729,14 +755,21 @@ void usb_prepare_for_next_setup_trf(void)
  */
 void usb_check_std_request(void)
 {
-    if (usb_setup_pkt.RequestType != STANDARD) return;
+    #ifdef DEBUG
+    serial1printf("> usb_check_std_request\r\n");
+    #endif
+    
+    if (usb_setup_pkt.RequestType != STANDARD)
+        return;
 
     switch (usb_setup_pkt.bRequest)
     {
         case SET_ADR:
-            usb_in_pipe[0].info.bits.busy = 1;            // This will generate a zero length packet
-            usb_device_state = ADR_PENDING_STATE;     // Update state only
-            /* See usb_ctrl_trf_in_handler() for the next step */
+            // This will generate a zero length packet
+            usb_in_pipe[0].info.bits.busy = 1;
+            // Update state only
+            usb_device_state = ADR_PENDING_STATE;
+            // See usb_ctrl_trf_in_handler() for the next step
             break;
 
         case GET_DSC:
@@ -748,9 +781,12 @@ void usb_check_std_request(void)
             break;
 
         case GET_CFG:
-            usb_in_pipe[0].pSrc.bRam = (unsigned char*)&usb_active_configuration;	// Set Source
-            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;			// Set memory type
-            usb_in_pipe[0].wCount |= 0xff;					// Set data count
+            // Set Source
+            usb_in_pipe[0].pSrc.bRam = (unsigned char*)&usb_active_configuration;
+            // Set memory type
+            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;
+            // Set data count
+            usb_in_pipe[0].wCount |= 0xff;
             usb_in_pipe[0].info.bits.busy = 1;
             break;
 
@@ -764,10 +800,13 @@ void usb_check_std_request(void)
             break;
 
         case GET_INTF:
+            // Set source
             usb_in_pipe[0].pSrc.bRam = (unsigned char*)&usb_alternate_interface +
-                usb_setup_pkt.bIntfID;				// Set source
-            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;		// Set memory type
-            usb_in_pipe[0].wCount |= 0xff;				// Set data count
+                usb_setup_pkt.bIntfID;
+            // Set memory type
+            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;
+            // Set data count
+            usb_in_pipe[0].wCount |= 0xff;
             usb_in_pipe[0].info.bits.busy = 1;
             break;
 
@@ -795,6 +834,11 @@ void usb_std_feature_req_handler(void)
     BDT_ENTRY *p;
     unsigned int *pUEP;
 
+    #ifdef DEBUG
+    serial1printf("> usb_std_feature_req_handler\r\n");
+    return;
+    #endif
+    
     if ((usb_setup_pkt.bFeature == DEVICE_REMOTE_WAKEUP)&&
        (usb_setup_pkt.Recipient == RCPT_DEV))
     {
@@ -812,7 +856,7 @@ void usb_std_feature_req_handler(void)
         usb_in_pipe[0].info.bits.busy = 1;
         /* Must do address calculation here */
 
-        if (usb_setup_pkt.EPDir == 0)
+        if (usb_setup_pkt.EPDir == 0) // OUT_FROM_HOST
         {
             p = (BDT_ENTRY*)pBDTEntryOut[usb_setup_pkt.EPNum];
         }
@@ -879,6 +923,11 @@ void usb_std_feature_req_handler(void)
  */
 void usb_std_get_dsc_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_std_get_dsc_handler\r\n");
+    return;
+    #endif
+
     if (usb_setup_pkt.bmRequestType == 0x80)
     {
         usb_in_pipe[0].info.Val = USB_INPIPES_ROM | USB_INPIPES_BUSY | USB_INPIPES_INCLUDE_ZERO;
@@ -925,6 +974,11 @@ void usb_std_get_dsc_handler(void)
  */
 void usb_std_get_status_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_std_get_status_handler\r\n");
+    return;
+    #endif
+
     ctrl_trf_data[0] = 0;                 // Initialize content
     ctrl_trf_data[1] = 0;
 
@@ -979,139 +1033,116 @@ void usb_std_get_status_handler(void)
 }
 
 /*
- * This routine wrap up the ramaining tasks in servicing
- * a Setup Request. Its main task is to set the endpoint
- * controls appropriately for a given situation. See code
- * below.
+ * This routine wrap up the ramaining tasks in servicing a Setup Request.
+ * Its main task is to set the endpoint controls appropriately for a
+ * given situation.
  * There are three main scenarios:
- * a) There was no handler for the Request, in this case
- *    a STALL should be sent out.
- * b) The host has requested a read control transfer,
- *    endpoints are required to be setup in a specific way.
- * c) The host has requested a write control transfer, or
- *    a control data stage is not required, endpoints are
+ * a) There was no handler for the Request, in this case a STALL should
+ *    be sent out.
+ * b) The host has requested a read control transfer, endpoints are
  *    required to be setup in a specific way.
+ * c) The host has requested a write control transfer, or a control data
+ *    stage is not required, endpoints are required to be setup in a specific way.
  *
  * Packet processing is resumed by clearing PKTDIS bit.
  */
+ 
 void usb_ctrl_ep_service_complete(void)
 {
-    /*
-     * PKTDIS bit is set when a Setup Transaction is received.
-     * Clear to resume packet processing.
-     */
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_ep_service_complete\r\n");
+    return;
+    #endif
+
+    // Clear PKTDIS to enable packet processing.
     U1CONCLR = _U1CON_PKTDIS_MASK;
 
+    #ifdef DEBUG
+    //serial1printf("busy=%d\r\n",usb_in_pipe[0].info.bits.busy);
+    #endif
+
+    // CTRL_TRF_RX ?
     if (usb_in_pipe[0].info.bits.busy == 0)
     {
         if (usb_out_pipe[0].info.bits.busy == 1)
         {
             control_transfer_state = CTRL_TRF_RX;
-            /*
-             * Control Write:
-             * <SETUP[0]><OUT[1]><OUT[0]>...<IN[1]> | <SETUP[0]>
-             *
-             * 1. Prepare IN EP to respond to early termination
-             *
-             *    This is the same as a Zero Length Packet Response
-             *    for control transfer without a data stage
-             */
+
+            /// USBCtrlEPAllowStatusStage
+            // 1. Prepare IN EP to respond to early termination
             pBDTEntryIn[0]->CNT = 0;
             pBDTEntryIn[0]->STAT.Val = _USIE|_DAT1|_DTSEN;
 
-            /*
-             * 2. Prepare OUT EP to receive data.
-             */
+            ///USBCtrlEPAllowDataStage
+            // 2. Prepare OUT EP to receive data.
             pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
-            pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress (&ctrl_trf_data);
+            pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&ctrl_trf_data);
             pBDTEntryEP0OutNext->STAT.Val = _USIE|_DAT1|_DTSEN;
         }
         else
         {
-            /*
-             * If no one knows how to service this request then stall.
-             * Must also prepare EP0 to receive the next SETUP transaction.
-             */
+            // Prepare EP0 to receive the next SETUP transaction.
             pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
             pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-
-            /* v2b fix */
             pBDTEntryEP0OutNext->STAT.Val = _USIE|_DAT0|_DTSEN|_BSTALL;
             pBDTEntryIn[0]->STAT.Val = _USIE|_BSTALL;
         }
     }
+
+    // CTRL_TRF_TX
     else
     {
-        // A module has claimed ownership of the control transfer session.
         if (usb_out_pipe[0].info.bits.busy == 0)
         {
             if (usb_setup_pkt.DataDir == DEV_TO_HOST)
             {
+                /// USBCtrlEPAllowDataStage
                 if (usb_setup_pkt.wLength < usb_in_pipe[0].wCount)
                 {
-                        usb_in_pipe[0].wCount = usb_setup_pkt.wLength;
+                    usb_in_pipe[0].wCount = usb_setup_pkt.wLength;
                 }
+                
                 usb_ctrl_trf_tx_service();
                 control_transfer_state = CTRL_TRF_TX;
-                /*
-                 * Control Read:
-                 * <SETUP[0]><IN[1]><IN[0]>...<OUT[1]> | <SETUP[0]>
-                 * 1. Prepare OUT EP to respond to early termination
-                 *
-                 * NOTE:
-                 * If something went wrong during the control transfer,
-                 * the last status stage may not be sent by the host.
-                 * When this happens, two different things could happen
-                 * depending on the host.
-                 * a) The host could send out a RESET.
-                 * b) The host could send out a new SETUP transaction
-                 *    without sending a RESET first.
-                 * To properly handle case (b), the OUT EP must be setup
-                 * to receive either a zero length OUT transaction, or a
-                 * new SETUP transaction.
-                 *
-                 * Furthermore, the Cnt byte should be set to prepare for
-                 * the SETUP data (8-byte or more), and the buffer address
-                 * should be pointed to usb_setup_pkt.
-                 */
+
+                /// USBCtrlEPAllowStatusStage
+
+                // 1. Prepare OUT EP to respond to early termination
                 pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
                 pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-                pBDTEntryEP0OutNext->STAT.Val = _USIE;           // Note: DTSEN is 0!
+                pBDTEntryEP0OutNext->STAT.Val = _USIE; // Note: DTSEN is 0!
 
                 pBDTEntryEP0OutCurrent->CNT = USB_EP0_BUFF_SIZE;
                 pBDTEntryEP0OutCurrent->ADR = (unsigned char*)&usb_setup_pkt;
-                pBDTEntryEP0OutCurrent->STAT.Val = _USIE;           // Note: DTSEN is 0!
+                #if 1 // RetroBSD
+                pBDTEntryEP0OutCurrent->STAT.Val = _USIE; // Microchip _USIE|_BSTALL
+                #else // Microchip
+                pBDTEntryEP0OutCurrent->STAT.Val = _USIE|_BSTALL;
+                #endif
 
-                /*
-                 * 2. Prepare IN EP to transfer data, Cnt should have
-                 *    been initialized by responsible request owner.
-                 */
-                pBDTEntryIn[0]->ADR = ConvertToPhysicalAddress (&ctrl_trf_data);
+                // 2. Prepare IN EP to transfer data
+                pBDTEntryIn[0]->ADR = ConvertToPhysicalAddress(&ctrl_trf_data);
                 pBDTEntryIn[0]->STAT.Val = _USIE|_DAT1|_DTSEN;
-
             }
-            else
-            {  // (usb_setup_pkt.DataDir == HOST_TO_DEVICE)
-
+            else // if (usb_setup_pkt.DataDir == HOST_TO_DEV)
+            {
                 control_transfer_state = CTRL_TRF_RX;
-                /*
-                 * Control Write:
-                 * <SETUP[0]><OUT[1]><OUT[0]>...<IN[1]> | <SETUP[0]>
-                 *
-                 * 1. Prepare IN EP to respond to early termination
-                 *
-                 *    This is the same as a Zero Length Packet Response
-                 *    for control transfer without a data stage
-                 */
+
+                /// USBCtrlEPAllowStatusStage
+                // 1. Prepare IN EP to respond to early termination
                 pBDTEntryIn[0]->CNT = 0;
                 pBDTEntryIn[0]->STAT.Val = _USIE|_DAT1|_DTSEN;
 
-                /*
-                 * 2. Prepare OUT EP to receive data.
-                 */
+                // 2. Prepare OUT EP to receive data.
+                #if 1 // RetroBSD
                 pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
-                pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress (&ctrl_trf_data);
+                pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&ctrl_trf_data);
                 pBDTEntryEP0OutNext->STAT.Val = _USIE|_DAT1|_DTSEN;
+                #else // Microchip
+                pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
+                pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
+                pBDTEntryEP0OutNext->STAT.Val = _USIE|_BSTALL;
+                #endif
             }
         }
     }
@@ -1134,6 +1165,11 @@ void usb_ctrl_trf_tx_service(void)
 {
     unsigned byteToSend;
     unsigned char *dst;
+
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_trf_tx_service\r\n");
+    return;
+    #endif
 
     /*
      * First, have to figure out how many byte of data to send.
@@ -1204,6 +1240,11 @@ void usb_ctrl_trf_rx_service(void)
 {
     unsigned byteToRead, i;
 
+    #ifdef DEBUG
+    serial1printf("> usb_ctrl_trf_rx_service\r\n");
+    return;
+    #endif
+
     byteToRead = pBDTEntryEP0OutCurrent->CNT;
 
     /*
@@ -1264,11 +1305,17 @@ void usb_ctrl_trf_rx_service(void)
  */
 void usb_std_set_cfg_handler(void)
 {
+    #ifdef DEBUG
+    serial1printf("> usb_std_set_cfg_handler\r\n");
+    return;
+    #endif
+
     // This will generate a zero length packet
     usb_in_pipe[0].info.bits.busy = 1;
 
     // disable all endpoints except endpoint 0
-    bzero((void*) &U1EP1, USB_MAX_EP_NUMBER - 1);
+    //bzero((void*) &U1EP1, USB_MAX_EP_NUMBER - 1);
+    U1EP1 = 0; // as USB_MAX_EP_NUMBER == 1;
 
     // clear the alternate interface settings
     bzero((void*) &usb_alternate_interface, USB_MAX_NUM_INT);
@@ -1288,8 +1335,9 @@ void usb_std_set_cfg_handler(void)
         usb_device_state = CONFIGURED_STATE;
 
         // initialize the required endpoints
-        usb_init_ep ((const unsigned char*) usb_config [usb_active_configuration - 1]);
-        usbcb_init_ep();
+        //usb_init_ep((const unsigned char*) usb_config [usb_active_configuration - 1]);
+        //usbcb_init_ep();
+        cdc_init_ep();
     }
 }
 
@@ -1299,9 +1347,14 @@ void usb_std_set_cfg_handler(void)
  * Input: unsigned EPNum - the endpoint to be configured
  *        unsigned direction - the direction to be configured
  */
-void usb_configure_endpoint (unsigned epnum, unsigned direction)
+void usb_configure_endpoint(unsigned epnum, unsigned direction)
 {
     volatile BDT_ENTRY* handle;
+
+    #ifdef DEBUG
+    serial1printf("> usb_configure_endpoint\r\n");
+    return;
+    #endif
 
     handle = (volatile BDT_ENTRY*) &usb_buffer[EP0_OUT_EVEN];
     handle += BD(epnum, direction, 0) / sizeof(BDT_ENTRY);
@@ -1317,25 +1370,10 @@ void usb_configure_endpoint (unsigned epnum, unsigned direction)
         pBDTEntryIn[epnum] = handle;
     }
 
-    #if (USB_PING_PONG_MODE == USB_PING_PONG__FULL_PING_PONG)
+    // USB_PING_PONG__FULL_PING_PONG
+
     handle->STAT.DTS = 0;
     (handle+1)->STAT.DTS = 1;
-    #elif (USB_PING_PONG_MODE == USB_PING_PONG__NO_PING_PONG)
-    //Set DTS to one because the first thing we will do
-    //when transmitting is toggle the bit
-    handle->STAT.DTS = 1;
-    #elif (USB_PING_PONG_MODE == USB_PING_PONG__EP0_OUT_ONLY)
-    if (epnum != 0)
-    {
-        handle->STAT.DTS = 1;
-    }
-    #elif (USB_PING_PONG_MODE == USB_PING_PONG__ALL_BUT_EP0)
-    if (epnum != 0)
-    {
-        handle->STAT.DTS = 0;
-        (handle+1)->STAT.DTS = 1;
-    }
-    #endif
 }
 
 /*
@@ -1375,21 +1413,27 @@ void usb_configure_endpoint (unsigned epnum, unsigned direction)
  *                   * USB_DISALLOW_SETUP disables control transfers
  *                   * USB_STALL_ENDPOINT STALLs this endpoint
  */
-void usb_enable_endpoint (unsigned ep, unsigned options)
+void usb_enable_endpoint(unsigned ep, unsigned options)
 {
     // Set the options to the appropriate endpoint control register
     unsigned int *p = (unsigned int*) (&U1EP0 + (4 * ep));
 
-    *p = options;
+    #ifdef DEBUG
+    serial1printf("> usb_enable_endpoint\r\n");
+    return;
+    #endif
 
     if (options & USB_OUT_ENABLED)
     {
-        usb_configure_endpoint(ep, 0);
+        usb_configure_endpoint(ep, OUT_FROM_HOST);
     }
+    
     if (options & USB_IN_ENABLED)
     {
-        usb_configure_endpoint(ep, 1);
+        usb_configure_endpoint(ep, IN_TO_HOST);
     }
+
+    *p = options;
 }
 
 /*
@@ -1399,10 +1443,15 @@ void usb_enable_endpoint (unsigned ep, unsigned options)
  *   unsigned ep - the endpoint the data will be transmitted on
  *   unsigned dir - the direction of the transfer
  */
-void usb_stall_endpoint (unsigned ep, unsigned dir)
+void usb_stall_endpoint(unsigned ep, unsigned dir)
 {
     BDT_ENTRY *p;
 
+    #ifdef DEBUG
+    serial1printf("> usb_stall_endpoint\r\n");
+    return;
+    #endif
+    
     if (ep == 0)
     {
         /*
@@ -1448,6 +1497,11 @@ USB_HANDLE usb_transfer_one_packet (unsigned ep, unsigned dir,
 {
     USB_HANDLE handle;
 
+    #ifdef DEBUG
+    serial1printf("> usb_transfer_one_packet\r\n");
+    return 0;
+    #endif
+    
     // If the direction is IN
     if (dir != 0)
     {

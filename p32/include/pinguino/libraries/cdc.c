@@ -37,8 +37,9 @@
 #ifndef __USBCDC__
 #define __USBCDC__
 
-// comment to not use interrupt
+// uncomment to use interrupt
 //#define __USBCDCINTERRUPT__
+#define DEBUG
 
 #include <stdarg.h>
 #include <typedef.h>
@@ -49,6 +50,13 @@
 
 #ifdef USERLED
 #include <digitalw.c>
+#endif
+
+#ifdef DEBUG
+#ifndef SERIALPRINTF
+#define SERIALPRINTF
+#endif
+#include <serial1.c>
 #endif
 
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
@@ -69,7 +77,7 @@
 #endif
 
 //u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
-extern unsigned usb_device_state;
+//extern unsigned usb_device_state;
 
 /***********************************************************************
  * USB CDC init routine
@@ -79,8 +87,12 @@ extern unsigned usb_device_state;
 void CDC_init()
 {
     #ifdef USERLED
-    int led_count = 0;
+    unsigned int led_count = 0;
     output(USERLED);
+    #endif
+
+    #ifdef DEBUG
+    serial1init(9600);
     #endif
 
     #ifdef __USBCDCINTERRUPT__
@@ -95,14 +107,14 @@ void CDC_init()
     usb_device_init();
 
     // Blink the led until device is configured and no more suspended
-    while ( U1PWRCbits.USUSPEND || usb_device_state < CONFIGURED_STATE )
+    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
     {
         usb_device_tasks();
 
         #ifdef USERLED
         if (led_count == 0)
         {
-            led_count = 10000;
+            led_count = 20000;
             toggle(USERLED);
         }
         
@@ -113,13 +125,17 @@ void CDC_init()
     #ifdef USERLED
     low(USERLED);
     #endif
-
 }
 
 /***********************************************************************
  * USB CDC interrupt routine
  * added by regis blanchot 23/01/2015
  * cf. ISRwrapper.S
+ * Alternatively, this routine may be called from the Interrupt Service
+ * Routine (ISR) whenever a USB interrupt occurs. If it is used this
+ * way, the entire USB firmware stack (the non-user API portion of the
+ * CDC serial driver) operates in an interrupt context (including the
+ * applicationís event-handler callback routine)
  **********************************************************************/
 
 #ifdef __USBCDCINTERRUPT__
@@ -130,9 +146,10 @@ void USBInterrupt(void)
         IntClearFlag(_USB_IRQ);
 
         // handles device-to-host transactions
-        cdc_tx_service();
+        //cdc_tx_service();
+        usb_device_tasks();
         
-        // Write a 1 to thess bits clear the interrupts
+        // Write a 1 to these bits clear the interrupts
         U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
         U1EIR = 0;
     }
@@ -144,18 +161,22 @@ void USBInterrupt(void)
  **********************************************************************/
 
 // Process device-specific SETUP requests.
+#if 0
 void usbcb_check_other_req()
 {
     // Check the setup data packet (cf. usb_function_cdc.c)
     usb_check_cdc_request();
 }
+#endif
 
 // Initialize the endpoints
+#if 0
 void usbcb_init_ep()
 {
     // Enable the CDC endpoint (cf. usb_function_cdc.c)
     cdc_init_ep();
 }
+#endif
 
 /***********************************************************************
  * USB CDC read routine (CDC.read)
@@ -197,9 +218,9 @@ u8 CDCgets(u8 *buffer)
  **********************************************************************/
 
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
-void CDCprint(char *string)
+void CDCprint(unsigned char *string)
 {
-    cdc_puts(string, strlen(string));
+    cdc_puts(string, strlen((const char *)string));
 }
 #endif
 
@@ -211,7 +232,7 @@ void CDCprint(char *string)
  **********************************************************************/
 
 #if defined(CDCPRINTLN)
-void CDCprintln(char *string)
+void CDCprintln(unsigned char *string)
 {
     CDCprint(string);
     CDCprint("\n\r");

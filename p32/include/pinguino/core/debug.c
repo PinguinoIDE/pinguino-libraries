@@ -13,36 +13,31 @@
 
 void debug(const char *format, ...)
 {
-	va_list args;
-	va_start(args, format);
+    va_list args;
+    va_start(args, format);
+    
+    #ifdef USBCDCDEBUG
+        #include <__cdc.c>
+        CDCprintf("debug: ");
+        CDCprintf(format, args);
+        CDCprintf("\r\n");
 
-	#ifdef NODEBUG
-	#endif
+    #elif UART1DEBUG
+        #include <serial1.c>
+        serial1init(9600);
+        serial1printf("debug: ");
+        serial1printf(format, args);
+        serial1printf("\r\n");
 
-	#ifdef USBCDCDEBUG
-		#include <__cdc.c>
-		CDCprintf("debug: ");
-		CDCprintf(format, args);
-		CDCprintf("\r\n");
-	#endif
+    #elif UART2DEBUG
+        #include <serial2.c>
+        serial2init(9600);
+        serial2printf("debug: ");
+        serial2printf(format, args);
+        serial2printf("\r\n");
+    #endif
 
-	#ifdef UART1DEBUG
-		#include <serial.c>
-		serial1init(9600);
-		serial1printf("debug: ");
-		serial1printf(format, args);
-		serial1printf("\r\n");
-	#endif
-
-	#ifdef UART2DEBUG
-		#include <serial.c>
-		serial2init(9600);
-		serial2printf("debug: ");
-		serial2printf(format, args);
-		serial2printf("\r\n");
-	#endif
-
-	va_end(args);
+    va_end(args);
 }
 
 #endif	/* __DEBUG_C */

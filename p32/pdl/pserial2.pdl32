@@ -1,5 +1,5 @@
 Serial2.init serial2init#include <serial2.c>
-Serial2.begin serial2init#include <serial2.c>
+Serial2.begin serial2init#include <serial2.c>#define ENABLE_UART2
 Serial2.write serial2write#include <serial2.c>
 Serial2.print serial2print#include <serial2.c>
 Serial2.println serial2println#include <serial2.c>

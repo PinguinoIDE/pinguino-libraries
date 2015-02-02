@@ -9,6 +9,7 @@
     ----------------------------------------------------------------------------
     Changelog :
     2014-12-20 - RB - fixed long and float support
+    2015-01-31 - RB - fixed cast issue in pprint
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -391,8 +392,13 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
 
             if (*format == 's')		// string
             {
-                char *s = va_arg(args, char*);
-                pc += pprints(out, s?s:"(null)", width, pad);
+                const u8 *s = va_arg(args, char*);
+                //RB20150131
+                //pc += pprints(out, s?s:"(null)", width, pad);
+                if (s)
+                    pc += pprints(out, s, width, pad);
+                else
+                    pc += pprints(out, (const u8 *)"(null)", width, pad);
                 continue;
             }
 

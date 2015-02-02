@@ -859,12 +859,15 @@ void MIPS32 IntConfigureSystem(u8 mode)
     /// Set the Vector Spacing to non-zero value
     _CP0_SET_INTCTL(0x00000020);
 
-    /// Set CAUSE IV
+    /// Set CAUSE IV (Interrupt Vector bit)
+    /// to use the special interrupt vector
     temp = _CP0_GET_CAUSE();    // Get Cause
     temp |= 0x00800000;         // Set IV <23>
     _CP0_SET_CAUSE(temp);       // Update Cause
 
     /// Clear BEV bit
+    /// to place the special interrupt vector at the base
+    /// of the vectored interrupt table.
     temp = _CP0_GET_STATUS();   // Get Status
     temp &= 0xFFBFFFFD;         // Clear BEV and EXL
     _CP0_SET_STATUS(temp);      // Update Status

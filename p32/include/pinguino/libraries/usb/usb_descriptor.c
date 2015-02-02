@@ -38,16 +38,16 @@ const USB_DEVICE_DESCRIPTOR usb_device = {
     sizeof (usb_device),    // Size of this descriptor in bytes
     USB_DESCRIPTOR_DEVICE,  // DEVICE descriptor type
     0x0200,                 // USB Spec Release Number in BCD format
-    0x00,                   // Class Code
+    CDC_DEVICE,             // Class Code CDC_DEVICE
     0x00,                   // Subclass code
     0x00,                   // Protocol code
     USB_EP0_BUFF_SIZE,      // Max packet size for EP0
     0x04D8,                 // Vendor ID
-    0xFEAB,                 // Product ID: PINGUINO USB CDC
-    0x0002,                 // Device release number in BCD format
+    0x000A,                 // Product ID: PINGUINO USB CDC
+    0x0000,                 // Device release number in BCD format
     1,                      // Manufacturer string index
     2,                      // Product string index
-    0,                      // Device serial number string index
+    3,                      // Device serial number string index
     1,                      // Number of possible configurations
 };
 
@@ -58,58 +58,17 @@ const USB_DEVICE_DESCRIPTOR usb_device = {
 const unsigned char usb_config1_descriptor[] = {
 
     // Configuration descriptor
-    sizeof (USB_CONFIGURATION_DESCRIPTOR),
+    sizeof(USB_CONFIGURATION_DESCRIPTOR),
     USB_DESCRIPTOR_CONFIGURATION,
     0x29, 0x00,             // Total length of data for this cfg
-    1,                      // Number of interfaces in this cfg
+    1,                      // Number of interfaces in this cfg     // 1
     1,                      // Index value of this configuration
     0,                      // Configuration string index
-    _DEFAULT | _SELF,       // Attributes
-    50,                     // Max power consumption (2X mA)
-
-    /// HID ************************************************************
-/*
-    // Interface descriptor
-    sizeof (USB_INTERFACE_DESCRIPTOR),
-    USB_DESCRIPTOR_INTERFACE,
-    0,                      // Interface Number
-    0,                      // Alternate Setting Number
-    2,                      // Number of endpoints in this intf
-    HID_INTF,               // Class code
-    0,                      // Subclass code
-    0,                      // Protocol code
-    0,                      // Interface string index
-
-    // HID Class-Specific descriptor
-    sizeof (USB_HID_DSC) + 3,
-    DSC_HID,
-    0x11, 0x01,             // HID Spec Release Number in BCD format (1.11)
-    0x00,                   // Country Code (0x00 for Not supported)
-    HID_NUM_OF_DSC,         // Number of class descriptors
-    DSC_RPT,                // Report descriptor type
-    HID_RPT01_SIZE, 0x00,   // Size of the report descriptor
-
-    // Endpoint descriptor
-    sizeof (USB_ENDPOINT_DESCRIPTOR),
-    USB_DESCRIPTOR_ENDPOINT,
-    HID_EP | _EP_IN,        // EndpointAddress
-    _INTERRUPT,             // Attributes
-    PACKET_SIZE, 0,         // Size
-    1,                      // Interval
-
-    // Endpoint descriptor
-    sizeof (USB_ENDPOINT_DESCRIPTOR),
-    USB_DESCRIPTOR_ENDPOINT,
-    HID_EP | _EP_OUT,       // EndpointAddress
-    _INTERRUPT,             // Attributes
-    PACKET_SIZE, 0,         // Size
-    1,                      // Interval
-*/
-
-    /// CDC ************************************************************
+    USB_CFG_DSC_REQUIRED,   // Attributes                           // _DEFAULT | _SELF
+    100/2,                  // Max power consumption (100 mA)
 
     // Interface Descriptor
-    0x09,                               // Size of this descriptor in bytes
+    sizeof(USB_INTERFACE_DESCRIPTOR),   // Size of this descriptor in bytes // 0x09
     USB_DESCRIPTOR_INTERFACE,           // Interface descriptor type
     CDC_COMM_INTF_ID,                   // Interface number
     0x00,                               // Alternate setting number
@@ -123,7 +82,7 @@ const unsigned char usb_config1_descriptor[] = {
     sizeof(USB_CDC_HEADER_FN_DSC),      // Size of this descriptor in bytes (5)
     CS_INTERFACE,                       // bDescriptorType
     DSC_FN_HEADER,                      // bDescriptorSubtype
-    0x20, 0x01,                         // bcdCDC
+    0x10, 0x01,                         // bcdCDC (RB20150129 : was 0x0120)
 
     // Abstract Control Management Functional Descriptor
     sizeof(USB_CDC_ACM_FN_DSC),         // Size of this descriptor in bytes (4)
@@ -135,28 +94,28 @@ const unsigned char usb_config1_descriptor[] = {
     sizeof(USB_CDC_UNION_FN_DSC),       // Size of this descriptor in bytes (5)
     CS_INTERFACE,                       // bDescriptorType
     DSC_FN_UNION,                       // bDescriptorSubtype
-    0x01,                               // bControlInterface
-    0x02,                               // bSubordinateInterface0
+    CDC_COMM_INTF_ID,                   // bControlInterface        // 01 ?
+    CDC_DATA_INTF_ID,                   // bSubordinateInterface0   // 02 ?
 
     // Call Management Functional Descriptor
     sizeof(USB_CDC_CALL_MGT_FN_DSC),    // Size of this descriptor in bytes (5)
     CS_INTERFACE,                       // bDescriptorType
     DSC_FN_CALL_MGT,                    // bDescriptorSubtype
-    0x00,                               // bmCapabilities
-    0x02,                               // bDataInterface
+    0x00,                               // bmCapabilities           // 00
+    CDC_DATA_INTF_ID,                   // bDataInterface           // 02
 
     // Endpoint Descriptor
-    0x07,
+    sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP01_IN,                           // Endpoint address
+    _EP01_IN,                           // Endpoint address         // _EP01_IN
     _INTERRUPT,                         // Attributes
     CDC_COMM_IN_EP_SIZE, 0x00,          // Size
-    0x02,                               // Interval
+    0x02,                               // Interval 2ms
 
     // CDC Data Interface
-    0x09,                               // Size of this descriptor in bytes
+    sizeof(USB_INTERFACE_DESCRIPTOR),   // 0x09
     USB_DESCRIPTOR_INTERFACE,           // Interface descriptor type
-    0x02,                               // Interface number
+    CDC_DATA_INTF_ID,                   // Interface number         // 0x02
     0x00,                               // Alternate setting number
     0x02,                               // Number of endpoints in this interface
     DATA_INTF,                          // Class code
@@ -165,17 +124,17 @@ const unsigned char usb_config1_descriptor[] = {
     0x00,                               // Interface string index
 
     // Endpoint Descriptor
-    0x07,                               // Size of this descriptor in bytes
+    sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP02_OUT,                          // Endpoint address
+    _EP02_OUT,                          // Endpoint address         // _EP02_OUT
     _BULK,                              // Attributes
     DESC_CONFIG_WORD(0x40),             // Size
     0x00,                               // Interval
 
     // Endpoint Descriptor
-    0x07,                               // Size of this descriptor in bytes
+    sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP02_IN,                           // Endpoint address
+    _EP02_IN,                           // Endpoint address         // _EP02_IN
     _BULK,                              // Attributes
     DESC_CONFIG_WORD(0x40),             // Size
     0x00                                // Interval
@@ -216,21 +175,29 @@ const unsigned char hid_rpt01 [HID_RPT01_SIZE] = {
 static const USB_STRING_INIT(1) string0_descriptor = {
     sizeof(string0_descriptor),
     USB_DESCRIPTOR_STRING,              /* Language code */
-    { 0x0409 },
+    { 0x0409 }
 };
 
 static const USB_STRING_INIT(25) string1_descriptor = {
     sizeof(string1_descriptor),
     USB_DESCRIPTOR_STRING,              /* Manufacturer */
     { 'M','i','c','r','o','c','h','i','p',' ',
-      'T','e','c','h','n','o','l','o','g','y',
-      ' ','I','n','c','.' },
+      'T','e','c','h','n','o','l','o','g','y',' ',
+      'I','n','c','.' }
 };
 
 static const USB_STRING_INIT(19) string2_descriptor = {
     sizeof(string2_descriptor),
     USB_DESCRIPTOR_STRING,              /* Product */
-    { 'P','I','N','G','U','I','N','O',' ','C','D','C',' ','D','e','v','i','c','e' },
+    { 'P','I','N','G','U','I','N','O',' ',
+      'C','D','C',' ',
+      'D','e','v','i','c','e' }
+};
+
+static const USB_STRING_INIT(19) string3_descriptor = {
+    sizeof(string3_descriptor),
+    USB_DESCRIPTOR_STRING,              /* Serial Number */
+    {'R','.','B','l','a','n','c','h','o','t'}
 };
 
 // Array of configuration descriptors
@@ -243,6 +210,7 @@ const unsigned char *const usb_string[USB_NUM_STRING_DESCRIPTORS] = {
     (const unsigned char *const) &string0_descriptor,
     (const unsigned char *const) &string1_descriptor,
     (const unsigned char *const) &string2_descriptor,
+    (const unsigned char *const) &string3_descriptor,
 };
 
 #endif

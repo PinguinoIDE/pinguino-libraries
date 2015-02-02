@@ -1,1 +1,1 @@
-Debug debug#include <debug.c>
+Debug debug#include <debug.c>#define DEBUG

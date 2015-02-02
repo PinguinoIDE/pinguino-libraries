@@ -29,31 +29,6 @@
 #ifndef USBFUNCTIONCDC_H
 #define USBFUNCTIONCDC_H
 
-/*
- * Default CDC configuration.
- */
-#ifndef CDC_COMM_INTF_ID
-#   define CDC_COMM_INTF_ID	0x0
-#endif
-#ifndef CDC_COMM_EP
-#   define CDC_COMM_EP		2
-#endif
-#ifndef CDC_COMM_IN_EP_SIZE
-#   define CDC_COMM_IN_EP_SIZE	8
-#endif
-#ifndef CDC_DATA_INTF_ID
-#   define CDC_DATA_INTF_ID	0x01
-#endif
-#ifndef CDC_DATA_EP
-#   define CDC_DATA_EP		3
-#endif
-#ifndef CDC_DATA_OUT_EP_SIZE
-#   define CDC_DATA_OUT_EP_SIZE	64
-#endif
-#ifndef CDC_DATA_IN_EP_SIZE
-#   define CDC_DATA_IN_EP_SIZE	64
-#endif
-
 /* Class-Specific Requests */
 #define SEND_ENCAPSULATED_COMMAND   0x00
 #define GET_ENCAPSULATED_RESPONSE   0x01
@@ -129,6 +104,48 @@
 #endif
 
 #define USB_CDC_ACM_FN_DSC_VAL      0x02
+
+/******************************
+ * CDC Specific Configuration *
+ ******************************/
+/*
+ * Default CDC configuration.
+ */
+
+#ifndef CDC_COMM_INTF_ID
+#   define CDC_COMM_INTF_ID	0x0
+#endif
+#ifndef CDC_COMM_EP
+#   define CDC_COMM_EP		2
+#endif
+#ifndef CDC_COMM_IN_EP_SIZE
+#   define CDC_COMM_IN_EP_SIZE	8
+#endif
+#ifndef CDC_DATA_INTF_ID
+#   define CDC_DATA_INTF_ID	0x01
+#endif
+#ifndef CDC_DATA_EP
+#   define CDC_DATA_EP		3
+#endif
+#ifndef CDC_DATA_OUT_EP_SIZE
+#   define CDC_DATA_OUT_EP_SIZE	64
+#endif
+#ifndef CDC_DATA_IN_EP_SIZE
+#   define CDC_DATA_IN_EP_SIZE	64
+#endif
+
+#define CDC_CONFIG_NUM          1
+#define CDC_INT_EP_NUM          2
+#define CDC_INT_EP_SIZE         8
+#define CDC_BULK_EP_NUM         3
+#define CDC_BULK_OUT_EP_SIZE    64
+#define CDC_BULK_IN_EP_SIZE     64
+
+/* Default Line Coding */
+#define CDC_DEFAULT_BPS         115200
+#define CDC_DEFAULT_FORMAT      0       // 1 stop bit
+#define CDC_DEFAULT_PARITY      0       // No parity
+#define CDC_DEFAULT_NUM_BITS    8       // 8-bits per word
 
 /*
  * Function:

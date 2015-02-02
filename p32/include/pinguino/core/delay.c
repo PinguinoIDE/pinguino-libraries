@@ -44,7 +44,7 @@ void Delayms(u32 ms)
 {
     do
     {
-        Delayus(1000); // 1 ms
+        Delayus(996); // 1 ms
     }
     while(--ms);
 }

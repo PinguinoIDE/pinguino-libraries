@@ -58,6 +58,14 @@ static unsigned char dummy_encapsulated_cmd_response[DUMMY_LENGTH];
  */
 void usb_check_cdc_request()
 {
+    #ifdef DEBUG
+    unsigned char rq = usb_setup_pkt.bRequest;
+    unsigned char cl = usb_setup_pkt.bmRequestType;
+    serial1printf("> usb_check_cdc_request\r\n");
+    serial1printf("> type    = 0x%X\r\n", cl);
+    serial1printf("> request = 0x%X\r\n", rq);
+    #endif
+
     /*
      * If request recipient is not an interface then return
      */
@@ -78,6 +86,7 @@ void usb_check_cdc_request()
         usb_setup_pkt.bIntfID != CDC_DATA_INTF_ID)
         return;
 
+#if 0
     switch (usb_setup_pkt.bRequest)
     {
         case SEND_ENCAPSULATED_COMMAND:
@@ -108,11 +117,12 @@ void usb_check_cdc_request()
 
         case SET_CONTROL_LINE_STATE:
             control_signal_bitmap._byte = (unsigned char)usb_setup_pkt.W_Value;
-            CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
-            CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
+            //CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
+            //CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
             usb_in_pipe[0].info.bits.busy = 1;
             break;
     }
+#endif
 }
 
 /*
@@ -120,24 +130,20 @@ void usb_check_cdc_request()
  * the default line coding (baud rate, bit parity, number of data bits,
  * and format). This function also enables the endpoints and prepares for
  * the first transfer from the host.
- *
- * This function should be called after the SET_CONFIGURATION command.
- * This is most simply done by calling this function from the
- * usbcb_init_ep() function.
- *
- * Usage:
- *     void usbcb_init_ep()
- *     {
- *         cdc_init_ep();
- *     }
  */
+ 
 void cdc_init_ep()
 {
+    #ifdef DEBUG
+    serial1printf("> cdc_init_ep\r\n");
+    return;
+    #endif
+
     // Abstract line coding information
-    cdc_line_coding.dwDTERate   = 115200;   // baud rate
-    cdc_line_coding.bCharFormat = 0;        // 1 stop bit
-    cdc_line_coding.bParityType = 0;        // No parity
-    cdc_line_coding.bDataBits   = 8;        // 5,6,7,8, or 16
+    cdc_line_coding.dwDTERate   = CDC_DEFAULT_BPS;      // baud rate
+    cdc_line_coding.bCharFormat = CDC_DEFAULT_FORMAT;   // 1 stop bit
+    cdc_line_coding.bParityType = CDC_DEFAULT_PARITY;   // No parity
+    cdc_line_coding.bDataBits   = CDC_DEFAULT_NUM_BITS; // 5,6,7,8, or 16
 
     cdc_trf_state = CDC_TX_READY;
     cdc_tx_len = 0;
@@ -154,13 +160,13 @@ void cdc_init_ep()
      *          sent.
      */
      
-    usb_enable_endpoint (CDC_COMM_EP, USB_IN_ENABLED |
+    usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED |
         USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
 
-    usb_enable_endpoint (CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED |
+    usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED |
         USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
 
-    data_out = usb_rx_one_packet (CDC_DATA_EP,
+    data_out = usb_rx_one_packet(CDC_DATA_EP,
         (unsigned char*) &cdc_data_rx, sizeof(cdc_data_rx));
 
     data_in = 0;
@@ -241,8 +247,6 @@ int cdc_putc(unsigned char c)
  */
 void cdc_puts(unsigned char *buffer, int length)
 {
-    int space; // number of free bytes in transmit buffer
-    
     if (cdc_is_tx_ready())
     {
         while (length--)
@@ -281,6 +285,11 @@ void cdc_puts(unsigned char *buffer, int length)
  */
 void cdc_tx_service()
 {
+    #ifdef DEBUG
+    serial1printf("> cdc_tx_service\r\n");
+    return;
+    #endif
+
     // Check that USB connection is established.
     if (usb_device_state < CONFIGURED_STATE ||
         (U1PWRC & _U1PWRC_USUSPEND_MASK))

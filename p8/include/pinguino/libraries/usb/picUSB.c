@@ -557,93 +557,107 @@ void WaitForSetupStage(void) {
   // follows the sequence of transactions described in the USB spec chapter 5.  The
   // only Control Pipe in this firmware is the Default Control Pipe (endpoint 0).
   // Control messages that have a different destination will be discarded.
-void ProcessControlTransfer(void) {
-#ifdef DEBUG_PRINT
+void ProcessControlTransfer(void)
+{
+    #ifdef DEBUG_PRINT
     printf("Pct\n\r");
-#endif
-  if (USTATbits.DIR == OUT) {
-  // Endpoint 0:out
-  // Pull PID from middle of BD0STAT
-    u8 PID = (EP_OUT_BD(0).Stat.uc & 0x3C) >> 2;
-    if (PID == 0x0D)
-  // SETUP PID - a transaction is starting
-      SetupStage();
-    else if (ctrlTransferStage == DATA_OUT_STAGE) {
-  // Complete the data stage so that all information has
-  // passed from host to device before servicing it.
-      OutDataStage(0);
+    #endif
+    if (USTATbits.DIR == OUT)
+    {
+        // Endpoint 0:out
+        // Pull PID from middle of BD0STAT
+        u8 PID = (EP_OUT_BD(0).Stat.uc & 0x3C) >> 2;
 
-#ifdef USB_USE_HID
-      if (HIDPostProcess) {
-  // Determine which report is being set.
-        u8 reportID = SetupPacket.wValue0;
-
-  // Find out if an Output or Feature report has arrived on the control pipe.
-  // Get the report type from the Setup packet.
-        if (SetupPacket.wValue1 == 0x02) {
-  // Output report
-          SetOutputReport(reportID);
+        if (PID == 0x0D)
+        {
+            // SETUP PID - a transaction is starting
+            SetupStage();
         }
-        else if (SetupPacket.wValue1 == 0x03) {
-  // Feature report
-          SetFeatureReport(reportID);
+        else if (ctrlTransferStage == DATA_OUT_STAGE)
+        {
+            // Complete the data stage so that all information has
+            // passed from host to device before servicing it.
+            OutDataStage(0);
+
+            #ifdef USB_USE_HID
+            if (HIDPostProcess)
+            {
+                // Determine which report is being set.
+                u8 reportID = SetupPacket.wValue0;
+
+                // Find out if an Output or Feature report has arrived on the control pipe.
+                // Get the report type from the Setup packet.
+                if (SetupPacket.wValue1 == 0x02)
+                {
+                    // Output report
+                    SetOutputReport(reportID);
+                }
+                else if (SetupPacket.wValue1 == 0x03)
+                {
+                    // Feature report
+                    SetFeatureReport(reportID);
+                }
+                else
+                {
+                    // Unknown report type
+                }
+            }
+            #endif
+
+            // Turn control over to the SIE and toggle the data bit
+            if(EP_OUT_BD(0).Stat.DTS)
+                EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
+            else
+                EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
         }
-        else {
-  // Unknown report type
+        else
+        {
+            // Prepare for the Setup stage of a control transfer
+            WaitForSetupStage();
         }
-      }
-#endif
-
-  // Turn control over to the SIE and toggle the data bit
-      if(EP_OUT_BD(0).Stat.DTS)
-        EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
-      else
-        EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
     }
-    else {
-  // Prepare for the Setup stage of a control transfer
-      WaitForSetupStage();
-    }
-  }
-  else if(USTATbits.DIR == IN) {
-  // Endpoint 0:in
-    if ((UADDR == 0) && (deviceState == ADDRESS)) {
-  // TBD: ensure that the new address matches the value of
-  // "deviceAddress" (which came in through a SET_ADDRESS).
-      UADDR = SetupPacket.wValue0;
-#ifdef DEBUG_PRINT
-      printf("UADDR = 0x%x\r\n", (word)UADDR);
-#endif
-      if(UADDR == 0)
-  // If we get a reset after a SET_ADDRESS, then we need
-  // to drop back to the Default state.
-        deviceState = DEFAULT_STATUS;
+    else if(USTATbits.DIR == IN)
+    {
+        // Endpoint 0:in
+        if ((UADDR == 0) && (deviceState == ADDRESS))
+        {
+            // TBD: ensure that the new address matches the value of
+            // "deviceAddress" (which came in through a SET_ADDRESS).
+            UADDR = SetupPacket.wValue0;
+            #ifdef DEBUG_PRINT
+            printf("UADDR = 0x%x\r\n", (word)UADDR);
+            #endif
+            if(UADDR == 0)
+                // If we get a reset after a SET_ADDRESS, then we need
+                // to drop back to the Default state.
+                deviceState = DEFAULT_STATUS;
     }
 
-    if (ctrlTransferStage == DATA_IN_STAGE) {
-  // Start (or continue) transmitting data
-      InDataStage(0);
+    if (ctrlTransferStage == DATA_IN_STAGE)
+    {
+        // Start (or continue) transmitting data
+        InDataStage(0);
 
-  // Turn control over to the SIE and toggle the data bit
-      if(EP_IN_BD(0).Stat.DTS)
-        EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
-      else
-        EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
+        // Turn control over to the SIE and toggle the data bit
+        if(EP_IN_BD(0).Stat.DTS)
+            EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
+        else
+            EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
     }
-    else {
-  // Prepare for the Setup stage of a control transfer
-      WaitForSetupStage();
+    else
+    {
+        // Prepare for the Setup stage of a control transfer
+        WaitForSetupStage();
     }
-  }
-  else {
-#ifdef DEBUG_PRINT
-    printf("IN on EP %d\r\n", (USTAT >> 3) & 0x0f);
-    printf("USTAT = 0x%uhx\r\n", USTAT);
-#endif
-  }
+    }
+    else
+    {
+        #ifdef DEBUG_PRINT
+        printf("IN on EP %d\r\n", (USTAT >> 3) & 0x0f);
+        printf("USTAT = 0x%uhx\r\n", USTAT);
+        #endif
+    }
 }
-
-
 
 void EnableUSBModule(void)
 {

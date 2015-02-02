@@ -1,5 +1,5 @@
 Serial1.init serial1init#include <serial1.c>
-Serial1.begin serial1init#include <serial1.c>
+Serial1.begin serial1init#include <serial1.c>#define ENABLE_UART1
 Serial1.write serial1write#include <serial1.c>
 Serial1.print serial1print#include <serial1.c>
 Serial1.println serial1println#include <serial1.c>
