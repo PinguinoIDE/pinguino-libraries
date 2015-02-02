@@ -1,4 +1,4 @@
-SHELL		=	cmd.exe
+SHELL=cmd.exe
 # ----------------------------------------------------------------------
 # Makefile32.windows
 # Windows Makefile for 32-bit Pinguino
@@ -126,31 +126,30 @@ ELF_FLAGS	= \
 all: clean copy compile convert
 #all: clean copy compile
 
+# ------------------------------------------------------------------
+# cleaning all build files
+# ------------------------------------------------------------------
 clean:
-	# ------------------------------------------------------------------
-	# cleaning all build files
-	# ------------------------------------------------------------------
 	if exist $(_IDE_SRCDIR_)\main32.o $(RM) $(_IDE_SRCDIR_)\main32.o
 	if exist $(_IDE_SRCDIR_)\main32.elf $(RM) $(_IDE_SRCDIR_)\main32.elf
 	if exist $(_IDE_SRCDIR_)\main32.hex $(RM) $(_IDE_SRCDIR_)\main32.hex
 	if exist $(OBJDIR)\processor.o $(RM) $(OBJDIR)\processor.o
 
+# ------------------------------------------------------------------
+# adding proc. definitions
+# ------------------------------------------------------------------
 copy:
-	# ------------------------------------------------------------------
-	# adding proc. definitions
-	# ------------------------------------------------------------------
 	$(CP) $(OBJDIR)\$(_IDE_PROC_).o $(OBJDIR)\processor.o > nul
 
+# ------------------------------------------------------------------
+# compiling and linking
+# ------------------------------------------------------------------
 compile:
-	# ------------------------------------------------------------------
-	# compiling and linking
-	# ------------------------------------------------------------------
-	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)\main32.elf $(_IDE_SRCDIR_)\main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)\main32.S $(_IDE_SRCDIR_)\main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)\main32.c > $(_IDE_SRCDIR_)\main32.pp
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)\main32.c > $(_IDE_SRCDIR_)\main32.lst
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)\main32.o $(_IDE_SRCDIR_)\main32.c 
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)\main32.elf  \
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)\main32.o $(_IDE_SRCDIR_)\main32.c
+	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)\main32.elf \
 		$(_IDE_SRCDIR_)\main32.o \
 		$(OBJDIR)\processor.o \
 		$(OBJDIR)\usb\$(CDCLIBRARY) \
@@ -160,16 +159,15 @@ compile:
 		$(INCDIR)\non-free\p32xxxx.h \
 		$(LIBS)
 
+# ------------------------------------------------------------------
+# converting elf to hex
+# ------------------------------------------------------------------
 convert:
-	# ------------------------------------------------------------------
-	# converting elf to hex
-	# ------------------------------------------------------------------
 	$(OBJC) -O ihex $(_IDE_SRCDIR_)\main32.elf $(_IDE_SRCDIR_)\main32.hex
 
+# ------------------------------------------------------------------
+# fixing bad record
+# ------------------------------------------------------------------
 correct:
-	# ------------------------------------------------------------------
-	# fixing bad record
-	# ------------------------------------------------------------------
 	grep --binary --invert-match $(BADRECORD) $(_IDE_SRCDIR_)\main32.hex > $(_IDE_SRCDIR_)\temp.hex
 	$(MV) $(_IDE_SRCDIR_)\temp.hex $(_IDE_SRCDIR_)\main32.hex
-
