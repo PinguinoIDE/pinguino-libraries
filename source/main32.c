@@ -170,58 +170,40 @@ int main()
 #endif // __SERIAL__
 
 
-//#ifndef ONEVENT
-    #ifndef TMR1INT
-    void Timer1Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-    
-    #if !defined(TMR2INT) && !defined(__MILLIS__) && !defined(__SERVOS__)
-    void Timer2Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-    
-    #ifndef TMR3INT
-    void Timer3Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-    
-    #ifndef TMR4INT
-    void Timer4Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-    
-    #ifndef TMR5INT
-    void Timer5Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-//#endif // ONEVENT
+#if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__)
+void Timer1Interrupt(void)
+{
+    Nop();    
+}
+#endif
 
-/*
-#ifndef __MILLIS__
+#if !defined(TMR2INT) && !defined(__SERVOS__)
 void Timer2Interrupt(void)
 {
     Nop();    
 }
-#endif // __MILLIS__
+#endif
 
-#ifndef __SERVOS__
-void Timer2Interrupt(void)
+#if !defined(TMR3INT) && !defined(__IRREMOTE__)//&& !defined(__PWM__)
+void Timer3Interrupt(void)
 {
     Nop();    
 }
-#endif // __SERVOS__
-*/
+#endif
+
+#if !defined(TMR4INT) && !defined(__STEPPER__)
+void Timer4Interrupt(void)
+{
+    Nop();    
+}
+#endif
+
+#if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
+void Timer5Interrupt(void)
+{
+    Nop();    
+}
+#endif
 
 #ifndef __SPI__
     #if (SPIx != 1)
@@ -246,7 +228,7 @@ void RTCCInterrupt(void)
 }
 #endif // __RTCC__
 
-#if !defined(__USBCDC__) || !defined(__USBCDCINTERRUPT__)
+#if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) || 
 void USBInterrupt(void)
 {
     Nop();    
