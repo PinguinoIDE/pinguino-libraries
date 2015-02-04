@@ -34,6 +34,8 @@
 #ifndef _DCF77_C_
  #define _DCF77_C_
 
+ #define __DCF77__
+
 #include <typedef.h>			// u8, u16, ...
 #include <digitalw.c>			// pinMode, ...
 #ifdef DEBUG					// NB: Turn debugging on or off from the IDE
@@ -289,6 +291,7 @@ void DCF77_start(u8 dcfPin)
 /*******************************************************************************
 * Timer 1 interrupt (Vector 4)
 *******************************************************************************/
+#if 0
 // Put the ISR_wrapper in the good place
 void ISR_wrapper_vector_4(void) __attribute__ ((section (".vector_4")));
 
@@ -297,6 +300,7 @@ void ISR_wrapper_vector_4(void) { Timer1Interrupt(); }
 
 // Tmr1Interrupt is declared as an interrupt routine
 void Timer1Interrupt(void) __attribute__ ((interrupt));
+#endif
 
 void Timer1Interrupt()
 {

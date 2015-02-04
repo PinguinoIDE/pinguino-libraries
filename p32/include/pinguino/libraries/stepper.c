@@ -508,13 +508,13 @@ void Stepper_stepMotor(int current_step)
     Interrupt routine
     Regis Blanchot (2013)
     --------------------------------------------------------------------
-    millis  uses Core Timer
+    millis  uses Timer1
     servos  uses Timer2
     pwm     uses Timer3
-    dcf77   uses Timer1
     stepper uses Timer4
+    dcf77   uses Timer1
     ------------------------------------------------------------------**/
-
+#if 0
 // Put the ISR_wrapper in the good place
 void MIPS32 ISR_wrapper_vector_16(void) __attribute__ ((section (".vector_16")));
 
@@ -526,9 +526,11 @@ void MIPS32 ISR_wrapper_vector_16(void)
 {
     stepper_interrupt();
 }
+#endif
 
 //void servo_interrupt()
-void MIPS32 stepper_interrupt(void)
+//void MIPS32 stepper_interrupt(void)
+void Timer4Interrupt(void)
 {
     static volatile int current_step=0;
     

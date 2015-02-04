@@ -38,7 +38,7 @@
 #endif
 
 #define USB_MAX_EP_NUMBER                   2
-#define USB_NUM_STRING_DESCRIPTORS          4 // 4 if serial number is used
+#define USB_NUM_STRING_DESCRIPTORS          3
 // PIC32 supports only full ping-pong mode.
 #define USB_PING_PONG_MODE USB_PING_PONG__FULL_PING_PONG
 
@@ -84,36 +84,36 @@
 #define _EP15_IN	0x8F
 
 /* Configuration Attributes */
-#define _DEFAULT	(0x01 << 7)	// Default Value (Bit 7 is set)
-#define _SELF		(0x01 << 6)	// Self-powered (Supports if set)
-#define _RWU		(0x01 << 5)	// Remote Wakeup (Supports if set)
-#define _HNP		(0x01 << 1)	// HNP (Supports if set)
-#define _SRP		(0x01)		// SRP (Supports if set)
+#define _DEFAULT        (0x01 << 7)	// Default Value (Bit 7 is set)
+#define _SELF           (0x01 << 6)	// Self-powered (Supports if set)
+#define _RWU            (0x01 << 5)	// Remote Wakeup (Supports if set)
+#define _HNP            (0x01 << 1)	// HNP (Supports if set)
+#define _SRP            (0x01)		// SRP (Supports if set)
 
 /* Endpoint Transfer Type */
-#define _CTRL		0x00		// Control Transfer
-#define _ISO		0x01		// Isochronous Transfer
-#define _BULK		0x02		// Bulk Transfer
-#define _INTERRUPT	0x03		// Interrupt Transfer
+#define _CTRL           0x00		// Control Transfer
+#define _ISO            0x01		// Isochronous Transfer
+#define _BULK           0x02		// Bulk Transfer
+#define _INTERRUPT      0x03		// Interrupt Transfer
 
 /* Isochronous Endpoint Synchronization Type */
-#define _NS		(0x00 << 2)	// No Synchronization
-#define _AS		(0x01 << 2)	// Asynchronous
-#define _AD		(0x02 << 2)	// Adaptive
-#define _SY		(0x03 << 2)	// Synchronous
+#define _NS             (0x00 << 2)	// No Synchronization
+#define _AS             (0x01 << 2)	// Asynchronous
+#define _AD             (0x02 << 2)	// Adaptive
+#define _SY             (0x03 << 2)	// Synchronous
 
 /* Isochronous Endpoint Usage Type */
-#define _DE		(0x00 << 4)	// Data endpoint
-#define _FE		(0x01 << 4)	// Feedback endpoint
-#define _IE		(0x02 << 4)	// Implicit feedback Data endpoint
+#define _DE             (0x00 << 4)	// Data endpoint
+#define _FE             (0x01 << 4)	// Feedback endpoint
+#define _IE             (0x02 << 4)	// Implicit feedback Data endpoint
 
-#define _ROM		USB_INPIPES_ROM
-#define _RAM		USB_INPIPES_RAM
+#define _ROM            USB_INPIPES_ROM
+#define _RAM            USB_INPIPES_RAM
 
 //These are the directional indicators used for the usb_transfer_one_packet()
 //  function.
-#define OUT_FROM_HOST	0
-#define IN_TO_HOST	1
+#define OUT_FROM_HOST   0
+#define IN_TO_HOST      1
 
 /*
  * CTRL_TRF_SETUP: Every setup packet has 8 bytes.  This structure
@@ -294,12 +294,12 @@ typedef struct __attribute__ ((packed))
 #define USB_INPIPES_NO_DATA        0x00     //no data to send
 #define USB_INPIPES_NO_OPTIONS     0x00     //no options set
 
-#define USB_EP0_ROM            USB_INPIPES_ROM
-#define USB_EP0_RAM            USB_INPIPES_RAM
-#define USB_EP0_BUSY           USB_INPIPES_BUSY
-#define USB_EP0_INCLUDE_ZERO   USB_INPIPES_INCLUDE_ZERO
-#define USB_EP0_NO_DATA        USB_INPIPES_NO_DATA
-#define USB_EP0_NO_OPTIONS     USB_INPIPES_NO_OPTIONS
+#define USB_EP0_ROM                 USB_INPIPES_ROM
+#define USB_EP0_RAM                 USB_INPIPES_RAM
+#define USB_EP0_BUSY                USB_INPIPES_BUSY
+#define USB_EP0_INCLUDE_ZERO        USB_INPIPES_INCLUDE_ZERO
+#define USB_EP0_NO_DATA             USB_INPIPES_NO_DATA
+#define USB_EP0_NO_OPTIONS          USB_INPIPES_NO_OPTIONS
 
 /*
  * Standard Request Codes
@@ -318,8 +318,8 @@ typedef struct __attribute__ ((packed))
 #define SYNCH_FRAME 12
 
 /* Section: Standard Feature Selectors */
-#define DEVICE_REMOTE_WAKEUP    0x01
-#define ENDPOINT_HALT           0x00
+#define DEVICE_REMOTE_WAKEUP        0x01
+#define ENDPOINT_HALT               0x00
 
 /* Section: USB Device States - To be used with [BYTE usb_device_state] */
 
@@ -328,24 +328,24 @@ typedef struct __attribute__ ((packed))
  * the D+ or D- line.  This defintions is a return value of the
  * function usb_get_device_state()
  */
-#define DETACHED_STATE          0x00
+#define DETACHED_STATE              0x00
 
 /* Attached is the state in which the device is attached ot the bus but the
  * hub/port that it is attached to is not yet configured. This defintions is a
  * return value of the function usb_get_device_state()
  */
-#define ATTACHED_STATE          0x01
+#define ATTACHED_STATE              0x01
 
 /* Powered is the state in which the device is attached to the bus and the
  * hub/port that it is attached to is configured. This defintions is a return
  * value of the function usb_get_device_state()
  */
-#define POWERED_STATE           0x02
+#define POWERED_STATE               0x02
 
 /* Default state is the state after the device receives a RESET command from
  * the host. This defintions is a return value of the function usb_get_device_state()
  */
-#define DEFAULT_STATE           0x04
+#define DEFAULT_STATE               0x04
 
 /* Address pending state is not an official state of the USB defined states.
  * This state is internally used to indicate that the device has received a
@@ -354,12 +354,12 @@ typedef struct __attribute__ ((packed))
  * complete.  This defintions is a return value of the function
  * usb_get_device_state()
  */
-#define ADR_PENDING_STATE       0x08
+#define ADR_PENDING_STATE           0x08
 
 /* Address is the state in which the device has its own specific address on the
  * bus. This defintions is a return value of the function usb_get_device_state().
  */
-#define ADDRESS_STATE           0x10
+#define ADDRESS_STATE               0x10
 
 /* Configured is the state where the device has been fully enumerated and is
  * operating on the bus.  The device is now allowed to excute its application
@@ -367,32 +367,32 @@ typedef struct __attribute__ ((packed))
  * value specified in the configuration descriptor of the current configuration.
  * This defintions is a return value of the function usb_get_device_state().
  */
-#define CONFIGURED_STATE        0x20
+#define CONFIGURED_STATE            0x20
 
 /* UCFG Initialization Parameters */
 #define SetConfigurationOptions()   {U1CNFG1 = 0;}
 
 /* UEPn Initialization Parameters */
-#define EP_CTRL		0x0C	// Cfg Control pipe for this ep
-#define EP_OUT		0x18	// Cfg OUT only pipe for this ep
-#define EP_IN		0x14	// Cfg IN only pipe for this ep
-#define EP_OUT_IN	0x1C	// Cfg both OUT & IN pipes for this ep
-#define HSHK_EN		0x01	// Enable handshake packet
-				// Handshake should be disable for isoch
+#define EP_CTRL                     0x0C	// Cfg Control pipe for this ep
+#define EP_OUT                      0x18	// Cfg OUT only pipe for this ep
+#define EP_IN                       0x14	// Cfg IN only pipe for this ep
+#define EP_OUT_IN                   0x1C	// Cfg both OUT & IN pipes for this ep
+#define HSHK_EN                     0x01	// Enable handshake packet
+                                            // Handshake should be disable for isoch
 
-#define USB_HANDSHAKE_ENABLED   0x01
-#define USB_HANDSHAKE_DISABLED  0x00
+#define USB_HANDSHAKE_ENABLED       0x01
+#define USB_HANDSHAKE_DISABLED      0x00
 
-#define USB_OUT_ENABLED         0x08
-#define USB_OUT_DISABLED        0x00
+#define USB_OUT_ENABLED             0x08
+#define USB_OUT_DISABLED            0x00
 
-#define USB_IN_ENABLED          0x04
-#define USB_IN_DISABLED         0x00
+#define USB_IN_ENABLED              0x04
+#define USB_IN_DISABLED             0x00
 
-#define USB_ALLOW_SETUP         0x00
-#define USB_DISALLOW_SETUP      0x10
+#define USB_ALLOW_SETUP             0x00
+#define USB_DISALLOW_SETUP          0x10
 
-#define USB_STALL_ENDPOINT      0x02
+#define USB_STALL_ENDPOINT          0x02
 
 // USB_HANDLE is a pointer to an entry in the BDT.  This pointer can be used
 // to read the length of the last transfer, the status of the last transfer,
@@ -409,14 +409,14 @@ typedef struct __attribute__ ((packed))
  * application related data.
  */
 #ifndef USB_EP0_BUFF_SIZE
-#   define USB_EP0_BUFF_SIZE	8
+#   define USB_EP0_BUFF_SIZE	64 // 8
 #endif
 
 /*
  * Only one interface by default.
  */
 #ifndef USB_MAX_NUM_INT
-#   define USB_MAX_NUM_INT	1
+#   define USB_MAX_NUM_INT	2
 #endif
 
 // Definitions for the BDT
@@ -428,6 +428,7 @@ extern const USB_DEVICE_DESCRIPTOR usb_device;
 // Array of configuration descriptors (cf. usb_descriptor.c)
 extern const unsigned char *const usb_config[];
 extern const unsigned char usb_config1_descriptor[];
+//extern const USB_Configuration_Descriptor usb_config1_descriptor;
 
 // Array of string descriptors (cf. usb_descriptor.c)
 extern const unsigned char *const usb_string[];
@@ -437,8 +438,8 @@ extern volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 
 extern USBVOLATILE unsigned usb_device_state;
 extern USBVOLATILE unsigned usb_active_configuration;
-extern USBVOLATILE IN_PIPE usb_in_pipe[1];
-extern USBVOLATILE OUT_PIPE usb_out_pipe[1];
+extern USBVOLATILE IN_PIPE usb_in_pipe;
+extern USBVOLATILE OUT_PIPE usb_out_pipe;
 
 /* Control Transfer States */
 #define WAIT_SETUP          0
@@ -1251,7 +1252,7 @@ void usbcb_ep0_data_received (void);
         None
 
  */
-#define usb_ep0_set_source_ram(src) usb_in_pipe[0].pSrc.bRam = src
+#define usb_ep0_set_source_ram(src) usb_in_pipe.pSrc.bRam = src
 
 /*
     Function:
@@ -1274,7 +1275,7 @@ void usbcb_ep0_data_received (void);
         None
 
  */
-#define usb_ep0_set_source_rom(src) usb_in_pipe[0].pSrc.bRom = src
+#define usb_ep0_set_source_rom(src) usb_in_pipe.pSrc.bRom = src
 
 /*
     Function:
@@ -1304,7 +1305,7 @@ void usbcb_ep0_data_received (void);
         None
 
  */
-#define usb_ep0_transmit(options) usb_in_pipe[0].info.Val = options | USB_INPIPES_BUSY
+#define usb_ep0_transmit(options) usb_in_pipe.info.Val = options | USB_INPIPES_BUSY
 
 /*
     Function:
@@ -1327,7 +1328,7 @@ void usbcb_ep0_data_received (void);
         None
 
  */
-#define usb_ep0_set_size(size) usb_in_pipe[0].wCount = size
+#define usb_ep0_set_size(size) usb_in_pipe.wCount = size
 
 /*
     Function:

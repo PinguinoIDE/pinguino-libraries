@@ -30,8 +30,8 @@
 #ifndef __MILLIS__
 #define __MILLIS__
 
-#ifdef TMR2INT
-#error "TIMER2 interrupt is already used !"
+#ifdef TMR1INT
+#error "TIMER1 interrupt is already used !"
 #endif
 
 #include <system.c>
@@ -46,26 +46,26 @@ volatile u32 _millis = 0;
 volatile u32 _micros;
 
 /*  --------------------------------------------------------------------
-    Init. Timer2 to overload every 1 ms
+    Init. Timer1 to overload every 1 ms
     --------------------------------------------------------------------
-    TIMER2 increments on every PBCLK clock cycle
+    TIMER1 increments on every PBCLK clock cycle
     Freq. = Nb cycles / sec
     Nb cycles / 1ms = Freq / 1000
-    prescaler = 1:2 (PR2 is a 16-bit number)
+    prescaler = 1:8 (PR1 is a 16-bit number)
     ------------------------------------------------------------------*/
 
 void millis_init(void)
 {
         IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-        IntSetVectorPriority(INT_TIMER2_VECTOR, 7, 3);
-        IntClearFlag(INT_TIMER2);
-        IntEnable(INT_TIMER2);
+        IntSetVectorPriority(INT_TIMER1_VECTOR, 7, 3);
+        IntClearFlag(INT_TIMER1);
+        IntEnable(INT_TIMER1);
 
-        T2CON = 0;
-        TMR2 = 0;
-        PR2 = GetPeripheralClock() / 1000 / 2;
-        // start TIMER2, prescaler = 1:2
-        T2CONSET = 0x8010;
+        T1CON = 0;
+        TMR1 = 0;
+        PR1 = GetPeripheralClock() / 1000 / 8;
+        // start TIMER1, prescaler = 1:8
+        T1CONSET = 0x8010;
         _millis = 0;
 }
 
@@ -76,21 +76,21 @@ u32 millis()
 
 u32 micros()
 {
-    _micros = 1000 * _millis + (1000 * TMR2) / PR2;
+    _micros = 1000 * _millis + (1000 * TMR1) / PR1;
     return (_micros);
 }
 
 /*  ----------------------------------------------------------------------------
-    TMR2 interrupt
+    TMR1 interrupt
     see also ISRwrapper.S
     --------------------------------------------------------------------------*/
 
-void Timer2Interrupt()
+void Timer1Interrupt()
 {
-    // is this an TIMER2 interrupt ?
-    //if (IntGetFlag(INT_TIMER2))
+    // is this an TIMER1 interrupt ?
+    //if (IntGetFlag(INT_TIMER1))
     //{
-        IntClearFlag(INT_TIMER2);
+        IntClearFlag(INT_TIMER1);
         _millis++;
     //}
 }

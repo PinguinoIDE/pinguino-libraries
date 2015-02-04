@@ -35,7 +35,7 @@
  **********************************************************************/
  
 const USB_DEVICE_DESCRIPTOR usb_device = {
-    sizeof (usb_device),    // Size of this descriptor in bytes
+    sizeof(usb_device),     // Size of this descriptor in bytes
     USB_DESCRIPTOR_DEVICE,  // DEVICE descriptor type
     0x0200,                 // USB Spec Release Number in BCD format
     CDC_DEVICE,             // Class Code CDC_DEVICE
@@ -43,11 +43,11 @@ const USB_DEVICE_DESCRIPTOR usb_device = {
     0x00,                   // Protocol code
     USB_EP0_BUFF_SIZE,      // Max packet size for EP0
     0x04D8,                 // Vendor ID
-    0x000A,                 // Product ID: PINGUINO USB CDC
+    0xFEAB,                 // Product ID: PINGUINO USB CDC
     0x0000,                 // Device release number in BCD format
     1,                      // Manufacturer string index
     2,                      // Product string index
-    3,                      // Device serial number string index
+    0,                      // Device serial number string index
     1,                      // Number of possible configurations
 };
 
@@ -55,17 +55,30 @@ const USB_DEVICE_DESCRIPTOR usb_device = {
  * Configuration 1 descriptor
  */
 
+// Total length in chars of data returned
+#define CONFIGURATION_TOTAL_LENGTH (sizeof(USB_CONFIGURATION_DESCRIPTOR) + \
+                                    sizeof(USB_INTERFACE_DESCRIPTOR) + \
+                                    sizeof(USB_CDC_HEADER_FN_DSC) + \
+                                    sizeof(USB_CDC_ACM_FN_DSC) + \
+                                    sizeof(USB_CDC_UNION_FN_DSC) + \
+                                    sizeof(USB_CDC_CALL_MGT_FN_DSC) + \
+                                    sizeof(USB_ENDPOINT_DESCRIPTOR) + \
+                                    sizeof(USB_INTERFACE_DESCRIPTOR) + \
+                                    sizeof(USB_ENDPOINT_DESCRIPTOR) + \
+                                    sizeof(USB_ENDPOINT_DESCRIPTOR) )
+
+//const USB_Configuration_Descriptor usb_config1_descriptor = {
 const unsigned char usb_config1_descriptor[] = {
 
     // Configuration descriptor
     sizeof(USB_CONFIGURATION_DESCRIPTOR),
     USB_DESCRIPTOR_CONFIGURATION,
-    0x29, 0x00,             // Total length of data for this cfg
-    1,                      // Number of interfaces in this cfg     // 1
-    1,                      // Index value of this configuration
-    0,                      // Configuration string index
-    USB_CFG_DSC_REQUIRED,   // Attributes                           // _DEFAULT | _SELF
-    100/2,                  // Max power consumption (100 mA)
+    CONFIGURATION_TOTAL_LENGTH,         // Total length of data for this cfg
+    2,                                  // Number of interfaces in this cfg     // 1
+    1,                                  // Index value of this configuration
+    0,                                  // Configuration string index
+    USB_CFG_DSC_SELF_PWR,               //(_DEFAULT | _SELF),     // Attributes                           // USB_CFG_DSC_REQUIRED
+    20,                                 // Max power consumption (100 mA) in 2mA units
 
     // Interface Descriptor
     sizeof(USB_INTERFACE_DESCRIPTOR),   // Size of this descriptor in bytes // 0x09
@@ -88,7 +101,7 @@ const unsigned char usb_config1_descriptor[] = {
     sizeof(USB_CDC_ACM_FN_DSC),         // Size of this descriptor in bytes (4)
     CS_INTERFACE,                       // bDescriptorType
     DSC_FN_ACM,                         // bDescriptorSubtype
-    USB_CDC_ACM_FN_DSC_VAL,             // bmCapabilities: (see PSTN120.pdf Table 4)
+    0x00, //USB_CDC_ACM_FN_DSC_VAL,             // bmCapabilities: (see PSTN120.pdf Table 4)
 
     // Union Functional Descriptor
     sizeof(USB_CDC_UNION_FN_DSC),       // Size of this descriptor in bytes (5)
@@ -107,9 +120,9 @@ const unsigned char usb_config1_descriptor[] = {
     // Endpoint Descriptor
     sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP01_IN,                           // Endpoint address         // _EP01_IN
+    _EP02_IN,                           // Endpoint address         // _EP01_IN
     _INTERRUPT,                         // Attributes
-    CDC_COMM_IN_EP_SIZE, 0x00,          // Size
+    16,//CDC_COMM_IN_EP_SIZE,                // Size
     0x02,                               // Interval 2ms
 
     // CDC Data Interface
@@ -126,45 +139,19 @@ const unsigned char usb_config1_descriptor[] = {
     // Endpoint Descriptor
     sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP02_OUT,                          // Endpoint address         // _EP02_OUT
+    _EP03_OUT,                          // Endpoint address         // _EP02_OUT
     _BULK,                              // Attributes
-    DESC_CONFIG_WORD(0x40),             // Size
+    0x0040,                             // Size
     0x00,                               // Interval
 
     // Endpoint Descriptor
     sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
     USB_DESCRIPTOR_ENDPOINT,            // Endpoint descriptor
-    _EP02_IN,                           // Endpoint address         // _EP02_IN
+    _EP03_IN,                           // Endpoint address         // _EP02_IN
     _BULK,                              // Attributes
-    DESC_CONFIG_WORD(0x40),             // Size
+    0x0040,                             // Size
     0x00                                // Interval
 };
-
-/*
- * Class specific descriptor - HID
- */
- 
-/*
-const unsigned char hid_rpt01 [HID_RPT01_SIZE] = {
-    0x06, 0x00, 0xFF,       // Usage Page = 0xFF00 (Vendor Defined Page 1)
-    0x09, 0x01,             // Usage (Vendor Usage 1)
-    0xA1, 0x01,             // Collection (Application)
-
-    0x19, 0x01,             // Usage Minimum
-    0x29, 0x40,             // Usage Maximum 64 input usages total (0x01 to 0x40)
-    0x15, 0x00,             // Logical Minimum (data bytes in the report may have minimum value = 0x00)
-    0x26, 0xFF, 0x00,       // Logical Maximum (data bytes in the report may have maximum value = 0x00FF = unsigned 255)
-    0x75, 0x08,             // Report Size: 8-bit field size
-    0x95, 0x40,             // Report Count: Make sixty-four 8-bit fields (the next time the parser hits an "Input", "Output", or "Feature" item)
-    0x81, 0x00,             // Input (Data, Array, Abs): Instantiates input packet fields based on the above report size, count, logical min/max, and usage.
-
-    0x19, 0x01,             // Usage Minimum
-    0x29, 0x40,             // Usage Maximum 64 output usages total (0x01 to 0x40)
-    0x91, 0x00,             // Output (Data, Array, Abs): Instantiates output packet fields.  Uses same report size and count as "Input" fields, since nothing new/different was specified to the parser since the "Input" item.
-
-    0xC0,                   // End Collection
-};
-*/
 
 /*
  * USB Strings
@@ -178,28 +165,24 @@ static const USB_STRING_INIT(1) string0_descriptor = {
     { 0x0409 }
 };
 
-static const USB_STRING_INIT(25) string1_descriptor = {
+static const USB_STRING_INIT(10) string1_descriptor = {
     sizeof(string1_descriptor),
     USB_DESCRIPTOR_STRING,              /* Manufacturer */
-    { 'M','i','c','r','o','c','h','i','p',' ',
-      'T','e','c','h','n','o','l','o','g','y',' ',
-      'I','n','c','.' }
-};
-
-static const USB_STRING_INIT(19) string2_descriptor = {
-    sizeof(string2_descriptor),
-    USB_DESCRIPTOR_STRING,              /* Product */
-    { 'P','I','N','G','U','I','N','O',' ',
-      'C','D','C',' ',
-      'D','e','v','i','c','e' }
-};
-
-static const USB_STRING_INIT(19) string3_descriptor = {
-    sizeof(string3_descriptor),
-    USB_DESCRIPTOR_STRING,              /* Serial Number */
     {'R','.','B','l','a','n','c','h','o','t'}
 };
 
+static const USB_STRING_INIT(8) string2_descriptor = {
+    sizeof(string2_descriptor),
+    USB_DESCRIPTOR_STRING,              /* Product */
+    { 'P','I','N','G','U','I','N','O' }
+};
+/*
+static const USB_STRING_INIT(10) string3_descriptor = {
+    sizeof(string3_descriptor),
+    USB_DESCRIPTOR_STRING,              // Serial Number
+    {}
+};
+*/
 // Array of configuration descriptors
 const unsigned char *const usb_config[] = {
     (const unsigned char *const) &usb_config1_descriptor,
@@ -210,7 +193,7 @@ const unsigned char *const usb_string[USB_NUM_STRING_DESCRIPTORS] = {
     (const unsigned char *const) &string0_descriptor,
     (const unsigned char *const) &string1_descriptor,
     (const unsigned char *const) &string2_descriptor,
-    (const unsigned char *const) &string3_descriptor,
+    //(const unsigned char *const) &string3_descriptor,
 };
 
 #endif

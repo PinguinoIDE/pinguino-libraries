@@ -58,71 +58,95 @@ static unsigned char dummy_encapsulated_cmd_response[DUMMY_LENGTH];
  */
 void usb_check_cdc_request()
 {
-    #ifdef DEBUG
-    unsigned char rq = usb_setup_pkt.bRequest;
-    unsigned char cl = usb_setup_pkt.bmRequestType;
-    serial1printf("> usb_check_cdc_request\r\n");
-    serial1printf("> type    = 0x%X\r\n", cl);
-    serial1printf("> request = 0x%X\r\n", rq);
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_check_cdc_request\r\n");
+    //#endif
 
-    /*
-     * If request recipient is not an interface then return
-     */
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> Recipient = ");
+    //SerialPrintNumber(UART,usb_setup_pkt.Recipient,10);
+    //SerialPrint(UART,"\r\n");
+    //#endif
+
+    // If request recipient is not an interface then return
     if (usb_setup_pkt.Recipient != RCPT_INTF)
         return;
 
-    /*
-     * If request type is not class-specific then return
-     */
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> RCPT_INTF\r\n");
+    //#endif
+
+    // If request type is not class-specific then return
     if (usb_setup_pkt.RequestType != CLASS)
         return;
 
-    /*
-     * Interface ID must match interface numbers associated with
-     * CDC class, else return
-     */
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> Request type CDC = ");
+    //#endif
+
+    #ifdef DEBUG
+    //SerialPrint(UART,"> Request = ");
+    SerialPrintNumber(UART,usb_setup_pkt.bRequest,10);
+    SerialPrint(UART,"\r\n");
+    #endif
+
+    return;
+    // Interface ID must match interface numbers associated with CDC class
+     
     if (usb_setup_pkt.bIntfID != CDC_COMM_INTF_ID &&
         usb_setup_pkt.bIntfID != CDC_DATA_INTF_ID)
         return;
 
-#if 0
     switch (usb_setup_pkt.bRequest)
     {
         case SEND_ENCAPSULATED_COMMAND:
+            //#ifdef DEBUG
+            //SerialPrint(UART,"SEND_ENCAPSULATED_COMMAND\r\n");
+            //#endif
             // send the packet
-            usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
-            usb_in_pipe[0].wCount = DUMMY_LENGTH;
-            usb_in_pipe[0].info.bits.ctrl_trf_mem = USB_INPIPES_RAM;
-            usb_in_pipe[0].info.bits.busy = 1;
+            usb_in_pipe.pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
+            usb_in_pipe.wCount = DUMMY_LENGTH;
+            usb_in_pipe.info.bits.ctrl_trf_mem = USB_INPIPES_RAM;
+            usb_in_pipe.info.bits.busy = 1;
             break;
 
         case GET_ENCAPSULATED_RESPONSE:
+            //#ifdef DEBUG
+            //SerialPrint(UART,"GET_ENCAPSULATED_RESPONSE\r\n");
+            //#endif
             // Populate dummy_encapsulated_cmd_response first.
-            usb_in_pipe[0].pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
-            usb_in_pipe[0].info.bits.busy = 1;
+            usb_in_pipe.pSrc.bRam = (unsigned char*) &dummy_encapsulated_cmd_response;
+            usb_in_pipe.info.bits.busy = 1;
             break;
 
         case SET_LINE_CODING:
-            usb_out_pipe[0].wCount = usb_setup_pkt.wLength;
-            usb_out_pipe[0].pDst.bRam = (unsigned char*) &cdc_line_coding._byte[0];
-            usb_out_pipe[0].pFunc = 0;
-            usb_out_pipe[0].info.bits.busy = 1;
+            //#ifdef DEBUG
+            //SerialPrint(UART,"SET_LINE_CODING\r\n");
+            //#endif
+            usb_out_pipe.wCount = usb_setup_pkt.wLength;
+            usb_out_pipe.pDst.bRam = (unsigned char*) &cdc_line_coding._byte[0];
+            usb_out_pipe.pFunc = 0;
+            usb_out_pipe.info.bits.busy = 1;
             break;
 
         case GET_LINE_CODING:
+            //#ifdef DEBUG
+            //SerialPrint(UART,"GET_LINE_CODING\r\n");
+            //#endif
             usb_ep0_send_ram_ptr ((unsigned char*) &cdc_line_coding,
                 LINE_CODING_LENGTH, USB_EP0_INCLUDE_ZERO);
             break;
 
         case SET_CONTROL_LINE_STATE:
+            //#ifdef DEBUG
+            //SerialPrint(UART,"SET_CONTROL_LINE_STATE\r\n");
+            //#endif
             control_signal_bitmap._byte = (unsigned char)usb_setup_pkt.W_Value;
             //CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
             //CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
-            usb_in_pipe[0].info.bits.busy = 1;
+            usb_in_pipe.info.bits.busy = 1;
             break;
     }
-#endif
 }
 
 /*
@@ -134,10 +158,9 @@ void usb_check_cdc_request()
  
 void cdc_init_ep()
 {
-    #ifdef DEBUG
-    serial1printf("> cdc_init_ep\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> cdc_init_ep\r\n");
+    //#endif
 
     // Abstract line coding information
     cdc_line_coding.dwDTERate   = CDC_DEFAULT_BPS;      // baud rate
@@ -286,7 +309,7 @@ void cdc_puts(unsigned char *buffer, int length)
 void cdc_tx_service()
 {
     #ifdef DEBUG
-    serial1printf("> cdc_tx_service\r\n");
+    SerialPrint(UART,"> cdc_tx_service\r\n");
     return;
     #endif
 

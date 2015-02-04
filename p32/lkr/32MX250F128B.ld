@@ -47,7 +47,7 @@ MEMORY
   exception_mem               : ORIGIN = 0x9D003000, LENGTH = 0x1000
   kseg1_boot_mem              : ORIGIN = 0x9D004000, LENGTH = 0x490
   kseg0_boot_mem              : ORIGIN = 0x9D004490, LENGTH = 0x570
-  kseg0_program_mem    (rx)   : ORIGIN = 0x9D004A00, LENGTH = 0x1C0E0
+  kseg0_program_mem    (rx)   : ORIGIN = 0x9D004A00, LENGTH = 0x1B600
 
   configsfrs                  : ORIGIN = 0xBFC00BF0, LENGTH = 0x10
   config3                     : ORIGIN = 0xBFC00BF0, LENGTH = 0x4
@@ -55,7 +55,7 @@ MEMORY
   config1                     : ORIGIN = 0xBFC00BF8, LENGTH = 0x4
   config0                     : ORIGIN = 0xBFC00BFC, LENGTH = 0x4
   boot_software_key           : ORIGIN = 0xA0000000, LENGTH = 0x4
-  kseg1_data_mem       (w!x)  : ORIGIN = 0xA0000004, LENGTH = 32K-0x4
+  kseg1_data_mem       (w!x)  : ORIGIN = 0xA0000004, LENGTH = 0x7FFC
   sfrs                        : ORIGIN = 0xBF800000, LENGTH = 0x100000
 }
 

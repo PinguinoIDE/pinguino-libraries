@@ -43,8 +43,8 @@ static USBVOLATILE unsigned control_transfer_state;
 static USBVOLATILE unsigned ustat_saved;
 USBVOLATILE unsigned usb_device_state;
 USBVOLATILE unsigned usb_active_configuration;
-USBVOLATILE IN_PIPE usb_in_pipe[1];
-USBVOLATILE OUT_PIPE usb_out_pipe[1];
+USBVOLATILE IN_PIPE usb_in_pipe;
+USBVOLATILE OUT_PIPE usb_out_pipe;
 USBVOLATILE int usb_remote_wakeup;
 
 /*
@@ -82,9 +82,9 @@ void usb_device_init(void)
     unsigned i;
     unsigned phyaddrusbbuf = (unsigned)usb_buffer & 0x1fffffff;
 
-    #ifdef DEBUG
-    serial1printf("\r\nDEVICE INIT.\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"\r\nDEVICE INIT.\r\n");
+    //#endif
 
     // Clear all USB error flags
     U1IR = 0xFF;
@@ -141,9 +141,9 @@ void usb_device_init(void)
     }
 
     //clear all of the internal pipe information
-    usb_in_pipe[0].info.Val = 0;
-    usb_out_pipe[0].info.Val = 0;
-    usb_out_pipe[0].wCount = 0;
+    usb_in_pipe.info.Val = 0;
+    usb_out_pipe.info.Val = 0;
+    usb_out_pipe.wCount = 0;
 
     // Get ready for the first packet
     pBDTEntryIn[0] = (volatile BDT_ENTRY*) &usb_buffer[EP0_IN_EVEN];
@@ -156,25 +156,23 @@ void usb_device_init(void)
 }
 
 /*
- * This function is the main state machine of the
- * USB device side stack.  This function should be
- * called periodically to receive and transmit
- * packets through the stack.  This function should
- * be called  preferably once every 100us
- * during the enumeration process.  After the
- * enumeration process this function still needs to
- * be called periodically to respond to various
- * situations on the bus but is more relaxed in its
- * time requirements.  This function should also
- * be called at least as fast as the OUT data
+ * This function is the main state machine of the USB device side stack.
+ * This function should be called periodically to receive and transmit
+ * packets through the stack.
+ * This function should be called  preferably once every 100us during
+ * the enumeration process. After the enumeration process this function
+ * still needs to be called periodically to respond to various situations
+ * on the bus but is more relaxed in its time requirements.
+ * This function should also be called at least as fast as the OUT data
  * expected from the PC.
  */
+ 
 void usb_device_tasks(void)
 {
     unsigned i;
 
     //#ifdef DEBUG
-    //serial1printf("usb_device_tasks\r\n");
+    //SerialPrint(UART,"usb_device_tasks\r\n");
     //#endif
 
     // if we are in the detached state
@@ -212,9 +210,9 @@ void usb_device_tasks(void)
     {
         if (U1OTGIR & _U1OTGIR_ACTVIF_MASK)
         {  
-            #ifdef DEBUG
-            serial1printf("ACTIVITY DETECTED\r\n");
-            #endif
+            //#ifdef DEBUG
+            //SerialPrint(UART,"ACTIVITY DETECTED\r\n");
+            //#endif
             // Clear flag
             U1OTGIR |= _U1OTGIR_ACTVIF_MASK;
             usb_wake_from_suspend();
@@ -224,9 +222,9 @@ void usb_device_tasks(void)
     // Pointless to continue servicing if the device is in suspend mode.
     if (U1PWRC & _U1PWRC_USUSPEND_MASK)
     {
-        #ifdef DEBUG
-        serial1printf("DEVICE SUSPENDED\r\n");
-        #endif
+        //#ifdef DEBUG
+        //SerialPrint(UART,"DEVICE SUSPENDED\r\n");
+        //#endif
         // Clear USB interrupt
         IEC1CLR = _IEC1_USBIE_MASK;
         return;
@@ -248,9 +246,9 @@ void usb_device_tasks(void)
     {
         if (U1IR & _U1IR_URSTIF_MASK)
         {
-            #ifdef DEBUG
-            serial1printf("RESET\r\n");
-            #endif
+            //#ifdef DEBUG
+            //SerialPrint(UART,"RESET\r\n");
+            //#endif
 
             usb_device_init();
             usb_device_state = DEFAULT_STATE;
@@ -281,37 +279,35 @@ void usb_device_tasks(void)
     {
         if (U1IR & _U1IR_IDLEIF_MASK)
         {
-            #ifdef DEBUG
-            serial1printf("DEVICE IDLE\r\n");
-            #endif
+            //#ifdef DEBUG
+            //SerialPrint(UART,"DEVICE IDLE\r\n");
+            //#endif
             usb_suspend();
             U1IR |= _U1IR_IDLEIF_MASK;
         }
     }
 
     // Start Of Frame
-    /*
     if (U1IE & _U1IE_SOFIE_MASK)
     {
         if (U1IR & _U1IR_SOFIF_MASK)
         {
-            #ifdef DEBUG
-            serial1printf("Start Of Frame.\r\n");
-            #endif
-            usbcb_sof_handler();
+            //#ifdef DEBUG
+            //SerialPrint(UART,"Start Of Frame.\r\n");
+            //#endif
+            //usbcb_sof_handler();
             U1IR |= _U1IR_SOFIF_MASK;
         }
     }
-    */
     
     // Stall
     if (U1IE & _U1IE_STALLIE_MASK)
     {
         if (U1IR & _U1IR_STALLIF_MASK)
         {
-            #ifdef DEBUG
-            serial1printf("DEVICE STALL\r\n");
-            #endif
+            //#ifdef DEBUG
+            //SerialPrint(UART,"DEVICE STALL\r\n");
+            //#endif
             usb_stall_handler();
             U1IR |= _U1IR_STALLIF_MASK;
         }
@@ -322,10 +318,10 @@ void usb_device_tasks(void)
     {
         if (U1IR & _U1IR_UERRIF_MASK)
         {
-            #ifdef DEBUG
-            serial1printf("ERROR %d DETECTED\r\n", U1EIR);
-            #endif
-            usbcb_error_handler();
+            //#ifdef DEBUG
+            //SerialPrintf(UART,"ERROR %d DETECTED\r\n", U1EIR);
+            //#endif
+            //usbcb_error_handler();
             // Clears UERRIF
             U1EIR = 0xFF;
             U1IR |= _U1IR_UERRIF_MASK;
@@ -347,9 +343,9 @@ void usb_device_tasks(void)
         {
             if (U1IR & _U1IR_TRNIF_MASK)
             {
-                #ifdef DEBUG
-                serial1printf("TRANSACTION COMPLETE\r\n");
-                #endif
+                //#ifdef DEBUG
+                //SerialPrint(UART,"TRANSACTION COMPLETE\r\n");
+                //#endif
                 // Processing of current token is complete
                 // A read of the U1STAT register will provide endpoint information
                 ustat_saved = U1STAT;
@@ -366,9 +362,9 @@ void usb_device_tasks(void)
  */
 void usb_stall_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_stall_handler\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_stall_handler\r\n");
+    //#endif
 
     /*
      * Does not really have to do anything here,
@@ -401,15 +397,15 @@ void usb_stall_handler(void)
  */
 void usb_suspend(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_suspend\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_suspend\r\n");
+    //#endif
 
     U1OTGIESET = _U1OTGIE_ACTVIE_MASK;	// Enable bus activity interrupt
     U1IR |= _U1IR_IDLEIF_MASK;
 
     // Now the PIC can go into sleep,idle, or switch to a slower clock.
-    usbcb_suspend();
+    //usbcb_suspend();
 }
 
 /*
@@ -417,12 +413,12 @@ void usb_suspend(void)
  */
 void usb_wake_from_suspend(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_wake_from_suspend\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_wake_from_suspend\r\n");
+    //#endif
 
     // Place to restore the original CPU clock frequency for ex.
-    usbcb_wake_from_suspend();
+    //usbcb_wake_from_suspend();
     U1OTGIECLR = _U1OTGIE_ACTVIE_MASK;
     U1OTGIR |= _U1OTGIR_ACTVIF_MASK;
 }
@@ -439,9 +435,9 @@ void usb_wake_from_suspend(void)
  */
 void usb_ctrl_ep_service(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_ep_service\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_ep_service\r\n");
+    //#endif
 
     // If the last packet was a EP0 OUT packet
     if ((ustat_saved & USTAT_EP0_PP_MASK) == USTAT_EP0_OUT_EVEN)
@@ -510,9 +506,9 @@ void usb_ctrl_ep_service(void)
  */
 void usb_ctrl_trf_setup_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_trf_setup_handler\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_trf_setup_handler\r\n");
+    //#endif
 
     //if the SIE currently owns the buffer
     if (pBDTEntryIn[0]->STAT.UOWN != 0)
@@ -528,8 +524,8 @@ void usb_ctrl_trf_setup_handler(void)
     /* Stage 1 */
     control_transfer_state = WAIT_SETUP;
 
-    usb_in_pipe[0].wCount = 0;
-    usb_in_pipe[0].info.Val = 0;
+    usb_in_pipe.wCount = 0;
+    usb_in_pipe.info.Val = 0;
 
     /* Stage 2 */
     usb_check_std_request();
@@ -541,21 +537,19 @@ void usb_ctrl_trf_setup_handler(void)
 }
 
 /*
- * This routine handles an OUT transaction according to
- * which control transfer state is currently active.
+ * This routine handles an OUT transaction according to which control
+ * transfer state is currently active.
  *
- * Note that if the the control transfer was from
- * host to device, the session owner should be notified
- * at the end of each OUT transaction to service the
- * received data.
+ * Note that if the the control transfer was from host to device,
+ * the session owner should be notified at the end of each OUT
+ * transaction to service the received data.
  */
+ 
 void usb_ctrl_trf_out_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_trf_out_handler\r\n");
-    Delayus(500);
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_trf_out_handler\r\n");
+    //#endif
 
     if (control_transfer_state == CTRL_TRF_RX)
     {
@@ -568,26 +562,23 @@ void usb_ctrl_trf_out_handler(void)
 }
 
 /*
- * This routine handles an IN transaction according to
- * which control transfer state is currently active.
+ * This routine handles an IN transaction according to which control
+ * transfer state is currently active.
  *
- * A Set Address Request must not change the acutal address
- * of the device until the completion of the control
- * transfer. The end of the control transfer for Set Address
- * Request is an IN transaction. Therefore it is necessary
- * to service this unique situation when the condition is
- * right. Macro mUSBCheckAdrPendingState is defined in
- * usb9.h and its function is to specifically service this event.
+ * A Set Address Request must not change the acutal address of the
+ * device until the completion of the control transfer.
+ * The end of the control transfer for Set Address Request is an IN
+ * transaction. Therefore it is necessary to service this unique
+ * situation when the condition is right.
  */
+ 
 void usb_ctrl_trf_in_handler(void)
 {
     unsigned lastDTS;
 
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_trf_in_handler\r\n");
-    Delayus(500);
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_trf_in_handler\r\n");
+    //#endif
 
     lastDTS = pBDTEntryIn[0]->STAT.DTS;
 
@@ -646,40 +637,19 @@ void usb_ctrl_trf_in_handler(void)
  */
 void usb_prepare_for_next_setup_trf(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_prepare_for_next_setup_trf\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_prepare_for_next_setup_trf\r\n");
+    //#endif
     
-    /* Bug Fix: Feb 26, 2007 v2.1
-    *********************************************************************
-    Facts:
-    A Setup Packet should never be stalled. (USB 2.0 Section 8.5.3)
-    If a Setup PID is detected by the SIE, the DTSEN setting is ignored.
-    This causes a problem at the end of a control write transaction.
-    In usb_ctrl_ep_service_complete(), during a control write (Host to Device),
-    the EP0_OUT is setup to write any data to the ctrl_trf_data buffer.
-    If <SETUP[0]><IN[1]> is completed and usb_ctrl_trf_in_handler() is not
-    called before the next <SETUP[0]> is received, then the latest Setup
-    data will be written to the ctrl_trf_data buffer instead of the usb_setup_pkt
-    buffer.
+    unsigned setup_cnt;
+    BDT_ENTRY* p;
 
-    If usb_ctrl_trf_in_handler() was called before the latest <SETUP[0]> is
-    received, then there would be no problem,
-    because usb_prepare_for_next_setup_trf() would have been called and updated
-    ep0Bo.ADR to point to the usb_setup_pkt buffer.
-
-    Work around:
-    Check for the problem as described above and copy the Setup data from
-    ctrl_trf_data to usb_setup_pkt.
-    */
-    
     if ((control_transfer_state == CTRL_TRF_RX) &&
        (U1CON & _U1CON_PKTDIS_MASK) &&
        (pBDTEntryEP0OutCurrent->CNT == sizeof(CTRL_TRF_SETUP)) &&
        (pBDTEntryEP0OutCurrent->STAT.PID == SETUP_TOKEN) &&
        (pBDTEntryEP0OutNext->STAT.UOWN == 0))
     {
-        unsigned setup_cnt;
 
         pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
 
@@ -691,60 +661,31 @@ void usb_prepare_for_next_setup_trf(void)
             *(((unsigned char*) &usb_setup_pkt) + setup_cnt) =
                 *(((unsigned char*) &ctrl_trf_data) + setup_cnt);
         }
-    /* End v3b fix */
     }
+
     else
     {
         control_transfer_state = WAIT_SETUP;
-        pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;      // Defined in target.cfg
+        pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
         pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-
-        /*
-        Bug Fix: Feb 26, 2007 v2.1 (#F1)
-        *********************************************************************
-        In the original firmware, if an OUT token is sent by the host
-        before a SETUP token is sent, the firmware would respond with an ACK.
-        This is not a correct response, the firmware should have sent a STALL.
-        This is a minor non-compliance since a compliant host should not
-        send an OUT before sending a SETUP token. The fix allows a SETUP
-        transaction to be accepted while stalling OUT transactions.
-        */
-        //ep0Bo.Stat.Val = _USIE|_DAT0|_DTSEN;        // Removed
         pBDTEntryEP0OutNext->STAT.Val = _USIE|_DAT0|_DTSEN|_BSTALL;  //Added #F1
-
-        /*
-        Bug Fix: Feb 26, 2007 v2.1 (#F3)
-        *********************************************************************
-        In the original firmware, if an IN token is sent by the host
-        before a SETUP token is sent, the firmware would respond with an ACK.
-        This is not a correct response, the firmware should have sent a STALL.
-        This is a minor non-compliance since a compliant host should not
-        send an IN before sending a SETUP token.
-
-        Comment why this fix (#F3) is interfering with fix (#AF1).
-        */
         pBDTEntryIn[0]->STAT.Val = _UCPU;             // Should be removed
 
-        {
-            BDT_ENTRY* p;
-
-            p = (BDT_ENTRY*)(((unsigned int)pBDTEntryIn[0])^USB_NEXT_EP0_IN_PING_PONG);
-            p->STAT.Val = _UCPU;
-        }
-
+        p = (BDT_ENTRY*)(((unsigned int)pBDTEntryIn[0])^USB_NEXT_EP0_IN_PING_PONG);
+        p->STAT.Val = _UCPU;
         //ep0Bi.Stat.Val = _USIE|_BSTALL;   // Should be added #F3
     }
 
     //if someone is still expecting data from the control transfer
     //  then make sure to terminate that request and let them know that
     //  they are done
-    if (usb_out_pipe[0].info.bits.busy == 1)
+    if (usb_out_pipe.info.bits.busy == 1)
     {
-        if (usb_out_pipe[0].pFunc != 0)
+        if (usb_out_pipe.pFunc != 0)
         {
-            usb_out_pipe[0].pFunc();
+            usb_out_pipe.pFunc();
         }
-        usb_out_pipe[0].info.bits.busy = 0;
+        usb_out_pipe.info.bits.busy = 0;
     }
 
 }//end usb_prepare_for_next_setup_trf
@@ -753,75 +694,130 @@ void usb_prepare_for_next_setup_trf(void)
  * This routine checks the setup data packet to see
  * if it knows how to handle it
  */
+
 void usb_check_std_request(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_check_std_request\r\n");
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_check_std_request\r\n");
+    //#endif
     
     if (usb_setup_pkt.RequestType != STANDARD)
         return;
 
-    switch (usb_setup_pkt.bRequest)
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> Request type STANDARD = ");
+    //#endif
+
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> Request = ");
+    //SerialPrintNumber(UART,usb_setup_pkt.bRequest,10);
+    //SerialPrint(UART,"\r\n");
+    //#endif
+
+    if (usb_setup_pkt.bRequest == GET_DSC)
     {
-        case SET_ADR:
-            // This will generate a zero length packet
-            usb_in_pipe[0].info.bits.busy = 1;
-            // Update state only
-            usb_device_state = ADR_PENDING_STATE;
-            // See usb_ctrl_trf_in_handler() for the next step
-            break;
+        //#ifdef DEBUG
+        //SerialPrint(UART,"GET_DSC\r\n");
+        //#endif
+        usb_std_get_dsc_handler();
+        return;
+    }
 
-        case GET_DSC:
-            usb_std_get_dsc_handler();
-            break;
+    if (usb_setup_pkt.bRequest == SET_ADR)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SET_ADR\r\n");
+        //#endif
+        // This will generate a zero length packet
+        usb_in_pipe.info.bits.busy = 1;
+        // Update state only
+        usb_device_state = ADR_PENDING_STATE;
+        // See usb_ctrl_trf_in_handler() for the next step
+        return;
+    }
 
-        case SET_CFG:
-            usb_std_set_cfg_handler();
-            break;
+    if (usb_setup_pkt.bRequest == SET_CFG)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SET_CFG\r\n");
+        //#endif
+        usb_std_set_cfg_handler();
+        return;
+    }
 
-        case GET_CFG:
-            // Set Source
-            usb_in_pipe[0].pSrc.bRam = (unsigned char*)&usb_active_configuration;
-            // Set memory type
-            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;
-            // Set data count
-            usb_in_pipe[0].wCount |= 0xff;
-            usb_in_pipe[0].info.bits.busy = 1;
-            break;
+    if (usb_setup_pkt.bRequest == GET_CFG)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"GET_CFG\r\n");
+        //#endif
+        // Set Source
+        usb_in_pipe.pSrc.bRam = (unsigned char*)&usb_active_configuration;
+        // Set memory type
+        usb_in_pipe.info.bits.ctrl_trf_mem = _RAM;
+        // Set data count
+        usb_in_pipe.wCount |= 0xff;
+        usb_in_pipe.info.bits.busy = 1;
+        return;
+    }
 
-        case GET_STATUS:
-            usb_std_get_status_handler();
-            break;
+    if (usb_setup_pkt.bRequest == GET_STATUS)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"GET_STATUS\r\n");
+        //#endif
+        usb_std_get_status_handler();
+        return;
+    }
 
-        case CLR_FEATURE:
-        case SET_FEATURE:
-            usb_std_feature_req_handler();
-            break;
+    if (usb_setup_pkt.bRequest == CLR_FEATURE && usb_setup_pkt.bRequest == SET_FEATURE)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SET_FEATURE\r\n");
+        //#endif
+        return;
+    }
 
-        case GET_INTF:
-            // Set source
-            usb_in_pipe[0].pSrc.bRam = (unsigned char*)&usb_alternate_interface +
-                usb_setup_pkt.bIntfID;
-            // Set memory type
-            usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;
-            // Set data count
-            usb_in_pipe[0].wCount |= 0xff;
-            usb_in_pipe[0].info.bits.busy = 1;
-            break;
+    if (usb_setup_pkt.bRequest == GET_INTF)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"GET_INTF\r\n");
+        //#endif
+        // Set source
+        usb_in_pipe.pSrc.bRam = (unsigned char*)&usb_alternate_interface +
+            usb_setup_pkt.bIntfID;
+        // Set memory type
+        usb_in_pipe.info.bits.ctrl_trf_mem = _RAM;
+        // Set data count
+        usb_in_pipe.wCount |= 0xff;
+        usb_in_pipe.info.bits.busy = 1;
+        return;
+    }
 
-        case SET_INTF:
-            usb_in_pipe[0].info.bits.busy = 1;
-            usb_alternate_interface[usb_setup_pkt.bIntfID] = usb_setup_pkt.bAltID;
-            break;
+    if (usb_setup_pkt.bRequest == SET_INTF)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SET_INTF\r\n");
+        //#endif
+        usb_in_pipe.info.bits.busy = 1;
+        usb_alternate_interface[usb_setup_pkt.bIntfID] = usb_setup_pkt.bAltID;
+        return;
+    }
 
-        case SET_DSC:
-            usbcb_std_set_dsc_handler();
-            break;
+    if (usb_setup_pkt.bRequest == SET_DSC)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SET_DSC\r\n");
+        //#endif
+        //usbcb_std_set_dsc_handler();
+        return;
+    }
 
-        case SYNCH_FRAME:
-        default:
-            break;
+    if (usb_setup_pkt.bRequest == SYNCH_FRAME)
+    {
+        //#ifdef DEBUG
+        //SerialPrint(UART,"SYNCH_FRAME\r\n");
+        //#endif
+        return;
     }
 }
 
@@ -835,14 +831,13 @@ void usb_std_feature_req_handler(void)
     unsigned int *pUEP;
 
     #ifdef DEBUG
-    serial1printf("> usb_std_feature_req_handler\r\n");
-    return;
+    SerialPrint(UART,"> usb_std_feature_req_handler\r\n");
     #endif
     
     if ((usb_setup_pkt.bFeature == DEVICE_REMOTE_WAKEUP)&&
        (usb_setup_pkt.Recipient == RCPT_DEV))
     {
-        usb_in_pipe[0].info.bits.busy = 1;
+        usb_in_pipe.info.bits.busy = 1;
         if (usb_setup_pkt.bRequest == SET_FEATURE)
             usb_remote_wakeup = 1;
         else
@@ -853,7 +848,7 @@ void usb_std_feature_req_handler(void)
        (usb_setup_pkt.Recipient == RCPT_EP)&&
        (usb_setup_pkt.EPNum != 0))
     {
-        usb_in_pipe[0].info.bits.busy = 1;
+        usb_in_pipe.info.bits.busy = 1;
         /* Must do address calculation here */
 
         if (usb_setup_pkt.EPDir == 0) // OUT_FROM_HOST
@@ -921,27 +916,27 @@ void usb_std_feature_req_handler(void)
 /*
  * This routine handles the standard GET_DESCRIPTOR request.
  */
+
 void usb_std_get_dsc_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_std_get_dsc_handler\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_std_get_dsc_handler\r\n");
+    //#endif
 
     if (usb_setup_pkt.bmRequestType == 0x80)
     {
-        usb_in_pipe[0].info.Val = USB_INPIPES_ROM | USB_INPIPES_BUSY | USB_INPIPES_INCLUDE_ZERO;
+        usb_in_pipe.info.Val = USB_INPIPES_ROM | USB_INPIPES_BUSY | USB_INPIPES_INCLUDE_ZERO;
 
         switch(usb_setup_pkt.bDescriptorType)
         {
             case USB_DESCRIPTOR_DEVICE:
-                usb_in_pipe[0].pSrc.bRom = (const unsigned char*) &usb_device;
-                usb_in_pipe[0].wCount = sizeof(usb_device);
+                usb_in_pipe.pSrc.bRom = (const unsigned char*) &usb_device;
+                usb_in_pipe.wCount = sizeof(usb_device);
                 break;
                 
             case USB_DESCRIPTOR_CONFIGURATION:
-                usb_in_pipe[0].pSrc.bRom = usb_config [usb_setup_pkt.bDscIndex];
-                usb_in_pipe[0].wCount = *(usb_in_pipe[0].pSrc.wRom+1);                // Set data count
+                usb_in_pipe.pSrc.bRom = usb_config [usb_setup_pkt.bDscIndex];
+                usb_in_pipe.wCount = *(usb_in_pipe.pSrc.wRom+1);                // Set data count
                 break;
                 
             case USB_DESCRIPTOR_STRING:
@@ -952,32 +947,32 @@ void usb_std_get_dsc_handler(void)
                 #endif
                 {
                     //Get a pointer to the String descriptor requested
-                    usb_in_pipe[0].pSrc.bRom = usb_string[usb_setup_pkt.bDscIndex];
+                    usb_in_pipe.pSrc.bRom = usb_string[usb_setup_pkt.bDscIndex];
                     // Set data count
-                    usb_in_pipe[0].wCount = *usb_in_pipe[0].pSrc.bRom;
+                    usb_in_pipe.wCount = *usb_in_pipe.pSrc.bRom;
                 }
                 else
                 {
-                    usb_in_pipe[0].info.Val = 0;
+                    usb_in_pipe.info.Val = 0;
                 }
                 break;
 
             default:
-                usb_in_pipe[0].info.Val = 0;
+                usb_in_pipe.info.Val = 0;
                 break;
-        }//end switch
-    }//end if
-}//end usb_std_get_dsc_handler
+        }
+    }
+}
 
 /*
  * This routine handles the standard GET_STATUS request
  */
+
 void usb_std_get_status_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_std_get_status_handler\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_std_get_status_handler\r\n");
+    //#endif
 
     ctrl_trf_data[0] = 0;                 // Initialize content
     ctrl_trf_data[1] = 0;
@@ -985,11 +980,7 @@ void usb_std_get_status_handler(void)
     switch(usb_setup_pkt.Recipient)
     {
         case RCPT_DEV:
-            usb_in_pipe[0].info.bits.busy = 1;
-            /*
-             * [0]: bit0: Self-Powered Status [0] Bus-Powered [1] Self-Powered
-             *      bit1: RemoteWakeup        [0] Disabled    [1] Enabled
-             */
+            usb_in_pipe.info.bits.busy = 1;
             ctrl_trf_data[0] |= 1;		// self powered
 
             if (usb_remote_wakeup == 1)
@@ -999,36 +990,30 @@ void usb_std_get_status_handler(void)
             break;
             
         case RCPT_INTF:
-            usb_in_pipe[0].info.bits.busy = 1;  // No data to update
+            usb_in_pipe.info.bits.busy = 1;  // No data to update
             break;
             
         case RCPT_EP:
-            usb_in_pipe[0].info.bits.busy = 1;
-            /*
-             * [0]: bit0: Halt Status [0] Not Halted [1] Halted
-             */
-            {
-                BDT_ENTRY *p;
+            usb_in_pipe.info.bits.busy = 1;
+            BDT_ENTRY *p;
 
-                if (usb_setup_pkt.EPDir == 0)
-                {
-                    p = (BDT_ENTRY*)pBDTEntryOut[usb_setup_pkt.EPNum];
-                } else {
-                    p = (BDT_ENTRY*)pBDTEntryIn[usb_setup_pkt.EPNum];
-                }
+            if (usb_setup_pkt.EPDir == 0)
+                p = (BDT_ENTRY*)pBDTEntryOut[usb_setup_pkt.EPNum];
+            else
+                p = (BDT_ENTRY*)pBDTEntryIn[usb_setup_pkt.EPNum];
 
-                if (p->STAT.Val & _BSTALL)      // Use _BSTALL as a bit mask
-                    ctrl_trf_data[0] = 1;       // Set bit0
-                break;
-            }
+            if (p->STAT.Val & _BSTALL)      // Use _BSTALL as a bit mask
+                ctrl_trf_data[0] = 1;       // Set bit0
+
+            break;
     }//end switch
 
-    if (usb_in_pipe[0].info.bits.busy == 1)
+    if (usb_in_pipe.info.bits.busy == 1)
     {
-        usb_in_pipe[0].pSrc.bRam = (unsigned char*) &ctrl_trf_data; // Set Source
-        usb_in_pipe[0].info.bits.ctrl_trf_mem = _RAM;               // Set memory type
-        usb_in_pipe[0].wCount &= ~0xff;
-        usb_in_pipe[0].wCount |= 2;                                 // Set data count
+        usb_in_pipe.pSrc.bRam = (unsigned char*) &ctrl_trf_data; // Set Source
+        usb_in_pipe.info.bits.ctrl_trf_mem = _RAM;               // Set memory type
+        usb_in_pipe.wCount &= ~0xff;
+        usb_in_pipe.wCount |= 2;                                 // Set data count
     }
 }
 
@@ -1049,22 +1034,17 @@ void usb_std_get_status_handler(void)
  
 void usb_ctrl_ep_service_complete(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_ep_service_complete\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_ep_service_complete\r\n");
+    //#endif
 
     // Clear PKTDIS to enable packet processing.
     U1CONCLR = _U1CON_PKTDIS_MASK;
 
-    #ifdef DEBUG
-    //serial1printf("busy=%d\r\n",usb_in_pipe[0].info.bits.busy);
-    #endif
-
     // CTRL_TRF_RX ?
-    if (usb_in_pipe[0].info.bits.busy == 0)
+    if (usb_in_pipe.info.bits.busy == 0)
     {
-        if (usb_out_pipe[0].info.bits.busy == 1)
+        if (usb_out_pipe.info.bits.busy == 1)
         {
             control_transfer_state = CTRL_TRF_RX;
 
@@ -1092,14 +1072,14 @@ void usb_ctrl_ep_service_complete(void)
     // CTRL_TRF_TX
     else
     {
-        if (usb_out_pipe[0].info.bits.busy == 0)
+        if (usb_out_pipe.info.bits.busy == 0)
         {
             if (usb_setup_pkt.DataDir == DEV_TO_HOST)
             {
                 /// USBCtrlEPAllowDataStage
-                if (usb_setup_pkt.wLength < usb_in_pipe[0].wCount)
+                if (usb_setup_pkt.wLength < usb_in_pipe.wCount)
                 {
-                    usb_in_pipe[0].wCount = usb_setup_pkt.wLength;
+                    usb_in_pipe.wCount = usb_setup_pkt.wLength;
                 }
                 
                 usb_ctrl_trf_tx_service();
@@ -1166,17 +1146,16 @@ void usb_ctrl_trf_tx_service(void)
     unsigned byteToSend;
     unsigned char *dst;
 
-    #ifdef DEBUG
-    serial1printf("> usb_ctrl_trf_tx_service\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_ctrl_trf_tx_service\r\n");
+    //#endif
 
     /*
      * First, have to figure out how many byte of data to send.
      */
-    if (usb_in_pipe[0].wCount < USB_EP0_BUFF_SIZE)
+    if (usb_in_pipe.wCount < USB_EP0_BUFF_SIZE)
     {
-        byteToSend = usb_in_pipe[0].wCount;
+        byteToSend = usb_in_pipe.wCount;
 
         /* v2b fix */
         if (short_packet_status == SHORT_PKT_NOT_USED)
@@ -1202,17 +1181,17 @@ void usb_ctrl_trf_tx_service(void)
     /*
      * Subtract the number of bytes just about to be sent from the total.
      */
-    usb_in_pipe[0].wCount = usb_in_pipe[0].wCount - byteToSend;
+    usb_in_pipe.wCount = usb_in_pipe.wCount - byteToSend;
 
     // Set destination pointer
     dst = (unsigned char*) ctrl_trf_data;
 
     // Determine type of memory source
-    if (usb_in_pipe[0].info.bits.ctrl_trf_mem == USB_INPIPES_ROM)
+    if (usb_in_pipe.info.bits.ctrl_trf_mem == USB_INPIPES_ROM)
     {
         while (byteToSend)
         {
-            *dst++ = *usb_in_pipe[0].pSrc.bRom++;
+            *dst++ = *usb_in_pipe.pSrc.bRom++;
             byteToSend--;
         }
     }
@@ -1221,7 +1200,7 @@ void usb_ctrl_trf_tx_service(void)
         // RAM
         while (byteToSend)
         {
-            *dst++ = *usb_in_pipe[0].pSrc.bRam++;
+            *dst++ = *usb_in_pipe.pSrc.bRam++;
             byteToSend--;
         }
     }
@@ -1241,8 +1220,7 @@ void usb_ctrl_trf_rx_service(void)
     unsigned byteToRead, i;
 
     #ifdef DEBUG
-    serial1printf("> usb_ctrl_trf_rx_service\r\n");
-    return;
+    SerialPrint(UART,"> usb_ctrl_trf_rx_service\r\n");
     #endif
 
     byteToRead = pBDTEntryEP0OutCurrent->CNT;
@@ -1250,22 +1228,22 @@ void usb_ctrl_trf_rx_service(void)
     /*
      * Accumulate total number of bytes read
      */
-    if (byteToRead > usb_out_pipe[0].wCount)
+    if (byteToRead > usb_out_pipe.wCount)
     {
-        byteToRead = usb_out_pipe[0].wCount;
+        byteToRead = usb_out_pipe.wCount;
     }
     else
     {
-        usb_out_pipe[0].wCount = usb_out_pipe[0].wCount - byteToRead;
+        usb_out_pipe.wCount = usb_out_pipe.wCount - byteToRead;
     }
 
     for(i=0;i<byteToRead;i++)
     {
-        *usb_out_pipe[0].pDst.bRam++ = ctrl_trf_data[i];
+        *usb_out_pipe.pDst.bRam++ = ctrl_trf_data[i];
     }//end while(byteToRead)
 
     //If there is more data to read
-    if (usb_out_pipe[0].wCount > 0)
+    if (usb_out_pipe.wCount > 0)
     {
         /*
          * Don't have to worry about overwriting _KEEP bit
@@ -1286,11 +1264,11 @@ void usb_ctrl_trf_rx_service(void)
     else
     {
         pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-        if (usb_out_pipe[0].pFunc != 0)
+        if (usb_out_pipe.pFunc != 0)
         {
-            usb_out_pipe[0].pFunc();
+            usb_out_pipe.pFunc();
         }
-        usb_out_pipe[0].info.bits.busy = 0;
+        usb_out_pipe.info.bits.busy = 0;
     }
 
     // reset ep0Bo.Cnt to USB_EP0_BUFF_SIZE
@@ -1298,20 +1276,19 @@ void usb_ctrl_trf_rx_service(void)
 }//end usb_ctrl_trf_rx_service
 
 /*
- * This routine first disables all endpoints by
- * clearing UEP registers. It then configures
- * (initializes) endpoints by calling the callback
+ * This routine first disables all endpoints by clearing UEP registers.
+ * It then configures (initializes) endpoints by calling the callback
  * function usbcb_init_ep().
  */
+
 void usb_std_set_cfg_handler(void)
 {
-    #ifdef DEBUG
-    serial1printf("> usb_std_set_cfg_handler\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_std_set_cfg_handler\r\n");
+    //#endif
 
     // This will generate a zero length packet
-    usb_in_pipe[0].info.bits.busy = 1;
+    usb_in_pipe.info.bits.busy = 1;
 
     // disable all endpoints except endpoint 0
     //bzero((void*) &U1EP1, USB_MAX_EP_NUMBER - 1);
@@ -1351,10 +1328,9 @@ void usb_configure_endpoint(unsigned epnum, unsigned direction)
 {
     volatile BDT_ENTRY* handle;
 
-    #ifdef DEBUG
-    serial1printf("> usb_configure_endpoint\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_configure_endpoint\r\n");
+    //#endif
 
     handle = (volatile BDT_ENTRY*) &usb_buffer[EP0_OUT_EVEN];
     handle += BD(epnum, direction, 0) / sizeof(BDT_ENTRY);
@@ -1418,10 +1394,9 @@ void usb_enable_endpoint(unsigned ep, unsigned options)
     // Set the options to the appropriate endpoint control register
     unsigned int *p = (unsigned int*) (&U1EP0 + (4 * ep));
 
-    #ifdef DEBUG
-    serial1printf("> usb_enable_endpoint\r\n");
-    return;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_enable_endpoint\r\n");
+    //#endif
 
     if (options & USB_OUT_ENABLED)
     {
@@ -1448,8 +1423,7 @@ void usb_stall_endpoint(unsigned ep, unsigned dir)
     BDT_ENTRY *p;
 
     #ifdef DEBUG
-    serial1printf("> usb_stall_endpoint\r\n");
-    return;
+    SerialPrint(UART,"> usb_stall_endpoint\r\n");
     #endif
     
     if (ep == 0)
@@ -1497,10 +1471,9 @@ USB_HANDLE usb_transfer_one_packet (unsigned ep, unsigned dir,
 {
     USB_HANDLE handle;
 
-    #ifdef DEBUG
-    serial1printf("> usb_transfer_one_packet\r\n");
-    return 0;
-    #endif
+    //#ifdef DEBUG
+    //SerialPrint(UART,"> usb_transfer_one_packet\r\n");
+    //#endif
     
     // If the direction is IN
     if (dir != 0)
@@ -1547,40 +1520,32 @@ USB_HANDLE usb_transfer_one_packet (unsigned ep, unsigned dir,
 /*
  * USB Callback Functions
  */
- 
-/*
- * Call back that is invoked when a USB suspend is detected.
- */
+
+#if 0 
+// Call back that is invoked when a USB suspend is detected.
 void __attribute__((weak)) usbcb_suspend()
 {
 }
 
-/*
- * This call back is invoked when a wakeup from USB suspend is detected.
- */
+// This call back is invoked when a wakeup from USB suspend is detected.
 void __attribute__((weak)) usbcb_wake_from_suspend()
 {
 }
 
-/*
- * Called when start-of-frame packet arrives, every 1 ms.
- */
+// Called when start-of-frame packet arrives, every 1 ms.
 void __attribute__((weak)) usbcb_sof_handler()
 {
 }
 
-/*
- * Called on any USB error interrupt, for debugging purposes.
- */
+// Called on any USB error interrupt, for debugging purposes.
 void __attribute__((weak)) usbcb_error_handler()
 {
 }
 
-/*
- * Handle a SETUP SET_DESCRIPTOR request (optional).
- */
+// Handle a SETUP SET_DESCRIPTOR request (optional).
 void __attribute__((weak)) usbcb_std_set_dsc_handler()
 {
 }
+#endif
 
 #endif /* USBDEVICE_C */

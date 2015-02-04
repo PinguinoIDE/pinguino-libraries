@@ -407,6 +407,25 @@ typedef union __attribute__((packed)) _CDC_NOTICE
 } CDC_NOTICE, *PCDC_NOTICE;
 
 /*
+ * Configuration Header and Interface Descriptors for an ACM Header
+ * See USB CDC 1.1 Page 15
+ */
+/*
+typedef struct
+{
+    USB_CONFIGURATION_DESCRIPTOR  Header;
+    USB_INTERFACE_DESCRIPTOR CMInterface;
+    USB_CDC_HEADER_FN_DSC Header_descriptor;
+    USB_CDC_ACM_FN_DSC ACM_descriptor;
+    USB_CDC_UNION_FN_DSC UF_descriptor;
+    USB_CDC_CALL_MGT_FN_DSC CMF_descriptor;
+    USB_ENDPOINT_DESCRIPTOR ep_config;
+    USB_INTERFACE_DESCRIPTOR DataInterface;
+    USB_ENDPOINT_DESCRIPTOR ep_out;
+    USB_ENDPOINT_DESCRIPTOR ep_in;
+} USB_Configuration_Descriptor;
+*/
+/*
  * E X T E R N S
  */
 

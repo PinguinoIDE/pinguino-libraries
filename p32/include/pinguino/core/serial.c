@@ -1019,7 +1019,8 @@ char * SerialGetString(u8 port)
     
     do {
         c = SerialGetKey(port);
-        SerialPrintf(port, (unsigned char *)"%c", c);
+        //SerialPrintf(port, (unsigned char *)"%c", c);
+        SerialPutChar(port, c);
         buffer[i++] = c;
     } while (c != '\r');
     buffer[i] = '\0';
