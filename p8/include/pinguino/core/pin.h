@@ -246,6 +246,7 @@
 	#define LED1	13
 	#define USERLED	13
     #endif
+    
 /**********************************************************************/
 #elif defined(PINGUINO2455)  || defined(PINGUINO4455)  || \
       defined(PINGUINO2550)  || defined(PINGUINO4550)  || \

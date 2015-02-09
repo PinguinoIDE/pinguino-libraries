@@ -31,14 +31,41 @@
 #include <usb/usb_ch9.h>
 #include <usb/usb_hal_pic32.h>
 
-#ifdef __USBCDCINTERRUPT__
-#define USBVOLATILE volatile
+#if defined(__USBHID__)
+
+    // TODO
+
+#elif defined(__USBCDC__)
+
+    #include <usb/usb_function_cdc.h>
+
+    #ifdef __USBCDCINTERRUPT__
+        #define USBVOLATILE volatile
+    #else
+        #define USBVOLATILE
+    #endif
+
+    #define USB_INT_NUM                     CDC_INT_NUM      // Nb interfaces
+    #define USB_EP_NUM                      CDC_EP_NUM       // Nb endpoints
+    #define USB_EP0_BUFF_SIZE               CDC_COMM_IN_EP_SIZE
+    #define USB_POLLING_PERIOD              0                // ms
+
+#elif defined(__USBUART__)
+
+    // TODO
+
+#elif defined(__USBBULK__)
+
+    // TODO
+
 #else
-#define USBVOLATILE
+
+    #error "No USB class drivers (HID, CDC, UART or BULK) defined"
+
 #endif
 
-#define USB_MAX_EP_NUMBER                   2
-#define USB_NUM_STRING_DESCRIPTORS          3
+#define USB_NUM_STRING_DESCRIPTORS          4   // 4 strings
+
 // PIC32 supports only full ping-pong mode.
 #define USB_PING_PONG_MODE USB_PING_PONG__FULL_PING_PONG
 
@@ -125,19 +152,19 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
     /* Standard Device Requests */
     struct __attribute__ ((packed))
     {
-        unsigned char bmRequestType; //from table 9-2 of USB2.0 spec
-        unsigned char bRequest; //from table 9-2 of USB2.0 spec
-        unsigned short wValue; //from table 9-2 of USB2.0 spec
-        unsigned short wIndex; //from table 9-2 of USB2.0 spec
-        unsigned short wLength; //from table 9-2 of USB2.0 spec
+        u8 bmRequestType; //from table 9-2 of USB2.0 spec
+        u8 bRequest; //from table 9-2 of USB2.0 spec
+        u16 wValue; //from table 9-2 of USB2.0 spec
+        u16 wIndex; //from table 9-2 of USB2.0 spec
+        u16 wLength; //from table 9-2 of USB2.0 spec
     };
     struct __attribute__ ((packed))
     {
         unsigned :8;
         unsigned :8;
-        unsigned short W_Value; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
-        unsigned short W_Index; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
-        unsigned short W_Length; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+        u16 W_Value; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+        u16 W_Index; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+        u16 W_Length; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
     };
     struct __attribute__ ((packed))
     {
@@ -145,7 +172,7 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
         unsigned RequestType:2; //Standard,Class,Vendor,Reserved
         unsigned DataDir:1;     //Host-to-device,Device-to-host
         unsigned :8;
-        unsigned char bFeature;          //DEVICE_REMOTE_WAKEUP,ENDPOINT_HALT
+        u8 bFeature;          //DEVICE_REMOTE_WAKEUP,ENDPOINT_HALT
         unsigned :8;
         unsigned :8;
         unsigned :8;
@@ -156,9 +183,9 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
     {
         unsigned :8;
         unsigned :8;
-        unsigned char bDscIndex;        //For Configuration and String DSC Only
-        unsigned char bDescriptorType;  //Device,Configuration,String
-        unsigned short wLangID;         //Language ID
+        u8 bDscIndex;        //For Configuration and String DSC Only
+        u8 bDescriptorType;  //Device,Configuration,String
+        u16 wLangID;         //Language ID
         unsigned :8;
         unsigned :8;
     };
@@ -166,19 +193,8 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
     {
         unsigned :8;
         unsigned :8;
-        unsigned char bDevADR;		//Device Address 0-127
-        unsigned char bDevADRH;         //Must equal zero
-        unsigned :8;
-        unsigned :8;
-        unsigned :8;
-        unsigned :8;
-    };
-    struct __attribute__ ((packed))
-    {
-        unsigned :8;
-        unsigned :8;
-        unsigned char bConfigurationValue;         //Configuration Value 0-255
-        unsigned char bCfgRSD;           //Must equal zero (Reserved)
+        u8 bDevADR;		//Device Address 0-127
+        u8 bDevADRH;         //Must equal zero
         unsigned :8;
         unsigned :8;
         unsigned :8;
@@ -188,10 +204,21 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
     {
         unsigned :8;
         unsigned :8;
-        unsigned char bAltID;            //Alternate Setting Value 0-255
-        unsigned char bAltID_H;          //Must equal zero
-        unsigned char bIntfID;           //Interface Number Value 0-255
-        unsigned char bIntfID_H;         //Must equal zero
+        u8 bConfigurationValue;         //Configuration Value 0-255
+        u8 bCfgRSD;           //Must equal zero (Reserved)
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        u8 bAltID;            //Alternate Setting Value 0-255
+        u8 bAltID_H;          //Must equal zero
+        u8 bIntfID;           //Interface Number Value 0-255
+        u8 bIntfID_H;         //Must equal zero
         unsigned :8;
         unsigned :8;
     };
@@ -201,8 +228,8 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
         unsigned :8;
         unsigned :8;
         unsigned :8;
-        unsigned char bEPID;             //Endpoint ID (Number & Direction)
-        unsigned char bEPID_H;           //Must equal zero
+        u8 bEPID;             //Endpoint ID (Number & Direction)
+        u8 bEPID_H;           //Must equal zero
         unsigned :8;
         unsigned :8;
     };
@@ -233,10 +260,10 @@ typedef struct __attribute__ ((packed))
     {
         //Various options of pointers that are available to
         // get the data from
-        unsigned char *bRam;
-        const unsigned char *bRom;
-        unsigned short *wRam;
-        const unsigned short *wRom;
+        u8 *bRam;
+        const u8 *bRom;
+        u16 *wRam;
+        const u16 *wRom;
     } pSrc;
     
     union __attribute__ ((packed))
@@ -252,10 +279,10 @@ typedef struct __attribute__ ((packed))
             //is this PIPE currently in use
             unsigned busy                  :1;
         } bits;
-        unsigned char Val;
+        u8 Val;
     } info;
     
-    unsigned short wCount;
+    u16 wCount;
 } IN_PIPE;
 
 #define CTRL_TRF_RETURN void
@@ -267,8 +294,8 @@ typedef struct __attribute__ ((packed))
     {
         //Various options of pointers that are available to
         // get the data from
-        unsigned char *bRam;
-        unsigned short *wRam;
+        u8 *bRam;
+        u16 *wRam;
     } pDst;
     
     union __attribute__ ((packed))
@@ -279,10 +306,10 @@ typedef struct __attribute__ ((packed))
             //is this PIPE currently in use
             unsigned busy                  :1;
         } bits;
-        unsigned char Val;
+        u8 Val;
     } info;
     
-    unsigned short wCount;
+    u16 wCount;
     CTRL_TRF_RETURN (*pFunc)(CTRL_TRF_PARAMS);
 } OUT_PIPE;
 
@@ -294,12 +321,12 @@ typedef struct __attribute__ ((packed))
 #define USB_INPIPES_NO_DATA        0x00     //no data to send
 #define USB_INPIPES_NO_OPTIONS     0x00     //no options set
 
-#define USB_EP0_ROM                 USB_INPIPES_ROM
-#define USB_EP0_RAM                 USB_INPIPES_RAM
-#define USB_EP0_BUSY                USB_INPIPES_BUSY
-#define USB_EP0_INCLUDE_ZERO        USB_INPIPES_INCLUDE_ZERO
-#define USB_EP0_NO_DATA             USB_INPIPES_NO_DATA
-#define USB_EP0_NO_OPTIONS          USB_INPIPES_NO_OPTIONS
+#define USB_EP0_ROM                USB_INPIPES_ROM
+#define USB_EP0_RAM                USB_INPIPES_RAM
+#define USB_EP0_BUSY               USB_INPIPES_BUSY
+#define USB_EP0_INCLUDE_ZERO       USB_INPIPES_INCLUDE_ZERO
+#define USB_EP0_NO_DATA            USB_INPIPES_NO_DATA
+#define USB_EP0_NO_OPTIONS         USB_INPIPES_NO_OPTIONS
 
 /*
  * Standard Request Codes
@@ -400,44 +427,24 @@ typedef struct __attribute__ ((packed))
 // to NULL so that they are in a known state during their first usage.
 #define USB_HANDLE volatile BDT_ENTRY*
 
-/* Size of buffer for end-point EP0.
- * Valid Options: 8, 16, 32, or 64 bytes.
- * Using larger options take more SRAM, but
- * does not provide much advantage in most types
- * of applications.  Exceptions to this, are applications
- * that use EP0 IN or OUT for sending large amounts of
- * application related data.
- */
-#ifndef USB_EP0_BUFF_SIZE
-#   define USB_EP0_BUFF_SIZE	64 // 8
-#endif
-
-/*
- * Only one interface by default.
- */
-#ifndef USB_MAX_NUM_INT
-#   define USB_MAX_NUM_INT	2
-#endif
-
 // Definitions for the BDT
-extern volatile BDT_ENTRY usb_buffer[(USB_MAX_EP_NUMBER + 1) * 4];
+extern volatile BDT_ENTRY usb_buffer[(USB_EP_NUM + 1) * 4];
 
 // Device descriptor (cf. usb_descriptor.c)
 extern const USB_DEVICE_DESCRIPTOR usb_device;
 
 // Array of configuration descriptors (cf. usb_descriptor.c)
-extern const unsigned char *const usb_config[];
-extern const unsigned char usb_config1_descriptor[];
-//extern const USB_Configuration_Descriptor usb_config1_descriptor;
+extern const u8 *const usb_config[];
+extern const u8 usb_config1_descriptor[];
 
 // Array of string descriptors (cf. usb_descriptor.c)
-extern const unsigned char *const usb_string[];
+extern const u8 *const usb_string[];
 
 // Buffer for control transfers
 extern volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 
-extern USBVOLATILE unsigned usb_device_state;
-extern USBVOLATILE unsigned usb_active_configuration;
+extern USBVOLATILE u32 usb_device_state;
+extern USBVOLATILE u32 usb_active_configuration;
 extern USBVOLATILE IN_PIPE usb_in_pipe;
 extern USBVOLATILE OUT_PIPE usb_out_pipe;
 
@@ -581,7 +588,7 @@ void usb_device_init(void);
     descriptor. For example:
 
     <code lang="c">
-    const unsigned char configDescriptor1[]={
+    const u8 configDescriptor1[]={
         0x09,                           // Size
         USB_DESCRIPTOR_CONFIGURATION,   // descriptor type
         DESC_CONFIG_WORD(0x0022),       // Total length
@@ -743,12 +750,12 @@ void usb_ctrl_trf_out_handler (void);
 void usb_wake_from_suspend (void);
 void usb_suspend (void);
 void usb_stall_handler (void);
-volatile USB_HANDLE usb_transfer_one_packet (unsigned ep, unsigned dir, unsigned char* data, unsigned len);
-void usb_enable_endpoint (unsigned ep, unsigned options);
-void usb_configure_endpoint (unsigned EPNum, unsigned direction);
+volatile USB_HANDLE usb_transfer_one_packet (u32 ep, u32 dir, u8* data, u32 len);
+void usb_enable_endpoint (u32 ep, u32 options);
+void usb_configure_endpoint (u32 EPNum, u32 direction);
 
 #if defined(USB_DYNAMIC_EP_CONFIG)
-    void usb_init_ep(unsigned char const* pConfig);
+    void usb_init_ep(u8 const* pConfig);
 #else
     #define usb_init_ep(a)
 #endif
@@ -768,7 +775,7 @@ void usb_configure_endpoint (unsigned EPNum, unsigned direction);
     desired application behavior. If the microcontroller will be put to
     sleep, a process similar to that shown below may be used:
 
-    \Example Psuedo Code:
+    \Example Pseudo Code:
     <code>
     ConfigureIOPinsForLowPower();
     SaveStateOfAllInterruptEnableBits();
@@ -839,177 +846,6 @@ void usbcb_suspend (void);
  */
 
 void usbcb_wake_from_suspend (void);
-
-/*
-  Function:
-    void usbcb_sof_handler (void)
-
-  Summary:
-    This callback is called when a SOF packet is received by the host.
-    (optional)
-
-  Description:
-    This callback is called when a SOF packet is received by the host.
-    (optional)
-
-    The USB host sends out a SOF packet to full-speed
-    devices every 1 ms. This interrupt may be useful
-    for isochronous pipes. End designers should
-    implement callback routine as necessary.
-
-  PreCondition:
-    None
-
-  Parameters:
-    None
-
-  Return Values:
-    None
-
-  Remarks:
-    None
- */
-
-void usbcb_sof_handler (void);
-
-/*
-  Function:
-    void usbcb_error_handler (void)
-
-  Summary:
-    This callback is called whenever a USB error occurs. (optional)
-
-  Description:
-    This callback is called whenever a USB error occurs. (optional)
-
-    The purpose of this callback is mainly for
-    debugging during development. Check UEIR to see
-    which error causes the interrupt.
-
-  PreCondition:
-    None
-
-  Parameters:
-    None
-
-  Return Values:
-    None
-
-  Remarks:
-    No need to clear UEIR to 0 here.
-    Callback caller is already doing that.
-
-    Typically, user firmware does not need to do anything special
-    if a USB error occurs.  For example, if the host sends an OUT
-    packet to your device, but the packet gets corrupted (ex:
-    because of a bad connection, or the user unplugs the
-    USB cable during the transmission) this will typically set
-    one or more USB error interrupt flags.  Nothing specific
-    needs to be done however, since the SIE will automatically
-    send a "NAK" packet to the host.  In response to this, the
-    host will normally retry to send the packet again, and no
-    data loss occurs.  The system will typically recover
-    automatically, without the need for application firmware
-    intervention.
-
-    Nevertheless, this callback function is provided, such as
-    for debugging purposes.
- */
-
-void usbcb_error_handler (void);
-
-/*
-  Function:
-      void usbcb_check_other_req (void)
-
-  Summary:
-    This function is called whenever a request comes over endpoint 0 (the
-    control endpoint) that the stack does not know how to handle.
-  Description:
-    When SETUP packets arrive from the host, some firmware must process the
-    request and respond appropriately to fulfill the request. Some of the
-    SETUP packets will be for standard USB "chapter 9" (as in, fulfilling
-    chapter 9 of the official USB specifications) requests, while others
-    may be specific to the USB device class that is being implemented. For
-    \example, a HID class device needs to be able to respond to "GET
-    REPORT" type of requests. This is not a standard USB chapter 9 request,
-    and therefore not handled by usb_device.c. Instead this request should
-    be handled by class specific firmware, such as that contained in
-    usb_function_hid.c.
-
-    Typical Usage:
-    <code>
-    void usbcb_check_other_req (void)
-    {
-        //Since the stack didn't handle the request I need to check
-        //  my class drivers to see if it is for them
-        USBCheckMSDRequest();
-    }
-    </code>
-  Conditions:
-    None
-  Remarks:
-    None
-  */
-
-void usbcb_check_other_req (void);
-
-/*
-  Function:
-    void usbcb_std_set_dsc_handler (void)
-
-  Summary:
-    This callback is called when a SET_DESCRIPTOR request is received (optional)
-
-  Description:
-    The usbcb_std_set_dsc_handler() callback function is
-    called when a SETUP, bRequest: SET_DESCRIPTOR request
-    arrives.  Typically SET_DESCRIPTOR requests are
-    not used in most applications, and it is
-    optional to support this type of request.
-
-  PreCondition:
-    None
-
-  Parameters:
-    None
-
-  Return Values:
-    None
-
-  Remark:            None
- */
-
-void usbcb_std_set_dsc_handler (void);
-
-/*
-  Function:
-      void usbcb_init_ep (void)
-
-  Summary:
-    This function is called whenever the device receives a
-    SET_CONFIGURATION request.
-  Description:
-    This function is called when the device becomes initialized, which
-    occurs after the host sends a SET_CONFIGURATION (wValue not = 0)
-    request. This callback function should initialize the endpoints for the
-    device's usage according to the current configuration.
-
-    Typical Usage:
-    <code>
-    void usbcb_init_ep (void)
-    {
-        usb_enable_endpoint(MSD_DATA_IN_EP,USB_IN_ENABLED|USB_OUT_ENABLED|USB_HANDSHAKE_ENABLED|USB_DISALLOW_SETUP);
-        USBMSDInit();
-    }
-    </code>
-  Conditions:
-    None
-  Remarks:
-    None
-  */
-
-void usbcb_init_ep (void);
 
 /*
   Function:
@@ -1093,45 +929,9 @@ void usbcb_init_ep (void);
 
 void usbcb_send_resume (void);
 
-/*
-  Function:
-    void usbcb_ep0_data_received(void)
-
-  Summary:
-    This function is called whenever a EP0 data
-    packet is received. (optional)
-
-  Description:
-    This function is called whenever a EP0 data
-    packet is received.  This gives the user (and
-    thus the various class examples a way to get
-    data that is received via the control endpoint.
-    This function needs to be used in conjunction
-    with the usbcb_check_other_req() function since
-    the usbcb_check_other_req() function is the apps
-    method for getting the initial control transfer
-    before the data arrives.
-
-  PreCondition:
-    ENABLE_EP0_DATA_RECEIVED_CALLBACK must be
-    defined already (in target.cfg)
-
-  Parameters:
-    None
-
-  Return Values:
-    None
-
-  Remarks:
-    None
-*/
-
-void usbcb_ep0_data_received (void);
-
-
-
-
 /* Section: MACROS */
+
+#define BCD(x)   ((( x / 10 ) << 4) | ( x % 10 ))
 
 #define DESC_CONFIG_BYTE(a) (a)
 #define DESC_CONFIG_WORD(a) (a&0xFF),((a>>8)&0xFF)
@@ -1154,7 +954,7 @@ void usbcb_ep0_data_received (void);
     {
         //Send the data contained in the INPacket[] array out on
         //  endpoint USBGEN_EP_NUM
-        handle = USBGenWrite (USBGEN_EP_NUM, (unsigned char*) &INPacket[0],  sizeof(INPacket));
+        handle = USBGenWrite (USBGEN_EP_NUM, (u8*) &INPacket[0],  sizeof(INPacket));
     }
     </code>
 
@@ -1169,11 +969,12 @@ void usbcb_ep0_data_received (void);
   Remarks:
     None
   */
+
 #define usb_handle_busy(handle) (handle != 0 && handle->STAT.UOWN)
 
 /*
     Function:
-        unsigned short usb_handle_get_length(USB_HANDLE handle)
+        u16 usb_handle_get_length(USB_HANDLE handle)
 
     Summary:
         Retrieves the length of the destination buffer of the input
@@ -1191,7 +992,7 @@ void usbcb_ep0_data_received (void);
         address for.
 
     Return Values:
-        unsigned short - length of the current buffer that the input handle
+        u16 - length of the current buffer that the input handle
         points to.  If the transfer is complete then this is the
         length of the data transmitted or the length of data
         actually received.
@@ -1200,11 +1001,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_handle_get_length(handle) (handle->CNT)
 
 /*
     Function:
-        unsigned short usb_handle_get_addr(USB_HANDLE)
+        u16 usb_handle_get_addr(USB_HANDLE)
 
     Summary:
         Retrieves the address of the destination buffer of the input
@@ -1222,18 +1024,19 @@ void usbcb_ep0_data_received (void);
         address for.
 
     Return Values:
-        unsigned short - address of the current buffer that the input handle
+        u16 - address of the current buffer that the input handle
         points to.
 
     Remarks:
         None
 
  */
+ 
 #define usb_handle_get_addr(handle) (handle->ADR)
 
 /*
     Function:
-        void usb_ep0_set_source_ram(unsigned char* src)
+        void usb_ep0_set_source_ram(u8* src)
 
     Summary:
         Sets the address of the data to send over the
@@ -1252,11 +1055,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_ep0_set_source_ram(src) usb_in_pipe.pSrc.bRam = src
 
 /*
     Function:
-        void usb_ep0_set_source_rom(unsigned char* src)
+        void usb_ep0_set_source_rom(u8* src)
 
     Summary:
         Sets the address of the data to send over the
@@ -1275,11 +1079,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_ep0_set_source_rom(src) usb_in_pipe.pSrc.bRom = src
 
 /*
     Function:
-        void usb_ep0_transmit(unsigned char options)
+        void usb_ep0_transmit(u8 options)
 
     Summary:
         Sets the address of the data to send over the
@@ -1305,11 +1110,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_ep0_transmit(options) usb_in_pipe.info.Val = options | USB_INPIPES_BUSY
 
 /*
     Function:
-        void usb_ep0_set_size(unsigned short size)
+        void usb_ep0_set_size(u16 size)
 
     Summary:
         Sets the size of the data to send over the
@@ -1328,11 +1134,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_ep0_set_size(size) usb_in_pipe.wCount = size
 
 /*
     Function:
-        void usb_ep0_send_ram_ptr(unsigned char* src, unsigned short size, unsigned char Options)
+        void usb_ep0_send_ram_ptr(u8* src, u16 size, u8 Options)
 
     Summary:
         Sets the source, size, and options of the data
@@ -1360,11 +1167,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+
 #define usb_ep0_send_ram_ptr(src,size,options)  {usb_ep0_set_source_ram(src);usb_ep0_set_size(size);usb_ep0_transmit(options | USB_EP0_RAM);}
 
 /*
     Function:
-        void usb_ep0_send_rom_ptr(unsigned char* src, unsigned short size, unsigned char Options)
+        void usb_ep0_send_rom_ptr(u8* src, u16 size, u8 Options)
 
     Summary:
         Sets the source, size, and options of the data
@@ -1392,11 +1200,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_ep0_send_rom_ptr(src,size,options)  {usb_ep0_set_source_rom(src);usb_ep0_set_size(size);usb_ep0_transmit(options | USB_EP0_ROM);}
 
 /*
     Function:
-        USB_HANDLE usb_tx_one_packet(unsigned char ep, unsigned char* data, unsigned short len)
+        USB_HANDLE usb_tx_one_packet(u8 ep, u8* data, u16 len)
 
     Summary:
         Sends the specified data out the specified endpoint
@@ -1417,11 +1226,12 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+ 
 #define usb_tx_one_packet(ep, data, len)    usb_transfer_one_packet(ep, IN_TO_HOST, data, len)
 
 /*
     Function:
-        void usb_rx_one_packet(unsigned char ep, unsigned char* data, unsigned short len)
+        void usb_rx_one_packet(u8 ep, u8* data, u16 len)
 
     Summary:
         Receives the specified data out the specified endpoint
@@ -1441,6 +1251,7 @@ void usbcb_ep0_data_received (void);
         None
 
  */
+
 #define usb_rx_one_packet(ep, data, len)    usb_transfer_one_packet(ep, OUT_FROM_HOST, data, len)
 
 /*
@@ -1454,8 +1265,8 @@ void usbcb_ep0_data_received (void);
         None
 
     Parameters:
-        unsigned char ep - the endpoint the data will be transmitted on
-        unsigned char dir - the direction of the transfer
+        u8 ep - the endpoint the data will be transmitted on
+        u8 dir - the direction of the transfer
 
     Return Values:
         None
@@ -1463,7 +1274,8 @@ void usbcb_ep0_data_received (void);
     Remarks:
         None
  */
-void usb_stall_endpoint(unsigned ep, unsigned dir);
+
+//void usb_stall_endpoint(u32 ep, u32 dir);
 
 #if (USB_PING_PONG_MODE == USB_PING_PONG__FULL_PING_PONG)
     #define USB_NEXT_EP0_OUT_PING_PONG 0x0008

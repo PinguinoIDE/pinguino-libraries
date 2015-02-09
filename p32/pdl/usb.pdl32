@@ -1,10 +1,12 @@
-CDC.write CDCputs#include <__cdc.c>
-CDC.print CDCprint#include <__cdc.c>#define CDCPRINT
-CDC.println CDCprintln#include <__cdc.c>#define CDCPRINTLN
-CDC.printf CDCprintf#include <__cdc.c>#define CDCPRINTF
-CDC.printNumber CDCprintNumber#include <__cdc.c>#define CDCPRINTNUMBER
-CDC.printFloat CDCprintFloat#include <__cdc.c>#define CDCPRINTFLOAT
-CDC.read CDCgets#include <__cdc.c>
-CDC.getKey CDCgetkey#include <__cdc.c>#define CDCGETKEY
-CDC.getString CDCgetstring#include <__cdc.c>#define CDCGETSTRING
-CDC.USBIsConnected CDCUSBIsConnected#include <__cdc.c>
+CDC.begin CDC_begin#include <cdc.c>
+CDC.polling CDC_polling#include <cdc.c>#define __USBCDCPOLLING__
+CDC.write CDC_print#include <cdc.c>#define CDCWRITE
+CDC.print CDC_print#include <cdc.c>#define CDCPRINT
+CDC.println CDC_println#include <cdc.c>#define CDCPRINTLN
+CDC.printf CDC_printf#include <cdc.c>#define CDCPRINTF
+CDC.printNumber CDC_printNumber#include <cdc.c>#define CDCPRINTNUMBER
+CDC.printFloat CDC_printFloat#include <cdc.c>#define CDCPRINTFLOAT
+CDC.read cdc_gets#include <cdc.c>
+CDC.getKey CDC_getkey#include <cdc.c>#define CDCGETKEY
+CDC.getString CDC_getstring#include <cdc.c>#define CDCGETSTRING
+CDC.isConnected CDC_USBIsConnected#include <cdc.c>

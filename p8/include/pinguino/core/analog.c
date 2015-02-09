@@ -252,51 +252,51 @@ void analogwrite(u8 pin, u16 duty)
         */
         
         case CCP4:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP4CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR4L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP4CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR4L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP4CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP5:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP5CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR5L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP5CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR5L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP5CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP6:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP6CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR6L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP6CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR6L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP6CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP7:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP7CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR7L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP7CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR7L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP7CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP8:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP8CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR8L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP8CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR8L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP8CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP9:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP9CON  = 0b00001100;           // Configure the CCPx module for PWM operation
-            CCPR9L   = ( duty >> 2 ) & 0xFF; // Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP9CON  = 0b00001100;              // Configure the CCPx module for PWM operation
+            CCPR9L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
             CCP9CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
             break;
 
         case CCP10:
-            //BitClear(TRISB, pin);            // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP10CON  = 0b00001100;          // Configure the CCPx module for PWM operation
-            CCPR10L   = ( duty >> 2 ) & 0xFF;// Set the PWM duty cycle by writing to the CCPRxL register
+            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
+            CCP10CON  = 0b00001100;             // Configure the CCPx module for PWM operation
+            CCPR10L   = ( duty >> 2 ) & 0xFF;   // Set the PWM duty cycle by writing to the CCPRxL register
             CCP10CON |= ((u8)duty & 0x03) << 4; // and CCPxCON<5:4> bits
             break;
 
@@ -304,13 +304,13 @@ void analogwrite(u8 pin, u16 duty)
 
         case CCP1:
             CCP1CON  = 0b00001100;
-            CCPR1L   = ( duty >> 2 ) & 0xFF; // 8 LSB
+            CCPR1L   = ( duty >> 2 ) & 0xFF;    // 8 LSB
             CCP1CON |= ((u8)duty & 0x03) << 4;  // 2 MSB in <5:4>
             break;
 
         case CCP2:
             CCP2CON  = 0b00001100;
-            CCPR2L   = ( duty >> 2 ) & 0xFF; // 8 LSB
+            CCPR2L   = ( duty >> 2 ) & 0xFF;    // 8 LSB
             CCP2CON |= ((u8)duty & 0x03) << 4;  // 2 MSB in <5:4>
             break;
 

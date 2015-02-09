@@ -9,15 +9,20 @@
     --------------------------------------------------------------------
     CHANGELOG:
 
-    16 Nov. 2010 - Jean-Pierre Mandon - first release
-            2011 - Régis Blanchot     - added printf, println, print, write, getKey, getString
-    25 Feb. 2012 - Jean-Pierre Mandon - added support for 32MX220F032
-    03 Mar. 2012 - Jean-Pierre Mandon - fixed a bug in WINDOWS CDC
-    18 Jun. 2013 - Moreno manzini     - added CDC.USBIsConnected to check if USB cable is connected
-    13 Mar. 2014 - Régis Blanchot     - added printNumber, printFloat
-    13 Mar. 2014 - Régis Blanchot     - updated print, println, getKey and getString to spare memory on small memory PIC
-    28 Aug. 2014 - Régis Blanchot     - added #include <string.h> to use strlen
-    23 Jan. 2015 - Régis Blanchot     - added interrupt management
+    16 Nov. 2010 - 1.0 - Jean-Pierre Mandon - first release
+            2011 - 1.1 - Régis Blanchot     - added printf, println, print, write, getKey, getString
+    25 Feb. 2012 - 1.2 - Jean-Pierre Mandon - added support for 32MX220F032
+    03 Mar. 2012 - 1.3 - Jean-Pierre Mandon - fixed a bug in WINDOWS CDC
+    18 Jun. 2013 - 1.4 - Moreno manzini     - added CDC.USBIsConnected to check if USB cable is connected
+    13 Mar. 2014 - 1.5 - Régis Blanchot     - added printNumber, printFloat
+    13 Mar. 2014 - 1.6 - Régis Blanchot     - updated print, println, getKey and getString to spare memory on small memory PIC
+    28 Aug. 2014 - 1.7 - Régis Blanchot     - added #include <string.h> to use strlen
+    23 Jan. 2015 - 2.0 - Régis Blanchot     - replaced use of libcdc.a with c files
+    02 Feb. 2015 - 2.1 - Régis Blanchot     - added interrupt-driven mode
+    04 Feb. 2015 - 2.2 - Régis Blanchot     - added CDC.begin and CDC.polling functions
+    06 Feb. 2015 - 2.3 - Régis Blanchot     - renamed CDC.USBIsConnected in CDC.isConnected
+    06 Feb. 2015 - 2.4 - Régis Blanchot     - renamed CDC.TXIsReady in CDC.available
+    06 Feb. 2015 - 2.5 - Régis Blanchot     - added CDC.isReady and CDC.connect
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -37,9 +42,15 @@
 #ifndef __USBCDC__
 #define __USBCDC__
 
-// uncomment to use interrupt
-//#define __USBCDCINTERRUPT__
 #define DEBUG
+
+#define CDC_MAJOR_VER 2
+#define CDC_MINOR_VER 5
+
+// Polling or interrupt mode
+#if !defined(__USBCDCPOLLING__)
+#define __USBCDCINTERRUPT__
+#endif
 
 #include <stdarg.h>
 #include <typedef.h>
@@ -48,19 +59,25 @@
 #include <delay.c>
 #include <interrupt.c>
 
-#ifdef USERLED
-#include <digitalw.c>
-#endif
-
 #ifdef DEBUG
-#ifndef SERIALPRINTF
-#define SERIALPRINTF
-#endif
-#include <serial1.c>
+    #ifdef USERLED
+    #include <digitalw.c>
+    #endif
+
+    #ifndef SERIALPRINT
+    #define SERIALPRINT
+    #endif
+
+    //#ifndef SERIALPRINTNUMBER
+    //#define SERIALPRINTNUMBER
+    //#endif
+
+    #include <serial.c>
+    #define UART UART1
 #endif
 
-#if defined(CDCPRINT) || defined(CDCPRINTLN)
-#include <string.h>         // strlen
+#if defined(CDCWRITE) || defined(CDCPRINT) || defined(CDCPRINTLN)
+#include <string.h>         // strlen, bzero, ...
 #endif
 
 #if defined(CDCPRINTF)
@@ -79,20 +96,59 @@
 //u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
 //extern unsigned usb_device_state;
 
+USBVOLATILE u8 cdc_USBNotConnected = false;
+USBVOLATILE u32 cdc_bps;
+
 /***********************************************************************
- * USB CDC init routine
- * called from main32.c
+ * Configure device
  **********************************************************************/
 
-void CDC_init()
+void CDC_connect(void)
 {
-    #ifdef USERLED
-    unsigned int led_count = 0;
+    #if defined(DEBUG) && defined(USERLED)
+    u32 led_count = 0;
     output(USERLED);
     #endif
 
     #ifdef DEBUG
-    serial1init(9600);
+    SerialPrint(UART,"Try to connect ...\r\n");
+    #endif
+    
+    usb_device_init();
+
+    // Blink the led until device is configured and no more suspended
+    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
+    {
+        usb_device_tasks();
+
+        #if defined(DEBUG) && defined(USERLED)
+        if (led_count == 0)
+        {
+            led_count = 10000;
+            toggle(USERLED);
+        }
+        
+        led_count--;
+        #endif
+    }
+
+    #if defined(DEBUG) && defined(USERLED)
+    low(USERLED);
+    #endif
+    
+    cdc_USBNotConnected = false;
+}
+
+/***********************************************************************
+ * USB CDC init routine
+ **********************************************************************/
+
+void CDC_begin(u32 baudrate)
+{
+    cdc_bps = baudrate;
+    
+    #ifdef DEBUG
+    SerialConfigure(UART, UART_ENABLE, UART_RX_TX_ENABLED, 9600);
     #endif
 
     #ifdef __USBCDCINTERRUPT__
@@ -104,27 +160,49 @@ void CDC_init()
     IntEnable(_USB_IRQ);
     #endif
     
-    usb_device_init();
+    CDC_connect();
+}
 
-    // Blink the led until device is configured and no more suspended
-    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
+/***********************************************************************
+ * CDC_isConnected (CDC.isConnected)
+ * added by Moreno Manzini 18 Jun. 2013 
+ * check if USB cable is connected
+ * modified by Regis Blanchot 06 Feb. 2015
+ **********************************************************************/
+
+u8 CDC_isConnected(void)
+{
+    if ( (U1OTGSTAT & _U1OTGSTAT_VBUSVD_MASK) && 
+         (U1OTGSTAT & _U1OTGSTAT_SESVD_MASK ) )
     {
-        usb_device_tasks();
-
-        #ifdef USERLED
-        if (led_count == 0)
+        if (cdc_USBNotConnected == true)
         {
-            led_count = 20000;
-            toggle(USERLED);
+            CDC_connect();
+            cdc_USBNotConnected = false;
         }
-        
-        led_count--;
-        #endif
+        return(true);
     }
+    else
+    {
+        cdc_USBNotConnected = true;
+        return (false);
+    }
+}
 
-    #ifdef USERLED
-    low(USERLED);
-    #endif
+u8 CDC_available(void)
+{
+    if (CDC_isConnected())
+    {
+        if(control_signal_bitmap.DTE_PRESENT == 1)
+            return (true);
+        else
+            return (false);
+    }
+    else
+    {
+        control_signal_bitmap.DTE_PRESENT = 0;
+        return (false);
+    }
 }
 
 /***********************************************************************
@@ -141,42 +219,17 @@ void CDC_init()
 #ifdef __USBCDCINTERRUPT__
 void USBInterrupt(void)
 {
-    if (IntGetFlag(_USB_IRQ))
-    {
-        IntClearFlag(_USB_IRQ);
-
-        // handles device-to-host transactions
-        //cdc_tx_service();
-        usb_device_tasks();
-        
-        // Write a 1 to these bits clear the interrupts
-        U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
-        U1EIR = 0;
-    }
+    usb_device_tasks();
+    cdc_tx_service();
+    IntClearFlag(_USB_IRQ);
+    //U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
+    //U1EIR = 0;
 }
+#else
+
+#define CDC_polling()
+
 #endif /* __USBCDCINTERRUPT__ */
-
-/***********************************************************************
- * USB Callback Functions
- **********************************************************************/
-
-// Process device-specific SETUP requests.
-#if 0
-void usbcb_check_other_req()
-{
-    // Check the setup data packet (cf. usb_function_cdc.c)
-    usb_check_cdc_request();
-}
-#endif
-
-// Initialize the endpoints
-#if 0
-void usbcb_init_ep()
-{
-    // Enable the CDC endpoint (cf. usb_function_cdc.c)
-    cdc_init_ep();
-}
-#endif
 
 /***********************************************************************
  * USB CDC read routine (CDC.read)
@@ -217,10 +270,10 @@ u8 CDCgets(u8 *buffer)
  * write a string on CDC port
  **********************************************************************/
 
-#if defined(CDCPRINT) || defined(CDCPRINTLN)
-void CDCprint(unsigned char *string)
+#if defined(CDCWRITE) || defined(CDCPRINT) || defined(CDCPRINTLN)
+void CDC_print(const char *string)
 {
-    cdc_puts(string, strlen((const char *)string));
+    cdc_puts(string, strlen(string));
 }
 #endif
 
@@ -232,10 +285,10 @@ void CDCprint(unsigned char *string)
  **********************************************************************/
 
 #if defined(CDCPRINTLN)
-void CDCprintln(unsigned char *string)
+void CDC_println(const char *string)
 {
-    CDCprint(string);
-    CDCprint("\n\r");
+    CDC_print(string);
+    CDC_print("\n\r");
 }
 #endif
 
@@ -247,13 +300,13 @@ void CDCprintln(unsigned char *string)
  **********************************************************************/
 
 #if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
-void CDCprintNumber(long value, u8 base)
+void CDC_printNumber(long value, u8 base)
 {  
     u8 sign;
     u8 length;
 
     long i;
-    unsigned long v;    // absolute value
+    u32 v;    // absolute value
 
     u8 tmp[12];
     u8 *tp = tmp;       // pointer on tmp
@@ -263,7 +316,7 @@ void CDCprintNumber(long value, u8 base)
 
     if (value==0)
     {
-        cdc_puts("0", 1);
+        cdc_putc('0');
         return;
     }
     
@@ -272,7 +325,7 @@ void CDCprintNumber(long value, u8 base)
     if (sign)
         v = -value;
     else
-        v = (unsigned long)value;
+        v = (u32)value;
 
     //while (v || tp == tmp)
     while (v)
@@ -299,7 +352,7 @@ void CDCprintNumber(long value, u8 base)
     // end of string
     *sp = 0;
 
-    cdc_puts(string, length);
+    cdc_puts((const char *)string, length);
 }
 #endif
 
@@ -311,7 +364,7 @@ void CDCprintNumber(long value, u8 base)
  **********************************************************************/
 
 #if defined(CDCPRINTFLOAT)
-void CDCprintFloat(float number, u8 digits)
+void CDC_printFloat(float number, u8 digits)
 { 
     u8 i, toPrint;
     u16 int_part;
@@ -334,18 +387,18 @@ void CDCprintFloat(float number, u8 digits)
     // Extract the integer part of the number and print it  
     int_part = (u16)number;
     remainder = number - (float)int_part;
-    CDCprintNumber(int_part, 10);
+    CDC_printNumber(int_part, 10);
 
     // Print the decimal point, but only if there are digits beyond
     if (digits > 0)
-        cdc_puts('.', 1); 
+        cdc_putc('.'); 
 
     // Extract digits from the remainder one at a time
     while (digits-- > 0)
     {
         remainder *= 10.0;
-        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-        CDCprintNumber(toPrint, 10);
+        toPrint = (u32)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+        CDC_printNumber(toPrint, 10);
         remainder -= toPrint; 
     }
 }
@@ -358,7 +411,7 @@ void CDCprintFloat(float number, u8 digits)
  **********************************************************************/
 
 #if defined(CDCPRINTF)
-void CDCprintf(const u8 *fmt, ...)
+void CDC_printf(const char *fmt, ...)
 {
     u8 buffer[_CDCBUFFERLENGTH_];
     u8 length;
@@ -366,7 +419,8 @@ void CDCprintf(const u8 *fmt, ...)
 
     va_start(args, fmt);
     length = psprintf2(buffer, fmt, args);
-    cdc_puts(buffer,length);
+    cdc_puts(&buffer,length);
+    
     va_end(args);
 }
 #endif
@@ -378,11 +432,11 @@ void CDCprintf(const u8 *fmt, ...)
  **********************************************************************/
 
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
-u8 CDCgetkey(void)
+u8 CDC_getkey(void)
 {
     u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
 
-    while (!CDCgets(buffer));
+    while (!cdc_gets(buffer));
     return (buffer[0]);	// return only the first character
 }
 #endif
@@ -394,83 +448,19 @@ u8 CDCgetkey(void)
  **********************************************************************/
 
 #if defined(CDCGETSTRING)
-u8 * CDCgetstring(void)
+u8 * CDC_getstring(void)
 {
     u8 c, i = 0;
     static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
     
     do {
-        c = CDCgetkey();
+        c = CDC_getkey();
         buffer[i++] = c;
-        cdc_puts(&buffer[i-1], 1);
+        //cdc_puts(&buffer[i-1], 1);
+        cdc_putc(buffer[i-1]);
     } while (c != '\r');
     buffer[i] = '\0';
     return buffer;
-}
-#endif
-
-/***********************************************************************
- * USB CDC IsConnected (CDC.USBIsConnected)
- * added by Moreno Manzini 18 Jun. 2013 
- * check if USB cable is connected
- **********************************************************************/
-
-#if 0
-BOOL CDCUSBNotConnected = false;
-
-BOOL CDCUSBIsConnected(void)
-{
-    if ( (U1OTGSTATbits.VBUSVD != 0) && (U1OTGSTATbits.SESVD != 0) )
-    {
-        if (CDCUSBNotConnected == true)
-        {
-            CDC_init();
-            CDCUSBNotConnected = false;
-        }
-        return(true);
-    }
-    else
-    {
-        CDCUSBNotConnected = true;
-        return (false);
-    }
-}
-
-// from MLA
-/*
-typedef union _CONTROL_SIGNAL_BITMAP
-{
-    BYTE _byte;
-    struct
-    {
-        unsigned DTE_PRESENT:1;
-        unsigned CARRIER_CONTROL:1;
-    };
-} CONTROL_SIGNAL_BITMAP;
-CONTROL_SIGNAL_BITMAP control_signal_bitmap;
-*/
-
-//extern u8 control_signal_bitmap;    // in libusb.a
-
-//#define CDCClearDTR() (control_signal_bitmap &= 0xfe)
-
-BOOL CDCDTRIsReady(void)
-{
-    if (CDCUSBIsConnected() == true)
-    {
-        if(control_signal_bitmap.DTE_PRESENT == 1)
-        //if((control_signal_bitmap & 0x01) == 0x01)
-            return (true);
-        else
-            return (false);
-    }
-    else
-    {
-        control_signal_bitmap.DTE_PRESENT = 0;
-        //control_signal_bitmap &= 0xfe;       // !0x01
-        //CDCClearDTR();
-        return (false);
-    }
 }
 #endif
 

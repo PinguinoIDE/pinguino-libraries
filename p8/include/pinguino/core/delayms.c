@@ -71,10 +71,10 @@ void Delayms(u16 p)
 
 void Delayms(u16 milliseconds)
 {
-    u16 nktcy = System_getPeripheralFrequency() / 1000000UL;
+    u16 n100tcy = System_getPeripheralFrequency() / 100000;
     
     while (milliseconds--)
-        delay1ktcy(nktcy);
+        delay100tcy(n100tcy);
 }
 
 #endif /* __DELAYMS_C__ */

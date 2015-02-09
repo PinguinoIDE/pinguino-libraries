@@ -168,7 +168,6 @@ vector_\_XX\()_ISR_wrapper:
 
     ISR_wrapper 24,Serial1Interrupt   # UART 1
     ISR_wrapper 32,Serial2Interrupt   # UART 2
-    
     ISR_wrapper 31,Serial3Interrupt   # UART 3
     ISR_wrapper 49,Serial4Interrupt   # UART 4
     ISR_wrapper 51,Serial5Interrupt   # UART 5

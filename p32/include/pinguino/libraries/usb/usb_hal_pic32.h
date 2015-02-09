@@ -34,12 +34,15 @@
 #ifndef USB_HAL_PIC32_H
 #define USB_HAL_PIC32_H
 
+#include <typedef.h>
+
 /* Buffer Descriptor Status Register Initialization Parameters */
 
-//The _BSTALL definition is changed from 0x04 to 0x00 to
+// The _BSTALL definition is changed from 0x04 to 0x00 to
 // fix a difference in the PIC18 and PIC24 definitions of this
 // bit.  This should be changed back once the definitions are
 // synced.
+
 #define _BSTALL     0x04        //Buffer Stall enable
 #define _DTSEN      0x08        //Data Toggle Synch enable
 #define _DAT0       0x00        //DATA0 packet expected next
@@ -72,7 +75,7 @@ typedef union __attribute__ ((packed)) _BD_STAT
         unsigned            :2;
         unsigned    PID     :4;         //Packet Identifier
     };
-    unsigned short  Val;
+    u16 Val;
 } BD_STAT;
 
 // BDT Entry Layout
@@ -82,16 +85,16 @@ typedef union __attribute__ ((packed))__BDT
     {
         BD_STAT     STAT;
         unsigned    CNT:10;
-        unsigned char *ADR;		//Buffer Address
+        u8 *ADR;		//Buffer Address
     };
     struct __attribute__ ((packed))
     {
         unsigned    res  :16;
         unsigned    count:10;
     };
-    unsigned int    w[2];
-    unsigned short  v[4];
-    unsigned long long Val;
+    u32 w[2];
+    u16 v[4];
+    u64 Val;
 } BDT_ENTRY;
 
 #define USTAT_EP0_PP_MASK   ~0x04
@@ -111,38 +114,39 @@ typedef union __attribute__ ((packed))__BDT
 #define USB_PING_PONG__FULL_PING_PONG	0x02
 //#define USB_PING_PONG__ALL_BUT_EP0	0x03
 
-/*
- * Translate virtual address to physical one.
- * Only for fixed mapping.
- */
+// Translate virtual address to physical one.
 static inline void *ConvertToPhysicalAddress (volatile void *addr)
 {
-    unsigned virt = (unsigned) addr;
-    unsigned phys;
+    u32 virt = (u32) addr;
+    u32 phys;
 
-    if (virt & 0x80000000) {
-        if (virt & 0x40000000) {
+    if (virt & 0x80000000)
+    {
+        if (virt & 0x40000000)
+        {
             // kseg2 or kseg3 - no mapping
             phys = virt;
-        } else {
+        }
+        else
+        {
             // kseg0 или kseg1, cut bits A[31:29]
             phys = virt & 0x1fffffff;
         }
-    } else {
-	// kuseg
+    }
+    else
+    {
+        // kuseg
         phys = virt + 0x40000000;
     }
     return (void*) phys;
 }
 
-/*
- * This macro is used to disable the USB module
- */
+// This macro is used to disable the USB module
 #define usb_module_disable() {\
-	U1CON = 0;\
-	U1IE = 0;\
-	U1OTGIE = 0;\
-	U1PWR |= _U1PWRC_USBPWR_MASK;\
-	usb_device_state = DETACHED_STATE;\
+    U1CON = 0;\
+    U1IE = 0;\
+    U1OTGIE = 0;\
+    U1PWR |= _U1PWRC_USBPWR_MASK;\
+    usb_device_state = DETACHED_STATE;\
 }
 #endif
