@@ -23,6 +23,8 @@
     06 Feb. 2015 - 2.3 - Régis Blanchot     - renamed CDC.USBIsConnected in CDC.isConnected
     06 Feb. 2015 - 2.4 - Régis Blanchot     - renamed CDC.TXIsReady in CDC.available
     06 Feb. 2015 - 2.5 - Régis Blanchot     - added CDC.isReady and CDC.connect
+    10 Feb. 2015 - 2.6 - Régis Blanchot     - splited usb_device_tasks() to create usb_enable_module()
+    12 Feb. 2015 - 2.7 - Régis Blanchot     - added interrupt attach/detach USB cable routine
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -45,7 +47,7 @@
 #define DEBUG
 
 #define CDC_MAJOR_VER 2
-#define CDC_MINOR_VER 5
+#define CDC_MINOR_VER 7
 
 // Polling or interrupt mode
 #if !defined(__USBCDCPOLLING__)
@@ -68,9 +70,9 @@
     #define SERIALPRINT
     #endif
 
-    //#ifndef SERIALPRINTNUMBER
-    //#define SERIALPRINTNUMBER
-    //#endif
+    #ifndef SERIALPRINTNUMBER
+    #define SERIALPRINTNUMBER
+    #endif
 
     #include <serial.c>
     #define UART UART1
@@ -96,51 +98,16 @@
 //u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
 //extern unsigned usb_device_state;
 
-USBVOLATILE u8 cdc_USBNotConnected = false;
+USBVOLATILE  u8 cdc_USBNotConnected = true;
 USBVOLATILE u32 cdc_bps;
 
-/***********************************************************************
- * Configure device
- **********************************************************************/
-
-void CDC_connect(void)
-{
-    #if defined(DEBUG) && defined(USERLED)
-    u32 led_count = 0;
-    output(USERLED);
-    #endif
-
-    #ifdef DEBUG
-    SerialPrint(UART,"Try to connect ...\r\n");
-    #endif
-    
-    usb_device_init();
-
-    // Blink the led until device is configured and no more suspended
-    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
-    {
-        usb_device_tasks();
-
-        #if defined(DEBUG) && defined(USERLED)
-        if (led_count == 0)
-        {
-            led_count = 10000;
-            toggle(USERLED);
-        }
-        
-        led_count--;
-        #endif
-    }
-
-    #if defined(DEBUG) && defined(USERLED)
-    low(USERLED);
-    #endif
-    
-    cdc_USBNotConnected = false;
-}
+void CDC_begin(u32);
+void CDC_connect(void);
 
 /***********************************************************************
  * USB CDC init routine
+ * Call usb_device_init();
+ * Call CDC_connect();
  **********************************************************************/
 
 void CDC_begin(u32 baudrate)
@@ -151,16 +118,59 @@ void CDC_begin(u32 baudrate)
     SerialConfigure(UART, UART_ENABLE, UART_RX_TX_ENABLED, 9600);
     #endif
 
+    usb_device_init();
+    CDC_connect();
+
     #ifdef __USBCDCINTERRUPT__
-    // Configure USB interrupt
-    // Note : USBIE and USBIF are not available on PIC32MX1XX devices.
+    // Configure and start USB interrupt
     IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     IntSetVectorPriority(_USB_1_VECTOR, 7, 3);
     IntClearFlag(_USB_IRQ);
     IntEnable(_USB_IRQ);
     #endif
-    
-    CDC_connect();
+}
+
+/***********************************************************************
+ * This function runs until the device is connected.
+ * Call usb_enable_module() if cable was not connected
+ * Call usb_device tasks() to process all interrupts
+ * TODO : get out if USB cable is unplugged
+ **********************************************************************/
+
+void CDC_connect(void)
+{
+    #if defined(DEBUG) && defined(USERLED)
+    u32 led_count = 0;
+    output(USERLED);
+    #endif
+
+    // Blink the led until device is configured and no more suspended
+    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
+    {
+        #if defined(DEBUG) && defined(USERLED)
+        if (led_count == 0)
+        {
+            led_count = 10000;
+            toggle(USERLED);
+        }
+        led_count--;
+        #endif
+
+        //usb_enable_module();
+        usb_device_tasks();
+
+        //#ifdef DEBUG
+        //SerialPrint(UART,"usb_device_state = ");
+        //SerialPrintNumber(UART, usb_device_state, DEC);
+        //SerialPrint(UART,"\r\n");
+        //#endif
+    }
+
+    #if defined(DEBUG) && defined(USERLED)
+    low(USERLED);
+    #endif
+
+    cdc_USBNotConnected = false;
 }
 
 /***********************************************************************
@@ -168,10 +178,12 @@ void CDC_begin(u32 baudrate)
  * added by Moreno Manzini 18 Jun. 2013 
  * check if USB cable is connected
  * modified by Regis Blanchot 06 Feb. 2015
+ * Works only with Olimex boards
  **********************************************************************/
 
 u8 CDC_isConnected(void)
 {
+    // VBUS detection is required just for self-powered devices.
     if ( (U1OTGSTAT & _U1OTGSTAT_VBUSVD_MASK) && 
          (U1OTGSTAT & _U1OTGSTAT_SESVD_MASK ) )
     {
@@ -188,6 +200,13 @@ u8 CDC_isConnected(void)
         return (false);
     }
 }
+
+/***********************************************************************
+ * CDC_available (CDC.available)
+ * added by Moreno Manzini 18 Jun. 2013 
+ * check if CDC is available
+ * modified by Regis Blanchot 06 Feb. 2015
+ **********************************************************************/
 
 u8 CDC_available(void)
 {
@@ -217,15 +236,25 @@ u8 CDC_available(void)
  **********************************************************************/
 
 #ifdef __USBCDCINTERRUPT__
+
 void USBInterrupt(void)
 {
-    usb_device_tasks();
-    cdc_tx_service();
+    // Clear general USB flag
     IntClearFlag(_USB_IRQ);
-    //U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
-    //U1EIR = 0;
+    // Process all interrupts
+    //usb_enable_module();
+    usb_device_tasks();
+    // Clear SOF and RESET flags
+    U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
+    // Clear all Error flags
+    U1EIR = 0;
 }
+
 #else
+
+/***********************************************************************
+ * Dummy function needed by the IDE pre-processor
+ **********************************************************************/
 
 #define CDC_polling()
 
@@ -306,7 +335,7 @@ void CDC_printNumber(long value, u8 base)
     u8 length;
 
     long i;
-    u32 v;    // absolute value
+    u32 v;              // absolute value
 
     u8 tmp[12];
     u8 *tp = tmp;       // pointer on tmp
@@ -434,10 +463,10 @@ void CDC_printf(const char *fmt, ...)
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
 u8 CDC_getkey(void)
 {
-    u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
+    u8 buffer[_CDCBUFFERLENGTH_];   // always get a full packet
 
     while (!cdc_gets(buffer));
-    return (buffer[0]);	// return only the first character
+    return (buffer[0]);             // return only the first character
 }
 #endif
 

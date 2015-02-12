@@ -71,12 +71,12 @@ const u8 usb_config1_descriptor[] = {
     // Configuration descriptor
     sizeof(USB_CONFIGURATION_DESCRIPTOR),       // Length of this descriptor.
     USB_DESCRIPTOR_CONFIGURATION,               // Configuration descriptor type
-    CONFIGURATION_TOTAL_LENGTH,0x00,            // Total length of data for this cfg
+    CONFIGURATION_TOTAL_LENGTH, 0x00,           // Total length of data for this cfg
     CDC_INT_NUM,                                // Number of interfaces in this cfg
     1,                                          // Value of this configuration
     0,                                          // Configuration string index
     USB_CFG_DSC_SELF_PWR,                       // Attributes  (_DEFAULT | _SELF) // USB_CFG_DSC_REQUIRED
-    20,                                         // Max power consumption in 2mA units
+    50,                                         // Max power consumption in 2mA units
 
         // CDC Communication Interface #1
         // This interface requires one endpoint, the managment element.
@@ -106,7 +106,7 @@ const u8 usb_config1_descriptor[] = {
             sizeof(USB_CDC_ACM_FN_DSC),         // Size of this descriptor in bytes (4)
             CDC_CS_INTERFACE,                   // bDescriptorType
             CDC_DSC_FN_ACM,                     // bDescriptorSubtype
-            (CDC_ACM_CAP_LINE_CODINGS | CDC_ACM_CAP_SEND_BREAK),// bmCapabilities: (see PSTN120.pdf Table 4)
+            0x00, //(CDC_ACM_CAP_LINE_CODINGS | CDC_ACM_CAP_SEND_BREAK),// bmCapabilities: (see PSTN120.pdf Table 4)
 
             // Union Functional Descriptor
             sizeof(USB_CDC_UNION_FN_DSC),       // Size of this descriptor in bytes (5)
@@ -151,7 +151,7 @@ const u8 usb_config1_descriptor[] = {
             _EP_OUT + CDC_DATA_EP,              // Endpoint address         // _EP02_OUT
             _BULK,                              // Attributes
             CDC_DATA_OUT_EP_SIZE, 0x00,         // Size
-            USB_POLLING_PERIOD,                 // Interval ms
+            0,//USB_POLLING_PERIOD,                 // Interval ms
 
             // Endpoint Descriptor
             sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
@@ -159,7 +159,7 @@ const u8 usb_config1_descriptor[] = {
             _EP_IN + CDC_DATA_EP,               // Endpoint address         // _EP02_IN
             _BULK,                              // Attributes
             CDC_DATA_IN_EP_SIZE, 0x00,          // Size
-            USB_POLLING_PERIOD                  // Interval ms
+            0//USB_POLLING_PERIOD                  // Interval ms
 };
 
 #endif /*__USBCDC__*/
@@ -194,11 +194,6 @@ static const USB_STRING_INIT(10) string3_descriptor = {
     {'R','.','B','l','a','n','c','h','o','t'}
 };
 
-// Array of configuration descriptors
-const u8 *const usb_config[] = {
-    (const u8 *const) &usb_config1_descriptor,
-};
-
 // Array of string descriptors
 const u8 *const usb_string[USB_NUM_STRING_DESCRIPTORS] = {
     (const u8 *const) &string0_descriptor,
@@ -208,5 +203,10 @@ const u8 *const usb_string[USB_NUM_STRING_DESCRIPTORS] = {
 };
 
 #endif
+
+// Array of configuration descriptors
+const u8 *const usb_config[] = {
+    (const u8 *const) &usb_config1_descriptor,
+};
 
 #endif	/* USBDESCRIPTORS_C */

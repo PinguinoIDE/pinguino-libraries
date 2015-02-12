@@ -1,34 +1,36 @@
 /*	----------------------------------------------------------------------------
-	FILE:			pwm.c
-	PROJECT:		pinguino
-	PURPOSE:		new hardware PWM control functions
-	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	10 oct. 2010
-	LAST RELEASE:	27 apr. 2013
-	----------------------------------------------------------------------------
-	freely adapted from JAL PWM Control Library.
-	----------------------------------------------------------------------------
+    FILE:			pwm.c
+    PROJECT:		pinguino
+    PURPOSE:		new hardware PWM control functions
+    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:	10 oct. 2010
+    LAST RELEASE:	27 apr. 2013
+    ----------------------------------------------------------------------------
+    freely adapted from JAL PWM Control Library.
+    ----------------------------------------------------------------------------
     Changelog :
-    * 12 Feb. 2013  regis blanchot - replaced duty cycle calculation
-    * 27 Apr. 2013  regis blanchot - moved pin definition to pin.h
+    * 12 Feb. 2013  Régis Blanchot - replaced duty cycle calculation
+    * 27 Apr. 2013  Régis Blanchot - moved pin definition to pin.h
                                      renamed function (also in pwm.pdl)
                                      CCPR1L = duty; -> CCPR1L = duty & 0xFF;
-    * 26 Jun. 2013  regis blanchot - fixed PWM_setDutyCycle()
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    * 26 Jun. 2013  Régis Blanchot - fixed PWM_setDutyCycle()
+    *  7 Jan. 2015  André Gentric  - fixed CCPxCON
+    * 28 Jan. 2015  Luca (brikker) - added enhanced CCP1 function
+    ----------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	--------------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    --------------------------------------------------------------------------*/
 
 #ifndef __PWM__
 #define __PWM__
@@ -235,6 +237,152 @@ void PWM_setPercentDutyCycle(u8 pin, u8 percent)
 
     PWM_setDutyCycle(pin, duty << 2);
 }
+
+// Config of Enhanced PWM
+#define SINGLE_OUT     		0b00111111 // Single output: P1A modulated; P1B, P1C, P1D assigned as port pins
+#define FULL_OUT_FWD   		0b01111111 // Full-bridge output forward: P1D modulated; P1A active; P1B, P1C inactive
+#define HALF_OUT       		0b10111111 // Half-bridge output: P1A, P1B modulated with dead-band control; P1C, P1D assigned as port pins
+#define FULL_OUT_REV   		0b11111111 // Full-bridge output reverse: P1B modulated; P1C active; P1A, P1D inactive
+
+// Mode of Enhanced PWM
+#define PWM_MODE_1     0b11111100 // P1A,P1C active high, P1B,P1D active high
+#define PWM_MODE_2     0b11111101 // P1A,P1C active high, P1B,P1D active low
+#define PWM_MODE_3     0b11111110 // P1A,P1C active low, P1B,P1D active high
+#define PWM_MODE_4     0b11111111 // P1A,P1C active low, P1B,P1D active low
+
+#if defined(PWMSETENHANCEDOUTPUT)
+#if defined(__18f4550)
+void PWM_setEnhancedOutput (u8 config, u8 mode)
+{
+
+    /* set P1M1 and P1M0 */
+    config |= 0b00111111;
+    mode |= 0b11111100;
+   
+    CCP1CON = (CCP1CON | 0b11000000) & config;
+    /* set CCP1M3, CCP1M2, CCP1M1, CCP1M0 */
+    CCP1CON = (CCP1CON | 0b00001111) & mode;
+    
+    if (SINGLE_OUT == config)
+    {
+        TRISCbits.TRISC2 = 0;
+    }
+    else if (HALF_OUT == config)
+    {
+        TRISCbits.TRISC2 = 0;
+        TRISDbits.TRISD5 = 0;
+    }
+    else if ((FULL_OUT_FWD == config) || (FULL_OUT_REV == config))
+    {
+        TRISCbits.TRISC2 = 0;
+        TRISDbits.TRISD5 = 0;
+        TRISDbits.TRISD6 = 0;
+        TRISDbits.TRISD7 = 0;
+    }
+}
+#else
+#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#endif
+#endif
+
+/*  --------------------------------------------------------------------
+    PWM_setDeadBand
+    --------------------------------------------------------------------
+    ****HALF BRIDGE MODE****
+    Delay time, in number of FOSC/4 (4 * TOSC) cycles, 
+    between the scheduled and actual time for a PWM signal 
+    to transition to active.
+    ------------------------------------------------------------------*/
+
+#if defined(PWMSETDEADBAND)
+#if defined(__18f4550)
+void PWM_setDeadBand (u8 cycles) 
+{
+    if (cycles > 127) {
+        cycles = 127;
+    }
+    cycles |= 0b10000000;
+    ECCP1DEL = (ECCP1DEL & 0b10000000) | cycles;
+}
+#else
+#error "Enhanced PWM modes not available or not yet supported for your processor."
+#endif
+#endif
+
+/*  --------------------------------------------------------------------
+    PWM_setASautoRestart
+    --------------------------------------------------------------------
+    1 = Upon auto-shutdown, the ECCPASE bit clears automatically once 
+        the shutdown event goes away; the PWM restarts automatically
+    0 = Upon auto-shutdown, ECCPASE must be cleared in software 
+        to restart the PWM
+    ------------------------------------------------------------------*/
+
+#if defined(PWMSETASAUTORESTART)
+#if defined(__18f4550)
+void PWM_setASautoRestart (u8 autorestart) 
+{	
+    if (autorestart) {
+        ECCP1DEL = (ECCP1DEL | 0b10000000);
+    } else {
+        ECCP1DEL = (ECCP1DEL & 0b01111111);
+    }
+}
+#else
+#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#endif
+#endif
+
+/*  --------------------------------------------------------------------
+    PWM_setASmanualRestart
+    --------------------------------------------------------------------
+    ECCPASE: ECCP Auto-Shutdown Event Status bit
+    1 = A shutdown event has occurred; ECCP outputs are in shutdown state
+    0 = ECCP outputs are operating
+    ------------------------------------------------------------------*/
+
+#if defined(PWMSETASMANUALRESTART)
+#if defined(__18f4550)
+void PWM_setASmanualRestart (u8 manualrestart) 
+{	
+    if (((ECCP1DEL & 0b10000000) >> 7) == 0) {
+        if (manualrestart) {
+            ECCP1AS = (ECCP1AS | 0b00000000);	//bit 7 ECCPASE: ECCP Auto-Shutdown Event Status bit [0 = work; 1 = shutdown]	
+        }
+    }
+}
+#else
+#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#endif
+#endif
+
+/*  --------------------------------------------------------------------
+    PWM_setAutoShutdown
+    --------------------------------------------------------------------
+    When ECCP is programmed for any of the Enhanced PWM modes, 
+    the active output pins may be configured for auto-shutdown. 
+    Auto-shutdown immediately places the Enhanced PWM output pins 
+    into a defined shutdown state when a shutdown event occurs.
+    
+    bit 7 ECCPASE: ECCP Auto-Shutdown Event Status bit
+    bit 6-4 ECCPAS2:ECCPAS0: ECCP Auto-Shutdown Source Select bits
+    bit 3-2 PSSAC1:PSSAC0: Pins A and C Shutdown State Control bits
+    bit 1-0 PSSBD1:PSSBD0: Pins B and D Shutdown State Control bits
+    ------------------------------------------------------------------*/
+
+#if defined(PWMSETAUTOSHUTDOWN)
+#if defined(__18f4550)
+void PWM_setAutoShutdown (u8 autoshutdown) {
+    if (autoshutdown) {
+        ECCP1AS = 0b01000000;		// AS Enabled
+    } else {
+        ECCP1AS = 0b00000000;		// AS Disabled
+    }
+}
+#else
+#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#endif
+#endif
 
 /*  --------------------------------------------------------------------
     pwm_interrupt

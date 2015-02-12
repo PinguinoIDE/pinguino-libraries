@@ -1,3 +1,8 @@
 PWM.setFrequency PWM_setFrequency#include <pwm.c>
 PWM.setDutyCycle PWM_setDutyCycle#include <pwm.c>
 PWM.setPercentDutyCycle PWM_setPercentDutyCycle#include <pwm.c>
+PWM.setEnhancedOutput PWM_setEnhancedOutput#include <pwm.c>PWMSETENHANCEDOUTPUT
+PWM.setDeadBand PWM_setDeadBand#include <pwm.c>PWMSETDEADBAND
+PWM.setASautoRestart PWM_setASautoRestart#include <pwm.c>PWMSETASAUTORESTART
+PWM.setASmanualRestart PWM_setASmanualRestart#include <pwm.c>PWMSETASMANUALRESTART
+PWM.setAutoShutdown PWM_setAutoShutdown#include <pwm.c>PWMSETAUTOSHUTDOWN

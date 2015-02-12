@@ -32,9 +32,10 @@
 
 u32 cdc_trf_state;              // States are defined cdc.h
 u32 cdc_tx_len;                 // total tx length
-extern USBVOLATILE u32 cdc_bps;             // CDC baud rate (cf. cdc.c)
+extern USBVOLATILE u32 cdc_bps; // CDC baud rate (cf. cdc.c)
 
 LINE_CODING cdc_line_coding;    // Buffer to store line coding information
+Zero_Packet_Length zlp;
 
 static USB_HANDLE data_out;
 static USB_HANDLE data_in;
@@ -146,6 +147,14 @@ void usb_check_cdc_request()
             control_signal_bitmap._byte = (u8)usb_setup_pkt.W_Value;
             //CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);
             //CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
+            
+            if (usb_setup_pkt.W_Value == 0x03)
+                cdc_trf_state = 1;
+            else
+                cdc_trf_state = CDC_TX_READY;
+            
+            usb_out_pipe.pDst.bRam = (u8*)&zlp;
+            usb_out_pipe.wCount = sizeof(Zero_Packet_Length) ;
             usb_in_pipe.info.bits.busy = 1;
             break;
     }
@@ -158,7 +167,7 @@ void usb_check_cdc_request()
  * the first transfer from the host.
  */
  
-void cdc_init_ep()
+void cdc_init_endpoint()
 {
     //#ifdef DEBUG
     //SerialPrint(UART,"> cdc_init_ep\r\n");
@@ -173,16 +182,20 @@ void cdc_init_ep()
     cdc_trf_state = CDC_TX_READY;
     cdc_tx_len = 0;
 
-    /*
-     * Do not have to init Cnt of IN pipes here.
-     * Reason:  Number of BYTEs to send to the host
-     *          varies from one transaction to
-     *          another. Cnt should equal the exact
-     *          number of BYTEs to transmit for
-     *          a given IN transaction.
-     *          This number of BYTEs will only
-     *          be known right before the data is
-     *          sent.
+    zlp.wValue0=0;
+    zlp.wValue1=0;
+    zlp.wValue2=0;
+    zlp.wValue3=0;
+    zlp.wValue4=0;
+    zlp.wValue5=0;
+    zlp.wValue6=0;
+    zlp.wValue7=0;
+
+    /* Do not have to init Cnt of IN pipes here.
+     * Reason:  Number of BYTEs to send to the host varies from one
+     * transaction to another. Cnt should equal the exact number of
+     * BYTEs to transmit for a given IN transaction. This number of
+     * BYTEs will only be known right before the data is sent.
      */
      
     usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED |
@@ -304,8 +317,7 @@ void cdc_tx_service()
     //#endif
 
     // Check that USB connection is established.
-    if (usb_device_state < CONFIGURED_STATE ||
-        (U1PWRC & _U1PWRC_USUSPEND_MASK))
+    if (usb_device_state < CONFIGURED_STATE || (U1PWRC & _U1PWRC_USUSPEND_MASK))
         return;
 
     if (usb_handle_busy(data_in))

@@ -45,7 +45,7 @@
 
 // Endpoint
 #define CDC_EP_NUM                      3    // Comm. IN, Data IN, Data OUT
-#define CDC_COMM_IN_EP_SIZE             16   // 64 seems to work also
+#define CDC_COMM_IN_EP_SIZE             8    // 8, 16, 32 or 64
 #define CDC_DATA_OUT_EP_SIZE            64
 #define CDC_DATA_IN_EP_SIZE             64
 
@@ -136,6 +136,9 @@
 #endif
 
 #define CDC_ACM_FN_DSC_VAL              0x02
+
+#define CDC_RTS_MASK   0x02
+#define CDC_DTR_MASK   0x01
 
 /*
  * This macro is used set the baud rate reported back to the host during
@@ -277,6 +280,22 @@ typedef union __attribute__((packed)) _CDC_NOTICE
     u8 packet[CDC_COMM_IN_EP_SIZE];
 } CDC_NOTICE, *PCDC_NOTICE;
 
+/**
+ZLP zero packet length
+Used to aknoledge a set_control_line request
+**/
+typedef struct
+{
+	u8 wValue0;
+	u8 wValue1;
+	u8 wValue2;
+	u8 wValue3;
+	u8 wValue4;
+	u8 wValue5;
+	u8 wValue6;
+	u8 wValue7;
+} Zero_Packet_Length;
+
 /*
  * E X T E R N S
  */
@@ -291,7 +310,7 @@ extern LINE_CODING cdc_line_coding;
  * Public Prototypes
  */
 void usb_check_cdc_request(void);
-void cdc_init_ep(void);
+void cdc_init_endpoint(void);
 u32 cdc_consume(void (*func) (u32));
 u32 cdc_gets(char *buffer);
 u32 cdc_putc(char c);

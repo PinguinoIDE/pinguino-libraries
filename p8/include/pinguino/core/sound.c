@@ -104,7 +104,7 @@
                         vol is no more used
     --------------------------------------------------------------------------*/
 
-    void Sound(u8 pin, u8 note, u16 duration, u8 vol)
+    void Sound(u8 pin, u8 note, u16 duration)//, u8 vol)
     {
         // Frequency table in French : http://fr.wikipedia.org/wiki/Note_de_musique
         // and in English http://liutaiomottola.com/formulae/freqtab.htm
@@ -113,13 +113,13 @@
         //const u16 freq[] = {2093,2217,2349,2489,2637,2793,2959,3135,3322,3520,3729,3951,4186};
         //const u16 freq[] = {4186,4434,4698,4978,5274,5587,5919,6271,6644,7040,7458,7902,8372};
         const u16 freq[] = {4189,4437,4687,4966,5281,5597,5905,6250,6637,7075,7425,7894,8333};
-
+        /*
         if (vol > 10)
         {
             vol = 10;					// max. volume is 10
         }
         vol = vol * 5;							// max. volume is reach for 50% duty
-
+        */
         Tone(pin, freq[note-1], duration);
     }
 
@@ -139,7 +139,7 @@
         while (partition[i] != 0)
         {
             exp = partition[i+1];
-            Sound(pin, partition[i], (8 << exp), volume);
+            Sound(pin, partition[i], (8 << exp));//, volume);
             i = i + 2;
         }
     }
