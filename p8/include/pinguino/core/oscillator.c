@@ -440,7 +440,7 @@ void System_setIntOsc(u32 freq)
               defined(__18f26j50) || defined(__18f46j50) || \
               defined(__18f27j53) || defined(__18f47j53)
 
-            else if (freq == 48000000)
+            if (freq == 48000000)
             {
                 _cpu_clock_ = 48000000;
                 OSCCONbits.IRCF = 0b111;
@@ -448,7 +448,7 @@ void System_setIntOsc(u32 freq)
             
         #elif defined(__18f14k22)
         
-            else // if (freq == 64000000)
+            if (freq == 64000000)
             {
                 _cpu_clock_ = 64000000;
                 OSCCONbits.IRCF = 0b111;
