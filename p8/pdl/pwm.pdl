@@ -1,4 +1,5 @@
 PWM.setFrequency PWM_setFrequency#include <pwm.c>
+PWM.getResolution PWM_getResolution#include <pwm.c>
 PWM.setDutyCycle PWM_setDutyCycle#include <pwm.c>
 PWM.setPercentDutyCycle PWM_setPercentDutyCycle#include <pwm.c>
 PWM.setEnhancedOutput PWM_setEnhancedOutput#include <pwm.c>PWMSETENHANCEDOUTPUT

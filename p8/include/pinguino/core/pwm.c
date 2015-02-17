@@ -16,6 +16,10 @@
     * 26 Jun. 2013  Régis Blanchot - fixed PWM_setDutyCycle()
     *  7 Jan. 2015  André Gentric  - fixed CCPxCON
     * 28 Jan. 2015  Luca (brikker) - added enhanced CCP1 function
+    * 15 Feb. 2015  Régis Blanchot - modified PWM_setFrequency to return
+                                     the value of PR2
+    * 16 Feb. 2015  Régis Blanchot - added PWM resolution calculation
+
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -42,17 +46,35 @@
 #include <oscillator.c>     // System_getPeripheralFrequency
 //#include <interrupt.c>    // to save memory space
 
+// Mode of legacy PWM
+#define PWMMODE         0b00001100 // PxA, PxC active-high, PxB, PxD active-high
+
+// Config of Enhanced PWM
+#define SINGLE_OUT      0b00111111 // Single output: P1A modulated; P1B, P1C, P1D assigned as port pins
+#define FULL_OUT_FWD    0b01111111 // Full-bridge output forward: P1D modulated; P1A active; P1B, P1C inactive
+#define HALF_OUT        0b10111111 // Half-bridge output: P1A, P1B modulated with dead-band control; P1C, P1D assigned as port pins
+#define FULL_OUT_REV    0b11111111 // Full-bridge output reverse: P1B modulated; P1C active; P1A, P1D inactive
+
+// Mode of Enhanced PWM
+#define PWM_MODE_1      0b11111100 // P1A,P1C active high, P1B,P1D active high
+#define PWM_MODE_2      0b11111101 // P1A,P1C active high, P1B,P1D active low
+#define PWM_MODE_3      0b11111110 // P1A,P1C active low, P1B,P1D active high
+#define PWM_MODE_4      0b11111111 // P1A,P1C active low, P1B,P1D active low
+
 /*  --------------------------------------------------------------------
     GLOBAL VARIABLES
     ------------------------------------------------------------------*/
 
-u16 _pr2_plus1 = 256;				// shadow value of PR2 set to max. + 1 
-u8  _t2con;							// shadow value of T2CON
+u16 gPWMRES;                        // PWM resolution
+u16 gPR2PLUS1 = 256;                // shadow value of PR2 set to max. + 1 
+u8  gT2CON;                         // shadow value of T2CON
 
 /*  --------------------------------------------------------------------
     PWM_setFrequency
     --------------------------------------------------------------------
-    @param:	frequency in hertz (range 3kHz .. 12MHz)
+    @descr:     calculate Timer2 prescaler and period to get the frequency
+    @param:     frequency in hertz (range 2929Hz .. 12MHz)
+    @return:    value of PR2
     --------------------------------------------------------------------
     let's say p = TMR2 Prescale Value
     PWM Period 	= [(PR2) + 1] * 4 * TOSC * p
@@ -61,36 +83,70 @@ u8  _t2con;							// shadow value of T2CON
     so [(PR2) + 1] = (1/PWM Frequency) / (4 * 1/FOSC * p)
     and [(PR2) + 1] = FOSC / (4 * PWM Frequency * p)
     then [(PR2) + 1] = FOSC / PWM Frequency / 4 / p
+    [(PR2) + 1] = FPB / PWM Frequency / p
     --------------------------------------------------------------------
     When TMR2 (TMR4) is equal to PR2 (PR4) the CCPx pin is set
     ------------------------------------------------------------------*/
 
-void PWM_setFrequency(u32 freq)
+u16 PWM_setFrequency(u32 freq)
 {
     // PR2+1 calculation
-    _pr2_plus1 = System_getPeripheralFrequency() / freq;	// FOSC / (4 * PWM Frequency)
+    // Timer2 clock input is the peripheral clock (FOSC/4). 
+
+    gPR2PLUS1 = System_getPeripheralFrequency() / freq;
 
     // Timer2 prescaler calculation
     // PR2 max value is 255, so PR2+1 max value is 256
-    // highest prescaler value is 16
-    // 16 * 256 = 4096 so :
-    if (_pr2_plus1 <= 4096)					// check if it's not too high
+    // only 3 possible prescaler value : 1, 4 or 16
+    // so gPR2PLUS1 can not be > to 16 * 256 = 4096
+    // and frequency can not be < 2929Hz (12MHZ/4096)
+    
+    if (gPR2PLUS1 <= 4096)                  // check if it's not too high
     {
-        if (_pr2_plus1 <= 256)				// no needs of any prescaler
+        if (gPR2PLUS1 <= 256)               // no needs of any prescaler
         {
-            _t2con = 0b00000100;			// prescaler is 1, Timer2 On
+            gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
         }
-        else if (_pr2_plus1 <= 1024)		// needs prescaler 1:4
+        else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
         {
-            _pr2_plus1 = _pr2_plus1 >> 2;	// divided by 4
-            _t2con = 0b00000101;			// prescaler is 4, Timer2 On
+            gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+            gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
         }
-        else								// needs prescaler 1:6
+        else                                // needs prescaler 1:6
         {
-            _pr2_plus1 = _pr2_plus1 >> 4;	// divided by 16
-            _t2con = 0b00000110;			// prescaler is 16, Timer2 On
+            gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+            gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
         }
+
+        // Returns PR2+1 value
+        return gPR2PLUS1;
     }
+    else
+        return 0;                           // error (mostly freq. is too low)
+}
+
+/*  --------------------------------------------------------------------
+    PWM_getResolution
+    --------------------------------------------------------------------
+    The resolution determines the number of available duty cycles for a
+    given period. For example, a 10-bit resolution will result in 1024
+    discrete duty cycles, whereas an 8-bit resolution will result in
+    256 discrete duty cycles.
+    --------------------------------------------------------------------
+    @descr:     calculate PWM resolution given the PWM period
+    @note:      PWM max resolution is 2^10 = 1024
+    @param:     PWM period
+    @return:    number of available duty cycles
+    ------------------------------------------------------------------*/
+
+u16 PWM_getResolution(u8 period)
+{
+    u8 p=0;
+    
+    // Calculates PWM resolution with my own log2 version ;-)
+    while ( (p++<=10) && (period>>p) ); // log2(period)
+    gPWMRES = 1 << p;
+    return (gPWMRES - 1);
 }
 
 /*  --------------------------------------------------------------------
@@ -114,11 +170,22 @@ void PWM_setFrequency(u32 freq)
 
 void PWM_setDutyCycle(u8 pin, u16 duty)
 {
-    if (duty > 1023) duty = 1023;		// upper limit (10-bit)
+    u8 msb, lsb;
 
-    // 1- Set the PWM period by writing to the PR2 (PR4) register.
+    //gPWMRES = PWM_getResolution(gPR2PLUS1);
+    
+    if (duty > 1024)
+        duty = 1023;                    // upper limit
 
-    PR2 = _pr2_plus1 - 1;				// set PWM period
+    // 1- Disable the CCPx pin output driver by setting the associated TRIS bit.
+
+    pinmode(pin, INPUT);                // PWM pin as INPUT
+
+    // 2- Set the PWM period by writing to the PR2 (PR4) register.
+
+    TMR2 = 0;                           // to get a complete duty cycle
+                                        // at the first PWM output
+    PR2 = gPR2PLUS1 - 1;                // set PWM period
 
     #if defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
@@ -128,8 +195,11 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
 
     #endif
     
-    // 2- Set the PWM duty cycle by writing to the CCPRxL register and
+    // 3- Set the PWM duty cycle by writing to the CCPRxL register and
     // CCPxCON<5:4> bits.
+
+    msb = (duty >> 2) & 0xFF;          // 8 MSB
+    lsb = ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
 
     switch (pin)
     {
@@ -137,80 +207,76 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
             defined(__18f27j53) || defined(__18f47j53)
 
         case CCP4:
-            CCP4CON  = 0b00001100;
-            CCPR4L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP4CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP4CON  = PWMMODE;
+            CCPR4L   = msb;
+            CCP4CON |= lsb;
             break;
 
         case CCP5:
-            CCP5CON  = 0b00001100;
-            CCPR5L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP5CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP5CON  = PWMMODE;
+            CCPR5L   = msb;
+            CCP5CON |= lsb;
             break;
 
         case CCP6:
-            CCP6CON  = 0b00001100;
-            CCPR6L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP6CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP6CON  = PWMMODE;
+            CCPR6L   = msb;
+            CCP6CON |= lsb;
             break;
 
         case CCP7:
-            CCP7CON  = 0b00001100;
-            CCPR7L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP7CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP7CON  = PWMMODE;
+            CCPR7L   = msb;
+            CCP7CON |= lsb;
             break;
 
         case CCP8:
-            CCP8CON  = 0b00001100;
-            CCPR8L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP8CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP8CON  = PWMMODE;
+            CCPR8L   = msb;
+            CCP8CON |= lsb;
             break;
 
         case CCP9:
-            CCP9CON  = 0b00001100;
-            CCPR9L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP9CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP9CON  = PWMMODE;
+            CCPR9L   = msb;
+            CCP9CON |= lsb;
             break;
 
         case CCP10:
-            CCP10CON  = 0b00001100;
-            CCPR10L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP10CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP10CON  = PWMMODE;
+            CCPR10L   = msb;
+            CCP10CON |= lsb;
             break;
 
         #else
 
         case CCP1:
-            CCP1CON  = 0b00001100;
-            CCPR1L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP1CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP1CON  = PWMMODE;
+            CCPR1L   = msb;
+            CCP1CON |= lsb;
             break;
 
         case CCP2:
-            CCP2CON  = 0b00001100;
-            CCPR2L   = ( duty >> 2 ) & 0xFF; // 8 MSB
-            CCP2CON |= ((u8)duty & 0x03) << 4;  // 2 LSB in <5:4>
+            CCP2CON  = PWMMODE;
+            CCPR2L   = msb;
+            CCP2CON |= lsb;
             break;
 
         #endif
             
         default:
             #ifdef DEBUG
-                #error "Invalid CCPx Pin"
+                // "Invalid CCPx Pin"
             #endif
     }
 
-    // 3- Make the CCPx pin an output by clearing the appropriate TRIS bit.
-
-    pinmode(pin, OUTPUT);				// PWM pin as OUTPUT
-
     // 4- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
 
-    T2CON = _t2con;						// Timer2 prescaler + ON
+    T2CON = gT2CON;                     // Timer2 prescaler + ON
 
-    // 5- Configure the CCPx module for PWM operation
+    // 5- Make the CCPx pin an output by clearing the appropriate TRIS bit.
 
-    //PIR1bits.TMR2IF = 0;				// Reset interrupt flag
+    pinmode(pin, OUTPUT);               // PWM pin as OUTPUT
 }
 
 /*  --------------------------------------------------------------------
@@ -231,24 +297,18 @@ void PWM_setPercentDutyCycle(u8 pin, u8 percent)
     if (percent == 0)
         duty = 0;
     else if (percent >= 100)
-        duty = _pr2_plus1 - 1;
+        duty = 1023; //gPR2PLUS1 - 1;
     else
-        duty = percent * (_pr2_plus1 / 4) / 25;	// (factor PR2/100)
+        duty = percent * gPR2PLUS1 / 100;   // 0 < duty < 255
 
-    PWM_setDutyCycle(pin, duty << 2);
+    PWM_setDutyCycle(pin, duty << 2);       // 0 < duty < 1023
 }
 
-// Config of Enhanced PWM
-#define SINGLE_OUT     		0b00111111 // Single output: P1A modulated; P1B, P1C, P1D assigned as port pins
-#define FULL_OUT_FWD   		0b01111111 // Full-bridge output forward: P1D modulated; P1A active; P1B, P1C inactive
-#define HALF_OUT       		0b10111111 // Half-bridge output: P1A, P1B modulated with dead-band control; P1C, P1D assigned as port pins
-#define FULL_OUT_REV   		0b11111111 // Full-bridge output reverse: P1B modulated; P1C active; P1A, P1D inactive
-
-// Mode of Enhanced PWM
-#define PWM_MODE_1     0b11111100 // P1A,P1C active high, P1B,P1D active high
-#define PWM_MODE_2     0b11111101 // P1A,P1C active high, P1B,P1D active low
-#define PWM_MODE_3     0b11111110 // P1A,P1C active low, P1B,P1D active high
-#define PWM_MODE_4     0b11111111 // P1A,P1C active low, P1B,P1D active low
+/*  --------------------------------------------------------------------
+    PWM_setEnhancedOutput
+    --------------------------------------------------------------------
+    @descr: TO DO
+    ------------------------------------------------------------------*/
 
 #if defined(PWMSETENHANCEDOUTPUT)
 #if defined(__18f4550)

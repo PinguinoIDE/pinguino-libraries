@@ -46,6 +46,7 @@
     ------------------------------------------------------------------*/
 
 // http://devmaster.net/posts/9648/fast-and-accurate-sine-cosine
+#if defined(SINR) || defined(COSR)
 float sine(int i)
 {
     float x =  0.01745329 * (float)i;   // degree to rad
@@ -56,6 +57,7 @@ float sine(int i)
     y = P * (y * y - y) + y;
     return y;
 }
+#endif
 
 /*  --------------------------------------------------------------------
     sine function
@@ -63,6 +65,7 @@ float sine(int i)
     return: sine value in float
     ------------------------------------------------------------------*/
 
+#ifdef SINR
 float sinr(int alpha)
 {
     u8 sign = 0; // positive
@@ -90,6 +93,7 @@ float sinr(int alpha)
     else
         return  sine(alpha);
 }
+#endif
 
 /*  --------------------------------------------------------------------
     cosine function
@@ -98,9 +102,54 @@ float sinr(int alpha)
     return: cosine value in float
     ------------------------------------------------------------------*/
 
+#ifdef COSR
 float cosr(int alpha)
 {
     return sinr(alpha + 90);
 }
+#endif
+
+// Return approximation of cos(i) where i is angle in integer degrees 0-359.
+// Returned value is in range -100 to 100 corresponding to -1.0 to 1.0.
+
+#if defined(COS100) || defined(SIN100)
+s8 cos100(u16 angle)
+{
+    u16 qop = angle;
+    s8 qsign = 1;
+
+    // input is 0-359 but curve is fit to 0-90
+    // so perform quadrant conversion
+
+    if (angle > 270)
+    {
+        qop = 360 - angle;
+    }
+    else if (angle > 180)
+    {
+        qop = angle - 180;
+        qsign = -1;
+    } 
+    else if (angle > 90)
+    {
+        qop = 180 - angle;
+        qsign = -1;
+    }
+
+    // apply quadratic fit approximation
+    return ((10188 - qop * (qop + 23)) / 101) * qsign;
+}
+#endif
+
+// Return approximation of sin(i) where i is angle in integer degrees 0-359.
+// Returned value is in range -100 to 100 corresponding to -1.0 to 1.0.
+
+#if defined(SIN100)
+s8 sin100(u16 angle)
+{
+    // sin is cos shifted -90 degrees
+    return cos100((angle + 270) % 360);
+}
+#endif
 
 #endif /* __TRIGO_C */
