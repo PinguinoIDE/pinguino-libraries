@@ -257,7 +257,8 @@
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
-     defined(__IRREMOTE__)  || defined(RTCCALARMINTENABLE) || defined(__STEPPER__)
+     defined(__IRREMOTE__)  || defined(__AUDIO__)   || \
+     defined(RTCCALARMINTENABLE) || defined(__STEPPER__)
      // || defined(__MICROSTEPPING__)
 
 /*  ----------------------------------------------------------------------------
@@ -332,6 +333,10 @@ void high_priority_isr(void) __interrupt 1
     rtcc_interrupt();
     #endif
 
+    #ifdef __AUDIO__
+    pwm_interrupt();
+    #endif
+    
     __asm 
         MOVFF   PREINC1, _TABLAT
         MOVFF   PREINC1, _TBLPTRU

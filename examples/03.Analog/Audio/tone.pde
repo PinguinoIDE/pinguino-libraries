@@ -24,7 +24,7 @@ int noteDurations[] = {4, 8, 8, 4, 4, 4, 4, 4 };
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    Audio.init(CDQUALITY);
+    Audio.init(RADIOQUALITY);
 }
 
 void loop()
@@ -40,7 +40,7 @@ void loop()
         // to calculate the note duration, take one second 
         // divided by the note type.
         //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-        noteDuration = 1000 / noteDurations[thisNote];
+        noteDuration = 500 / noteDurations[thisNote];
 
         Audio.tone(CCP4, melody[thisNote], noteDuration);
 
