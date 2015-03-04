@@ -92,21 +92,21 @@
     #endif // __SERIAL__
 
 
-    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__)
+    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // TO REMOVE
     void Timer1Interrupt(void)
     {
         Nop();    
     }
     #endif
 
-    #if !defined(TMR2INT) && !defined(__SERVOS__)
+    #if !defined(TMR2INT) && !defined(__SERVOS__) && !defined(__AUDIO__)
     void Timer2Interrupt(void)
     {
         Nop();    
     }
     #endif
 
-    #if !defined(TMR3INT) && !defined(__IRREMOTE__)//&& !defined(__PWM__)
+    #if !defined(TMR3INT) && !defined(__IRREMOTE__) //&& !defined(__PWM__)
     void Timer3Interrupt(void)
     {
         Nop();    

@@ -84,7 +84,7 @@ void usb_device_init(void)
     U1EIR   = 0xFF;
     U1EIE   = 0x00;
     U1OTGIR = 0xFF;
-    U1OTGIE = _U1OTGIE_SESVDIE_MASK;
+    U1OTGIE = _U1OTGIE_SESVDIE_MASK; // USB Cable detection
 
     // Disable USB module
     U1CON = 0;
@@ -162,7 +162,10 @@ void usb_device_tasks(void)
                 #endif
                 
                 // Clear flag for next interrupt
-                U1OTGIR |= _U1OTGIR_SESVDIF_MASK;
+                //U1OTGIR |= _U1OTGIR_SESVDIF_MASK;
+
+                // We temporarily disable this interrupt
+                U1OTGIECLR  = _U1OTGIE_SESVDIE_MASK;
 
                 // Enable USB module
                 while (!(U1CON & _U1CON_USBEN_MASK))
@@ -187,6 +190,7 @@ void usb_device_tasks(void)
         else
         {
             // No need to go further if the USB cable is disconnected.
+            // Status stays at DETACHED_STATE
             return;
         }
     }
@@ -200,12 +204,12 @@ void usb_device_tasks(void)
                 #ifdef DEBUG
                 SerialPrint(UART,"USB CABLE UNPLUGGED\r\n");
                 #endif
-                
-                // Clear flag
-                U1OTGIR |= _U1OTGIR_SESVDIF_MASK;
+            
+                // Clear flag for next interrupt
+                //U1OTGIR |= _U1OTGIR_SESVDIF_MASK;
 
                 // We keep only this interrupt
-                U1OTGIE  = _U1OTGIE_SESVDIE_MASK;
+                U1OTGIE = _U1OTGIE_SESVDIE_MASK;
 
                 // Mask all USB interrupts              
                 U1IE = 0;          
@@ -289,7 +293,7 @@ void usb_device_tasks(void)
                       _U1IE_TRNIE_MASK   | _U1IE_URSTIE_MASK;//  | \
                       _U1IE_SOFIE_MASK   | _U1IE_UERRIE_MASK;
             U1EIE   = 0x9F;
-            U1OTGIE = _U1OTGIE_ACTVIE_MASK | _U1OTGIE_SESVDIE_MASK;
+            U1OTGIE = _U1OTGIE_ACTVIE_MASK;// | _U1OTGIE_SESVDIE_MASK;
             
             // Reset to default address
             U1ADDR = 0x00;

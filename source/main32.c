@@ -13,6 +13,8 @@
                         added UART3,4,5,6 support
     14 Jan. 2015        Regis Blanchot <rblanchot@gmail.com>
                         added OnTimerX support
+    03 Mar. 2015        Regis Blanchot <rblanchot@gmail.com>
+                        moved interrupt weak definitions in isrwrapper.c
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -29,13 +31,14 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ----------------------------------------------------------------------*/
 
-#include <p32xxxx.h>    // always in first place to avoid conflict with const.h ON
+#include <p32xxxx.h>    // Always in first place to avoid conflict with const.h ON
 #include <typedef.h>    // Pinguino's types definitions
 #include <const.h>      // Pinguino's constants definitions
 #include <pin.h>        // Pinguino's pin definitions
 #include <macro.h>      // Pinguino's macros definitions
-#include <system.c>     // PIC32 System Core Functions
 #include "define.h"     // Pinguino Sketch Constants
+#include <isrwrapper.c> // PIC32 interrupt weak definitions
+#include <system.c>     // PIC32 System Core Functions
 #include <io.c>         // Pinguino Boards Peripheral Remappage and IOs configurations
 
 /*
@@ -126,111 +129,3 @@ int main()
     return(0);
     
 } // end of main
-
-/** INTERRUPTS ********************************************************/
-
-#ifndef __SERIAL__
-    void Serial1Interrupt(void)
-    {
-        Nop();    
-    }
-
-    void Serial2Interrupt(void)
-    {
-        Nop();    
-    }
-
-    #ifndef ENABLE_UART3
-    void Serial3Interrupt(void)
-    {
-        Nop();
-    }
-    #endif
-
-    #ifndef ENABLE_UART4
-    void Serial4Interrupt(void)
-    {
-        Nop();
-    }
-    #endif
-
-    #ifndef ENABLE_UART5
-    void Serial5Interrupt(void)
-    {
-        Nop();
-    }
-    #endif
-
-    #ifndef ENABLE_UART6
-    void Serial6Interrupt(void)
-    {
-        Nop();
-    }
-    #endif
-#endif // __SERIAL__
-
-
-#if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__)
-void Timer1Interrupt(void)
-{
-    Nop();    
-}
-#endif
-
-#if !defined(TMR2INT) && !defined(__SERVOS__)
-void Timer2Interrupt(void)
-{
-    Nop();    
-}
-#endif
-
-#if !defined(TMR3INT) && !defined(__IRREMOTE__)//&& !defined(__PWM__)
-void Timer3Interrupt(void)
-{
-    Nop();    
-}
-#endif
-
-#if !defined(TMR4INT) && !defined(__STEPPER__)
-void Timer4Interrupt(void)
-{
-    Nop();    
-}
-#endif
-
-#if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
-void Timer5Interrupt(void)
-{
-    Nop();    
-}
-#endif
-
-#ifndef __SPI__
-    #if (SPIx != 1)
-    void SPI1Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-    
-    #if (SPIx != 2)
-    void SPI2Interrupt(void)
-    {
-        Nop();    
-    }
-    #endif
-#endif // __SPI__
-
-#ifndef __RTCC__
-void RTCCInterrupt(void)
-{
-    Nop();    
-}
-#endif // __RTCC__
-
-#if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) || 
-void USBInterrupt(void)
-{
-    Nop();    
-}
-#endif // __USBCDC__

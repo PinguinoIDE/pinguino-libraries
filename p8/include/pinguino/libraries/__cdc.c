@@ -1,8 +1,8 @@
 /*	--------------------------------------------------------------------
-    FILE:  			__cdc.c
-    PROJECT: 		pinguino8
-    PURPOSE: 		USB CDC routines for use with pinguino board, 
-    PROGRAMER: 		Jean-Pierre Mandon 2010
+    FILE:         __cdc.c
+    PROJECT:      pinguino
+    PURPOSE:      USB CDC routines for use with pinguino board, 
+    PROGRAMER:    Jean-Pierre Mandon 2010
     CHANGELOG:
     --------------------------------------------------------------------
     14 Jun 2011 - Regis Blanchot (rblanchot@gmail.com) added :
@@ -52,18 +52,19 @@ u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
 
 void CDC_init(void)
 {
-    // Init
-    //INTCON=0;                   // Disable global HP interrupts
+    u32 usb_counter = 0;
+
+    // Disable global interrupts
     INTCONbits.GIEH = 0;
     INTCONbits.GIEL = 0;
-    //INTCON2=0xC0;               // set RBPU and INTEDG0 ???
-
-    #ifdef boot2
 
     UCON=0;
     UCFG=0;
+    UEP0=0;
 
-    UEP0=0;UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
+    #ifdef boot2
+
+    UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
     UEP6=0;UEP7=0;UEP8=0;UEP9=0;UEP10=0;UEP11=0;
     UEP12=0;UEP13=0;UEP14=0;UEP15=0;
     
@@ -79,11 +80,19 @@ void CDC_init(void)
     currentConfiguration = 0x00;
 
     // Enable USB module
+    #if 0
     while(deviceState != CONFIGURED)
     {
-      EnableUSBModule();
-      ProcessUSBTransactions();
+        EnableUSBModule();
+        ProcessUSBTransactions();
     }
+    #else
+    while (usb_counter++ < 0xFFFFF && deviceState != CONFIGURED);
+    {
+        EnableUSBModule();
+        ProcessUSBTransactions();
+    }
+    #endif
 
     // Enable Interrupt
     #if defined(__18f25k50) || defined(__18f45k50)

@@ -2,11 +2,14 @@
 #include <typedef.h>
 
 /**
-This togehter with the coresponding usbconfig.c file needs to be filled up by the user according to implem
-ent the USB functionality. The names are fixed since they are used inside the usb.h and usb.c file.<br>
-EP0 is always filled up by the library so you dont really need to worry about. The user just needs to prov
-ide the right device, config and interface descriptor for it.<br>
-The following things need to be filled up by the user (see picUSB.h for a description of the structs)
+This togehter with the coresponding usbconfig.c file needs to be
+filled up by the user according to implement the USB functionality.
+The names are fixed since they are used inside the usb.h and usb.c file.
+EP0 is always filled up by the library so you dont really need to worry
+about. The user just needs to provide the right device, config and
+interface descriptor for it.
+The following things need to be filled up by the user (see picUSB.h
+for a description of the structs)
 - The device descriptor.
 - One configuration descriptor (multiple configuration not yet suppoerted)
 - One interface descriptor for each desired interface.

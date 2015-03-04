@@ -4,45 +4,54 @@
     connected on a PWM pin :
     CCP1 or CCP2 for almost all 8-bit boards except for xxj53 boards
     xxj53 boards : CCP4, 5, 6, 7, 8, 9 or 10
+    PWM0 to PWM4 for almost all 32-bit boards
 */
 
-// notes in the melody:
+#define LINEOUT 1 //PWM4
 
-int melody[] = {
-    NOTE_C4,
-    NOTE_G3,
-    NOTE_G3,
-    NOTE_A3,
-    NOTE_G3,
-    0,
-    NOTE_B3,
-    NOTE_C4    };
+// Melody structure
+typedef struct
+{
+    int freq;
+    int rest;
+} Note;
 
-// note durations: 4 = quarter note, 8 = eighth note, etc.:
-int noteDurations[] = {4, 8, 8, 4, 4, 4, 4, 4 };
+// Note = frequency, duration
+// 4 = quarter note, 8 = eighth note, etc.
+Note melody[] = {
+    NOTE_C4, 4,
+    NOTE_G3, 8,
+    NOTE_G3, 8,
+    NOTE_A3, 4,
+    NOTE_G3, 4,
+    0,       4,
+    NOTE_B3, 4,
+    NOTE_C4, 4    };
 
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    Audio.init(RADIOQUALITY);
+    Audio.init(CDQUALITY);
+    //Audio.staccato();
+    //Audio.legato();
 }
 
 void loop()
 {
-
     int thisNote;	
     int pauseBetweenNotes;
     int noteDuration;
     
+    digitalWrite(USERLED, HIGH);
+
     // iterate over the notes of the melody:
     for (thisNote = 0; thisNote < 8; thisNote++)
     {
-        // to calculate the note duration, take one second 
-        // divided by the note type.
-        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-        noteDuration = 500 / noteDurations[thisNote];
+        // to calculate the note duration, take 1/2 a second 
+        // divided by the note rest.
+        noteDuration = 500 / melody[thisNote].rest;
 
-        Audio.tone(CCP4, melody[thisNote], noteDuration);
+        Audio.tone(LINEOUT, melody[thisNote].freq, noteDuration);
 
         // to distinguish the notes, set a minimum time between them.
         // the note's duration + 30% seems to work well:
@@ -51,7 +60,7 @@ void loop()
     }
   
     // stop the tone playing:
-    Audio.noTone(CCP4);
-    toggle(USERLED);
-    delay(1000);
+    Audio.noTone(LINEOUT);
+    digitalWrite(USERLED, LOW);
+    delay(100);
 }

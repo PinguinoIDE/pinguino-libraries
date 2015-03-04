@@ -152,7 +152,7 @@ compile:
 	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)/main32.S $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.pp
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
+	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\
 		$(_IDE_SRCDIR_)/main32.o\

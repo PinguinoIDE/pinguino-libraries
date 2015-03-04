@@ -164,9 +164,9 @@ const u8 usb_config1_descriptor[] = {
 
 #endif /*__USBCDC__*/
 
-/**
+/***********************************************************************
  * USB Strings
- */
+ **********************************************************************/
 
 #if defined(USB_NUM_STRING_DESCRIPTORS)
 
@@ -182,10 +182,11 @@ static const USB_STRING_INIT(9) string1_descriptor = {
     {'S','e','a','I','c','e','L','a','b'}
 };
 
-static const USB_STRING_INIT(8) string2_descriptor = {
+static const USB_STRING_INIT(26) string2_descriptor = {
     sizeof(string2_descriptor),
     USB_DESCRIPTOR_STRING,              /* Product */
-    { 'P','I','N','G','U','I','N','O'}
+    { 'P','i','n','g','u','i','n','o',' ',
+      '(','w','w','w','.','p','i','n','g','u','i','n','o','.','c','c',')' }
 };
 
 static const USB_STRING_INIT(10) string3_descriptor = {

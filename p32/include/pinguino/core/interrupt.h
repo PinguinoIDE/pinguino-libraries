@@ -56,6 +56,7 @@
     #define INT_MILLISEC                    2
     #define INT_SEC                         3
 
+    // RB 04-03-2015 : REDUNDANT WITH p32xxxx.h, SHOULD BE REMOVED
     // INTERRUPT VECTOR LOCATION
     #if defined(PIC32_PINGUINO_220) || \
         defined(PINGUINO32MX220)    || \

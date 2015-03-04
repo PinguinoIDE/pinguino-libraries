@@ -1,30 +1,30 @@
-/*	----------------------------------------------------------------------------
-	FILE:			delayms.c
-	PROJECT:		pinguino
-	PURPOSE:		pinguino delays functions
-	PROGRAMER:		jean-pierre mandon
-	FIRST RELEASE:	2008
-	LAST RELEASE:	2013-01-17
-	----------------------------------------------------------------------------
-	CHANGELOG:
-    * 2017-01-17    rblanchot - delays are now based on SystemGetClock()
+/*  --------------------------------------------------------------------
+    FILE:			delayms.c
+    PROJECT:		pinguino
+    PURPOSE:		pinguino delays functions
+    PROGRAMER:		jean-pierre mandon
+    FIRST RELEASE:	2008
+    LAST RELEASE:	2013-01-17
+    --------------------------------------------------------------------
+    CHANGELOG:
+    * 2013-01-17    rblanchot - delays are now based on SystemGetClock()
     TODO:
     * check rountines are interuptible
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	--------------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    ------------------------------------------------------------------*/
 
 #ifndef __DELAYMS_C__
 #define __DELAYMS_C__
@@ -74,7 +74,7 @@ void Delayms(u16 milliseconds)
     u16 n100tcy = System_getPeripheralFrequency() / 100000;
     
     while (milliseconds--)
-        delay100tcy(n100tcy);
+        delay100tcy(n100tcy-3);
 }
 
 #endif /* __DELAYMS_C__ */

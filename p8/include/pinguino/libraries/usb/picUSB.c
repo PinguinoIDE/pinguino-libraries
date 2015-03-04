@@ -801,80 +801,81 @@ void Suspend(void)
 }
 
 
-void BusReset() {
-  UEIR  = 0x00;
-  UIR   = 0x00;
-  UEIE  = 0x9f;
-  UIE   = 0x7b;
-  UADDR = 0x00;
+void BusReset()
+{
+    UEIR  = 0x00;
+    UIR   = 0x00;
+    UEIE  = 0x9f;
+    UIE   = 0x7b;
+    UADDR = 0x00;
 
-  // Set endpoint 0 as a control pipe
-  UEP0 = EP_CTRL | HSHK_EN;
+    // Set endpoint 0 as a control pipe
+    UEP0 = EP_CTRL | HSHK_EN;
 
-  // Flush any pending transactions
-  while (UIRbits.TRNIF == 1)
-    UIRbits.TRNIF = 0;
+    // Flush any pending transactions
+    //if (UIRbits.TRNIF == 1)
+    while (UIRbits.TRNIF == 1)
+        UIRbits.TRNIF = 0;
 
-  // Enable packet processing
-  UCONbits.PKTDIS = 0;
+    // Enable packet processing
+    UCONbits.PKTDIS = 0;
 
-  // Prepare for the Setup stage of a control transfer
-  WaitForSetupStage();
+    // Prepare for the Setup stage of a control transfer
+    WaitForSetupStage();
 
-  remoteWakeup = 0;                     // Remote wakeup is off by default
-  selfPowered = 0;                      // Self powered is off by default
-  currentConfiguration = 0;             // Clear active configuration
-  deviceState = DEFAULT_STATUS;
+    remoteWakeup = 0;                     // Remote wakeup is off by default
+    selfPowered = 0;                      // Self powered is off by default
+    currentConfiguration = 0;             // Clear active configuration
+    deviceState = DEFAULT_STATUS;
 }
 
 
   // Main entry point for USB tasks.  Checks interrupts, then checks for transactions.
 void ProcessUSBTransactions(void)
 {
-  // See if the device is connected yet.
-  if(deviceState == DETACHED)
-    return;
+    // See if the device is connected yet.
+    if(deviceState == DETACHED)
+        return;
 
-  // If the USB became active then wake up from suspend
-  if(UIRbits.ACTVIF && UIEbits.ACTVIE)
-    UnSuspend();
+    // If the USB became active then wake up from suspend
+    if(UIRbits.ACTVIF && UIEbits.ACTVIE)
+        UnSuspend();
 
-  // If we are supposed to be suspended, then don't try performing any
-  // processing.
-  if(UCONbits.SUSPND == 1)
-    return;
+    // If we are supposed to be suspended, then don't try performing any
+    // processing.
+    if(UCONbits.SUSPND == 1)
+        return;
 
-  // Process a bus reset
-  if (UIRbits.URSTIF && UIEbits.URSTIE)
-    BusReset();
+    // Process a bus reset
+    if (UIRbits.URSTIF && UIEbits.URSTIE)
+        BusReset();
 
-  // No bus activity for a while - suspend the firmware
-  if (UIRbits.IDLEIF && UIEbits.IDLEIE)
-    Suspend();
+    // No bus activity for a while - suspend the firmware
+    if (UIRbits.IDLEIF && UIEbits.IDLEIE)
+        Suspend();
 
-  
-  if (UIRbits.SOFIF && UIEbits.SOFIE)
-    StartOfFrame();
-  
-  if (UIRbits.STALLIF && UIEbits.STALLIE)
-    Stall();
+    if (UIRbits.SOFIF && UIEbits.SOFIE)
+        StartOfFrame();
 
-  // TBD: See where the error came from.
-  // Clear errors
-  if (UIRbits.UERRIF && UIEbits.UERRIE)
-    UIRbits.UERRIF = 0;
+    if (UIRbits.STALLIF && UIEbits.STALLIE)
+        Stall();
 
-  // Unless we have been reset by the host, no need to keep processing
-  if (deviceState < DEFAULT_STATUS)
-    return;
+    // TBD: See where the error came from.
+    // Clear errors
+    if (UIRbits.UERRIF && UIEbits.UERRIE)
+        UIRbits.UERRIF = 0;
 
-  // A transaction has finished.  Try default processing on endpoint 0.
-  if(UIRbits.TRNIF && UIEbits.TRNIE)
-  {
-    ProcessControlTransfer();
-    // Turn off interrupt
-    UIRbits.TRNIF = 0;
-  }
+    // Unless we have been reset by the host, no need to keep processing
+    if (deviceState < DEFAULT_STATUS)
+        return;
+
+    // A transaction has finished.  Try default processing on endpoint 0.
+    if(UIRbits.TRNIF && UIEbits.TRNIE)
+    {
+        ProcessControlTransfer();
+        // Turn off interrupt
+        UIRbits.TRNIF = 0;
+    }
 }
 
 

@@ -4,12 +4,13 @@
     PURPOSE:		PIC32 Peripheral Remappage and IOs Configuration
     PROGRAMER:		Jean-Pierre Mandon <jp.mandon@gmail.com>
                     Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	16 feb. 2012
-    LAST RELEASE:	16 feb. 2012
+    FIRST RELEASE:	16 Feb. 2012
+    LAST RELEASE:	04 Mar. 2015
     ----------------------------------------------------------------------------
     CHANGELOG:
     [20-02-12][Régis Blanchot][Exported from main32.c in this file]
     [25-02-12][Régis Blanchot][Added PWM remap. for PIC32 PINGUINO 220]
+    [04-03-15][Régis Blanchot][Added AUDIO support]
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -34,17 +35,16 @@
 #include <typedef.h>
 #include <system.c>
 
-/**
- * Set all Analog Pins as Digital IOs
- * The ANSELx register has a default value of 0xFFFF; therefore,
- * all pins that share analog functions are analog (not digital)
- * by default.
- **/
+/***********************************************************************
+ * Set all Analog Pins as Digital IOs.
+ * The ANSELx register has a default value of 0xFFFF; therefore all pins
+ * that share analog functions are analog (not digital) by default.
+ **********************************************************************/
  
 void IOsetDigital()
 {
     #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
-		defined(__32MX250F128B__) || defined(__32MX270F256B__)
+        defined(__32MX250F128B__) || defined(__32MX270F256B__)
         CFGCONbits.JTAGEN=0;    // Disable the JTAG port, Port A as Digital Port
         ANSELA = 0;
         ANSELB = 0;
@@ -57,9 +57,9 @@ void IOsetDigital()
     #endif
 }
 
-/**
+/***********************************************************************
  * Set all Pins as Output
- **/
+ **********************************************************************/
 
 void IOsetSpecial()
 {
@@ -70,15 +70,17 @@ void IOsetSpecial()
     TRISB  = 0;
 
     #if !defined(__32MX220F032B__) && \
-		!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
-		
+        !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+
         TRISC  = 0;
+
         #if !defined(__32MX220F032D__)
             TRISD  = 0;
             TRISE  = 0;
             TRISF  = 0;
             TRISG  = 0;
         #endif
+
     #endif
 
     #if defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
@@ -94,43 +96,53 @@ void IOsetSpecial()
     */
 }
 
-/**
+/***********************************************************************
  * PIC32 Peripheral Remappage
- **/
+ **********************************************************************/
 
 void IOsetRemap()
 {
     #if defined(PIC32_PINGUINO_220)
+    
         SystemUnlock();
         CFGCONbits.IOLOCK=0;			// unlock configuration
         CFGCONbits.PMDLOCK=0;
+
         #ifdef __SERIAL__
             U2RXRbits.U2RXR=6;			// Define U2RX as RC8 ( D0 )
             RPC9Rbits.RPC9R=2;			// Define U2TX as RC9 ( D1 )
             U1RXRbits.U1RXR=2;			// Define U1RX as RA4 ( UEXT SERIAL )
             RPB4Rbits.RPB4R=1;			// Define U1TX as RB4 ( UEXT SERIAL )
         #endif
+
         #ifdef __SPI__
             SDI1Rbits.SDI1R=5;			// Define SDI1 as RA8 ( UEXT SPI )
             RPA9Rbits.RPA9R=3;			// Define SDO1 as RA9 ( UEXT SPI )
         #endif
-        #ifdef __PWM__
+
+        #if defined(__PWM__) || defined(__AUDIO__)
             RPC2Rbits.RPC2R  =0b0101;	// PWM0 = OC3 as D2  = RC2
             RPC3Rbits.RPC3R  =0b0101;	// PWM1 = OC4 as D3  = RC3
             RPB5Rbits.RPB5R  =0b0101;	// PWM2 = OC2 as D11 = RB5
             RPB13Rbits.RPB13R=0b0110;	// PWM3 = OC5 as D12 = RB13
             RPB15Rbits.RPB15R=0b0101;	// PWM4 = OC1 as D13 = RB15
         #endif
+
         CFGCONbits.IOLOCK=1;			// relock configuration
         CFGCONbits.PMDLOCK=1;	
         SystemLock();
+
     #endif
 
     // Thanks to danirobin
-    #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
+    #if defined(PINGUINO32MX220) || \
+        defined(PINGUINO32MX250) || \
+        defined(PINGUINO32MX270)
+        
         SystemUnlock();
         CFGCONbits.IOLOCK=0;			// unlock configuration
         CFGCONbits.PMDLOCK=0;
+
         #ifdef __SERIAL__
             // Serial 1
             U1RXRbits.U1RXR = 0b0100;   // Define U1RX as RB2 ( D10 )
@@ -139,6 +151,7 @@ void IOsetRemap()
             U2RXRbits.U2RXR = 0b0010;   // Define U2RX as RB1 (D11)
             RPB0Rbits.RPB0R = 0b0010;   // Define U2TX as RB0 (D12)
         #endif
+
         #ifdef __SPI__
             // Input
             //SS1Rbits.SS1R   = 0b0100;   // Define SS1  as RB7 ( D5 )
@@ -148,16 +161,19 @@ void IOsetRemap()
             RPA4Rbits.RPA4R = 0b0011;   // Define SDO1 as RA4 ( D7 )
             // NB : SCK1 is not a remappable pin (SCK1 = RB14 = D1)
         #endif
-        #ifdef __PWM__
-            RPB4Rbits.RPB4R =0b0101;    // PWM0 = OC1 = RB4
-            RPA4Rbits.RPA4R =0b0110;    // PWM1 = OC4 = RA4
-            RPB5Rbits.RPB5R =0b0101;    // PWM2 = OC2 = RB5
-            RPB13Rbits.RPB13R=0b0101;   // PWM3 = OC5 = RB13
-            RPB14Rbits.RPB14R=0b0101;   // PWM4 = OC3 = RB14
+
+        #if defined(__PWM__) || defined(__AUDIO__)
+            RPB4Rbits.RPB4R   = 0b0101; // PWM0 = OC1 = RB4  = D8
+            RPA4Rbits.RPA4R   = 0b0110; // PWM1 = OC4 = RA4  = D7
+            RPB5Rbits.RPB5R   = 0b0101; // PWM2 = OC2 = RB5  = D6
+            RPB13Rbits.RPB13R = 0b0101; // PWM3 = OC5 = RB13 = D2
+            RPB14Rbits.RPB14R = 0b0101; // PWM4 = OC3 = RB14 = D1
         #endif
+
         CFGCONbits.IOLOCK=1;			// relock configuration
         CFGCONbits.PMDLOCK=1;	
         SystemLock();
+
     #endif
 }
 

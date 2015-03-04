@@ -8,11 +8,12 @@
     --------------------------------------------------------------------
     CHANGELOG:
     * 15 Feb. 2015  Régis Blanchot - added Sine Wave Generator
+    * 16 Feb. 2015  Régis Blanchot - added Audio.init(SAMPLERATE)
     * 17 Feb. 2015  Régis Blanchot - added Direct Digital Synthesis
     * 17 Feb. 2015  Régis Blanchot - renamed library to audio.c
+    * 17 Feb. 2015  Régis Blanchot - added Audio.staccato() and Audio.legato()
     TODO:
-    * Audio.staccato() and Audio.legato() 
-    * DTMF (Dual Tone Modulation Frequency)
+    * DTMF (dual-tone multi-frequency)
     * Wav decoder
     READINGS :
     * http://www.romanblack.com/one_sec.htm#BDA 
@@ -62,7 +63,7 @@
     // global variables
     volatile u16 gSampleRate;
     volatile u16 gPhase;
-    volatile u16 gFreqInc;
+    volatile u16 gFreqInc, gFreq1Inc, gFreq2Inc;
     volatile u16 gDuty50;
              u8  gStaccato = true;
 
@@ -194,6 +195,55 @@
         // the accumulator will go back to zero after (gSampleRate/freq) ticks
         gPhase = 0;
         gFreqInc = 65536 * freq / gSampleRate;
+
+        *pCCPxCON = PWMMODE;
+        
+        pinmode(pin, OUTPUT);   // PWM pin as OUTPUT
+        PIE1bits.TMR2IE = 1;    // enable interrupt
+        
+        Delayms(duration);
+        
+        if (gStaccato)
+            *pCCPxCON = 0;      // staccato
+    }
+
+/*  --------------------------------------------------------------------
+    DTMF (dual-tone multi-frequency)
+    --------------------------------------------------------------------
+    Play sound with a certain frequency for a certain duration
+    @param pin:         pin number where buzzer or loudspeaker is connected
+    @param note:        note frequency
+    @param duration:    Duration in ms
+    ------------------------------------------------------------------*/
+
+    void Audio_DTMF(u8 pin, u16 freq1, u16 freq2, u16 duration)
+    {
+        switch (pin)
+        {
+            #if defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+
+            case CCP4 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
+            case CCP5 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
+            case CCP6 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
+            case CCP7 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
+            case CCP8 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
+            case CCP9 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
+            case CCP10: pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
+
+            #else
+
+            case CCP1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
+            case CCP2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
+
+            #endif
+        }
+
+        // 16-bit accumulator's increment value.
+        // the accumulator will go back to zero after (gSampleRate/freq) ticks
+        gPhase = 0;
+        gFreq1Inc = 65536 * freq1 / gSampleRate;
+        gFreq2Inc = 65536 * freq1 / gSampleRate;
 
         *pCCPxCON = PWMMODE;
         

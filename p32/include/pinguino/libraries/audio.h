@@ -25,7 +25,21 @@
 #ifndef __AUDIO_H
     #define __AUDIO_H
     
-    // NOTES
+    #define PWMMODE         0x800E      // PWM mode on OCx; Fault pin disabled
+                                        // Timer3 is the clock source for this OCMP module
+                                        // Output Compare peripheral is enabled
+    
+    // The hearing range of human ears is roughly 20 Hz to 20000 Hz.
+    // The Nyquist–Shannon sampling theorem says the sampling frequency
+    // must be greater than twice the maximum frequency we wish to reproduce.
+    
+    // Common sampling rates
+    #define CDQUALITY       44100
+    #define TAPEQUALITY     22050
+    #define RADIOQUALITY    11025
+    #define TELQUALITY      8820
+
+    // Notes
     #define NOTE_B0  31
     #define NOTE_C1  33                 // 1rst octave
     #define NOTE_CS1 35
@@ -116,7 +130,7 @@
     #define NOTE_D8  4699
     #define NOTE_DS8 4978
 
-    // RESTS
+    // Rests
     #define R4          8               // long (or four-measure rest)
     #define R2          7               // double whole rest / breve rest
     #define R1          6               // whole rest / semibreve rest
@@ -127,6 +141,7 @@
     #define R1_32       1               // thirty-second rest / demisemiquaver rest
     #define R1_64       0               // sixty-fourth rest / hemidemisemiquaver rest
 
+    // Wav format
     typedef struct
     {
             u8          RIFF[4];        // RIFF Header  
