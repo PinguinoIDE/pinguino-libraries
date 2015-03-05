@@ -61,10 +61,10 @@
     u8 *pCCPRxL;                // CCPRxL
 
     // global variables
+    volatile u16 gPeriodPlus1;
     volatile u16 gSampleRate;
     volatile u16 gPhase;
-    volatile u16 gFreqInc, gFreq1Inc, gFreq2Inc;
-    volatile u16 gDuty50;
+    volatile u16 gFreq1Inc, gFreq2Inc;
              u8  gStaccato = true;
 
     // Waveform table
@@ -81,7 +81,7 @@
 /*  --------------------------------------------------------------------
     init
     --------------------------------------------------------------------
-    @descr :            Generate a sample PWM period signal and enable
+    @descr :            Generate a sample PWM gPeriodPlus1 signal and enable
                         Timer2 interrupt
     @param :            none
     @note  :            PWM_setFrequency() computes the best value for
@@ -95,7 +95,7 @@
         // PR2+1 calculation
         // Timer2 clock input is the peripheral clock (FOSC/4). 
 
-        u16 period = System_getPeripheralFrequency() / samplerate;
+        gPeriodPlus1 = System_getPeripheralFrequency() / samplerate;
 
         // stops interrupt
         INTCONbits.GIEH = 0;         // disable global HP interrupts
@@ -108,23 +108,23 @@
         // Timer2 prescaler calculation
         // PR2 max value is 255, so PR2+1 max value is 256
         // only 3 possible prescaler value : 1, 4 or 16
-        // so period can not be > to 16 * 256 = 4096
+        // so gPeriodPlus1 can not be > to 16 * 256 = 4096
         // and frequency can not be < 2929Hz (12MHZ/4096)
         
-        if (period <= 4096)          // check if it's not too high
+        if (gPeriodPlus1 <= 4096)          // check if it's not too high
         {
-            if (period <= 256)       // no needs of any prescaler
+            if (gPeriodPlus1 <= 256)       // no needs of any prescaler
             {
                 T2CON = 0b00000100;  // prescaler is 1, Timer2 On
             }
-            else if (period <= 1024) // needs prescaler 1:4
+            else if (gPeriodPlus1 <= 1024) // needs prescaler 1:4
             {
-                period = period >> 2;// divided by 4
+                gPeriodPlus1 = gPeriodPlus1 >> 2;// divided by 4
                 T2CON = 0b00000101;  // prescaler is 4, Timer2 On
             }
             else                     // needs prescaler 1:6
             {
-                period = period >> 4;// divided by 16
+                gPeriodPlus1 = gPeriodPlus1 >> 4;// divided by 16
                 T2CON = 0b00000110;  // prescaler is 16, Timer2 On
             }
         }
@@ -132,9 +132,7 @@
         gSampleRate = samplerate;
 
         TMR2 = 0;
-        PR2 = period - 1;
-        gDuty50 = PR2 / 2;           // period is on 8-bit
-        gDuty50 = gDuty50 << 2;      // duty cycle is on 10-bit
+        PR2 = gPeriodPlus1 - 1;
 
         // (re-)starts interrupt
         INTCONbits.GIEL = 1;         // enable global LP interrupts
@@ -194,7 +192,7 @@
         // 16-bit accumulator's increment value.
         // the accumulator will go back to zero after (gSampleRate/freq) ticks
         gPhase = 0;
-        gFreqInc = 65536 * freq / gSampleRate;
+        gFreq1Inc = 65536 * freq / gSampleRate;
 
         *pCCPxCON = PWMMODE;
         
@@ -243,7 +241,7 @@
         // the accumulator will go back to zero after (gSampleRate/freq) ticks
         gPhase = 0;
         gFreq1Inc = 65536 * freq1 / gSampleRate;
-        gFreq2Inc = 65536 * freq1 / gSampleRate;
+        gFreq2Inc = 65536 * freq2 / gSampleRate;
 
         *pCCPxCON = PWMMODE;
         
@@ -292,7 +290,7 @@
 /*  --------------------------------------------------------------------
     Interrupt Service Routine
     --------------------------------------------------------------------
-    The new PWM value must be computed in less than the PWM cycle period.
+    The new PWM value must be computed in less than the PWM cycle gPeriodPlus1.
     If sample rate = CDQUALITY    -> Tpwm =  22 us
     If sample rate = TAPEQUALITY  -> Tpwm =  45 us
     If sample rate = RADIOQUALITY -> Tpwm =  90 us
@@ -311,11 +309,11 @@ void pwm_interrupt()
         PIR1bits.TMR2IF = 0;
 
         // Increment the 16-bit phase accumulator
-        gPhase += gFreqInc;
+        gPhase += gFreq1Inc;
         
         // The signal level must be offset so that the zero level
         // generates a PWM output with a 50% duty cycle
-        *pCCPRxL = sine64[ gPhase & 0x3F ];
+        *pCCPRxL = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
 
         // Load the duty cycle register according to the sine table
         //PWM_setDutyCycle(gPin, duty);

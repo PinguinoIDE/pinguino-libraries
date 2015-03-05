@@ -1,9 +1,6 @@
 // Simple serial test
 // Jean-Pierre Mandon 2010
 
-char caractere;
-char chaine[5]={'T','E','S','T',0};
-
 void setup()
 {
     Serial.begin(9600);
@@ -11,13 +8,23 @@ void setup()
 
 void loop()
 {
-    Serial.print("TEST\n\r");
+    char c;
+
+    Serial.println("TEST");
     if (Serial.available())
     {
-        Serial.print("caractere \r\n");
-        caractere=Serial.read();
-        Serial.print(chaine);
-        Serial.printNumber(caractere, DEC);
+        c = Serial.read();
+        
+        // with print and printNumber
+        Serial.print("You pressed key [");
+        Serial.print(&c);
+        Serial.print("], Code ASCII = ");
+        Serial.printNumber(c, DEC);
+        Serial.print("\r\n");
+
+        // with printf
+        //Serial.printf("You pressed key [%s], Code ASCII = %d \r\n", &c, c);
+        
         delay(1000);
     }
     delay(100);

@@ -152,7 +152,7 @@ u8 CDCgets(u8 *buffer)
 
 u8 CDCputs(u8 *buffer, u8 length)
 {
-    u8 i=0;
+    u8 i;
 
     if (deviceState != CONFIGURED) return 0;
     
@@ -187,9 +187,30 @@ u8 CDCputs(u8 *buffer, u8 length)
     return i;
 }
 
+void CDCputc(u8 c)
+{
+    if (deviceState != CONFIGURED) return;
+    
+    if (!CONTROL_LINE) return;
+    
+    if (!EP_IN_BD(CDC_DATA_EP_NUM).Stat.UOWN)
+    {
+        CDCTxBuffer[0] = c;
+
+        // Set counter to num bytes ready for send
+        EP_IN_BD(CDC_DATA_EP_NUM).Cnt = 1;
+        // clear BDT Stat bits beside DTS and then togle DTS
+        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc &= 0x40;
+        EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS;
+        // reset Buffer to original state
+        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+    }
+}
+
 /**
 Initialize
 **/
+
 void CDCInitEndpoint(void)
 {
     #ifdef DEBUG_PRINT_CDC

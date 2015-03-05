@@ -29,9 +29,9 @@
 #include <usb/usb_cdc.c>
 #include <typedef.h>
 
-#ifdef boot2
+//#ifdef boot2
     #include <delayms.c>
-#endif
+//#endif
 
 #if defined(CDCPRINTF)
     #include <stdio.c>                  // Pinguino printf
@@ -52,17 +52,16 @@ u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
 
 void CDC_init(void)
 {
-    u32 usb_counter = 0;
+    u32 counter=1;
 
     // Disable global interrupts
     INTCONbits.GIEH = 0;
     INTCONbits.GIEL = 0;
 
+    #ifdef boot2
+    
     UCON=0;
     UCFG=0;
-    UEP0=0;
-
-    #ifdef boot2
 
     UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
     UEP6=0;UEP7=0;UEP8=0;UEP9=0;UEP10=0;UEP11=0;
@@ -74,20 +73,20 @@ void CDC_init(void)
     #endif
 
     // Initialize USB for CDC
-    UCFG = 0x14; 				// Enable pullup resistors; full speed mode
+    UCFG = 0x14;            // Enable pullup resistors; full speed mode
     deviceState = DETACHED;
     remoteWakeup = 0x00;
     currentConfiguration = 0x00;
 
     // Enable USB module
     #if 0
-    while(deviceState != CONFIGURED)
+    while (deviceState != CONFIGURED)
     {
         EnableUSBModule();
         ProcessUSBTransactions();
     }
     #else
-    while (usb_counter++ < 0xFFFFF && deviceState != CONFIGURED);
+    while ( counter++ && deviceState != CONFIGURED )
     {
         EnableUSBModule();
         ProcessUSBTransactions();
@@ -115,7 +114,7 @@ void CDC_init(void)
  * write 1 char on CDC port
  **********************************************************************/
 
-#define CDCwrite(c) CDCputs(c, 1)
+#define CDCwrite(c) CDCputc(c)
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)
@@ -140,8 +139,14 @@ void CDCprint(char *string)
 #if defined(CDCPRINTLN)
 void CDCprintln(char *string)
 {
-    CDCprint(string);
-    CDCprint("\n\r");
+    CDCputs(string, strlen(string));
+    Delayms(1);
+    CDCputc('\r');
+    Delayms(1);
+    CDCputc('\n');
+    Delayms(1);
+    //CDCprint(string);
+    //CDCprint("\n\r");
 }
 #endif
 
@@ -169,7 +174,8 @@ void CDCprintNumber(long value, u8 base)
 
     if (value==0)
     {
-        CDCputs("0", 1);
+        //CDCputs("0", 1);
+        CDCputc('0');
         return;
     }
     
@@ -219,41 +225,45 @@ void CDCprintNumber(long value, u8 base)
 #if defined(CDCPRINTFLOAT)
 void CDCprintFloat(float number, u8 digits)
 { 
-	u8 i, toPrint;
-	u16 int_part;
-	float rounding, remainder;
+    u8 i, toPrint;
+    u16 int_part;
+    float rounding, remainder;
 
-	// Handle negative numbers
-	if (number < 0.0)
-	{
-		CDCputs('-', 1);
-		number = -number;
-	}
+    // Handle negative numbers
+    if (number < 0.0)
+    {
+        //CDCputs('-', 1);
+        CDCputc('-');
+        number = -number;
+    }
 
-	// Round correctly so that print(1.999, 2) prints as "2.00"  
-	rounding = 0.5;
-	for (i=0; i<digits; ++i)
-		rounding /= 10.0;
+    // Round correctly so that print(1.999, 2) prints as "2.00"  
+    rounding = 0.5;
+    for (i=0; i<digits; ++i)
+        rounding /= 10.0;
 
-	number += rounding;
+    number += rounding;
 
-	// Extract the integer part of the number and print it  
-	int_part = (u16)number;
-	remainder = number - (float)int_part;
-	CDCprintNumber(int_part, 10);
+    // Extract the integer part of the number and print it  
+    int_part = (u16)number;
+    remainder = number - (float)int_part;
+    CDCprintNumber(int_part, 10);
 
-	// Print the decimal point, but only if there are digits beyond
-	if (digits > 0)
-		CDCputs('.', 1); 
-
-	// Extract digits from the remainder one at a time
-	while (digits-- > 0)
-	{
-		remainder *= 10.0;
-		toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-		CDCprintNumber(toPrint, 10);
-		remainder -= toPrint; 
-	}
+    // Print the decimal point, but only if there are digits beyond
+    if (digits > 0)
+    {
+        //CDCputs('.', 1); 
+        CDCputc('.'); 
+    }
+    
+    // Extract digits from the remainder one at a time
+    while (digits-- > 0)
+    {
+        remainder *= 10.0;
+        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+        CDCprintNumber(toPrint, 10);
+        remainder -= toPrint; 
+    }
 }
 #endif
 
@@ -307,7 +317,8 @@ u8 * CDCgetstring(void)
     do {
         c = CDCgetkey();
         buffer[i++] = c;
-        CDCputs(&buffer[i-1], 1);
+        //CDCputs(&buffer[i-1], 1);
+        CDCputc(buffer[i-1]);
     } while (c != '\r');
     buffer[i] = '\0';
     return buffer;
