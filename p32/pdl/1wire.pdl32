@@ -14,3 +14,5 @@ DS18B20.crc DS18B20_crc#include <18b20.c>
 1wire.writeBit OneWireWriteBit#include <1wire.c>
 1wire.readByte OneWireReadByte#include <1wire.c>
 1wire.writeByte OneWireWriteByte#include <1wire.c>
+1wire.read OneWireReadByte#include <1wire.c>
+1wire.write OneWireWriteByte#include <1wire.c>

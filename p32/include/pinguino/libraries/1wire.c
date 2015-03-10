@@ -117,6 +117,8 @@
 		return(value);
 	}
 
+	#define OneWireRead(DQpin) OneWireReadByte(DQpin)
+
 /*	----------------------------------------------------------------------------
 	---------- Writes a bit to the one-wire bus, passed in bitval.
 	--------------------------------------------------------------------------*/
@@ -152,5 +154,7 @@
 			OneWireWriteBit(DQpin, temp);	// write bit in temp into
 		}
 	}
+
+	#define OneWireWrite(DQpin, val) OneWireWriteByte(DQpin, val)
 
 #endif
