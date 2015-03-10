@@ -44,7 +44,7 @@
 #ifndef __USBCDC__
 #define __USBCDC__
 
-#define DEBUG
+//#define DEBUG
 
 #define CDC_MAJOR_VER 2
 #define CDC_MINOR_VER 7
@@ -139,15 +139,15 @@ void CDC_begin(u32 baudrate)
 
 void CDC_connect(void)
 {
-    #if defined(DEBUG) && defined(USERLED)
-    u32 led_count = 0;
+    #if defined(USERLED)
+    u16 led_count = 0;
     output(USERLED);
     #endif
 
     // Blink the led until device is configured and no more suspended
-    while ( (U1PWRC & _U1PWRC_USUSPEND_MASK) || (usb_device_state < CONFIGURED_STATE) )
+    while ( U1PWRCbits.USUSPEND || (usb_device_state < CONFIGURED_STATE) )
     {
-        #if defined(DEBUG) && defined(USERLED)
+        #if defined(USERLED)
         if (led_count == 0)
         {
             led_count = 10000;
@@ -166,7 +166,11 @@ void CDC_connect(void)
         //#endif
     }
 
-    #if defined(DEBUG) && defined(USERLED)
+    #ifdef DEBUG
+    //SerialPrint(UART,"Connected\r\n");
+    #endif
+
+    #if defined(USERLED)
     low(USERLED);
     #endif
 
@@ -228,26 +232,26 @@ u8 CDC_available(void)
  * USB CDC interrupt routine
  * added by regis blanchot 23/01/2015
  * cf. ISRwrapper.S
- * Alternatively, this routine may be called from the Interrupt Service
- * Routine (ISR) whenever a USB interrupt occurs. If it is used this
- * way, the entire USB firmware stack (the non-user API portion of the
- * CDC serial driver) operates in an interrupt context (including the
- * applicationís event-handler callback routine)
  **********************************************************************/
 
 #ifdef __USBCDCINTERRUPT__
 
 void USBInterrupt(void)
 {
+    #ifdef DEBUG
+    //SerialPrint(UART,"> USB_IRQ\r\n");
+    #endif
+    
     // Clear general USB flag
     IntClearFlag(_USB_IRQ);
     // Process all interrupts
     //usb_enable_module();
     usb_device_tasks();
+    //cdc_tx_service();
     // Clear SOF and RESET flags
-    U1IR = _U1IR_SOFIF_MASK | _U1IR_URSTIF_MASK;
+    U1IR = _U1IR_URSTIF_MASK | _U1IR_SOFIF_MASK;
     // Clear all Error flags
-    U1EIR = 0;
+    U1EIR = 0xFF;
 }
 
 #else
@@ -402,7 +406,7 @@ void CDC_printFloat(float number, u8 digits)
     // Handle negative numbers
     if (number < 0.0)
     {
-        cdc_puts('-', 1);
+        cdc_putc('-');
         number = -number;
     }
 

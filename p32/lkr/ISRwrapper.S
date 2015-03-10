@@ -24,6 +24,8 @@
 ** they apply.
 */
 
+#include <p32xxxx.h>
+
         .macro  ISR_wrapper     _XX:req,C_ISR_NAME:req
 
   /*
@@ -141,40 +143,28 @@ vector_\_XX\()_ISR_wrapper:
     ** Create wrappers for ISRs used in specific libraries
     */
 
-    ISR_wrapper  4,Timer1Interrupt    # TIMER 1
-    ISR_wrapper  8,Timer2Interrupt    # TIMER 2
-    ISR_wrapper 12,Timer3Interrupt    # TIMER 3
-    ISR_wrapper 16,Timer4Interrupt    # TIMER 4
-    ISR_wrapper 20,Timer5Interrupt    # TIMER 5
+    ISR_wrapper _TIMER_1_VECTOR, Timer1Interrupt
+    ISR_wrapper _TIMER_2_VECTOR, Timer2Interrupt
+    ISR_wrapper _TIMER_3_VECTOR, Timer3Interrupt
+    ISR_wrapper _TIMER_4_VECTOR, Timer4Interrupt
+    ISR_wrapper _TIMER_5_VECTOR, Timer5Interrupt
 
-    #if defined(__32MX220F032D__) || \
-        defined(__32MX220F032B__) || \
-        defined(__32MX250F128B__) || \
-        defined(__32MX270F256B__)
+    ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
+    ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
 
-    ISR_wrapper 31,SPI1Interrupt      # SPI 1
-    ISR_wrapper 36,SPI2Interrupt      # SPI 2
+    ISR_wrapper _UART_1_VECTOR,  Serial1Interrupt
+    ISR_wrapper _UART_2_VECTOR,  Serial2Interrupt
 
-    ISR_wrapper 32,Serial1Interrupt   # UART 1
-    ISR_wrapper 37,Serial2Interrupt   # UART 2
-    
-    ISR_wrapper 25,RTCCInterrupt      # RTCC
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
 
-    ISR_wrapper 30,USBInterrupt       # USB
-
-    #else
-    
-    ISR_wrapper 36,SPI2Interrupt      # SPI 2
-
-    ISR_wrapper 24,Serial1Interrupt   # UART 1
-    ISR_wrapper 32,Serial2Interrupt   # UART 2
-    ISR_wrapper 31,Serial3Interrupt   # UART 3
-    ISR_wrapper 49,Serial4Interrupt   # UART 4
-    ISR_wrapper 51,Serial5Interrupt   # UART 5
-    ISR_wrapper 50,Serial6Interrupt   # UART 6
-
-    ISR_wrapper 35,RTCCInterrupt      # RTCC
-    
-    ISR_wrapper 45,USBInterrupt       # USB
+    ISR_wrapper _UART_3_VECTOR,  Serial3Interrupt
+    ISR_wrapper _UART_4_VECTOR,  Serial4Interrupt
+    ISR_wrapper _UART_5_VECTOR,  Serial5Interrupt
+    ISR_wrapper _UART_6_VECTOR,  Serial6Interrupt
 
     #endif
+    
+    ISR_wrapper _RTCC_VECTOR,    RTCCInterrupt
+
+    ISR_wrapper _USB_1_VECTOR,   USBInterrupt

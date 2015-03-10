@@ -159,37 +159,37 @@
 #define UART_DATA_READY						0x00000001	// UART data has been received and is avaiable in the FIFO.
 
 //#ifndef SERIAL_BUFFERLENGTH
-    #define SERIAL_BUFFERLENGTH 			128				// rx buffer length
+    #define SERIAL_BUFFERLENGTH 			128			// rx buffer length
 //#endif
 
-volatile unsigned char UART1SerialBuffer[SERIAL_BUFFERLENGTH];	// UART1 buffer
-volatile unsigned char UART2SerialBuffer[SERIAL_BUFFERLENGTH];	// UART2 buffer
+volatile u8 UART1SerialBuffer[SERIAL_BUFFERLENGTH];	// UART1 buffer
+volatile u8 UART2SerialBuffer[SERIAL_BUFFERLENGTH];	// UART2 buffer
 #ifdef ENABLE_UART3
-volatile unsigned char UART3SerialBuffer[SERIAL_BUFFERLENGTH];	// UART3 buffer
+volatile u8 UART3SerialBuffer[SERIAL_BUFFERLENGTH];	// UART3 buffer
 #endif
 #ifdef ENABLE_UART4
-volatile unsigned char UART4SerialBuffer[SERIAL_BUFFERLENGTH];	// UART4 buffer
+volatile u8 UART4SerialBuffer[SERIAL_BUFFERLENGTH];	// UART4 buffer
 #endif
 #ifdef ENABLE_UART5
-volatile unsigned char UART5SerialBuffer[SERIAL_BUFFERLENGTH];	// UART5 buffer
+volatile u8 UART5SerialBuffer[SERIAL_BUFFERLENGTH];	// UART5 buffer
 #endif
 #ifdef ENABLE_UART6
-volatile unsigned char UART6SerialBuffer[SERIAL_BUFFERLENGTH];	// UART6 buffer
+volatile u8 UART6SerialBuffer[SERIAL_BUFFERLENGTH];	// UART6 buffer
 #endif
 
-volatile long UART1wpointer, UART1rpointer;				// write and read pointer
-volatile long UART2wpointer, UART2rpointer;				// write and read pointer
+volatile long UART1wpointer, UART1rpointer;			// write and read pointer
+volatile long UART2wpointer, UART2rpointer;			// write and read pointer
 #ifdef ENABLE_UART3
-volatile long UART3wpointer, UART3rpointer;				// write and read pointer
+volatile long UART3wpointer, UART3rpointer;			// write and read pointer
 #endif
 #ifdef ENABLE_UART4
-volatile long UART4wpointer, UART4rpointer;				// write and read pointer
+volatile long UART4wpointer, UART4rpointer;			// write and read pointer
 #endif
 #ifdef ENABLE_UART5
-volatile long UART5wpointer, UART5rpointer;				// write and read pointer
+volatile long UART5wpointer, UART5rpointer;			// write and read pointer
 #endif
 #ifdef ENABLE_UART6
-volatile long UART6wpointer, UART6rpointer;				// write and read pointer
+volatile long UART6wpointer, UART6rpointer;			// write and read pointer
 #endif
 
 /*	--------------------------------------------------------------------
@@ -208,7 +208,7 @@ volatile long UART6wpointer, UART6rpointer;				// write and read pointer
 
 void SerialSetDataRate(u8 port, u32 baudrate)
 {
-    u8 speed;
+    u8 speed = UART_ENABLE_STANDARD_SPEED;
     u32 max, max1, max2;
     u32 min1, min2;
     u32 pbclock;
@@ -297,12 +297,11 @@ void SerialSetDataRate(u8 port, u32 baudrate)
     }
 }
 
-#ifndef __PIC32MX220F032D__
-
 /*	--------------------------------------------------------------------
     SerialGetDataRate
     ------------------------------------------------------------------*/
 
+#ifdef SERIALGETDATARATE
 u32 SerialGetDataRate(u8 port)
 {
     u8 speed;
@@ -374,12 +373,11 @@ u32 SerialGetDataRate(u8 port)
     }
     return baudrate;
 }
+#endif // SERIALGETDATARATE
 
-#endif
-
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     SerialEnable
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     ex : SerialEnable(UART1, UART_RX_TX_ENABLED | UART_INTERRUPT_ON_RX_FULL)
     ------------------------------------------------------------------*/
 
@@ -404,9 +402,9 @@ void SerialEnable(u8 port, u32 config)
     }
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     SerialSetLineControl
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     ex : SerialSetLineControl(UART1, UART_ENABLE | UART_ENABLE_PINS_TX_RX_ONLY | UART_8_BITS_NO_PARITY | UART_STOP_BITS_1)
     ------------------------------------------------------------------*/
 
@@ -488,28 +486,29 @@ void SerialPinConfigure(u8 port)
     switch (port)
     {
         case UART1:
-        #ifdef __32MX460F512L__
+            #ifdef __32MX460F512L__
             TRISFbits.TRISF8 = OUTPUT;	// RF8 / U1TX output
             TRISFbits.TRISF2 = INPUT;	// RF2 / U1RX input
-        #endif
-        #ifdef __32MX440F256H__
+            #endif
+            #ifdef __32MX440F256H__
             TRISDbits.TRISD3 = OUTPUT;	// RD3 / U1TX output
             TRISDbits.TRISD2 = INPUT;	// RD2 / U1RX input
-        #endif
-        #ifdef PIC32_PINGUINO_220
+            #endif
+            #ifdef PIC32_PINGUINO_220
             TRISBbits.TRISB4 = OUTPUT;	// RB4 / U1TX output
             TRISAbits.TRISA4 = INPUT;	// RA4 / U1RX input
-        #endif			
-        #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
+            #endif
+            #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBbits.TRISB2=INPUT;		// RB2 is input ( RX )
             TRISBbits.TRISB3=OUTPUT;	// RB3 is output ( TX )
-        #endif
+            #endif
             break;
+            
         case UART2:
-        #ifdef PIC32_PINGUINO_220
+            #ifdef PIC32_PINGUINO_220
             TRISCbits.TRISC9 = OUTPUT;	// RC9 / U2TX output
             TRISCbits.TRISC8 = INPUT;	// RC8 / U2RX input				
-        #else
+            #else
             #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBbits.TRISB1=INPUT;		// RB1 is input ( RX )
             TRISBbits.TRISB0=OUTPUT;	// RB0 is output ( TX )
@@ -517,21 +516,25 @@ void SerialPinConfigure(u8 port)
             TRISFbits.TRISF5 = OUTPUT;	// RF5 / U2TX output
             TRISFbits.TRISF4 = INPUT;	// RF4 / U2RX input
             #endif
-        #endif
+            #endif
             break;
+
         //32MX4xx do not have UART3,4,5 AND 6
+
         #ifdef ENABLE_UART3
         case UART3:
             TRISGbits.TRISG8 = OUTPUT;	// RG8 / U3TX output
             TRISGbits.TRISG7 = INPUT;	// RG7 / U3RX input
             break;
         #endif
+
         #ifdef ENABLE_UART4
         case UART4:
             TRISDbits.TRISD15 = OUTPUT;	// RD15 / U4TX output
             TRISDbits.TRISD14 = INPUT;	// RD14 / U4RX input
             break;
         #endif
+
         #ifdef ENABLE_UART5
             #ifndef __32MX220F032D__
             case UART5:
@@ -540,6 +543,7 @@ void SerialPinConfigure(u8 port)
                 break;
             #endif
         #endif
+
         #ifdef ENABLE_UART6
         case UART6:
             TRISGbits.TRISG6 = OUTPUT;	// RG6 / U6TX output
@@ -639,7 +643,7 @@ void SerialConfigure(u8 port, u32 config, u32 enable, u32 baudrate)
 
 void SerialUART1WriteChar(char c)
 {
-    while (!U1STAbits.TRMT);				// wait transmitter is ready
+    while (!U1STAbits.TRMT);			// wait transmitter is ready
     U1TXREG = c;
 }
 
@@ -649,7 +653,7 @@ void SerialUART1WriteChar(char c)
 
 void SerialUART2WriteChar(char c)
 {
-    while (!U2STAbits.TRMT);				// wait transmission has completed
+    while (!U2STAbits.TRMT);			// wait transmission has completed
     U2TXREG = c;
 }
 
@@ -659,7 +663,7 @@ void SerialUART2WriteChar(char c)
 #ifdef ENABLE_UART3
 void SerialUART3WriteChar(char c)
 {
-    while (!U2ASTAbits.TRMT);				// wait transmission has completed	
+    while (!U2ASTAbits.TRMT);			// wait transmission has completed	
     U2ATXREG = c;
 }
 #endif
@@ -670,7 +674,7 @@ void SerialUART3WriteChar(char c)
 #ifdef ENABLE_UART4
 void SerialUART4WriteChar(char c)
 {
-    while (!U1BSTAbits.TRMT);				// wait transmission has completed	
+    while (!U1BSTAbits.TRMT);			// wait transmission has completed	
     U1BTXREG = c;
 }
 #endif
@@ -681,7 +685,7 @@ void SerialUART4WriteChar(char c)
 #ifdef ENABLE_UART5
 void SerialUART5WriteChar(char c)
 {
-    while (!U3BSTAbits.TRMT);				// wait transmission has completed	
+    while (!U3BSTAbits.TRMT);			// wait transmission has completed
     U3BTXREG = c;
 }
 #endif
@@ -692,7 +696,7 @@ void SerialUART5WriteChar(char c)
 #ifdef ENABLE_UART6
 void SerialUART6WriteChar(char c)
 {
-    while (!U2BSTAbits.TRMT);				// wait transmission has completed	
+    while (!U2BSTAbits.TRMT);			// wait transmission has completed
     U2BTXREG = c;
 }
 #endif
@@ -705,31 +709,24 @@ void SerialPutChar(u8 port, char c)
 {
     switch (port)
     {
-        case UART1:
-            SerialUART1WriteChar(c);
-            break;
-        case UART2:
-            SerialUART2WriteChar(c);
-            break;
+        case UART1: SerialUART1WriteChar(c); break;
+        
+        case UART2: SerialUART2WriteChar(c); break;
+
         #ifdef ENABLE_UART3
-        case UART3:
-            SerialUART3WriteChar(c);
-            break;
+        case UART3: SerialUART3WriteChar(c); break;
         #endif
+
         #ifdef ENABLE_UART4
-        case UART4:
-            SerialUART4WriteChar(c);
-            break;
+        case UART4: SerialUART4WriteChar(c); break;
         #endif
+
         #ifdef ENABLE_UART5
-        case UART5:
-            SerialUART5WriteChar(c);
-            break;
+        case UART5: SerialUART5WriteChar(c); break;
         #endif
+
         #ifdef ENABLE_UART6
-        case UART6:
-            SerialUART6WriteChar(c);
-            break;
+        case UART6: SerialUART6WriteChar(c); break;
         #endif
     }
 }
@@ -879,28 +876,35 @@ void SerialPrintFloat(u8 port, float number, u8 digits)
     ------------------------------------------------------------------*/
 
 #ifdef SERIALPRINTF
-void SerialPrintf(u8 port, unsigned char *fmt, ...)
+void SerialPrintf(u8 port, u8 *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
+    
     switch (port)
     {
         case UART1: pprintf(SerialUART1WriteChar, fmt, args); break;
+        
         case UART2: pprintf(SerialUART2WriteChar, fmt, args); break;
+        
         #ifdef ENABLE_UART3
         case UART3: pprintf(SerialUART3WriteChar, fmt, args); break;
         #endif
+        
         #ifdef ENABLE_UART4
         case UART4: pprintf(SerialUART4WriteChar, fmt, args); break;
         #endif
+        
         #ifdef ENABLE_UART5
         case UART5: pprintf(SerialUART5WriteChar, fmt, args); break;
         #endif
+        
         #ifdef ENABLE_UART6
         case UART6: pprintf(SerialUART6WriteChar, fmt, args); break;
         #endif
     }
+    
     va_end(args);
 }
 #endif
@@ -914,16 +918,21 @@ char SerialAvailable(u8 port)
     switch (port)
     {
         case UART1: return (UART1wpointer != UART1rpointer); break;
+
         case UART2:	return (UART2wpointer != UART2rpointer); break;
+
         #ifdef ENABLE_UART3
         case UART3:	return (UART3wpointer != UART3rpointer); break;
         #endif
+
         #ifdef ENABLE_UART4
         case UART4:	return (UART4wpointer != UART4rpointer); break;
         #endif
+
         #ifdef ENABLE_UART5
         case UART5:	return (UART5wpointer != UART5rpointer); break;
         #endif
+
         #ifdef ENABLE_UART6
         case UART6:	return (UART6wpointer != UART6rpointer); break;
         #endif
@@ -935,9 +944,9 @@ char SerialAvailable(u8 port)
     SerialRead : Get char
     ------------------------------------------------------------------*/
 
-int SerialRead(u8 port)
+char SerialRead(u8 port)
 {
-    int c = 0;
+    char c = 0;
 
     if (SerialAvailable(port))
     {
@@ -949,44 +958,49 @@ int SerialRead(u8 port)
                     UART1rpointer=1;
                 return(c);
                 break;
+
             case UART2:
                 c = UART2SerialBuffer[UART2rpointer++];
                 if (UART2rpointer == SERIAL_BUFFERLENGTH)
                     UART2rpointer=1;
                 return(c);
                 break;
-        #ifdef ENABLE_UART3
+
+            #ifdef ENABLE_UART3
             case UART3:
                 c = UART3SerialBuffer[UART3rpointer++];
                 if (UART3rpointer == SERIAL_BUFFERLENGTH)
                     UART3rpointer=1;
                 return(c);
                 break;
-        #endif
-        #ifdef ENABLE_UART4
+            #endif
+
+            #ifdef ENABLE_UART4
             case UART4:				
                 c = UART4SerialBuffer[UART4rpointer++];
                 if (UART4rpointer == SERIAL_BUFFERLENGTH)
                     UART4rpointer=1;
                 return(c);
                 break;
-        #endif
-        #ifdef ENABLE_UART5
+            #endif
+
+            #ifdef ENABLE_UART5
             case UART5:
                 c = UART5SerialBuffer[UART5rpointer++];
                 if (UART5rpointer == SERIAL_BUFFERLENGTH)
                     UART5rpointer=1;
                 return(c);
                 break;
-        #endif
-        #ifdef ENABLE_UART6
+            #endif
+            
+            #ifdef ENABLE_UART6
             case UART6:
                 c = UART6SerialBuffer[UART6rpointer++];
                 if (UART6rpointer == SERIAL_BUFFERLENGTH)
                     UART6rpointer=1;
                 return(c);
                 break;
-        #endif
+            #endif
         }
     }
     return(-1);
@@ -1019,7 +1033,7 @@ char * SerialGetString(u8 port)
     
     do {
         c = SerialGetKey(port);
-        //SerialPrintf(port, (unsigned char *)"%c", c);
+        //SerialPrintf(port, (u8 *)"%c", c);
         SerialPutChar(port, c);
         buffer[i++] = c;
     } while (c != '\r');
@@ -1034,7 +1048,7 @@ char * SerialGetString(u8 port)
 
 void SerialGetDataBuffer(u8 port)
 {
-    unsigned char caractere;
+    u8 caractere;
     long newwp;
 
     switch (port)
@@ -1047,7 +1061,7 @@ void SerialGetDataBuffer(u8 port)
                 newwp = 1;									// else place=1
 
             if (UART1rpointer != newwp)						// if read pointer!=write pointer
-                UART1SerialBuffer[UART1wpointer++] = caractere;	// store received char
+                UART1SerialBuffer[UART1wpointer++] = caractere;// store received char
 
             if (UART1wpointer == SERIAL_BUFFERLENGTH)		// if write pointer=length buffer
                 UART1wpointer = 1;							// write pointer = 1
@@ -1146,19 +1160,17 @@ void SerialGetDataBuffer(u8 port)
 }
 
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     SerialInterrupt
     ------------------------------------------------------------------*/
 
 // vector 24 or 32 (PIC32_PINGUINO_220)
 void Serial1Interrupt(void)
 {
-    //char Dummy;
-
     // Is this an RX interrupt from UART1 ?
     if (IntGetFlag(INT_UART1_RECEIVER))
     {
-        if (!(U1STA & _U1STA_OERR_MASK)) //(U1STAbits.OERR != 0)
+        if (U1STAbits.OERR)
         {
             U1STACLR = _U1STA_OERR_MASK;
         }
@@ -1166,18 +1178,12 @@ void Serial1Interrupt(void)
         {
             do
             {
-                //if ((U1STAbits.FERR != 0) || (U1STAbits.PERR != 0))
-                if (!(U1STA & _U1STA_FERR_MASK) || !(U1STA & _U1STA_PERR_MASK))
-                {
-                    //Dummy = U1RXREG;
+                if (U1STAbits.FERR || U1STAbits.PERR)
                     U1RXREG;
-                }
                 else
-                {
                     SerialGetDataBuffer(UART1);
-                }
             }
-            while (!(U1STA & _U1STA_URXDA_MASK));//(U1STAbits.URXDA != 0);
+            while (U1STAbits.URXDA);
         }
         IntClearFlag(INT_UART1_RECEIVER);
     }
@@ -1198,12 +1204,10 @@ void Serial1Interrupt(void)
 // vector 32 or 37 (PIC32_PINGUINO_220)
 void Serial2Interrupt(void)
 {
-    //char Dummy;
-
     // Is this an RX interrupt from UART2 ?
     if (IntGetFlag(INT_UART2_RECEIVER))
     {
-        if (!(U2STA & _U2STA_OERR_MASK)) //(U2STAbits.OERR != 0)
+        if (U2STAbits.OERR)
         {
             U2STACLR = _U2STA_OERR_MASK;
         }
@@ -1211,10 +1215,8 @@ void Serial2Interrupt(void)
         {
             do
             {
-                //if ((U2STAbits.FERR != 0) || (U2STAbits.PERR != 0))
-                if (!(U2STA & _U2STA_FERR_MASK) || !(U2STA & _U2STA_PERR_MASK))
+                if (U2STAbits.FERR || U2STAbits.PERR)
                 {
-                    //Dummy = U2RXREG;
                     U2RXREG;
                 }
                 else
@@ -1222,7 +1224,7 @@ void Serial2Interrupt(void)
                     SerialGetDataBuffer(UART2);
                 }
             }
-            while (!(U2STA & _U2STA_URXDA_MASK));//(U2STAbits.URXDA != 0);
+            while (U2STAbits.URXDA);
         }
         IntClearFlag(INT_UART2_RECEIVER);
     }
@@ -1243,26 +1245,32 @@ void Serial2Interrupt(void)
 #ifdef ENABLE_UART3
 // vector 31 is shared with SPI2
 void Serial3Interrupt(void)
-{	
+{
     char    Dummy;
 
     // Is this an RX interrupt from UART3 ?
     if (IntGetFlag(INT_UART3_RECEIVER))
     {
-   if (U3STAbits.OERR != 0)
-    U3STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U3STAbits.FERR != 0) || (U3STAbits.PERR != 0))
-       Dummy = U3RXREG;
-      else
-       SerialGetDataBuffer(UART3);
-     }
-    while (U3STAbits.URXDA != 0);
+        if (U3STAbits.OERR != 0)
+        {
+            U3STAbits.OERR = 0;
+        }
+        else
+        {
+            do
+            {
+                if ((U3STAbits.FERR != 0) || (U3STAbits.PERR != 0))
+                    Dummy = U3RXREG;
+                else
+                    SerialGetDataBuffer(UART3);
+            }
+            while (U3STAbits.URXDA != 0);
+        }
+        
         //Toggle(REDLED);			// Toggle LED to indicate UART activity
         IntClearFlag(INT_UART3_RECEIVER);
     }
+
     // Is this an TX interrupt from UART3 ?
     if (IntGetFlag(INT_UART3_TRANSMITTER))
     {
@@ -1274,27 +1282,32 @@ void Serial3Interrupt(void)
 #ifdef ENABLE_UART4
 // vector 49
 void Serial4Interrupt(void)
-{	
+{
     char    Dummy;
 
-    //toggle(REDLED);
     // Is this an RX interrupt from UART4 ?
     if (IntGetFlag(INT_UART4_RECEIVER))
     {
-   if (U4STAbits.OERR != 0)
-    U4STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U4STAbits.FERR != 0) || (U4STAbits.PERR != 0))
-       Dummy = U4RXREG;
-      else
-       SerialGetDataBuffer(UART4);
-     }
-    while (U4STAbits.URXDA != 0);
+        if (U4STAbits.OERR != 0)
+        {
+            U4STAbits.OERR = 0;
+        }
+        else
+        {
+            do
+            {
+                if ((U4STAbits.FERR != 0) || (U4STAbits.PERR != 0))
+                    Dummy = U4RXREG;
+                else
+                    SerialGetDataBuffer(UART4);
+            }
+            while (U4STAbits.URXDA != 0);
+        }
+        
         //toggle(REDLED);			// Toggle LED to indicate UART activity
         IntClearFlag(INT_UART4_RECEIVER);
     }
+    
     // Is this an TX interrupt from UART4 ?
     if (IntGetFlag(INT_UART4_TRANSMITTER))
     {
@@ -1312,20 +1325,26 @@ void Serial5Interrupt(void)
     // Is this an RX interrupt from UART5 ?
     if (IntGetFlag(INT_UART5_RECEIVER))
     {
-   if (U5STAbits.OERR != 0)
-    U5STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U5STAbits.FERR != 0) || (U5STAbits.PERR != 0))
-       Dummy = U5RXREG;
-      else
-       SerialGetDataBuffer(UART5);
-     }
-    while (U5STAbits.URXDA != 0);
+        if (U5STAbits.OERR != 0)
+        {
+            U5STAbits.OERR = 0;
+        }
+        else
+        {
+            do
+            {
+                if ((U5STAbits.FERR != 0) || (U5STAbits.PERR != 0))
+                    Dummy = U5RXREG;
+                else
+                    SerialGetDataBuffer(UART5);
+            }
+            while (U5STAbits.URXDA != 0);
+        }
+        
         //Toggle(REDLED);			// Toggle LED to indicate UART activity
         IntClearFlag(INT_UART5_RECEIVER);
     }
+
     // Is this an TX interrupt from UART5 ?
     if (IntGetFlag(INT_UART5_TRANSMITTER))
     {
@@ -1343,20 +1362,26 @@ void Serial6Interrupt(void)
     // Is this an RX interrupt from UART6 ?
     if (IntGetFlag(INT_UART6_RECEIVER))
     {
-   if (U6STAbits.OERR != 0)
-    U6STAbits.OERR = 0;
-   else
-         do
-     {
-      if ((U6STAbits.FERR != 0) || (U6STAbits.PERR != 0))
-       Dummy = U6RXREG;
-      else
-       SerialGetDataBuffer(UART6);
-     }
-    while (U6STAbits.URXDA != 0);
+        if (U6STAbits.OERR != 0)
+        {
+            U6STAbits.OERR = 0;
+        }
+        else
+        {
+            do
+            {
+                if ((U6STAbits.FERR != 0) || (U6STAbits.PERR != 0))
+                    Dummy = U6RXREG;
+                else
+                    SerialGetDataBuffer(UART6);
+            }
+            while (U6STAbits.URXDA != 0);
+        }
+        
         //Toggle(REDLED);			// Toggle LED to indicate UART activity
         IntClearFlag(INT_UART6_RECEIVER);
     }
+    
     // Is this an TX interrupt from UART6 ?
     if (IntGetFlag(INT_UART6_TRANSMITTER))
     {
@@ -1369,7 +1394,7 @@ void Serial6Interrupt(void)
     ClearRxError
     ------------------------------------------------------------------*/
 
-BOOL ClearRxError(u8 port)
+BOOL SerailClearRxError(u8 port)
 {
     switch (port)
     {

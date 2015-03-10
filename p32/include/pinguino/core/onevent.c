@@ -32,6 +32,7 @@
 #include <macro.h>
 #include <interrupt.h>
 #include <interrupt.c>
+#include <system.c>
 
 #define TXCKPS256 0b111 // 1:256 prescale value
 #define TXCKPS64  0b110 // 1:64  prescale value

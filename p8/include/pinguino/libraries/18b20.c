@@ -1,11 +1,11 @@
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     FILE:			18b20.c
     PROJECT:		Pinguino
     PURPOSE:		One wire driver to use with DS18B20 digital temperature sensor.
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	28 Sep 2010
     LAST RELEASE:	27 Mar 2014
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     02 Jun 2011	Jean-Pierre Mandon	fixed a bug in decimal part of the measure
     17 Jan 2012	Mark Harper			update to deal correctly with negative temperatures
     29 Jun 2012 Régis Blanchot		changed CRC calculation to save 8-bit Pinguino's RAM
@@ -15,11 +15,11 @@
     27 Mar 2014 Brikker             added reading until CRC is found valid
     28 May 2014 Régis Blanchot      fixed OneWireRead  -> OneWireReadByte
                                     fixed OneWireWrite -> OneWireWriteByte
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     TODO : 
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     this file is based on Maxim AN162 and Microchip AN1199
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -33,7 +33,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __DS18B20_C
     #define __DS18B20_C
@@ -50,9 +50,9 @@
         u16 fraction;	// fractional part
     } DS18B20_Temperature;
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- GLOBAL VARIABLES
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20Rom[6][8];	// table of found ROM codes
     u8 ROM[8];				// ROM Bit
@@ -118,21 +118,21 @@
     u8 DS18B20StartMeasure(u8 pin, u8 rom, u8 resolution);
     u8 DS18B20ReadMeasure(u8 pin, u8 rom, DS18B20_Temperature * t);
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- DS18B20Read()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Description:	reads the ds18x20 device on the 1-wire bus and returns the temperature
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     resolution = 9 to 12 bit resolution
                     t = temperature pointer
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20Read(u8 pin, u8 rom, u8 resolution, DS18B20_Temperature * t)
     {
         u8 	res, busy = LOW;
         u8 	temp_lsb, temp_msb;
-		u8  c, crc_flag = 0;
+        u8  c, crc_flag = 0;
         u8	buffer[];
         u16	temp;
 
@@ -202,7 +202,7 @@
                 //if (OneWireReset(pin)) return false;
 
                 // Calculation
-                // ---------------------------------------------------------------------
+                // -----------------------------------------------------
                 //	Temperature Register Format
                 //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
                 //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
@@ -244,9 +244,9 @@
         return true;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- DS18B20Configure()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Description: writes configuration data to the DS18x20 device
     * Arguments:
                     pin = pin number where one wire bus is connected.
@@ -255,7 +255,7 @@
                     TL = Alarm Trigger Low
                     config = configuration
     * Data must be transmitted least significant bit first
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20Configure(u8 pin, u8 rom, u8 TH, u8 TL, u8 config)
     {
@@ -277,19 +277,19 @@
         return true;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- Address a specific slave device on a multidrop or single-drop bus
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor
     * Description:	reads and returns a byte of data from the device.
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     The match ROM command followed by a 64-bit ROM code sequence allows the bus
     master to address a specific slave device on a multidrop or single-drop bus.
     Only the slave that exactly matches the 64-bit ROM code sequence will respond
     to the function command issued by the master; all other slaves on the bus
     will wait for a reset pulse.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20MatchRom(u8 pin, u8 rom)
     {
@@ -301,18 +301,18 @@
         return true;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- Reads the ROM Code from a device (when there is only one)
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments:	pin = pin number where one wire bus is connected.
                     romcode = identification code of device.
     * Description: reads and returns a byte of data from the device.
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This command can only be used when there is only ONE slave on the bus.
     It allows the bus master to read the slave’s 64-bit ROM code without using the Search ROM procedure.
     If this command is used when there is more than one slave present on the bus,
     a data collision will occur when all the slaves attempt to respond at the same time.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     void DS18B20ReadRom(u8 pin, u8 *romcode)
     {
@@ -325,12 +325,12 @@
         }
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- Find Devices on the one-wire bus
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments: pin number where one wire bus is connected.
     * Description: detects devices and print their rom code.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     void DS18B20Find(u8 pin)
     {
@@ -355,13 +355,13 @@
         }
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- First
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments: pin number where one wire bus is connected.
     * Description: resets the current state of a ROM search and calls Next to
     find the first device on the 1-wire bus.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20GetFirst(u8 pin)
     {
@@ -370,13 +370,13 @@
         return DS18B20GetNext(pin);	// call Next and return its return value
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- Next
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments: pin number where one wire bus is connected.
     * Description: searches for the next device on the 1-wire bus. If
     there are no more devices on the 1-wire then false is returned.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20GetNext(u8 pin)
     {
@@ -449,9 +449,9 @@
         return nxt;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- CRC
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Arguments:    x
     * Global:       dowcrc - global crc stored here
     * Description:	Update the CRC for transmitted and received data using
@@ -490,7 +490,7 @@
         int i = (x ^ dowcrc) & 0xff;
         dowcrc = r1[i&0xf] ^ r2[i>>4];
         return dowcrc;
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20_crc(u8 x)
     {
@@ -510,16 +510,16 @@
         return dowcrc;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- DS18B20StartMeasure()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Description:	reads the ds18x20 device on the 1-wire bus and
 					starts the temperature acquisition
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     resolution = 9 to 12 bit resolution
                     t = temperature pointer
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20StartMeasure(u8 pin, u8 rom, u8 resolution)
     {
@@ -556,15 +556,15 @@
         return TRUE;
     }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     ---------- DS18B20ReadMeasure()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     * Description:	reads the ds18x20 device on the 1-wire bus
     * Arguments:	pin = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     t = temperature pointer
 	* Return:		the temperature previously acquired
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
     u8 DS18B20ReadMeasure(u8 pin, u8 rom, DS18B20_Temperature * t)
     {
@@ -593,7 +593,7 @@
         if (OneWireReset(pin)) return FALSE;
 
         // Calculation
-        // ---------------------------------------------------------------------
+        // -------------------------------------------------------------
         //	Temperature Register Format
         //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
         //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4

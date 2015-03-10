@@ -69,6 +69,9 @@ void setup()
     // if 6800- or 8080-interface and PMP is used
     //SSD1306.init(1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
     
+    // if i2c interface is used
+    //SSD1306.init(0x3C); // i2c address of the display
+    
     // if 6800- or 8080-interface (but not PMP) is used
     //void SSD1306.init(u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
     SSD1306.init(8, 9, 0, 1, 2, 3, 4, 5, 6, 7);

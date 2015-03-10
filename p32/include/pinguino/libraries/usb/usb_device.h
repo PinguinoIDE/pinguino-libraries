@@ -47,7 +47,7 @@
 
     #define USB_INT_NUM                     CDC_INT_NUM      // Nb interfaces
     #define USB_EP_NUM                      CDC_EP_NUM       // Nb endpoints
-    #define USB_EP0_BUFF_SIZE               64 // CDC_COMM_IN_EP_SIZE
+    #define USB_EP0_BUFF_SIZE               64               // CDC_COMM_IN_EP_SIZE
     #define USB_POLLING_PERIOD              1                // ms - must be > 0
 
 #elif defined(__USBUART__)

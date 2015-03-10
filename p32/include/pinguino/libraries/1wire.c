@@ -104,7 +104,7 @@
 	---------- Read a byte from the one-wire bus and return it.
 	--------------------------------------------------------------------------*/
 
-	u8 OneWireRead(u8 DQpin)
+	u8 OneWireReadByte(u8 DQpin)
 	{
 		u8 i, value = 0;
 		for (i=0; i<8; i++)
@@ -142,7 +142,7 @@
 	---------- Writes a byte to the one-wire bus.
 	--------------------------------------------------------------------------*/
 
-	void OneWireWrite(u8 DQpin, u8 val)
+	void OneWireWriteByte(u8 DQpin, u8 val)
 	{
 		u8 i, temp;
 		for (i=0; i<8; i++)					// writes byte, one bit at a time
