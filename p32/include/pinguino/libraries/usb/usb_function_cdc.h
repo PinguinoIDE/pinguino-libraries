@@ -300,9 +300,9 @@ typedef struct
  * E X T E R N S
  */
 
-extern u32 cdc_rx_len;
-extern u32 cdc_tx_len;
-extern u32 cdc_trf_state;
+extern u8 cdc_rx_len;
+extern u8 cdc_tx_len;
+extern u8 cdc_trf_state;
 
 extern LINE_CODING cdc_line_coding;
 
@@ -311,10 +311,11 @@ extern LINE_CODING cdc_line_coding;
  */
 void usb_check_cdc_request(void);
 void cdc_init_endpoint(void);
-u32 cdc_consume(void (*func) (u32));
-u32 cdc_gets(char *buffer);
-u32 cdc_putc(char c);
-void cdc_puts(const char *buffer, u32 length);
+u8 cdc_consume(void (*func) (u32));
+char cdc_getc();
+u8 cdc_gets(char *buffer);
+u8 cdc_putc(char c);
+void cdc_puts(const char *buffer, u8 length);
 void cdc_tx_service(void);
 
 #endif //USBFUNCTIONCDC_H

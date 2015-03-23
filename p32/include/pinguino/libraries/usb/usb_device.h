@@ -37,13 +37,13 @@
 
 #elif defined(__USBCDC__)
 
-    #include <usb/usb_function_cdc.h>
-
     #ifdef __USBCDCINTERRUPT__
         #define USBVOLATILE volatile
     #else
         #define USBVOLATILE
     #endif
+
+    #include <usb/usb_function_cdc.h>
 
     #define USB_INT_NUM                     CDC_INT_NUM      // Nb interfaces
     #define USB_EP_NUM                      CDC_EP_NUM       // Nb endpoints
@@ -443,8 +443,8 @@ extern const u8 *const usb_string[];
 // Buffer for control transfers
 extern volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 
-extern USBVOLATILE u32 usb_device_state;
-extern USBVOLATILE u32 usb_active_configuration;
+extern USBVOLATILE u8 usb_device_state;
+extern USBVOLATILE u8 usb_active_configuration;
 extern USBVOLATILE IN_PIPE usb_in_pipe;
 extern USBVOLATILE OUT_PIPE usb_out_pipe;
 
@@ -733,6 +733,7 @@ void usb_device_init(void);
  
 #define usb_is_device_suspended() (U1PWRC & _U1PWRC_USUSPEND_MASK)
 
+void usb_check_cable(void);
 void usb_ctrl_ep_service (void);
 void usb_ctrl_trf_setup_handler (void);
 void usb_ctrl_trf_in_handler (void);
@@ -750,9 +751,9 @@ void usb_ctrl_trf_out_handler (void);
 void usb_wake_from_suspend (void);
 void usb_suspend (void);
 void usb_stall_handler (void);
-volatile USB_HANDLE usb_transfer_one_packet (u32 ep, u32 dir, u8* data, u32 len);
-void usb_enable_endpoint (u32 ep, u32 options);
-void usb_configure_endpoint (u32 EPNum, u32 direction);
+volatile USB_HANDLE usb_transfer_one_packet (u8 ep, u8 dir, u8* data, u8 len);
+void usb_enable_endpoint (u8 ep, u8 options);
+void usb_configure_endpoint (u8 ep, u8 dir);
 
 #if defined(USB_DYNAMIC_EP_CONFIG)
     void usb_init_ep(u8 const* pConfig);
@@ -1275,7 +1276,7 @@ void usbcb_send_resume (void);
         None
  */
 
-//void usb_stall_endpoint(u32 ep, u32 dir);
+void usb_stall_endpoint(u8 ep, u8 dir);
 
 #if (USB_PING_PONG_MODE == USB_PING_PONG__FULL_PING_PONG)
     #define USB_NEXT_EP0_OUT_PING_PONG 0x0008

@@ -37,12 +37,12 @@ SECTIONS
   /*********************************************************************
    *** Exception sections
    ********************************************************************/
-
+/*
   .bev_excpt _BEV_EXCPT_ADDR :
   {
     KEEP(*(.bev_handler))
   } > kseg1_boot_mem
-  
+*/
   .app_excpt _GEN_EXCPT_ADDR :
   {
     KEEP(*(.gen_handler))

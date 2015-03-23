@@ -40,6 +40,8 @@
 
 	/// PROTOTYPES
 
+void I2C2_master(u16);   
+void I2C2_slave(u16);   
 void I2C2_init();
 u8   I2C2_write(u16, u8*, u8);
 u8   I2C2_send(u16, u8);
@@ -54,6 +56,20 @@ void I2C2_stop();
 void I2C2_restart();
 void I2C2_sendNack();
 void I2C2_sendAck();
+
+/*	----------------------------------------------------------------------------
+    ---------- Initialisation Functions for Master and Slave
+    --------------------------------------------------------------------------*/
+
+void I2C1_master(u16 speed)   
+{
+    I2C_init(I2C1, I2C_MASTER_MODE, speed);
+}
+
+void I2C1_slave(u16 DeviceID)   
+{
+    I2C1_init(I2C1, I2C_SLAVE_MODE, DeviceID);
+}
 
 /*	----------------------------------------------------------------------------
 	---------- Open the I2C bus

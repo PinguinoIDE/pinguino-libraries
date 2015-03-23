@@ -8,9 +8,10 @@
     LAST RELEASE:	04 Mar. 2015
     ----------------------------------------------------------------------------
     CHANGELOG:
-    [20-02-12][Régis Blanchot][Exported from main32.c in this file]
-    [25-02-12][Régis Blanchot][Added PWM remap. for PIC32 PINGUINO 220]
-    [04-03-15][Régis Blanchot][Added AUDIO support]
+    20-02-12    Régis Blanchot  Exported from main32.c in this file
+    25-02-12    Régis Blanchot  Added PWM remap. for PIC32 PINGUINO 220
+    04-03-15    Régis Blanchot  Added AUDIO support
+    20-03-15    Régis Blanchot  Removed call to system.c
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -33,7 +34,7 @@
 #include <p32xxxx.h>
 #include <const.h>
 #include <typedef.h>
-#include <system.c>
+//#include <system.c>
 
 /***********************************************************************
  * Set all Analog Pins as Digital IOs.
@@ -100,37 +101,44 @@ void IOsetSpecial()
  * PIC32 Peripheral Remappage
  **********************************************************************/
 
+#if defined(__SERIAL__) || defined(__SPI__) || \
+    defined(__PWM__)    || defined(__AUDIO__)
+
 void IOsetRemap()
 {
     #if defined(PIC32_PINGUINO_220)
     
-        SystemUnlock();
-        CFGCONbits.IOLOCK=0;			// unlock configuration
+        //SystemUnlock();
+        SYSKEY = 0;                     // ensure OSCCON is locked
+        SYSKEY = 0xAA996655;            // Write Key1 to SYSKEY
+        SYSKEY = 0x556699AA;            // Write Key2 to SYSKEY
+        CFGCONbits.IOLOCK=0;            // unlock configuration
         CFGCONbits.PMDLOCK=0;
 
         #ifdef __SERIAL__
-            U2RXRbits.U2RXR=6;			// Define U2RX as RC8 ( D0 )
-            RPC9Rbits.RPC9R=2;			// Define U2TX as RC9 ( D1 )
-            U1RXRbits.U1RXR=2;			// Define U1RX as RA4 ( UEXT SERIAL )
-            RPB4Rbits.RPB4R=1;			// Define U1TX as RB4 ( UEXT SERIAL )
+            U2RXRbits.U2RXR=6;          // Define U2RX as RC8 ( D0 )
+            RPC9Rbits.RPC9R=2;          // Define U2TX as RC9 ( D1 )
+            U1RXRbits.U1RXR=2;          // Define U1RX as RA4 ( UEXT SERIAL )
+            RPB4Rbits.RPB4R=1;          // Define U1TX as RB4 ( UEXT SERIAL )
         #endif
 
         #ifdef __SPI__
-            SDI1Rbits.SDI1R=5;			// Define SDI1 as RA8 ( UEXT SPI )
-            RPA9Rbits.RPA9R=3;			// Define SDO1 as RA9 ( UEXT SPI )
+            SDI1Rbits.SDI1R=5;          // Define SDI1 as RA8 ( UEXT SPI )
+            RPA9Rbits.RPA9R=3;          // Define SDO1 as RA9 ( UEXT SPI )
         #endif
 
         #if defined(__PWM__) || defined(__AUDIO__)
-            RPC2Rbits.RPC2R  =0b0101;	// PWM0 = OC3 as D2  = RC2
-            RPC3Rbits.RPC3R  =0b0101;	// PWM1 = OC4 as D3  = RC3
-            RPB5Rbits.RPB5R  =0b0101;	// PWM2 = OC2 as D11 = RB5
-            RPB13Rbits.RPB13R=0b0110;	// PWM3 = OC5 as D12 = RB13
-            RPB15Rbits.RPB15R=0b0101;	// PWM4 = OC1 as D13 = RB15
+            RPC2Rbits.RPC2R  =0b0101;   // PWM0 = OC3 as D2  = RC2
+            RPC3Rbits.RPC3R  =0b0101;   // PWM1 = OC4 as D3  = RC3
+            RPB5Rbits.RPB5R  =0b0101;   // PWM2 = OC2 as D11 = RB5
+            RPB13Rbits.RPB13R=0b0110;   // PWM3 = OC5 as D12 = RB13
+            RPB15Rbits.RPB15R=0b0101;   // PWM4 = OC1 as D13 = RB15
         #endif
 
-        CFGCONbits.IOLOCK=1;			// relock configuration
-        CFGCONbits.PMDLOCK=1;	
-        SystemLock();
+        CFGCONbits.IOLOCK=1;            // relock configuration
+        CFGCONbits.PMDLOCK=1;
+        //SystemLock();
+        SYSKEY = 0x12345678;            // Write any value other than Key1 or Key2
 
     #endif
 
@@ -139,7 +147,10 @@ void IOsetRemap()
         defined(PINGUINO32MX250) || \
         defined(PINGUINO32MX270)
         
-        SystemUnlock();
+        //SystemUnlock();
+        SYSKEY = 0;                     // ensure OSCCON is locked
+        SYSKEY = 0xAA996655;            // Write Key1 to SYSKEY
+        SYSKEY = 0x556699AA;            // Write Key2 to SYSKEY
         CFGCONbits.IOLOCK=0;			// unlock configuration
         CFGCONbits.PMDLOCK=0;
 
@@ -172,9 +183,13 @@ void IOsetRemap()
 
         CFGCONbits.IOLOCK=1;			// relock configuration
         CFGCONbits.PMDLOCK=1;	
-        SystemLock();
+        //SystemLock();
+        SYSKEY = 0x12345678;            // Write any value other than Key1 or Key2
 
     #endif
 }
+
+#endif // defined(__SERIAL__) || defined(__SPI__) || \
+       // defined(__PWM__)    || defined(__AUDIO__)
 
 #endif /* __IO_C */

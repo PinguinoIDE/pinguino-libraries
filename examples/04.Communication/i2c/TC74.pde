@@ -15,8 +15,8 @@
     I2C addresses
 */ 
 //const u8 TC74A0 = 0b1001000;
-const u8 TC74A3 = 0b1001011;
-const u8 LCDI2C = 0b0100111;
+const  u8 TC74A3 = 0b1001011;
+const  u8 LCDI2C = 0b0100111;
 
 u8 num;
 char temperature[] = " 000  C";

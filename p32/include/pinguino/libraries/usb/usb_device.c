@@ -33,19 +33,20 @@
     #error "PIC32 only supports full ping pong mode."
 #endif
 
-static USBVOLATILE u8 usb_alternate_interface[USB_INT_NUM];
 static volatile BDT_ENTRY *pBDTEntryEP0OutCurrent;
 static volatile BDT_ENTRY *pBDTEntryEP0OutNext;
 static volatile BDT_ENTRY *pBDTEntryOut[USB_EP_NUM+1];
 static volatile BDT_ENTRY *pBDTEntryIn[USB_EP_NUM+1];
-static USBVOLATILE u32 short_packet_status;
-static USBVOLATILE u32 control_transfer_state;
-static USBVOLATILE u32 ustat_saved;
-USBVOLATILE u32 usb_device_state;
-USBVOLATILE u32 usb_active_configuration;
+static USBVOLATILE u8 VBUSSense;      // Current VBUS level 
+static USBVOLATILE u8 usb_alternate_interface[USB_INT_NUM];
+static USBVOLATILE u8 short_packet_status;
+static USBVOLATILE u8 control_transfer_state;
+static USBVOLATILE u8 ustat_saved;
+USBVOLATILE u8 usb_device_state;
+USBVOLATILE u8 usb_active_configuration;
 USBVOLATILE IN_PIPE usb_in_pipe;
 USBVOLATILE OUT_PIPE usb_out_pipe;
-USBVOLATILE int usb_remote_wakeup;
+USBVOLATILE u8 usb_remote_wakeup;
 
 /*
  * Section A: Buffer Descriptor Table
@@ -63,7 +64,7 @@ volatile CTRL_TRF_SETUP usb_setup_pkt;           // 8-byte only
 static volatile u8 ctrl_trf_data[USB_EP0_BUFF_SIZE];
 
 /***********************************************************************
- * This function initializes the device stack in the default state
+ * Initializes the device stack in the default state.
  * The USB module will be completely reset including all of the internal
  * variables, registers, and interrupt flags.
  **********************************************************************/
@@ -79,19 +80,20 @@ void usb_device_init(void)
 
     // Clear all USB interrupts and flags except VBUS monitoring
     // The interrupt flag bits are cleared by writing a 1
-    U1IR    = 0xFF;
     U1IE    = 0x00;
-    U1EIR   = 0xFF;
-    U1EIE   = 0x00;
-    U1OTGIR = 0xFF;
-    U1OTGIE = _U1OTGIE_SESVDIE_MASK; // USB Cable detection
+    //U1EIE   = 0x00;
+    U1OTGIE = _U1OTGIE_SESVDIE_MASK;
 
+    U1IR    = 0xFF;
+    //U1EIR   = 0xFF;
+    U1OTGIR = 0xFF; // _U1OTGIR_SESVDIF_MASK;
+    
     // Disable USB module
-    U1CON = 0;
+    U1CON = 0x00;
     
     // Reset configuration
     // Must be preprogrammed prior to enabling the module.
-    U1CNFG1 = 0;
+    U1CNFG1 = 0x00;
 
     // Reset to default address
     U1ADDR = 0x00;
@@ -123,10 +125,10 @@ void usb_device_init(void)
     U1OTGCON = _U1OTGCON_DMPULUP_MASK | _U1OTGCON_DPPULUP_MASK; // | \
                //_U1OTGCON_VBUSON_MASK; // _U1OTGCON_VBUSDIS_MASK | 
 
-    // Power up the USB module
-    U1PWRCSET = _U1PWRC_USBPWR_MASK;
+    // Power up the USB module (done in usb_check_cable)
+    //U1PWRCSET = _U1PWRC_USBPWR_MASK;
 
-    // Indicate that we are now in the detached state
+    // Indicate that we are in the detached state
     usb_device_state = DETACHED_STATE;
 }
 
@@ -149,93 +151,32 @@ void usb_device_tasks(void)
     //SerialPrint(UART, "\r\n");
     #endif
 
-    // Check if the USB cable has been plugged or unplugged.
-    // We can not use ATTACHIF in DEVICE mode so we use SESVD.
-    // SESVD is detected as 0 when USB cable has been unplugged.
-    // SESVD is detected as 1 when USB cable has been plugged.
+   /*
+    * Plugged or unplugged ?
+    */
 
-    if (usb_device_state == DETACHED_STATE)
+    if (U1OTGIE & _U1OTGIE_SESVDIE_MASK)
     {
-        if (U1OTGIEbits.SESVDIE)
-        {
-            // SESVD is detected as 1 when USB cable has been plugged
-            if (U1OTGIRbits.SESVDIF)
-            {  
-                #ifdef DEBUG
-                //SerialPrint(UART,"USB CABLE PLUGGED\r\n");
-                #endif
-                
-                // Clear flag for next interrupt
-                U1OTGIRbits.SESVDIF = 1;
-
-                // We temporarily disable this interrupt
-                //U1OTGIECLR  = _U1OTGIE_SESVDIE_MASK;
-
-                // Enable USB module
-                //while (!(U1CON & _U1CON_USBEN_MASK))
-                while (!U1CONbits.USBEN)
-                    U1CONSET = _U1CON_USBEN_MASK;
-
-                // Enable Pull-ups, define as USB device (no OTG or HOST) 
-                //U1OTGCON = _U1OTGCON_DMPULUP_MASK | _U1OTGCON_DPPULUP_MASK | \
-                //           _U1OTGCON_VBUSON_MASK; // _U1OTGCON_VBUSDIS_MASK | 
-
-                // Power up the USB module
-                U1PWRCSET = _U1PWRC_USBPWR_MASK;
-                 
-                // Enable RESET and IDLE interrupts only
-                U1IE = _U1IE_URSTIE_MASK | _U1IE_IDLEIE_MASK;
-
-                // moved to the powered state
-                usb_device_state = POWERED_STATE;
-            }
-        }
-        else
-        {
-            // No need to go further if the USB cable is disconnected.
-            // Status stays at DETACHED_STATE
+        if (U1OTGIR & _U1OTGIR_SESVDIF_MASK)
+        {  
             #ifdef DEBUG
-            //SerialPrint(UART,"USB CABLE UNPLUGGED\r\n");
+            //SerialPrint(UART,"SESSION CHANGE DETECTED\r\n");
             #endif
-            return;
-        }
-    }
-    else // if (usb_device_state > DETACHED_STATE)
-    {
-        if (U1OTGIE & _U1OTGIE_SESVDIE_MASK)
-        {
-            // SESVD is detected as 0 when USB cable has been unplugged
-            //if (!(U1OTGIR & _U1OTGIR_SESVDIF_MASK))
-            if (!U1OTGIRbits.SESVDIF)
-            {  
-                #ifdef DEBUG
-                //SerialPrint(UART,"USB CABLE UNPLUGGED\r\n");
-                #endif
             
-                // Clear flag for next interrupt
-                U1OTGIRbits.SESVDIF = 1;
-
-                // As we are disconnected we'll just check this interrupt
-                U1OTGIE = _U1OTGIE_SESVDIE_MASK;
-
-                // Mask all other USB interrupts              
-                U1IE = 0;          
-                U1EIE = 0;
-
-                // Disable module
-                U1CON = 0;             
-
-                // Shut the USB module down
-                U1PWRCCLR = _U1PWRC_USBPWR_MASK;
-
-                // Back to the detached state
-                usb_device_state == DETACHED_STATE;
-
-                // No need to go further if the USB cable is disconnected.
-                return;
-            }
+            // Power up the USB module
+            // and enable USB reset and idle interrupts
+            // If the device is connected
+            usb_check_cable();
+            
+            // Clear SESVD flag
+            U1OTGIR = _U1OTGIR_SESVDIF_MASK;
         }
     }
+
+    //#if defined(__USBCDCPOLLING__)
+    if (usb_device_state == DETACHED_STATE)
+        return;
+    //#endif
 
    /*
     * Task A: Service USB Activity Interrupt
@@ -250,9 +191,11 @@ void usb_device_tasks(void)
             #ifdef DEBUG
             //SerialPrint(UART,"ACTIVITY DETECTED\r\n");
             #endif
-            // Clear flag
-            U1OTGIRbits.ACTVIF = 1;
+
+            // Clear ACTIV flag and disable this interrupt
+            U1OTGIR |= _U1OTGIR_ACTVIF_MASK;
             U1OTGIECLR = _U1OTGIE_ACTVIE_MASK;
+
             U1PWRCCLR = _U1PWRC_USUSPEND_MASK; // useful ?
         }
     }
@@ -265,8 +208,7 @@ void usb_device_tasks(void)
         #ifdef DEBUG
         //SerialPrint(UART,"DEVICE SUSPENDED\r\n");
         #endif
-        // Clear USB interrupt
-        //IEC1CLR = _IEC1_USBIE_MASK;
+
         return;
     }
     #endif
@@ -292,14 +234,16 @@ void usb_device_tasks(void)
 
             // Clear all USB interrupts flags (included RESET)
             U1IR    = 0xFF;
-            U1EIR   = 0xFF;
+            //U1EIR   = 0xFF;
             U1OTGIR = 0xFF;
 
             // Enable interrupts
-            U1IE    = _U1IE_STALLIE_MASK | _U1IE_IDLEIE_MASK  | \
-                      _U1IE_TRNIE_MASK   | _U1IE_URSTIE_MASK  | \
-                      _U1IE_SOFIE_MASK   | _U1IE_UERRIE_MASK;
-            U1EIE   = 0x9F;
+            U1IE    = _U1IE_TRNIE_MASK   | _U1IE_IDLEIE_MASK;
+                      //_U1IE_URSTIE_MASK  | _U1IE_STALLIE_MASK;
+                      // _U1IE_UERRIE_MASK  | _U1IE_SOFIE_MASK;
+                      
+            //U1EIE   = 0x9F;
+            
             U1OTGIE = _U1OTGIE_ACTVIE_MASK;// | _U1OTGIE_SESVDIE_MASK;
             
             // Reset to default address
@@ -310,9 +254,7 @@ void usb_device_tasks(void)
 
             // Flush any pending transactions
             while (U1IR & _U1IR_TRNIF_MASK)
-            {
-                U1IRbits.TRNIF = 1;
-            }
+                U1IR |= _U1IR_TRNIF_MASK;
 
             // Enable packet processing (PKTDIS=0)
             U1CONCLR = _U1CON_PKTDIS_MASK;
@@ -346,15 +288,19 @@ void usb_device_tasks(void)
 
             // Enable bus activity interrupt
             // NOTE: Do not clear UIR_ACTVIF here!
-            U1OTGIESET = _U1OTGIE_ACTVIE_MASK;
+            U1OTGIE = _U1OTGIE_ACTVIE_MASK;
 
+            // Enable bus reset interrupt
+            U1IE = _U1IE_URSTIE_MASK;
+            U1IR = _U1IR_URSTIF_MASK;
+            
             // Clear IDLE flag
-            U1IRbits.IDLEIF = 1;
+            //U1IR |= _U1IR_IDLEIF_MASK;
         }
     }
 
     // Start Of Frame
-    #if 1
+    #if 0
     if (U1IE & _U1IE_SOFIE_MASK)
     {
         if (U1IR & _U1IR_SOFIF_MASK)
@@ -362,14 +308,17 @@ void usb_device_tasks(void)
             #ifdef DEBUG
             //SerialPrint(UART,"Start Of Frame.\r\n");
             #endif
+            
             //usbcb_sof_handler();
-            U1IRbits.SOFIF = 1;
+
+            // Clear SOF flag
+            U1IR |= _U1IR_SOFIF_MASK;
         }
     }
     #endif
     
     // Stall
-    #if 1
+    #if 0
     if (U1IE & _U1IE_STALLIE_MASK)
     {
         if (U1IR & _U1IR_STALLIF_MASK)
@@ -377,6 +326,7 @@ void usb_device_tasks(void)
             #ifdef DEBUG
             //SerialPrint(UART,"DEVICE STALL\r\n");
             #endif
+            
             if (U1EP0 & _U1EP0_EPSTALL_MASK)
             {
                 // UOWN - if 0, owned by CPU, if 1, owned by SIE
@@ -389,13 +339,14 @@ void usb_device_tasks(void)
                 // Clear stall status
                 U1EP0CLR = _U1EP0_EPSTALL_MASK;
             }
-            U1IRbits.STALLIF = 1;
+            // Clear STALL flag
+            U1IR |= _U1IR_STALLIF_MASK;
         }
     }
     #endif
     
     // Error
-    #if 1
+    #if 0
     if (U1IE & _U1IE_UERRIE_MASK)
     {
         if (U1IR & _U1IR_UERRIF_MASK)
@@ -405,10 +356,12 @@ void usb_device_tasks(void)
             SerialPrintNumber(UART, U1EIR, 16);
             SerialPrint(UART,"\r\n");
             #endif
+
             //usbcb_error_handler();
-            // Clears UERRIF
+
+            // Clears USB error flag
+            U1IR |= _U1IR_UERRIF_MASK;
             U1EIR = 0xFF;
-            U1IRbits.UERRIF = 1;
         }
     }
     #endif
@@ -417,7 +370,7 @@ void usb_device_tasks(void)
     if (usb_device_state < DEFAULT_STATE)
     {
         // Clear USB interrupt
-        //IEC1CLR = _IEC1_USBIE_MASK;
+        //IFS1CLR = _IFS1_USBIF_MASK;
         return;
     }
     
@@ -474,12 +427,72 @@ void usb_device_tasks(void)
             }
             
             // Clear the TRNIF interrupt
-            U1IRbits.TRNIF = 1;
+            U1IR |= _U1IR_TRNIF_MASK;
         }
     }
 
     // Clear USB interrupt
-    //IEC1CLR = _IEC1_USBIE_MASK;
+    //IFS1CLR = _IFS1_USBIF_MASK;
+}
+
+/***********************************************************************
+ * Check if USB cable is plugged or unplugged
+ **********************************************************************/
+  
+void usb_check_cable(void)
+{
+    u8 VBUSLocal = (U1OTGSTATbits.SESVD != 0); 
+
+    #ifdef DEBUG
+    //SerialPrint(UART,"USB check cable\r\n");
+    #endif
+
+    if (VBUSLocal != VBUSSense)
+    { 
+        VBUSSense = VBUSLocal; 
+
+        if (VBUSSense)
+        { 
+            #ifdef DEBUG
+            //SerialPrint(UART,"USB CABLE PLUGGED\r\n");
+            #endif
+            
+            // Enable USB module
+            while (!U1CONbits.USBEN)
+                U1CONSET = _U1CON_USBEN_MASK;
+
+            // Power up the USB module
+            U1PWRCSET = _U1PWRC_USBPWR_MASK;
+             
+            // Enable USB reset and idle interrupts
+            U1IE  = _U1IE_URSTIE_MASK | _U1IE_IDLEIE_MASK;
+            
+            // moved to the powered state
+            usb_device_state = POWERED_STATE;
+        }
+        else
+        { 
+            #ifdef DEBUG
+            //SerialPrint(UART,"USB CABLE UNPLUGGED\r\n");
+            #endif
+        
+            // Disable USB interrupts
+            U1IE  = 0;
+            //U1EIE = 0;
+
+            // Remove power from the D+/D- pull-up resistor
+            U1OTGCONCLR = _U1OTGCON_DMPULUP_MASK | _U1OTGCON_DPPULUP_MASK;
+
+            // Disable USB module
+            U1CON = 0;             
+
+            // Shutdown the USB module
+            U1PWRCCLR = _U1PWRC_USBPWR_MASK;
+
+            // Back to the detached state
+            usb_device_state = DETACHED_STATE;
+        } 
+    } 
 }
 
 /***********************************************************************
@@ -606,7 +619,7 @@ void usb_ctrl_trf_out_handler(void)
  
 void usb_ctrl_trf_in_handler(void)
 {
-    u32 lastDTS;
+    u8 lastDTS;
 
     #ifdef DEBUG
     //SerialPrint(UART,"> usb_ctrl_trf_in_handler\r\n");
@@ -674,7 +687,7 @@ void usb_prepare_for_next_setup_trf(void)
     //SerialPrint(UART,"> usb_prepare_for_next_setup_trf\r\n");
     #endif
     
-    u32 setup_cnt;
+    u8 setup_cnt;
     BDT_ENTRY* p;
 
     if ((control_transfer_state == CTRL_TRF_RX) &&
@@ -751,6 +764,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"GET_DSC\r\n");
         #endif
+
         usb_std_get_dsc_handler();
         return;
     }
@@ -760,6 +774,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"SET_ADR\r\n");
         #endif
+
         // This will generate a zero length packet
         usb_in_pipe.info.bits.busy = 1;
         // Update state only
@@ -771,8 +786,9 @@ void usb_check_std_request(void)
     if (usb_setup_pkt.bRequest == SET_CFG)
     {
         #ifdef DEBUG
-        SerialPrint(UART,"SET_CFG\r\n");
+        //SerialPrint(UART,"SET_CFG\r\n");
         #endif
+
         usb_std_set_cfg_handler();
         return;
     }
@@ -783,6 +799,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"GET_CFG\r\n");
         #endif
+
         // Set Source
         usb_in_pipe.pSrc.bRam = (u8*)&usb_active_configuration;
         // Set memory type
@@ -806,11 +823,13 @@ void usb_check_std_request(void)
     #endif
     
     #if 1
-    if (usb_setup_pkt.bRequest == CLR_FEATURE && usb_setup_pkt.bRequest == SET_FEATURE)
+    if ( (usb_setup_pkt.bRequest == CLR_FEATURE) || 
+         (usb_setup_pkt.bRequest == SET_FEATURE))
     {
         #ifdef DEBUG
         //SerialPrint(UART,"SET_FEATURE\r\n");
         #endif
+
         usb_std_feature_req_handler();
         return;
     }
@@ -822,6 +841,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"GET_INTF\r\n");
         #endif
+
         // Set source
         usb_in_pipe.pSrc.bRam = (u8*)&usb_alternate_interface + usb_setup_pkt.bIntfID;
         // Set memory type
@@ -839,6 +859,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"SET_INTF\r\n");
         #endif
+        
         usb_in_pipe.info.bits.busy = 1;
         usb_alternate_interface[usb_setup_pkt.bIntfID] = usb_setup_pkt.bAltID;
         return;
@@ -853,6 +874,7 @@ void usb_check_std_request(void)
         #ifdef DEBUG
         //SerialPrint(UART,"SET_DSC\r\n");
         #endif
+
         //usbcb_std_set_dsc_handler();
         return;
     }
@@ -875,8 +897,8 @@ void usb_check_std_request(void)
  
 void usb_std_feature_req_handler(void)
 {
-    BDT_ENTRY *p;
-    u32 *pUEP;
+    BDT_ENTRY* p;
+    u32* pUEP;
 
     #ifdef DEBUG
     //SerialPrint(UART,"> usb_std_feature_req_handler\r\n");
@@ -918,13 +940,12 @@ void usb_std_feature_req_handler(void)
         {
             // If it was not a SET_FEATURE
             // point to the appropriate UEP register
-            pUEP = (u32*) &U1EP0;
-            pUEP += usb_setup_pkt.EPNum * 4;
+            pUEP = (u32*) (&U1EP0 + (4 * usb_setup_pkt.EPNum));
 
             //Clear the STALL bit in the UEP register
             *pUEP &= ~UEP_STALL;
 
-            if (usb_setup_pkt.EPDir == 1) // IN
+            if (usb_setup_pkt.EPDir == IN_TO_HOST)
             {
                 // If the endpoint is an IN endpoint then we need to
                 // return it to the CPU and reset the DTS bit so that
@@ -972,6 +993,7 @@ void usb_std_get_dsc_handler(void)
                 #ifdef DEBUG
                 //SerialPrint(UART,"> USB_DESCRIPTOR_DEVICE\r\n");
                 #endif
+                
                 usb_in_pipe.pSrc.bRom = (const u8*) &usb_device;
                 usb_in_pipe.wCount = sizeof(usb_device);
                 break;
@@ -980,6 +1002,7 @@ void usb_std_get_dsc_handler(void)
                 #ifdef DEBUG
                 //SerialPrint(UART,"> USB_DESCRIPTOR_CONFIGURATION\r\n");
                 #endif
+                
                 usb_in_pipe.pSrc.bRom = usb_config[usb_setup_pkt.bDscIndex];
                 usb_in_pipe.wCount = *(usb_in_pipe.pSrc.wRom+1);                // Set data count
                 break;
@@ -988,6 +1011,7 @@ void usb_std_get_dsc_handler(void)
                 #ifdef DEBUG
                 //SerialPrint(UART,"> USB_DESCRIPTOR_STRING\r\n");
                 #endif
+                
                 #if defined(USB_NUM_STRING_DESCRIPTORS)
                 if (usb_setup_pkt.bDscIndex < USB_NUM_STRING_DESCRIPTORS)
                 #else
@@ -1367,11 +1391,11 @@ void usb_std_set_cfg_handler(void)
 /***********************************************************************
  * This function will configure the specified endpoint.
  *
- * Input: u32 EPNum - the endpoint to be configured
- *        u32 direction - the direction to be configured
+ * Input: u8 ep  - the endpoint to be configured
+ *        u8 dir - the direction to be configured
  **********************************************************************/
  
-void usb_configure_endpoint(u32 epnum, u32 direction)
+void usb_configure_endpoint(u8 ep, u8 dir)
 {
     volatile BDT_ENTRY* handle;
 
@@ -1380,17 +1404,17 @@ void usb_configure_endpoint(u32 epnum, u32 direction)
     #endif
 
     handle = (volatile BDT_ENTRY*) &usb_buffer[EP0_OUT_EVEN];
-    handle += BD(epnum, direction, 0) / sizeof(BDT_ENTRY);
+    handle += BD(ep, dir, 0) / sizeof(BDT_ENTRY);
 
     handle->STAT.UOWN = 0;
 
-    if (direction == 0)
+    if (dir == OUT_FROM_HOST)
     {
-        pBDTEntryOut[epnum] = handle;
+        pBDTEntryOut[ep] = handle;
     }
     else
     {
-        pBDTEntryIn[epnum] = handle;
+        pBDTEntryIn[ep] = handle;
     }
 
     // USB_PING_PONG__FULL_PING_PONG
@@ -1403,27 +1427,29 @@ void usb_configure_endpoint(u32 epnum, u32 direction)
  * Enable the specified endpoint with the specified options.
  *
  * Input:
- *   u32 ep -       the endpoint to be configured
- *   u32 options -  optional settings for the endpoint. The options should
- *                   be ORed together to form a single options string. The
- *                   available optional settings for the endpoint. The
- *                   options should be ORed together to form a single options
- *                   string. The available options are the following\:
- *                   * USB_HANDSHAKE_ENABLED enables USB handshaking (ACK, NAK)
- *                   * USB_HANDSHAKE_DISABLED disables USB handshaking (ACK, NAK)
- *                   * USB_OUT_ENABLED enables the out direction
- *                   * USB_OUT_DISABLED disables the out direction
- *                   * USB_IN_ENABLED enables the in direction
- *                   * USB_IN_DISABLED disables the in direction
- *                   * USB_ALLOW_SETUP enables control transfers
- *                   * USB_DISALLOW_SETUP disables control transfers
- *                   * USB_STALL_ENDPOINT STALLs this endpoint
+ *   u8 ep -       the endpoint to be configured
+ *   u8 options -  optional settings for the endpoint. The options should
+ *                 be ORed together to form a single options string. The
+ *                 available optional settings for the endpoint. The
+ *                 options should be ORed together to form a single options
+ *                 string. The available options are the following\:
+ *                 * USB_HANDSHAKE_ENABLED enables USB handshaking (ACK, NAK)
+ *                 * USB_HANDSHAKE_DISABLED disables USB handshaking (ACK, NAK)
+ *                 * USB_OUT_ENABLED enables the out direction
+ *                 * USB_OUT_DISABLED disables the out direction
+ *                 * USB_IN_ENABLED enables the in direction
+ *                 * USB_IN_DISABLED disables the in direction
+ *                 * USB_ALLOW_SETUP enables control transfers
+ *                 * USB_DISALLOW_SETUP disables control transfers
+ *                 * USB_STALL_ENDPOINT STALLs this endpoint
  **********************************************************************/
  
-void usb_enable_endpoint(u32 ep, u32 options)
+void usb_enable_endpoint(u8 ep, u8 options)
 {
     // Set the options to the appropriate endpoint control register
-    u32 *p = (u32 *) (&U1EP0 + (4 * ep));
+    u32* p;
+    
+    p = (u32 *) (&U1EP0 + (4 * ep));
 
     #ifdef DEBUG
     //SerialPrint(UART,"> usb_enable_endpoint\r\n");
@@ -1450,7 +1476,7 @@ void usb_enable_endpoint(u32 ep, u32 options)
  *   u32 dir - the direction of the transfer
  **********************************************************************/
  
-void usb_stall_endpoint(u32 ep, u32 dir)
+void usb_stall_endpoint(u8 ep, u8 dir)
 {
     BDT_ENTRY *p;
 
@@ -1466,8 +1492,6 @@ void usb_stall_endpoint(u32 ep, u32 dir)
          */
         pBDTEntryEP0OutNext->CNT = USB_EP0_BUFF_SIZE;
         pBDTEntryEP0OutNext->ADR = ConvertToPhysicalAddress(&usb_setup_pkt);
-
-        /* v2b fix */
         pBDTEntryEP0OutNext->STAT.Val = _USIE|_DAT0|_DTSEN|_BSTALL;
         pBDTEntryIn[0]->STAT.Val = _USIE|_BSTALL;
     }
@@ -1478,13 +1502,9 @@ void usb_stall_endpoint(u32 ep, u32 dir)
 
         //If the device is in FULL or ALL_BUT_EP0 ping pong modes
         //then stall that entry as well
-        #if (USB_PING_PONG_MODE == USB_PING_PONG__FULL_PING_PONG) || \
-            (USB_PING_PONG_MODE == USB_PING_PONG__ALL_BUT_EP0)
 
         p = (BDT_ENTRY*) &usb_buffer[EP(ep, dir, 1)];
         p->STAT.Val |= _BSTALL | _USIE;
-        
-        #endif
     }
 }
 
@@ -1499,7 +1519,7 @@ void usb_stall_endpoint(u32 ep, u32 dir)
  *   u32 len - length of the data needing to be sent
  **********************************************************************/
  
-USB_HANDLE usb_transfer_one_packet (u32 ep, u32 dir, u8* data, u32 len)
+USB_HANDLE usb_transfer_one_packet (u8 ep, u8 dir, u8* data, u8 len)
 {
     USB_HANDLE handle;
 
@@ -1508,7 +1528,7 @@ USB_HANDLE usb_transfer_one_packet (u32 ep, u32 dir, u8* data, u32 len)
     #endif
     
     // If the direction is IN
-    if (dir != 0)
+    if (dir == IN_TO_HOST)
     {
         // point to the IN BDT of the specified endpoint
         handle = pBDTEntryIn[ep];
@@ -1526,7 +1546,7 @@ USB_HANDLE usb_transfer_one_packet (u32 ep, u32 dir, u8* data, u32 len)
     handle->STAT.Val |= _USIE | _DTSEN;
 
     // Point to the next buffer for ping pong purposes.
-    if (dir != 0)
+    if (dir == IN_TO_HOST)
     {
         // toggle over the to the next buffer for an IN endpoint
         *(u8*)&pBDTEntryIn[ep] ^= USB_NEXT_PING_PONG;

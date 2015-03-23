@@ -34,7 +34,8 @@
 #if defined(__USBCDC__)
  
 const USB_DEVICE_DESCRIPTOR usb_device = {
-    sizeof(usb_device),                         // Size of this descriptor in bytes
+    //sizeof(usb_device)
+    sizeof(USB_DEVICE_DESCRIPTOR),              // Size of this descriptor in bytes
     USB_DESCRIPTOR_DEVICE,                      // DEVICE descriptor type
     0x0200,                                     // USB Spec Release Number in BCD format
     CDC_DEVICE,                                 // Class Code CDC_DEVICE

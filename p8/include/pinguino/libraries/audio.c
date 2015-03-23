@@ -92,6 +92,8 @@
 
     void Audio_init(u16 samplerate)
     {
+        u8 prescaler;
+        
         // PR2+1 calculation
         // Timer2 clock input is the peripheral clock (FOSC/4). 
 
@@ -115,24 +117,25 @@
         {
             if (gPeriodPlus1 <= 256)       // no needs of any prescaler
             {
-                T2CON = 0b00000100;  // prescaler is 1, Timer2 On
+                prescaler = 0;             // prescaler is 1, Timer2 On
             }
             else if (gPeriodPlus1 <= 1024) // needs prescaler 1:4
             {
                 gPeriodPlus1 = gPeriodPlus1 >> 2;// divided by 4
-                T2CON = 0b00000101;  // prescaler is 4, Timer2 On
+                prescaler = 1;            // prescaler is 4, Timer2 On
             }
-            else                     // needs prescaler 1:6
+            else                          // needs prescaler 1:6
             {
                 gPeriodPlus1 = gPeriodPlus1 >> 4;// divided by 16
-                T2CON = 0b00000110;  // prescaler is 16, Timer2 On
+                prescaler = 2;           // prescaler is 16, Timer2 On
             }
         }
 
         gSampleRate = samplerate;
 
-        TMR2 = 0;
-        PR2 = gPeriodPlus1 - 1;
+        TMR2  = 0;
+        PR2   = gPeriodPlus1 - 1;
+        T2CON = prescaler | _TMR2ON;
 
         // (re-)starts interrupt
         INTCONbits.GIEL = 1;         // enable global LP interrupts
@@ -313,12 +316,15 @@ void pwm_interrupt()
         
         // The signal level must be offset so that the zero level
         // generates a PWM output with a 50% duty cycle
-        *pCCPRxL = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
+        //*pCCPRxL = sine64[ gPhase & 0x3F ];// * gPeriodPlus1 / 100;
+        //duty = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
+        duty = sine64[ gPhase & 0x3F ] * 100;
+        //duty = duty * 4;
 
         // Load the duty cycle register according to the sine table
         //PWM_setDutyCycle(gPin, duty);
-        //*pCCPRxL   = (duty >> 2) & 0xFF;          // 8 MSB
-        //*pCCPxCON |= ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
+        *pCCPRxL   = (duty >> 2) & 0xFF;          // 8 MSB
+        *pCCPxCON |= ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
     }
 }
 

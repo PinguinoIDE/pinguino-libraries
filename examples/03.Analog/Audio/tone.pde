@@ -7,7 +7,7 @@
     PWM0 to PWM4 for almost all 32-bit boards
 */
 
-#define LINEOUT 1 //PWM4
+#define LINEOUT CCP1 //PWM4
 
 // Melody structure
 typedef struct
@@ -31,7 +31,7 @@ Note melody[] = {
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    Audio.init(CDQUALITY);
+    Audio.init(TAPEQUALITY);
     //Audio.staccato();
     //Audio.legato();
 }
@@ -62,5 +62,5 @@ void loop()
     // stop the tone playing:
     Audio.noTone(LINEOUT);
     digitalWrite(USERLED, LOW);
-    delay(100);
+    delay(500);
 }

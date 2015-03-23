@@ -44,7 +44,7 @@
 #ifndef __USBCDC__
 #define __USBCDC__
 
-//#define DEBUG
+#define DEBUG
 
 #define CDC_MAJOR_VER 2
 #define CDC_MINOR_VER 7
@@ -99,7 +99,7 @@
 //extern unsigned usb_device_state;
 
 USBVOLATILE  u8 cdc_USBNotConnected = true;
-USBVOLATILE u32 cdc_bps;
+u32 cdc_bps;
 
 void CDC_begin(u32);
 void CDC_connect(void);
@@ -156,14 +156,13 @@ void CDC_connect(void)
         led_count--;
         #endif
 
-        //usb_enable_module();
         usb_device_tasks();
 
-        //#ifdef DEBUG
+        #ifdef DEBUG
         //SerialPrint(UART,"usb_device_state = ");
         //SerialPrintNumber(UART, usb_device_state, DEC);
         //SerialPrint(UART,"\r\n");
-        //#endif
+        #endif
     }
 
     #ifdef DEBUG
@@ -238,20 +237,26 @@ u8 CDC_available(void)
 
 void USBInterrupt(void)
 {
-    #ifdef DEBUG
-    //SerialPrint(UART,"> USB_IRQ\r\n");
-    #endif
-    
-    // Clear general USB flag
-    IntClearFlag(_USB_IRQ);
-    // Process all interrupts
-    //usb_enable_module();
-    usb_device_tasks();
-    //cdc_tx_service();
-    // Clear SOF and RESET flags
-    U1IR = _U1IR_URSTIF_MASK | _U1IR_SOFIF_MASK;
-    // Clear all Error flags
-    U1EIR = 0xFF;
+    if (IFS1 & _IFS1_USBIF_MASK)
+    {
+        #ifdef DEBUG
+        //SerialPrint(UART,"> USB_IRQ\r\n");
+        #endif
+        
+        // Process all interrupts
+        usb_device_tasks();
+        cdc_tx_service();
+
+        // Clear general USB flag
+        //IntClearFlag(_USB_IRQ);
+        IFS1CLR = _IFS1_USBIF_MASK;
+
+        // Clear SOF and RESET flags
+        //U1IR = _U1IR_URSTIF_MASK;// | _U1IR_SOFIF_MASK;
+
+        // Clear all Error flags
+        //U1EIR = 0xFF;
+    }
 }
 
 #else
