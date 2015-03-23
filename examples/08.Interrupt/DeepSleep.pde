@@ -2,6 +2,7 @@
     Go to Deep Sleep for 1 second
     Toggle built-in led at wake-up
     Régis Blanchot
+    8-bit only
 *****************************************/
 
 void setup()

@@ -14,16 +14,7 @@ Interrupt routines inspired to http://blog.pinguino.cc/?p=225
 
 -----------------------------------------------------*/
 
-
-#include <interrupt.c>
-
-
-
-
 #define NumSample100mS 10 //1Sec total
-
-
-
 
 unsigned int CounterO=0;
 unsigned int VCounterRes=0;
@@ -36,113 +27,88 @@ unsigned int ActRes=0;
 
 DWORD   Frequency;
 
-
-
-// Put the ISR_wrapper in the good place
-void __attribute__ ((nomips16)) ISR_wrapper_vector_4(void) __attribute__ ((section (".vector_4")));
-
 // TMR1 Overflow Interrupt Function
-void __attribute__ ((nomips16)) Tmr1Interrupt(void) __attribute__ ((interrupt));
-
-// ISR_wrapper will call the Tmr1Interrupt()
-void __attribute__ ((nomips16)) ISR_wrapper_vector_4(void) { Tmr1Interrupt(); }
-
-
-// Put the ISR_wrapper in the good place
-void __attribute__ ((nomips16)) ISR_wrapper_vector_16(void) __attribute__ ((section (".vector_16")));
-
-// TMR1 Overflow Interrupt Function
-void __attribute__ ((nomips16)) Tmr4Interrupt(void) __attribute__ ((interrupt));
-
-// ISR_wrapper will call the Tmr1Interrupt()
-void __attribute__ ((nomips16)) ISR_wrapper_vector_16(void) { Tmr4Interrupt(); }
-
-
-
-// TMR1 Overflow Interrupt Function
-void __attribute__ ((nomips16)) Tmr1Interrupt(void)
+void Timer1Interrupt(void)
 {
- if (IFS0bits.T1IF)		// Timer Interrupt flag
-	{
-	 IFS0CLR=0x10;		// Clear the timer interrupt flag
-	 CounterO++;		   // increment the CounterO
-	}
+    if (Int.getFlag(INT_TIMER1)) // Timer Interrupt flag
+    {
+        // Clear the timer interrupt flag
+        Int.clearFlag(INT_TIMER1);
+        CounterO++;		   // increment the CounterO
+    }
 }
-
-
-
-// TMR1 Init Function
-void init_timer1(void)
-{
-IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);	// interrupt mode (interrupt.c)
-T1CON=0;		     // reset timer 1 configuration
-TMR1=0;			     // reset timer 1 Counter register (VERY DANGEROUS OPERATION USE ONLY AT INIT TIME)
-PR1=0x0FFFF;		  // define the preload register
-IPC1SET=0x7;		  // select interrupt priority and sub-priority
-IFS0CLR=0x10;		// clear interrupt flag
-IEC0SET=0x10;		// enable timer 1 interrupt
-T1CONSET=0x8000;	// start timer 1 and set prescaler to 1 internal clock
-// decomment to measure external clock on P31 (Conn1.1) I/O pin
-//T1CONSET=0x8002;	// start timer 1 and set prescaler to 1 external clock
-}
-
-
 
 // TMR4 Overflow Interrupt Function
-void __attribute__ ((nomips16)) Tmr4Interrupt(void)
+void Timer4Interrupt(void)
 {
- TmpCounterRes = TMR1;
- TmpCounterO = CounterO;
-if (IFS0bits.T4IF)		// Timer Interrupt flag
-	{
-	 IFS0CLR=0x10000;		// Clear the timer interrupt flag
-	 CtnPulse100mS++;		// increment the CounterO
-   if (CtnPulse100mS >= NumSample100mS)
+    TmpCounterRes = TMR1;
+    TmpCounterO = CounterO;
+    if (Int.getFlag(INT_TIMER4))	// Timer Interrupt flag
     {
-     VCounterRes = TmpCounterRes;
-     PrevRes = ActRes;
-     ActRes = TmpCounterRes;
-     VCounterO = TmpCounterO;
-     CounterO = 0;
-     CtnPulse100mS = 0;
-	  }
-  }
+        // Clear the timer interrupt flag
+        Int.clearFlag(INT_TIMER4);
+        CtnPulse100mS++;		// increment the CounterO
+        if (CtnPulse100mS >= NumSample100mS)
+        {
+            VCounterRes = TmpCounterRes;
+            PrevRes = ActRes;
+            ActRes = TmpCounterRes;
+            VCounterO = TmpCounterO;
+            CounterO = 0;
+            CtnPulse100mS = 0;
+        }
+    }
 }
-
-
-
-// TMR4 Init Function
-void init_timer4(void)
-{
-IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);	// interrupt mode (interrupt.c)
-T4CON=0;		            // reset timer 4 configuration
-TMR4=0;			            // reset timer 4 Counter register (VERY DANGEROUS OPERATION USE ONLY AT INIT TIME)
-PR4=31250-1;		         // define the preload register
-IPC4SET=0x7;		         // select interrupt priority and sub-priority
-IFS0CLR=0x10000;		    // clear interrupt flag
-IEC0SET=0x10000;		    // enable timer 4 interrupt
-T4CONSET=0x8070;	      // start timer 4 and set prescaler to 256
-}
-
-
 
 void setup()
 {
-System.setCpuFrequency(80000000); // should be 80 MHz
-System.setPeripheralFrequency(80000000); // should be 80 MHz
+    System.setCpuFrequency(80000000); // should be 80 MHz
+    System.setPeripheralFrequency(80000000); // should be 80 MHz
+    Int.configureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR); // interrupt mode 
  
-init_timer1();
-init_timer4();
+    // TMR1 Init
+    
+    // reset timer 1 configuration
+    T1CON=0;
+    // reset timer 1 Counter register
+    TMR1=0;
+    // define the preload register
+    PR1=0x0FFFF;
+    // select interrupt priority and sub-priority
+    Int.setVectorPriority(INT_TIMER1_VECTOR, 7, 3);
+    // Clear the timer interrupt flag
+    Int.clearFlag(INT_TIMER1);
+    // Enable Timer1 Interrupt
+    Int.enable(INT_TIMER1);
+    // start timer 1 and set prescaler to 1 internal clock
+    T1CONSET=0x8000;
+    // decomment to measure external clock on P31 (Conn1.1) I/O pin
+    //T1CONSET=0x8002;
+
+    // TMR4 Init Function
+    
+    // reset timer 4 configuration
+    T4CON=0;
+    // reset timer 4 counter register
+    TMR4=0;
+    // define the preload register
+    PR4=31250-1;
+    // select interrupt priority and sub-priority
+    Int.setVectorPriority(INT_TIMER4_VECTOR, 7, 3);
+    // Clear the timer interrupt flag
+    Int.clearFlag(INT_TIMER4);
+    // Enable Timer1 Interrupt
+    Int.enable(INT_TIMER4);
+    // start timer 4 and set prescaler to 256
+    T4CONSET=0x8070;
 }
-
-
 
 void loop()
 {
- Frequency = VCounterO;
- Frequency *= 65536;
- Frequency += VCounterRes;
- Frequency -= PrevRes;
- CDC.printf("Freq= %u Hz , OvF= %d , Cnt= %d , Res= %d\n\r",Frequency,VCounterO,VCounterRes,PrevRes);	
- delay(1000);
+    Frequency = VCounterO;
+    Frequency *= 65536;
+    Frequency += VCounterRes;
+    Frequency -= PrevRes;
+    CDC.printf("Freq= %u Hz , OvF= %d , Cnt= %d , Res=%d\n\r",Frequency,VCounterO,VCounterRes,PrevRes);	
+    delay(1000);
 }

@@ -1,11 +1,11 @@
 /*	----------------------------------------------------------------------------
 	blink built-in led with help from interrupt library
 	----------------------------------------------------------------------------
-	author:			    Régis Blanchot
-	first release:  19/12/2010
-	last update:	  25/11/2013
-	pinguino ide:   > x.4 rev 950
- 	boards:         8-bit ONLY
+	author:        Régis Blanchot
+	first release: 19/12/2010
+	last update:   25/11/2013
+	pinguino ide:  > x.4 rev 950
+ 	boards:        8-bit ONLY
 	--------------------------------------------------------------------------*/
 
 u16 volatile flag = 0;
