@@ -30,8 +30,8 @@ BMXDUDBA = 0xBF882020;
  * which resides in the KSEG0 program flash (kseg0_program_mem) memory block.
  **********************************************************************/
 
-_ebase_address           = 0x9D004000;
-_RESET_ADDR              = 0x9D005000;
+_ebase_address           = 0x9D000000;
+_RESET_ADDR              = 0x9D004000;
 
 /***********************************************************************
  * A Bootstrap exception is an exception which occurs while bootstrap code
@@ -41,7 +41,7 @@ _RESET_ADDR              = 0x9D005000;
  * the function named ‘_bootstrap_exception_handler()’. See crt0.S
  **********************************************************************/
 
-_BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380;
+/* _BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380; */
 
 /***********************************************************************
  * A general exception is any non-interrupt exception that occurs during
@@ -57,16 +57,6 @@ _BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380;
 _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
 
 /***********************************************************************
- * Debug supporting code for running ICD3/RealICE during a debug session
- **********************************************************************/
-
-/*
-_DBG_EXCPT_ADDR          = _RESET_ADDR + 0x480;
-_DBG_CODE_ADDR           = _RESET_ADDR + 0x200;
-_DBG_CODE_SIZE           = 0x180;
-*/
-
-/***********************************************************************
  * Memory Regions
  ***********************************************************************
  * - exception_mem  contains interrupt vector table starting at ebase (cacheable)
@@ -74,29 +64,37 @@ _DBG_CODE_SIZE           = 0x180;
  * - kseg0_boot_mem contains C startup module (cacheable)
  * - debug_exec_mem containing debug supporting code for running ICD3/RealICE during a debug session (non-cacheable)
  * - configuration words (non-cacheable)
- **********************************************************************/
+ * - length = 0x200 + 64 vectors * 32 bytes = 0xA00 < 0xBF0
+**********************************************************************/
 
 MEMORY
 {
 
-exception_mem              : ORIGIN = 0x9D004000, LENGTH = 0x1000
+/**********************************************************************
+ * exception_mem  contains INTERRUPT VECTOR TABLE starting at ebase (cacheable)
+ * exception_mem value MUST BE same as value of _ebase_address
+ * exception_mem must align with 4K address boundary
+ * SPACE SHARED BETWEEN THE BOOTLOADER AND THE PINGUINO APPLICATION
+ * 0x200 + 64 vectors * 32 bytes = 0xA00
+ **********************************************************************/
+
+exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
 
 /**********************************************************************
  * kseg1_boot_mem (non-cacheable) contains
  * - Reset vector (0x000)
  * - Bootstrap exception handler (0x380)
  * - Debug exception handler (0x480)
- * kseg1_boot_mem value MUST BE same as the _RESET_ADDR value
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0x9D005000, LENGTH = 0x390
+kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
 
 /**********************************************************************
  * kseg0_boot_mem (cacheable) contains C startup module (cacheable)
- * Startup code is about 0x200 bytes long
+ * Startup code is 0x1B0 bytes long
  **********************************************************************/
 
-kseg0_boot_mem             : ORIGIN = 0x9D005390, LENGTH = 0x470
+kseg0_boot_mem             : ORIGIN = 0x9D004010, LENGTH = 0x200
 
 /***********************************************************************
  * User Program code
@@ -104,20 +102,11 @@ kseg0_boot_mem             : ORIGIN = 0x9D005390, LENGTH = 0x470
  * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
  * Bootloader Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
  * Bootloader Code is placed between 0x9D001000 and 0x9D004000
- * 0x40000 - 0x5800 = 0x3A800 bytes free
+ * 0x40000 − 0x4000 = 0x3C000 bytes free
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D005800, LENGTH = 0x3A800
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3B000
   
-/**********************************************************************
- * debug_exec_mem (non-cacheable) contains debug supporting code
- * for running ICD3/RealICE during a debug session
- **********************************************************************/
-
-/*
-debug_exec_mem             : ORIGIN = 0x9D005200, LENGTH = 0x180
-*/
-
 /***********************************************************************
  * Device Configuration Registers (configuration bits)
  **********************************************************************/
