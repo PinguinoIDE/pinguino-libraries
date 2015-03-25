@@ -1,7 +1,8 @@
 /***********************************************************************
  * PIC32MX270F256B object file
  * Contains Memory Regions definitions
- * 2014-09-10 Régis Blanchot
+ * 2015-03-24 Régis Blanchot
+ * TO USE ONLY WITH PINGUINO HID USB BOOTLOADER v1.1 or sup.
  * more info :
  * https://sourceware.org/binutils/docs-2.23.1/ld/File-Commands.html#File-Commands
  **********************************************************************/
@@ -60,9 +61,11 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  * Memory Regions
  ***********************************************************************
  * - exception_mem  contains interrupt vector table starting at ebase (cacheable)
- * - kseg1_boot_mem contains reset vector, bootstrap exception handler, debug exception handler (non-cacheable)
+ * - kseg1_boot_mem contains reset vector, bootstrap exception handler,
+ *   debug exception handler (non-cacheable)
  * - kseg0_boot_mem contains C startup module (cacheable)
- * - debug_exec_mem containing debug supporting code for running ICD3/RealICE during a debug session (non-cacheable)
+ * - debug_exec_mem containing debug supporting code for running
+ *   ICD3/RealICE during a debug session (non-cacheable)
  * - configuration words (non-cacheable)
  * - length = 0x200 + 64 vectors * 32 bytes = 0xA00 < 0xBF0
 **********************************************************************/
@@ -85,6 +88,7 @@ exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
  * - Reset vector (0x000)
  * - Bootstrap exception handler (0x380)
  * - Debug exception handler (0x480)
+ * Note : Bootloader code between 0x9D001000 and 0x9D004000
  **********************************************************************/
 
 kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10

@@ -5,7 +5,7 @@
     PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
                         Jean-Pierre Mandon <jp.mandon@gmail.com>
     FIRST RELEASE:      16 Nov. 2010
-    LAST RELEASE:       14 Jan. 2015
+    LAST RELEASE:       20 Mar. 2015
     --------------------------------------------------------------------
     CHANGELOG:
 
@@ -15,6 +15,8 @@
                         added OnTimerX support
     03 Mar. 2015        Regis Blanchot <rblanchot@gmail.com>
                         moved interrupt weak definitions in isrwrapper.c
+    20 Mar. 2015        removed SystemConfig() as CPU frequency is already
+                        defined in the bootloader
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -38,7 +40,7 @@
 #include <macro.h>      // Pinguino's macros definitions
 #include "define.h"     // Pinguino Sketch Constants
 #include <isrwrapper.c> // PIC32 interrupt weak definitions
-#include <system.c>     // PIC32 System Core Functions
+//#include <system.c>     // PIC32 System Core Functions
 #include <io.c>         // Pinguino Boards Peripheral Remappage and IOs configurations
 
 /*
@@ -60,25 +62,13 @@
 
 int main()
 {
-    // Set default clock frequency
-    // Note : default peripheral freq. is 1/2 clock frequency
-    #if defined(__32MX220F032D__) || \
-        defined(__32MX220F032B__) || \
-        defined(__32MX250F128B__) || \
-        defined(__32MX270F256B__)
-
-        SystemConfig(40000000);
-
-    #else
-
-        SystemConfig(80000000);
-
-    #endif
-
     // Configure pins
     IOsetDigital();
     IOsetSpecial();
+    #if defined(__SERIAL__) || defined(__SPI__) || \
+        defined(__PWM__)    || defined(__AUDIO__)
     IOsetRemap();
+    #endif
 
     // Different init.
     #ifdef __ANALOG__
