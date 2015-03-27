@@ -1,5 +1,5 @@
 // Simple serial test
-// Jean-Pierre Mandon 2010
+// Press a key and see its ASCII code
 
 void setup()
 {

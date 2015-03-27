@@ -31,7 +31,7 @@ BMXDUDBA = 0xBF882020;
  * which resides in the KSEG0 program flash (kseg0_program_mem) memory block.
  **********************************************************************/
 
-_ebase_address           = 0x9D000000;
+_ebase_address           = 0x9D003000;
 _RESET_ADDR              = 0x9D004000;
 
 /***********************************************************************
@@ -42,7 +42,7 @@ _RESET_ADDR              = 0x9D004000;
  * the function named ‘_bootstrap_exception_handler()’. See crt0.S
  **********************************************************************/
 
-/* _BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380; */
+_BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380;
 
 /***********************************************************************
  * A general exception is any non-interrupt exception that occurs during
@@ -81,7 +81,7 @@ MEMORY
  * 0x200 + 64 vectors * 32 bytes = 0xA00
  **********************************************************************/
 
-exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
+exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0x1000
 
 /**********************************************************************
  * kseg1_boot_mem (non-cacheable) contains
@@ -91,14 +91,14 @@ exception_mem              : ORIGIN = 0x9D000000, LENGTH = 0x1000
  * Note : Bootloader code between 0x9D001000 and 0x9D004000
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
+kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x390
 
 /**********************************************************************
  * kseg0_boot_mem (cacheable) contains C startup module (cacheable)
  * Startup code is 0x1B0 bytes long
  **********************************************************************/
 
-kseg0_boot_mem             : ORIGIN = 0x9D004010, LENGTH = 0x200
+kseg0_boot_mem             : ORIGIN = 0x9D004390, LENGTH = 0x200
 
 /***********************************************************************
  * User Program code
@@ -106,7 +106,7 @@ kseg0_boot_mem             : ORIGIN = 0x9D004010, LENGTH = 0x200
  * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
  * Bootloader Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
  * Bootloader Code is placed between 0x9D001000 and 0x9D004000
- * 0x40000 − 0x4000 = 0x3C000 bytes free
+ * 0x40000 − 0x5000 = 0x3B000 bytes free
  **********************************************************************/
 
 kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3B000
