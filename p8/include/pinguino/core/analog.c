@@ -55,7 +55,7 @@ void analog_init(void)
 	ADCON0=0x00;        // 0b00000000 = VRef-=VSS, VRef+=VDD, No channel selected yet 
 	ADCON1=0xBD;		// 0b10111101 = Right justified, Calibration Normal, 20TAD, FOSC/16
 
-    #elif defined(PINGUINO47J53A)
+    #elif defined(PINGUINO47J53)
     // RB 09/09/2013: Analog Conversion Mode is set to 12-bit in Bootloader Config file
     // #pragma config ADCSEL = BIT12 // 12-bit conversion mode is enabled
 
@@ -103,7 +103,7 @@ void analog_init(void)
 void analogreference(u8 Type)
 {
     #if !defined(PINGUINO26J50) && !defined(PINGUINO46J50) && \
-        !defined(PINGUINO27J53) && !defined(PINGUINO47J53A)   
+        !defined(PINGUINO27J53) && !defined(PINGUINO47J53)   
 
     if(Type == DEFAULT)			//the default analog reference of 5 volts (on 5V Arduino boards) or 3.3 volts (on 3.3V Arduino boards)
         ADCON1|=0x00;			//Vref+ = VDD
@@ -150,7 +150,7 @@ u16 analogread(u8 channel)
     // RB - March 2014 - Enable individual Analog channel selection
     //                   Has to be done for other Pinguino
     
-    #elif defined(PINGUINO47J53A)
+    #elif defined(PINGUINO47J53)
 
         if (channel > 15)
             return 0;

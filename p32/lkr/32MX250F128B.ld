@@ -22,10 +22,6 @@ PROVIDE(_vector_spacing = 0x00000001);
 
 _ebase_address           = 0x9D003000;
 _RESET_ADDR              = 0x9D004000;
-_BEV_EXCPT_ADDR          = 0x9D004380;
-_DBG_EXCPT_ADDR          = 0x9D004480;
-_DBG_CODE_ADDR           = 0xBFC02000;
-_GEN_EXCPT_ADDR          = _ebase_address + 0x180;
 
 /*************************************************************************
  * Memory Regions
@@ -44,10 +40,10 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  *************************************************************************/
 MEMORY
 {
-  exception_mem               : ORIGIN = 0x9D003000, LENGTH = 0x1000
-  kseg1_boot_mem              : ORIGIN = 0x9D004000, LENGTH = 0x490
-  kseg0_boot_mem              : ORIGIN = 0x9D004490, LENGTH = 0x570
-  kseg0_program_mem    (rx)   : ORIGIN = 0x9D004A00, LENGTH = 0x1B600
+  exception_mem               : ORIGIN = 0x9D003000, LENGTH = 0xA00
+  kseg0_boot_mem              : ORIGIN = 0x9D003A00, LENGTH = 0x200
+  kseg1_boot_mem              : ORIGIN = 0x9D004000, LENGTH = 0x10
+  kseg0_program_mem    (rx)   : ORIGIN = 0x9D004010, LENGTH = 0x1BFF0
 
   configsfrs                  : ORIGIN = 0xBFC00BF0, LENGTH = 0x10
   config3                     : ORIGIN = 0xBFC00BF0, LENGTH = 0x4

@@ -36,43 +36,25 @@ INCLUDEDIRS	= -I$(INCDIR)/non-free\
 #-I$(_IDE_SRCDIR_)\
 #
 
-LIBDIRS		= -L$(OBJDIR)/usb
+LIBDIRS	 = -L$(OBJDIR)/usb
+LIBS		= -lm -lgcc -lc
 
 # ----------------------------------------------------------------------
-# Various options
-# ----------------------------------------------------------------------
-# - cdc library / Jean-pierre Mandon 2012
-# - unsupported record in hex file / Jean-pierre Mandon 2012
-#		04		 : 4 bytes
-#		0000	 : address
-#		05		 : record type = Start_Linear_Address_Record
-#		9D004000 : address where the user program should start
-#				 : _RESET_ADDR (see lkr/procdefs.ld)
-#		1A		 : checksum
+# CDC library / Jean-pierre Mandon 2012
 # ----------------------------------------------------------------------
 
 ifneq (,$(filter $(_IDE_BOARD_),PIC32_PINGUINO_220 PINGUINO32MX220 PINGUINO32MX250 PINGUINO32MX270))
 	CDCLIBRARY  = libcdc220.a
-	BADRECORD   = '^:040000059D0040001A'
 else
 	CDCLIBRARY  = libcdc.a
-	BADRECORD   ='^:040000059D006000FA'
 endif
 
 # ----------------------------------------------------------------------
 # commands
 # ----------------------------------------------------------------------
 
-ifdef CPLUPLUS
-	CC	  = $(_IDE_BINDIR_)/p32-g++
-	LIBS	  = -lstdc++ -lm -lgcc -lc
-else
-	CC	  = $(_IDE_BINDIR_)/p32-gcc
-	LIBS	  = -lm -lgcc -lc
-endif
-
-OBJC		  = $(_IDE_BINDIR_)/p32-objcopy
-
+CC		  = $(_IDE_BINDIR_)/p32-gcc
+OBJC		= $(_IDE_BINDIR_)/p32-objcopy
 RM		  = rm -f -v
 CP		  = cp
 MV		  = mv
@@ -126,9 +108,7 @@ ELF_FLAGS		= \
 # rules
 # ----------------------------------------------------------------------
 
-#all: clean copy compile convert correct
 all: clean copy compile convert
-#all: clean copy compile
 
 clean:
 	# ------------------------------------------------------------------
@@ -149,10 +129,8 @@ compile:
 	# ------------------------------------------------------------------
 	# compiling and linking
 	# ------------------------------------------------------------------
-	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)/main32.S $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.pp
-	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -g -Wa,-a,-ad $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.lst
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\
 		$(_IDE_SRCDIR_)/main32.o\
@@ -169,10 +147,3 @@ convert:
 	# converting elf to hex
 	# ------------------------------------------------------------------
 	$(OBJC) -O ihex $(_IDE_SRCDIR_)/main32.elf $(_IDE_SRCDIR_)/main32.hex
-
-correct:
-	# ------------------------------------------------------------------
-	# fixing bad record
-	# ------------------------------------------------------------------
-	grep --binary --invert-match $(BADRECORD) $(_IDE_SRCDIR_)/main32.hex > $(_IDE_SRCDIR_)/temp.hex
-	$(MV) $(_IDE_SRCDIR_)/temp.hex $(_IDE_SRCDIR_)/main32.hex

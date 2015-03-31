@@ -1,5 +1,6 @@
 /*-------------------------------------------------------------------------
  * PIC32MX795F512L processor header
+ * Build date : Jul 22 2014
  *
  * This software is developed by Microchip Technology Inc. and its
  * subsidiaries ("Microchip").
@@ -31,6 +32,7 @@
  * 
  *-------------------------------------------------------------------------*/
 
+#pragma once
 #ifndef __32MX795F512L_H
 #define __32MX795F512L_H
 
@@ -766,39 +768,6 @@ extern volatile unsigned int        OC5RS __attribute__((section("sfrs")));
 extern volatile unsigned int        OC5RSCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        OC5RSSET __attribute__((section("sfrs")));
 extern volatile unsigned int        OC5RSINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SEN:1;
-    unsigned RSEN:1;
-    unsigned PEN:1;
-    unsigned RCEN:1;
-    unsigned ACKEN:1;
-    unsigned ACKDT:1;
-    unsigned STREN:1;
-    unsigned GCEN:1;
-    unsigned SMEN:1;
-    unsigned DISSLW:1;
-    unsigned A10M:1;
-    unsigned STRICT:1;
-    unsigned SCLREL:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :11;
-    unsigned IPMIEN:1;
-    unsigned :1;
-    unsigned I2CSIDL:1;
-    unsigned :1;
-    unsigned I2CEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C1ACONbits_t;
-extern volatile __I2C1ACONbits_t I2C1ACONbits __asm__ ("I2C1ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -832,39 +801,9 @@ typedef union {
   };
 } __I2C3CONbits_t;
 extern volatile __I2C3CONbits_t I2C3CONbits __asm__ ("I2C3CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned TBF:1;
-    unsigned RBF:1;
-    unsigned R_W:1;
-    unsigned S:1;
-    unsigned P:1;
-    unsigned D_A:1;
-    unsigned I2COV:1;
-    unsigned IWCOL:1;
-    unsigned ADD10:1;
-    unsigned GCSTAT:1;
-    unsigned BCL:1;
-    unsigned :3;
-    unsigned TRSTAT:1;
-    unsigned ACKSTAT:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned I2CPOV:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C1ASTATbits_t;
-extern volatile __I2C1ASTATbits_t I2C1ASTATbits __asm__ ("I2C1ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -892,79 +831,26 @@ typedef union {
   };
 } __I2C3STATbits_t;
 extern volatile __I2C3STATbits_t I2C3STATbits __asm__ ("I2C3STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AADD __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3ADD __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AADDCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3ADDCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AADDSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3ADDSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AADDINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3ADDINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AMSK __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3MSK __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AMSKCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3MSKCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AMSKSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3MSKSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1AMSKINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3MSKINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ATRN __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3TRN __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ATRNCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3TRNCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ATRNSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3TRNSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ATRNINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3TRNINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C1ARCV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C3RCV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SEN:1;
-    unsigned RSEN:1;
-    unsigned PEN:1;
-    unsigned RCEN:1;
-    unsigned ACKEN:1;
-    unsigned ACKDT:1;
-    unsigned STREN:1;
-    unsigned GCEN:1;
-    unsigned SMEN:1;
-    unsigned DISSLW:1;
-    unsigned A10M:1;
-    unsigned STRICT:1;
-    unsigned SCLREL:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :11;
-    unsigned IPMIEN:1;
-    unsigned :1;
-    unsigned I2CSIDL:1;
-    unsigned :1;
-    unsigned I2CEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C2ACONbits_t;
-extern volatile __I2C2ACONbits_t I2C2ACONbits __asm__ ("I2C2ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -998,39 +884,9 @@ typedef union {
   };
 } __I2C4CONbits_t;
 extern volatile __I2C4CONbits_t I2C4CONbits __asm__ ("I2C4CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned TBF:1;
-    unsigned RBF:1;
-    unsigned R_W:1;
-    unsigned S:1;
-    unsigned P:1;
-    unsigned D_A:1;
-    unsigned I2COV:1;
-    unsigned IWCOL:1;
-    unsigned ADD10:1;
-    unsigned GCSTAT:1;
-    unsigned BCL:1;
-    unsigned :3;
-    unsigned TRSTAT:1;
-    unsigned ACKSTAT:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned I2CPOV:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C2ASTATbits_t;
-extern volatile __I2C2ASTATbits_t I2C2ASTATbits __asm__ ("I2C2ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1058,79 +914,26 @@ typedef union {
   };
 } __I2C4STATbits_t;
 extern volatile __I2C4STATbits_t I2C4STATbits __asm__ ("I2C4STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AADD __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4ADD __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AADDCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4ADDCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AADDSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4ADDSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AADDINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4ADDINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AMSK __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4MSK __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AMSKCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4MSKCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AMSKSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4MSKSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2AMSKINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4MSKINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ATRN __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4TRN __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ATRNCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4TRNCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ATRNSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4TRNSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ATRNINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4TRNINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C2ARCV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C4RCV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SEN:1;
-    unsigned RSEN:1;
-    unsigned PEN:1;
-    unsigned RCEN:1;
-    unsigned ACKEN:1;
-    unsigned ACKDT:1;
-    unsigned STREN:1;
-    unsigned GCEN:1;
-    unsigned SMEN:1;
-    unsigned DISSLW:1;
-    unsigned A10M:1;
-    unsigned STRICT:1;
-    unsigned SCLREL:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :11;
-    unsigned IPMIEN:1;
-    unsigned :1;
-    unsigned I2CSIDL:1;
-    unsigned :1;
-    unsigned I2CEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C3ACONbits_t;
-extern volatile __I2C3ACONbits_t I2C3ACONbits __asm__ ("I2C3ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1164,39 +967,9 @@ typedef union {
   };
 } __I2C5CONbits_t;
 extern volatile __I2C5CONbits_t I2C5CONbits __asm__ ("I2C5CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned TBF:1;
-    unsigned RBF:1;
-    unsigned R_W:1;
-    unsigned S:1;
-    unsigned P:1;
-    unsigned D_A:1;
-    unsigned I2COV:1;
-    unsigned IWCOL:1;
-    unsigned ADD10:1;
-    unsigned GCSTAT:1;
-    unsigned BCL:1;
-    unsigned :3;
-    unsigned TRSTAT:1;
-    unsigned ACKSTAT:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned I2CPOV:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __I2C3ASTATbits_t;
-extern volatile __I2C3ASTATbits_t I2C3ASTATbits __asm__ ("I2C3ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1224,45 +997,25 @@ typedef union {
   };
 } __I2C5STATbits_t;
 extern volatile __I2C5STATbits_t I2C5STATbits __asm__ ("I2C5STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AADD __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5ADD __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AADDCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5ADDCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AADDSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5ADDSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AADDINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5ADDINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AMSK __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5MSK __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AMSKCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5MSKCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AMSKSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5MSKSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3AMSKINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5MSKINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ATRN __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5TRN __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ATRNCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5TRNCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ATRNSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5TRNSET __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ATRNINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5TRNINV __attribute__((section("sfrs")));
-extern volatile unsigned int        I2C3ARCV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C5RCV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C1CON __attribute__((section("sfrs")));
 typedef union {
@@ -1430,38 +1183,6 @@ extern volatile unsigned int        I2C2TRNCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C2TRNSET __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C2TRNINV __attribute__((section("sfrs")));
 extern volatile unsigned int        I2C2RCV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SRXISEL:2;
-    unsigned STXISEL:2;
-    unsigned :1;
-    unsigned MSTEN:1;
-    unsigned CKP:1;
-    unsigned SSEN:1;
-    unsigned CKE:1;
-    unsigned SMP:1;
-    unsigned MODE16:1;
-    unsigned MODE32:1;
-    unsigned DISSDO:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-    unsigned ENHBUF:1;
-    unsigned SPIFE:1;
-    unsigned :6;
-    unsigned FRMCNT:3;
-    unsigned FRMSYPW:1;
-    unsigned MSSEN:1;
-    unsigned FRMPOL:1;
-    unsigned FRMSYNC:1;
-    unsigned FRMEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI1ACONbits_t;
-extern volatile __SPI1ACONbits_t SPI1ACONbits __asm__ ("SPI1ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1494,36 +1215,9 @@ typedef union {
   };
 } __SPI3CONbits_t;
 extern volatile __SPI3CONbits_t SPI3CONbits __asm__ ("SPI3CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SPIRBF:1;
-    unsigned SPITBF:1;
-    unsigned :1;
-    unsigned SPITBE:1;
-    unsigned :1;
-    unsigned SPIRBE:1;
-    unsigned SPIROV:1;
-    unsigned SRMT:1;
-    unsigned SPITUR:1;
-    unsigned :2;
-    unsigned SPIBUSY:1;
-    unsigned :4;
-    unsigned TXBUFELM:5;
-    unsigned :3;
-    unsigned RXBUFELM:5;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI1ASTATbits_t;
-extern volatile __SPI1ASTATbits_t SPI1ASTATbits __asm__ ("SPI1ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1548,54 +1242,14 @@ typedef union {
   };
 } __SPI3STATbits_t;
 extern volatile __SPI3STATbits_t SPI3STATbits __asm__ ("SPI3STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ABUF __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3BUF __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI1ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI3BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SRXISEL:2;
-    unsigned STXISEL:2;
-    unsigned :1;
-    unsigned MSTEN:1;
-    unsigned CKP:1;
-    unsigned SSEN:1;
-    unsigned CKE:1;
-    unsigned SMP:1;
-    unsigned MODE16:1;
-    unsigned MODE32:1;
-    unsigned DISSDO:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-    unsigned ENHBUF:1;
-    unsigned SPIFE:1;
-    unsigned :6;
-    unsigned FRMCNT:3;
-    unsigned FRMSYPW:1;
-    unsigned MSSEN:1;
-    unsigned FRMPOL:1;
-    unsigned FRMSYNC:1;
-    unsigned FRMEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI2ACONbits_t;
-extern volatile __SPI2ACONbits_t SPI2ACONbits __asm__ ("SPI2ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1628,36 +1282,9 @@ typedef union {
   };
 } __SPI2CONbits_t;
 extern volatile __SPI2CONbits_t SPI2CONbits __asm__ ("SPI2CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SPIRBF:1;
-    unsigned SPITBF:1;
-    unsigned :1;
-    unsigned SPITBE:1;
-    unsigned :1;
-    unsigned SPIRBE:1;
-    unsigned SPIROV:1;
-    unsigned SRMT:1;
-    unsigned SPITUR:1;
-    unsigned :2;
-    unsigned SPIBUSY:1;
-    unsigned :4;
-    unsigned TXBUFELM:5;
-    unsigned :3;
-    unsigned RXBUFELM:5;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI2ASTATbits_t;
-extern volatile __SPI2ASTATbits_t SPI2ASTATbits __asm__ ("SPI2ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1682,54 +1309,14 @@ typedef union {
   };
 } __SPI2STATbits_t;
 extern volatile __SPI2STATbits_t SPI2STATbits __asm__ ("SPI2STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ABUF __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2BUF __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI2ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI2BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ACON __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SRXISEL:2;
-    unsigned STXISEL:2;
-    unsigned :1;
-    unsigned MSTEN:1;
-    unsigned CKP:1;
-    unsigned SSEN:1;
-    unsigned CKE:1;
-    unsigned SMP:1;
-    unsigned MODE16:1;
-    unsigned MODE32:1;
-    unsigned DISSDO:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-    unsigned ENHBUF:1;
-    unsigned SPIFE:1;
-    unsigned :6;
-    unsigned FRMCNT:3;
-    unsigned FRMSYPW:1;
-    unsigned MSSEN:1;
-    unsigned FRMPOL:1;
-    unsigned FRMSYNC:1;
-    unsigned FRMEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI3ACONbits_t;
-extern volatile __SPI3ACONbits_t SPI3ACONbits __asm__ ("SPI3ACON") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4CON __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1762,36 +1349,9 @@ typedef union {
   };
 } __SPI4CONbits_t;
 extern volatile __SPI4CONbits_t SPI4CONbits __asm__ ("SPI4CON") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ACONCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4CONCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ACONSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4CONSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ACONINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4CONINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ASTAT __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned SPIRBF:1;
-    unsigned SPITBF:1;
-    unsigned :1;
-    unsigned SPITBE:1;
-    unsigned :1;
-    unsigned SPIRBE:1;
-    unsigned SPIROV:1;
-    unsigned SRMT:1;
-    unsigned SPITUR:1;
-    unsigned :2;
-    unsigned SPIBUSY:1;
-    unsigned :4;
-    unsigned TXBUFELM:5;
-    unsigned :3;
-    unsigned RXBUFELM:5;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __SPI3ASTATbits_t;
-extern volatile __SPI3ASTATbits_t SPI3ASTATbits __asm__ ("SPI3ASTAT") __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4STAT __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -1816,21 +1376,13 @@ typedef union {
   };
 } __SPI4STATbits_t;
 extern volatile __SPI4STATbits_t SPI4STATbits __asm__ ("SPI4STAT") __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ASTATCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4STATCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ASTATSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4STATSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ASTATINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4STATINV __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ABUF __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4BUF __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        SPI3ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI4BRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        SPI1CON __attribute__((section("sfrs")));
 typedef union {
@@ -2071,38 +1623,6 @@ extern volatile unsigned int        U1ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U1BRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U1ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U1BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BMODE __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned STSEL:1;
-    unsigned PDSEL:2;
-    unsigned BRGH:1;
-    unsigned RXINV:1;
-    unsigned ABAUD:1;
-    unsigned LPBACK:1;
-    unsigned WAKE:1;
-    unsigned :4;
-    unsigned IREN:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :1;
-    unsigned PDSEL0:1;
-    unsigned PDSEL1:1;
-  };
-  struct {
-    unsigned :13;
-    unsigned USIDL:1;
-    unsigned :1;
-    unsigned UARTEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U1BMODEbits_t;
-extern volatile __U1BMODEbits_t U1BMODEbits __asm__ ("U1BMODE") __attribute__((section("sfrs")));
 extern volatile unsigned int        U4MODE __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2135,49 +1655,9 @@ typedef union {
   };
 } __U4MODEbits_t;
 extern volatile __U4MODEbits_t U4MODEbits __asm__ ("U4MODE") __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BMODECLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U4MODECLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BMODESET __attribute__((section("sfrs")));
 extern volatile unsigned int        U4MODESET __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BMODEINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U4MODEINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BSTA __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned URXDA:1;
-    unsigned OERR:1;
-    unsigned FERR:1;
-    unsigned PERR:1;
-    unsigned RIDLE:1;
-    unsigned ADDEN:1;
-    unsigned URXISEL:2;
-    unsigned TRMT:1;
-    unsigned UTXBF:1;
-    unsigned UTXEN:1;
-    unsigned UTXBRK:1;
-    unsigned URXEN:1;
-    unsigned UTXINV:1;
-    unsigned UTXISEL:2;
-    unsigned ADDR:8;
-    unsigned ADM_EN:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned URXISEL0:1;
-    unsigned URXISEL1:1;
-    unsigned :6;
-    unsigned UTXISEL0:1;
-    unsigned UTXISEL1:1;
-  };
-  struct {
-    unsigned :14;
-    unsigned UTXSEL:2;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U1BSTAbits_t;
-extern volatile __U1BSTAbits_t U1BSTAbits __asm__ ("U1BSTA") __attribute__((section("sfrs")));
 extern volatile unsigned int        U4STA __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2215,61 +1695,15 @@ typedef union {
   };
 } __U4STAbits_t;
 extern volatile __U4STAbits_t U4STAbits __asm__ ("U4STA") __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BSTACLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U4STACLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BSTASET __attribute__((section("sfrs")));
 extern volatile unsigned int        U4STASET __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BSTAINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U4STAINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BTXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U4TXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BRXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U4RXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BBRG __attribute__((section("sfrs")));
 extern volatile unsigned int        U4BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BBRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U4BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BBRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U4BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        U1BBRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U4BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2AMODE __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned STSEL:1;
-    unsigned PDSEL:2;
-    unsigned BRGH:1;
-    unsigned RXINV:1;
-    unsigned ABAUD:1;
-    unsigned LPBACK:1;
-    unsigned WAKE:1;
-    unsigned UEN:2;
-    unsigned :1;
-    unsigned RTSMD:1;
-    unsigned IREN:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :1;
-    unsigned PDSEL0:1;
-    unsigned PDSEL1:1;
-    unsigned :5;
-    unsigned UEN0:1;
-    unsigned UEN1:1;
-  };
-  struct {
-    unsigned :13;
-    unsigned USIDL:1;
-    unsigned :1;
-    unsigned UARTEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U2AMODEbits_t;
-extern volatile __U2AMODEbits_t U2AMODEbits __asm__ ("U2AMODE") __attribute__((section("sfrs")));
 extern volatile unsigned int        U3MODE __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2307,49 +1741,9 @@ typedef union {
   };
 } __U3MODEbits_t;
 extern volatile __U3MODEbits_t U3MODEbits __asm__ ("U3MODE") __attribute__((section("sfrs")));
-extern volatile unsigned int        U2AMODECLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U3MODECLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2AMODESET __attribute__((section("sfrs")));
 extern volatile unsigned int        U3MODESET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2AMODEINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U3MODEINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ASTA __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned URXDA:1;
-    unsigned OERR:1;
-    unsigned FERR:1;
-    unsigned PERR:1;
-    unsigned RIDLE:1;
-    unsigned ADDEN:1;
-    unsigned URXISEL:2;
-    unsigned TRMT:1;
-    unsigned UTXBF:1;
-    unsigned UTXEN:1;
-    unsigned UTXBRK:1;
-    unsigned URXEN:1;
-    unsigned UTXINV:1;
-    unsigned UTXISEL:2;
-    unsigned ADDR:8;
-    unsigned ADM_EN:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned URXISEL0:1;
-    unsigned URXISEL1:1;
-    unsigned :6;
-    unsigned UTXISEL0:1;
-    unsigned UTXISEL1:1;
-  };
-  struct {
-    unsigned :14;
-    unsigned UTXSEL:2;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U2ASTAbits_t;
-extern volatile __U2ASTAbits_t U2ASTAbits __asm__ ("U2ASTA") __attribute__((section("sfrs")));
 extern volatile unsigned int        U3STA __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2387,56 +1781,15 @@ typedef union {
   };
 } __U3STAbits_t;
 extern volatile __U3STAbits_t U3STAbits __asm__ ("U3STA") __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ASTACLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U3STACLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ASTASET __attribute__((section("sfrs")));
 extern volatile unsigned int        U3STASET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ASTAINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U3STAINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ATXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U3TXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ARXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U3RXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        U3BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U3BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U3BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2ABRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U3BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BMODE __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned STSEL:1;
-    unsigned PDSEL:2;
-    unsigned BRGH:1;
-    unsigned RXINV:1;
-    unsigned ABAUD:1;
-    unsigned LPBACK:1;
-    unsigned WAKE:1;
-    unsigned :4;
-    unsigned IREN:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :1;
-    unsigned PDSEL0:1;
-    unsigned PDSEL1:1;
-  };
-  struct {
-    unsigned :13;
-    unsigned USIDL:1;
-    unsigned :1;
-    unsigned UARTEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U2BMODEbits_t;
-extern volatile __U2BMODEbits_t U2BMODEbits __asm__ ("U2BMODE") __attribute__((section("sfrs")));
 extern volatile unsigned int        U6MODE __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2469,49 +1822,9 @@ typedef union {
   };
 } __U6MODEbits_t;
 extern volatile __U6MODEbits_t U6MODEbits __asm__ ("U6MODE") __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BMODECLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U6MODECLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BMODESET __attribute__((section("sfrs")));
 extern volatile unsigned int        U6MODESET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BMODEINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U6MODEINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BSTA __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned URXDA:1;
-    unsigned OERR:1;
-    unsigned FERR:1;
-    unsigned PERR:1;
-    unsigned RIDLE:1;
-    unsigned ADDEN:1;
-    unsigned URXISEL:2;
-    unsigned TRMT:1;
-    unsigned UTXBF:1;
-    unsigned UTXEN:1;
-    unsigned UTXBRK:1;
-    unsigned URXEN:1;
-    unsigned UTXINV:1;
-    unsigned UTXISEL:2;
-    unsigned ADDR:8;
-    unsigned ADM_EN:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned URXISEL0:1;
-    unsigned URXISEL1:1;
-    unsigned :6;
-    unsigned UTXISEL0:1;
-    unsigned UTXISEL1:1;
-  };
-  struct {
-    unsigned :14;
-    unsigned UTXSEL:2;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U2BSTAbits_t;
-extern volatile __U2BSTAbits_t U2BSTAbits __asm__ ("U2BSTA") __attribute__((section("sfrs")));
 extern volatile unsigned int        U6STA __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2549,23 +1862,14 @@ typedef union {
   };
 } __U6STAbits_t;
 extern volatile __U6STAbits_t U6STAbits __asm__ ("U6STA") __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BSTACLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U6STACLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BSTASET __attribute__((section("sfrs")));
 extern volatile unsigned int        U6STASET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BSTAINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U6STAINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BTXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U6TXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BRXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U6RXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BBRG __attribute__((section("sfrs")));
 extern volatile unsigned int        U6BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BBRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U6BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BBRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U6BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        U2BBRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U6BRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U2MODE __attribute__((section("sfrs")));
 typedef union {
@@ -2604,49 +1908,9 @@ typedef union {
   };
 } __U2MODEbits_t;
 extern volatile __U2MODEbits_t U2MODEbits __asm__ ("U2MODE") __attribute__((section("sfrs")));
-extern volatile unsigned int        U3AMODE __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned STSEL:1;
-    unsigned PDSEL:2;
-    unsigned BRGH:1;
-    unsigned RXINV:1;
-    unsigned ABAUD:1;
-    unsigned LPBACK:1;
-    unsigned WAKE:1;
-    unsigned UEN:2;
-    unsigned :1;
-    unsigned RTSMD:1;
-    unsigned IREN:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :1;
-    unsigned PDSEL0:1;
-    unsigned PDSEL1:1;
-    unsigned :5;
-    unsigned UEN0:1;
-    unsigned UEN1:1;
-  };
-  struct {
-    unsigned :13;
-    unsigned USIDL:1;
-    unsigned :1;
-    unsigned UARTEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U3AMODEbits_t;
-extern volatile __U3AMODEbits_t U3AMODEbits __asm__ ("U3AMODE") __attribute__((section("sfrs")));
 extern volatile unsigned int        U2MODECLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3AMODECLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U2MODESET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3AMODESET __attribute__((section("sfrs")));
 extern volatile unsigned int        U2MODEINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3AMODEINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U2STA __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2684,93 +1948,15 @@ typedef union {
   };
 } __U2STAbits_t;
 extern volatile __U2STAbits_t U2STAbits __asm__ ("U2STA") __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ASTA __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned URXDA:1;
-    unsigned OERR:1;
-    unsigned FERR:1;
-    unsigned PERR:1;
-    unsigned RIDLE:1;
-    unsigned ADDEN:1;
-    unsigned URXISEL:2;
-    unsigned TRMT:1;
-    unsigned UTXBF:1;
-    unsigned UTXEN:1;
-    unsigned UTXBRK:1;
-    unsigned URXEN:1;
-    unsigned UTXINV:1;
-    unsigned UTXISEL:2;
-    unsigned ADDR:8;
-    unsigned ADM_EN:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned URXISEL0:1;
-    unsigned URXISEL1:1;
-    unsigned :6;
-    unsigned UTXISEL0:1;
-    unsigned UTXISEL1:1;
-  };
-  struct {
-    unsigned :14;
-    unsigned UTXSEL:2;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U3ASTAbits_t;
-extern volatile __U3ASTAbits_t U3ASTAbits __asm__ ("U3ASTA") __attribute__((section("sfrs")));
 extern volatile unsigned int        U2STACLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ASTACLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U2STASET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ASTASET __attribute__((section("sfrs")));
 extern volatile unsigned int        U2STAINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ASTAINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U2TXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ATXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U2RXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ARXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U2BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ABRG __attribute__((section("sfrs")));
 extern volatile unsigned int        U2BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ABRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U2BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ABRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U2BRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3ABRGINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BMODE __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned STSEL:1;
-    unsigned PDSEL:2;
-    unsigned BRGH:1;
-    unsigned RXINV:1;
-    unsigned ABAUD:1;
-    unsigned LPBACK:1;
-    unsigned WAKE:1;
-    unsigned :4;
-    unsigned IREN:1;
-    unsigned SIDL:1;
-    unsigned :1;
-    unsigned ON:1;
-  };
-  struct {
-    unsigned :1;
-    unsigned PDSEL0:1;
-    unsigned PDSEL1:1;
-  };
-  struct {
-    unsigned :13;
-    unsigned USIDL:1;
-    unsigned :1;
-    unsigned UARTEN:1;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U3BMODEbits_t;
-extern volatile __U3BMODEbits_t U3BMODEbits __asm__ ("U3BMODE") __attribute__((section("sfrs")));
 extern volatile unsigned int        U5MODE __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2803,49 +1989,9 @@ typedef union {
   };
 } __U5MODEbits_t;
 extern volatile __U5MODEbits_t U5MODEbits __asm__ ("U5MODE") __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BMODECLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U5MODECLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BMODESET __attribute__((section("sfrs")));
 extern volatile unsigned int        U5MODESET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BMODEINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U5MODEINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BSTA __attribute__((section("sfrs")));
-typedef union {
-  struct {
-    unsigned URXDA:1;
-    unsigned OERR:1;
-    unsigned FERR:1;
-    unsigned PERR:1;
-    unsigned RIDLE:1;
-    unsigned ADDEN:1;
-    unsigned URXISEL:2;
-    unsigned TRMT:1;
-    unsigned UTXBF:1;
-    unsigned UTXEN:1;
-    unsigned UTXBRK:1;
-    unsigned URXEN:1;
-    unsigned UTXINV:1;
-    unsigned UTXISEL:2;
-    unsigned ADDR:8;
-    unsigned ADM_EN:1;
-  };
-  struct {
-    unsigned :6;
-    unsigned URXISEL0:1;
-    unsigned URXISEL1:1;
-    unsigned :6;
-    unsigned UTXISEL0:1;
-    unsigned UTXISEL1:1;
-  };
-  struct {
-    unsigned :14;
-    unsigned UTXSEL:2;
-  };
-  struct {
-    unsigned w:32;
-  };
-} __U3BSTAbits_t;
-extern volatile __U3BSTAbits_t U3BSTAbits __asm__ ("U3BSTA") __attribute__((section("sfrs")));
 extern volatile unsigned int        U5STA __attribute__((section("sfrs")));
 typedef union {
   struct {
@@ -2883,23 +2029,14 @@ typedef union {
   };
 } __U5STAbits_t;
 extern volatile __U5STAbits_t U5STAbits __asm__ ("U5STA") __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BSTACLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U5STACLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BSTASET __attribute__((section("sfrs")));
 extern volatile unsigned int        U5STASET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BSTAINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U5STAINV __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BTXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U5TXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BRXREG __attribute__((section("sfrs")));
 extern volatile unsigned int        U5RXREG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BBRG __attribute__((section("sfrs")));
 extern volatile unsigned int        U5BRG __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BBRGCLR __attribute__((section("sfrs")));
 extern volatile unsigned int        U5BRGCLR __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BBRGSET __attribute__((section("sfrs")));
 extern volatile unsigned int        U5BRGSET __attribute__((section("sfrs")));
-extern volatile unsigned int        U3BBRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        U5BRGINV __attribute__((section("sfrs")));
 extern volatile unsigned int        PMCON __attribute__((section("sfrs")));
 typedef union {
@@ -14504,155 +13641,80 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
   .extern OC5RSSET         /* 0xBF803828 */
   .extern OC5RSINV         /* 0xBF80382C */
   .extern I2C3CON          /* 0xBF805000 */
-  .extern I2C1ACON         /* 0xBF805000 */
   .extern I2C3CONCLR       /* 0xBF805004 */
-  .extern I2C1ACONCLR      /* 0xBF805004 */
   .extern I2C3CONSET       /* 0xBF805008 */
-  .extern I2C1ACONSET      /* 0xBF805008 */
   .extern I2C3CONINV       /* 0xBF80500C */
-  .extern I2C1ACONINV      /* 0xBF80500C */
   .extern I2C3STAT         /* 0xBF805010 */
-  .extern I2C1ASTAT        /* 0xBF805010 */
   .extern I2C3STATCLR      /* 0xBF805014 */
-  .extern I2C1ASTATCLR     /* 0xBF805014 */
   .extern I2C3STATSET      /* 0xBF805018 */
-  .extern I2C1ASTATSET     /* 0xBF805018 */
   .extern I2C3STATINV      /* 0xBF80501C */
-  .extern I2C1ASTATINV     /* 0xBF80501C */
   .extern I2C3ADD          /* 0xBF805020 */
-  .extern I2C1AADD         /* 0xBF805020 */
   .extern I2C3ADDCLR       /* 0xBF805024 */
-  .extern I2C1AADDCLR      /* 0xBF805024 */
   .extern I2C3ADDSET       /* 0xBF805028 */
-  .extern I2C1AADDSET      /* 0xBF805028 */
   .extern I2C3ADDINV       /* 0xBF80502C */
-  .extern I2C1AADDINV      /* 0xBF80502C */
   .extern I2C3MSK          /* 0xBF805030 */
-  .extern I2C1AMSK         /* 0xBF805030 */
   .extern I2C3MSKCLR       /* 0xBF805034 */
-  .extern I2C1AMSKCLR      /* 0xBF805034 */
   .extern I2C3MSKSET       /* 0xBF805038 */
-  .extern I2C1AMSKSET      /* 0xBF805038 */
   .extern I2C3MSKINV       /* 0xBF80503C */
-  .extern I2C1AMSKINV      /* 0xBF80503C */
   .extern I2C3BRG          /* 0xBF805040 */
-  .extern I2C1ABRG         /* 0xBF805040 */
   .extern I2C3BRGCLR       /* 0xBF805044 */
-  .extern I2C1ABRGCLR      /* 0xBF805044 */
   .extern I2C3BRGSET       /* 0xBF805048 */
-  .extern I2C1ABRGSET      /* 0xBF805048 */
   .extern I2C3BRGINV       /* 0xBF80504C */
-  .extern I2C1ABRGINV      /* 0xBF80504C */
   .extern I2C3TRN          /* 0xBF805050 */
-  .extern I2C1ATRN         /* 0xBF805050 */
   .extern I2C3TRNCLR       /* 0xBF805054 */
-  .extern I2C1ATRNCLR      /* 0xBF805054 */
   .extern I2C3TRNSET       /* 0xBF805058 */
-  .extern I2C1ATRNSET      /* 0xBF805058 */
   .extern I2C3TRNINV       /* 0xBF80505C */
-  .extern I2C1ATRNINV      /* 0xBF80505C */
   .extern I2C3RCV          /* 0xBF805060 */
-  .extern I2C1ARCV         /* 0xBF805060 */
   .extern I2C4CON          /* 0xBF805100 */
-  .extern I2C2ACON         /* 0xBF805100 */
   .extern I2C4CONCLR       /* 0xBF805104 */
-  .extern I2C2ACONCLR      /* 0xBF805104 */
   .extern I2C4CONSET       /* 0xBF805108 */
-  .extern I2C2ACONSET      /* 0xBF805108 */
   .extern I2C4CONINV       /* 0xBF80510C */
-  .extern I2C2ACONINV      /* 0xBF80510C */
   .extern I2C4STAT         /* 0xBF805110 */
-  .extern I2C2ASTAT        /* 0xBF805110 */
   .extern I2C4STATCLR      /* 0xBF805114 */
-  .extern I2C2ASTATCLR     /* 0xBF805114 */
   .extern I2C4STATSET      /* 0xBF805118 */
-  .extern I2C2ASTATSET     /* 0xBF805118 */
   .extern I2C4STATINV      /* 0xBF80511C */
-  .extern I2C2ASTATINV     /* 0xBF80511C */
   .extern I2C4ADD          /* 0xBF805120 */
-  .extern I2C2AADD         /* 0xBF805120 */
   .extern I2C4ADDCLR       /* 0xBF805124 */
-  .extern I2C2AADDCLR      /* 0xBF805124 */
   .extern I2C4ADDSET       /* 0xBF805128 */
-  .extern I2C2AADDSET      /* 0xBF805128 */
   .extern I2C4ADDINV       /* 0xBF80512C */
-  .extern I2C2AADDINV      /* 0xBF80512C */
   .extern I2C4MSK          /* 0xBF805130 */
-  .extern I2C2AMSK         /* 0xBF805130 */
   .extern I2C4MSKCLR       /* 0xBF805134 */
-  .extern I2C2AMSKCLR      /* 0xBF805134 */
   .extern I2C4MSKSET       /* 0xBF805138 */
-  .extern I2C2AMSKSET      /* 0xBF805138 */
   .extern I2C4MSKINV       /* 0xBF80513C */
-  .extern I2C2AMSKINV      /* 0xBF80513C */
   .extern I2C4BRG          /* 0xBF805140 */
-  .extern I2C2ABRG         /* 0xBF805140 */
   .extern I2C4BRGCLR       /* 0xBF805144 */
-  .extern I2C2ABRGCLR      /* 0xBF805144 */
   .extern I2C4BRGSET       /* 0xBF805148 */
-  .extern I2C2ABRGSET      /* 0xBF805148 */
   .extern I2C4BRGINV       /* 0xBF80514C */
-  .extern I2C2ABRGINV      /* 0xBF80514C */
   .extern I2C4TRN          /* 0xBF805150 */
-  .extern I2C2ATRN         /* 0xBF805150 */
   .extern I2C4TRNCLR       /* 0xBF805154 */
-  .extern I2C2ATRNCLR      /* 0xBF805154 */
   .extern I2C4TRNSET       /* 0xBF805158 */
-  .extern I2C2ATRNSET      /* 0xBF805158 */
   .extern I2C4TRNINV       /* 0xBF80515C */
-  .extern I2C2ATRNINV      /* 0xBF80515C */
   .extern I2C4RCV          /* 0xBF805160 */
-  .extern I2C2ARCV         /* 0xBF805160 */
   .extern I2C5CON          /* 0xBF805200 */
-  .extern I2C3ACON         /* 0xBF805200 */
   .extern I2C5CONCLR       /* 0xBF805204 */
-  .extern I2C3ACONCLR      /* 0xBF805204 */
   .extern I2C5CONSET       /* 0xBF805208 */
-  .extern I2C3ACONSET      /* 0xBF805208 */
   .extern I2C5CONINV       /* 0xBF80520C */
-  .extern I2C3ACONINV      /* 0xBF80520C */
   .extern I2C5STAT         /* 0xBF805210 */
-  .extern I2C3ASTAT        /* 0xBF805210 */
   .extern I2C5STATCLR      /* 0xBF805214 */
-  .extern I2C3ASTATCLR     /* 0xBF805214 */
   .extern I2C5STATSET      /* 0xBF805218 */
-  .extern I2C3ASTATSET     /* 0xBF805218 */
   .extern I2C5STATINV      /* 0xBF80521C */
-  .extern I2C3ASTATINV     /* 0xBF80521C */
   .extern I2C5ADD          /* 0xBF805220 */
-  .extern I2C3AADD         /* 0xBF805220 */
   .extern I2C5ADDCLR       /* 0xBF805224 */
-  .extern I2C3AADDCLR      /* 0xBF805224 */
   .extern I2C5ADDSET       /* 0xBF805228 */
-  .extern I2C3AADDSET      /* 0xBF805228 */
   .extern I2C5ADDINV       /* 0xBF80522C */
-  .extern I2C3AADDINV      /* 0xBF80522C */
   .extern I2C5MSK          /* 0xBF805230 */
-  .extern I2C3AMSK         /* 0xBF805230 */
   .extern I2C5MSKCLR       /* 0xBF805234 */
-  .extern I2C3AMSKCLR      /* 0xBF805234 */
   .extern I2C5MSKSET       /* 0xBF805238 */
-  .extern I2C3AMSKSET      /* 0xBF805238 */
   .extern I2C5MSKINV       /* 0xBF80523C */
-  .extern I2C3AMSKINV      /* 0xBF80523C */
   .extern I2C5BRG          /* 0xBF805240 */
-  .extern I2C3ABRG         /* 0xBF805240 */
   .extern I2C5BRGCLR       /* 0xBF805244 */
-  .extern I2C3ABRGCLR      /* 0xBF805244 */
   .extern I2C5BRGSET       /* 0xBF805248 */
-  .extern I2C3ABRGSET      /* 0xBF805248 */
   .extern I2C5BRGINV       /* 0xBF80524C */
-  .extern I2C3ABRGINV      /* 0xBF80524C */
   .extern I2C5TRN          /* 0xBF805250 */
-  .extern I2C3ATRN         /* 0xBF805250 */
   .extern I2C5TRNCLR       /* 0xBF805254 */
-  .extern I2C3ATRNCLR      /* 0xBF805254 */
   .extern I2C5TRNSET       /* 0xBF805258 */
-  .extern I2C3ATRNSET      /* 0xBF805258 */
   .extern I2C5TRNINV       /* 0xBF80525C */
-  .extern I2C3ATRNINV      /* 0xBF80525C */
   .extern I2C5RCV          /* 0xBF805260 */
-  .extern I2C3ARCV         /* 0xBF805260 */
   .extern I2C1CON          /* 0xBF805300 */
   .extern I2C1CONCLR       /* 0xBF805304 */
   .extern I2C1CONSET       /* 0xBF805308 */
@@ -14704,83 +13766,44 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
   .extern I2C2TRNINV       /* 0xBF80545C */
   .extern I2C2RCV          /* 0xBF805460 */
   .extern SPI3CON          /* 0xBF805800 */
-  .extern SPI1ACON         /* 0xBF805800 */
   .extern SPI3CONCLR       /* 0xBF805804 */
-  .extern SPI1ACONCLR      /* 0xBF805804 */
   .extern SPI3CONSET       /* 0xBF805808 */
-  .extern SPI1ACONSET      /* 0xBF805808 */
   .extern SPI3CONINV       /* 0xBF80580C */
-  .extern SPI1ACONINV      /* 0xBF80580C */
   .extern SPI3STAT         /* 0xBF805810 */
-  .extern SPI1ASTAT        /* 0xBF805810 */
   .extern SPI3STATCLR      /* 0xBF805814 */
-  .extern SPI1ASTATCLR     /* 0xBF805814 */
   .extern SPI3STATSET      /* 0xBF805818 */
-  .extern SPI1ASTATSET     /* 0xBF805818 */
   .extern SPI3STATINV      /* 0xBF80581C */
-  .extern SPI1ASTATINV     /* 0xBF80581C */
   .extern SPI3BUF          /* 0xBF805820 */
-  .extern SPI1ABUF         /* 0xBF805820 */
   .extern SPI3BRG          /* 0xBF805830 */
-  .extern SPI1ABRG         /* 0xBF805830 */
   .extern SPI3BRGCLR       /* 0xBF805834 */
-  .extern SPI1ABRGCLR      /* 0xBF805834 */
   .extern SPI3BRGSET       /* 0xBF805838 */
-  .extern SPI1ABRGSET      /* 0xBF805838 */
   .extern SPI3BRGINV       /* 0xBF80583C */
-  .extern SPI1ABRGINV      /* 0xBF80583C */
   .extern SPI2CON          /* 0xBF805A00 */
-  .extern SPI2ACON         /* 0xBF805A00 */
   .extern SPI2CONCLR       /* 0xBF805A04 */
-  .extern SPI2ACONCLR      /* 0xBF805A04 */
   .extern SPI2CONSET       /* 0xBF805A08 */
-  .extern SPI2ACONSET      /* 0xBF805A08 */
   .extern SPI2CONINV       /* 0xBF805A0C */
-  .extern SPI2ACONINV      /* 0xBF805A0C */
   .extern SPI2STAT         /* 0xBF805A10 */
-  .extern SPI2ASTAT        /* 0xBF805A10 */
   .extern SPI2STATCLR      /* 0xBF805A14 */
-  .extern SPI2ASTATCLR     /* 0xBF805A14 */
   .extern SPI2STATSET      /* 0xBF805A18 */
-  .extern SPI2ASTATSET     /* 0xBF805A18 */
   .extern SPI2STATINV      /* 0xBF805A1C */
-  .extern SPI2ASTATINV     /* 0xBF805A1C */
   .extern SPI2BUF          /* 0xBF805A20 */
-  .extern SPI2ABUF         /* 0xBF805A20 */
   .extern SPI2BRG          /* 0xBF805A30 */
-  .extern SPI2ABRG         /* 0xBF805A30 */
   .extern SPI2BRGCLR       /* 0xBF805A34 */
-  .extern SPI2ABRGCLR      /* 0xBF805A34 */
   .extern SPI2BRGSET       /* 0xBF805A38 */
-  .extern SPI2ABRGSET      /* 0xBF805A38 */
   .extern SPI2BRGINV       /* 0xBF805A3C */
-  .extern SPI2ABRGINV      /* 0xBF805A3C */
   .extern SPI4CON          /* 0xBF805C00 */
-  .extern SPI3ACON         /* 0xBF805C00 */
   .extern SPI4CONCLR       /* 0xBF805C04 */
-  .extern SPI3ACONCLR      /* 0xBF805C04 */
   .extern SPI4CONSET       /* 0xBF805C08 */
-  .extern SPI3ACONSET      /* 0xBF805C08 */
   .extern SPI4CONINV       /* 0xBF805C0C */
-  .extern SPI3ACONINV      /* 0xBF805C0C */
   .extern SPI4STAT         /* 0xBF805C10 */
-  .extern SPI3ASTAT        /* 0xBF805C10 */
   .extern SPI4STATCLR      /* 0xBF805C14 */
-  .extern SPI3ASTATCLR     /* 0xBF805C14 */
   .extern SPI4STATSET      /* 0xBF805C18 */
-  .extern SPI3ASTATSET     /* 0xBF805C18 */
   .extern SPI4STATINV      /* 0xBF805C1C */
-  .extern SPI3ASTATINV     /* 0xBF805C1C */
   .extern SPI4BUF          /* 0xBF805C20 */
-  .extern SPI3ABUF         /* 0xBF805C20 */
   .extern SPI4BRG          /* 0xBF805C30 */
-  .extern SPI3ABRG         /* 0xBF805C30 */
   .extern SPI4BRGCLR       /* 0xBF805C34 */
-  .extern SPI3ABRGCLR      /* 0xBF805C34 */
   .extern SPI4BRGSET       /* 0xBF805C38 */
-  .extern SPI3ABRGSET      /* 0xBF805C38 */
   .extern SPI4BRGINV       /* 0xBF805C3C */
-  .extern SPI3ABRGINV      /* 0xBF805C3C */
   .extern SPI1CON          /* 0xBF805E00 */
   .extern SPI1CONCLR       /* 0xBF805E04 */
   .extern SPI1CONSET       /* 0xBF805E08 */
@@ -14823,145 +13846,75 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
   .extern U1BRGINV         /* 0xBF80604C */
   .extern U1ABRGINV        /* 0xBF80604C */
   .extern U4MODE           /* 0xBF806200 */
-  .extern U1BMODE          /* 0xBF806200 */
   .extern U4MODECLR        /* 0xBF806204 */
-  .extern U1BMODECLR       /* 0xBF806204 */
   .extern U4MODESET        /* 0xBF806208 */
-  .extern U1BMODESET       /* 0xBF806208 */
   .extern U4MODEINV        /* 0xBF80620C */
-  .extern U1BMODEINV       /* 0xBF80620C */
   .extern U4STA            /* 0xBF806210 */
-  .extern U1BSTA           /* 0xBF806210 */
   .extern U4STACLR         /* 0xBF806214 */
-  .extern U1BSTACLR        /* 0xBF806214 */
   .extern U4STASET         /* 0xBF806218 */
-  .extern U1BSTASET        /* 0xBF806218 */
   .extern U4STAINV         /* 0xBF80621C */
-  .extern U1BSTAINV        /* 0xBF80621C */
   .extern U4TXREG          /* 0xBF806220 */
-  .extern U1BTXREG         /* 0xBF806220 */
   .extern U4RXREG          /* 0xBF806230 */
-  .extern U1BRXREG         /* 0xBF806230 */
   .extern U4BRG            /* 0xBF806240 */
-  .extern U1BBRG           /* 0xBF806240 */
   .extern U4BRGCLR         /* 0xBF806244 */
-  .extern U1BBRGCLR        /* 0xBF806244 */
   .extern U4BRGSET         /* 0xBF806248 */
-  .extern U1BBRGSET        /* 0xBF806248 */
   .extern U4BRGINV         /* 0xBF80624C */
-  .extern U1BBRGINV        /* 0xBF80624C */
   .extern U3MODE           /* 0xBF806400 */
-  .extern U2AMODE          /* 0xBF806400 */
   .extern U3MODECLR        /* 0xBF806404 */
-  .extern U2AMODECLR       /* 0xBF806404 */
   .extern U3MODESET        /* 0xBF806408 */
-  .extern U2AMODESET       /* 0xBF806408 */
   .extern U3MODEINV        /* 0xBF80640C */
-  .extern U2AMODEINV       /* 0xBF80640C */
   .extern U3STA            /* 0xBF806410 */
-  .extern U2ASTA           /* 0xBF806410 */
   .extern U3STACLR         /* 0xBF806414 */
-  .extern U2ASTACLR        /* 0xBF806414 */
   .extern U3STASET         /* 0xBF806418 */
-  .extern U2ASTASET        /* 0xBF806418 */
   .extern U3STAINV         /* 0xBF80641C */
-  .extern U2ASTAINV        /* 0xBF80641C */
   .extern U3TXREG          /* 0xBF806420 */
-  .extern U2ATXREG         /* 0xBF806420 */
   .extern U3RXREG          /* 0xBF806430 */
-  .extern U2ARXREG         /* 0xBF806430 */
   .extern U3BRG            /* 0xBF806440 */
-  .extern U2ABRG           /* 0xBF806440 */
   .extern U3BRGCLR         /* 0xBF806444 */
-  .extern U2ABRGCLR        /* 0xBF806444 */
   .extern U3BRGSET         /* 0xBF806448 */
-  .extern U2ABRGSET        /* 0xBF806448 */
   .extern U3BRGINV         /* 0xBF80644C */
-  .extern U2ABRGINV        /* 0xBF80644C */
   .extern U6MODE           /* 0xBF806600 */
-  .extern U2BMODE          /* 0xBF806600 */
   .extern U6MODECLR        /* 0xBF806604 */
-  .extern U2BMODECLR       /* 0xBF806604 */
   .extern U6MODESET        /* 0xBF806608 */
-  .extern U2BMODESET       /* 0xBF806608 */
   .extern U6MODEINV        /* 0xBF80660C */
-  .extern U2BMODEINV       /* 0xBF80660C */
   .extern U6STA            /* 0xBF806610 */
-  .extern U2BSTA           /* 0xBF806610 */
   .extern U6STACLR         /* 0xBF806614 */
-  .extern U2BSTACLR        /* 0xBF806614 */
   .extern U6STASET         /* 0xBF806618 */
-  .extern U2BSTASET        /* 0xBF806618 */
   .extern U6STAINV         /* 0xBF80661C */
-  .extern U2BSTAINV        /* 0xBF80661C */
   .extern U6TXREG          /* 0xBF806620 */
-  .extern U2BTXREG         /* 0xBF806620 */
   .extern U6RXREG          /* 0xBF806630 */
-  .extern U2BRXREG         /* 0xBF806630 */
   .extern U6BRG            /* 0xBF806640 */
-  .extern U2BBRG           /* 0xBF806640 */
   .extern U6BRGCLR         /* 0xBF806644 */
-  .extern U2BBRGCLR        /* 0xBF806644 */
   .extern U6BRGSET         /* 0xBF806648 */
-  .extern U2BBRGSET        /* 0xBF806648 */
   .extern U6BRGINV         /* 0xBF80664C */
-  .extern U2BBRGINV        /* 0xBF80664C */
   .extern U2MODE           /* 0xBF806800 */
-  .extern U3AMODE          /* 0xBF806800 */
   .extern U2MODECLR        /* 0xBF806804 */
-  .extern U3AMODECLR       /* 0xBF806804 */
   .extern U2MODESET        /* 0xBF806808 */
-  .extern U3AMODESET       /* 0xBF806808 */
   .extern U2MODEINV        /* 0xBF80680C */
-  .extern U3AMODEINV       /* 0xBF80680C */
   .extern U2STA            /* 0xBF806810 */
-  .extern U3ASTA           /* 0xBF806810 */
   .extern U2STACLR         /* 0xBF806814 */
-  .extern U3ASTACLR        /* 0xBF806814 */
   .extern U2STASET         /* 0xBF806818 */
-  .extern U3ASTASET        /* 0xBF806818 */
   .extern U2STAINV         /* 0xBF80681C */
-  .extern U3ASTAINV        /* 0xBF80681C */
   .extern U2TXREG          /* 0xBF806820 */
-  .extern U3ATXREG         /* 0xBF806820 */
   .extern U2RXREG          /* 0xBF806830 */
-  .extern U3ARXREG         /* 0xBF806830 */
   .extern U2BRG            /* 0xBF806840 */
-  .extern U3ABRG           /* 0xBF806840 */
   .extern U2BRGCLR         /* 0xBF806844 */
-  .extern U3ABRGCLR        /* 0xBF806844 */
   .extern U2BRGSET         /* 0xBF806848 */
-  .extern U3ABRGSET        /* 0xBF806848 */
   .extern U2BRGINV         /* 0xBF80684C */
-  .extern U3ABRGINV        /* 0xBF80684C */
   .extern U5MODE           /* 0xBF806A00 */
-  .extern U3BMODE          /* 0xBF806A00 */
   .extern U5MODECLR        /* 0xBF806A04 */
-  .extern U3BMODECLR       /* 0xBF806A04 */
   .extern U5MODESET        /* 0xBF806A08 */
-  .extern U3BMODESET       /* 0xBF806A08 */
   .extern U5MODEINV        /* 0xBF806A0C */
-  .extern U3BMODEINV       /* 0xBF806A0C */
   .extern U5STA            /* 0xBF806A10 */
-  .extern U3BSTA           /* 0xBF806A10 */
   .extern U5STACLR         /* 0xBF806A14 */
-  .extern U3BSTACLR        /* 0xBF806A14 */
   .extern U5STASET         /* 0xBF806A18 */
-  .extern U3BSTASET        /* 0xBF806A18 */
   .extern U5STAINV         /* 0xBF806A1C */
-  .extern U3BSTAINV        /* 0xBF806A1C */
   .extern U5TXREG          /* 0xBF806A20 */
-  .extern U3BTXREG         /* 0xBF806A20 */
   .extern U5RXREG          /* 0xBF806A30 */
-  .extern U3BRXREG         /* 0xBF806A30 */
   .extern U5BRG            /* 0xBF806A40 */
-  .extern U3BBRG           /* 0xBF806A40 */
   .extern U5BRGCLR         /* 0xBF806A44 */
-  .extern U3BBRGCLR        /* 0xBF806A44 */
   .extern U5BRGSET         /* 0xBF806A48 */
-  .extern U3BBRGSET        /* 0xBF806A48 */
   .extern U5BRGINV         /* 0xBF806A4C */
-  .extern U3BBRGINV        /* 0xBF806A4C */
   .extern PMCON            /* 0xBF807000 */
   .extern PMCONCLR         /* 0xBF807004 */
   .extern PMCONSET         /* 0xBF807008 */
@@ -18559,82 +17512,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _OC5CON_w_MASK                           0xFFFFFFFF
 #define _OC5CON_w_LENGTH                         0x00000020
 
-#define _I2C1ACON_SEN_POSITION                   0x00000000
-#define _I2C1ACON_SEN_MASK                       0x00000001
-#define _I2C1ACON_SEN_LENGTH                     0x00000001
-
-#define _I2C1ACON_RSEN_POSITION                  0x00000001
-#define _I2C1ACON_RSEN_MASK                      0x00000002
-#define _I2C1ACON_RSEN_LENGTH                    0x00000001
-
-#define _I2C1ACON_PEN_POSITION                   0x00000002
-#define _I2C1ACON_PEN_MASK                       0x00000004
-#define _I2C1ACON_PEN_LENGTH                     0x00000001
-
-#define _I2C1ACON_RCEN_POSITION                  0x00000003
-#define _I2C1ACON_RCEN_MASK                      0x00000008
-#define _I2C1ACON_RCEN_LENGTH                    0x00000001
-
-#define _I2C1ACON_ACKEN_POSITION                 0x00000004
-#define _I2C1ACON_ACKEN_MASK                     0x00000010
-#define _I2C1ACON_ACKEN_LENGTH                   0x00000001
-
-#define _I2C1ACON_ACKDT_POSITION                 0x00000005
-#define _I2C1ACON_ACKDT_MASK                     0x00000020
-#define _I2C1ACON_ACKDT_LENGTH                   0x00000001
-
-#define _I2C1ACON_STREN_POSITION                 0x00000006
-#define _I2C1ACON_STREN_MASK                     0x00000040
-#define _I2C1ACON_STREN_LENGTH                   0x00000001
-
-#define _I2C1ACON_GCEN_POSITION                  0x00000007
-#define _I2C1ACON_GCEN_MASK                      0x00000080
-#define _I2C1ACON_GCEN_LENGTH                    0x00000001
-
-#define _I2C1ACON_SMEN_POSITION                  0x00000008
-#define _I2C1ACON_SMEN_MASK                      0x00000100
-#define _I2C1ACON_SMEN_LENGTH                    0x00000001
-
-#define _I2C1ACON_DISSLW_POSITION                0x00000009
-#define _I2C1ACON_DISSLW_MASK                    0x00000200
-#define _I2C1ACON_DISSLW_LENGTH                  0x00000001
-
-#define _I2C1ACON_A10M_POSITION                  0x0000000A
-#define _I2C1ACON_A10M_MASK                      0x00000400
-#define _I2C1ACON_A10M_LENGTH                    0x00000001
-
-#define _I2C1ACON_STRICT_POSITION                0x0000000B
-#define _I2C1ACON_STRICT_MASK                    0x00000800
-#define _I2C1ACON_STRICT_LENGTH                  0x00000001
-
-#define _I2C1ACON_SCLREL_POSITION                0x0000000C
-#define _I2C1ACON_SCLREL_MASK                    0x00001000
-#define _I2C1ACON_SCLREL_LENGTH                  0x00000001
-
-#define _I2C1ACON_SIDL_POSITION                  0x0000000D
-#define _I2C1ACON_SIDL_MASK                      0x00002000
-#define _I2C1ACON_SIDL_LENGTH                    0x00000001
-
-#define _I2C1ACON_ON_POSITION                    0x0000000F
-#define _I2C1ACON_ON_MASK                        0x00008000
-#define _I2C1ACON_ON_LENGTH                      0x00000001
-
-#define _I2C1ACON_IPMIEN_POSITION                0x0000000B
-#define _I2C1ACON_IPMIEN_MASK                    0x00000800
-#define _I2C1ACON_IPMIEN_LENGTH                  0x00000001
-
-#define _I2C1ACON_I2CSIDL_POSITION               0x0000000D
-#define _I2C1ACON_I2CSIDL_MASK                   0x00002000
-#define _I2C1ACON_I2CSIDL_LENGTH                 0x00000001
-
-#define _I2C1ACON_I2CEN_POSITION                 0x0000000F
-#define _I2C1ACON_I2CEN_MASK                     0x00008000
-#define _I2C1ACON_I2CEN_LENGTH                   0x00000001
-
-#define _I2C1ACON_w_POSITION                     0x00000000
-#define _I2C1ACON_w_MASK                         0xFFFFFFFF
-#define _I2C1ACON_w_LENGTH                       0x00000020
-
 #define _I2C3CON_SEN_POSITION                    0x00000000
 #define _I2C3CON_SEN_MASK                        0x00000001
 #define _I2C3CON_SEN_LENGTH                      0x00000001
@@ -18711,66 +17588,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C3CON_w_MASK                          0xFFFFFFFF
 #define _I2C3CON_w_LENGTH                        0x00000020
 
-#define _I2C1ASTAT_TBF_POSITION                  0x00000000
-#define _I2C1ASTAT_TBF_MASK                      0x00000001
-#define _I2C1ASTAT_TBF_LENGTH                    0x00000001
-
-#define _I2C1ASTAT_RBF_POSITION                  0x00000001
-#define _I2C1ASTAT_RBF_MASK                      0x00000002
-#define _I2C1ASTAT_RBF_LENGTH                    0x00000001
-
-#define _I2C1ASTAT_R_W_POSITION                  0x00000002
-#define _I2C1ASTAT_R_W_MASK                      0x00000004
-#define _I2C1ASTAT_R_W_LENGTH                    0x00000001
-
-#define _I2C1ASTAT_S_POSITION                    0x00000003
-#define _I2C1ASTAT_S_MASK                        0x00000008
-#define _I2C1ASTAT_S_LENGTH                      0x00000001
-
-#define _I2C1ASTAT_P_POSITION                    0x00000004
-#define _I2C1ASTAT_P_MASK                        0x00000010
-#define _I2C1ASTAT_P_LENGTH                      0x00000001
-
-#define _I2C1ASTAT_D_A_POSITION                  0x00000005
-#define _I2C1ASTAT_D_A_MASK                      0x00000020
-#define _I2C1ASTAT_D_A_LENGTH                    0x00000001
-
-#define _I2C1ASTAT_I2COV_POSITION                0x00000006
-#define _I2C1ASTAT_I2COV_MASK                    0x00000040
-#define _I2C1ASTAT_I2COV_LENGTH                  0x00000001
-
-#define _I2C1ASTAT_IWCOL_POSITION                0x00000007
-#define _I2C1ASTAT_IWCOL_MASK                    0x00000080
-#define _I2C1ASTAT_IWCOL_LENGTH                  0x00000001
-
-#define _I2C1ASTAT_ADD10_POSITION                0x00000008
-#define _I2C1ASTAT_ADD10_MASK                    0x00000100
-#define _I2C1ASTAT_ADD10_LENGTH                  0x00000001
-
-#define _I2C1ASTAT_GCSTAT_POSITION               0x00000009
-#define _I2C1ASTAT_GCSTAT_MASK                   0x00000200
-#define _I2C1ASTAT_GCSTAT_LENGTH                 0x00000001
-
-#define _I2C1ASTAT_BCL_POSITION                  0x0000000A
-#define _I2C1ASTAT_BCL_MASK                      0x00000400
-#define _I2C1ASTAT_BCL_LENGTH                    0x00000001
-
-#define _I2C1ASTAT_TRSTAT_POSITION               0x0000000E
-#define _I2C1ASTAT_TRSTAT_MASK                   0x00004000
-#define _I2C1ASTAT_TRSTAT_LENGTH                 0x00000001
-
-#define _I2C1ASTAT_ACKSTAT_POSITION              0x0000000F
-#define _I2C1ASTAT_ACKSTAT_MASK                  0x00008000
-#define _I2C1ASTAT_ACKSTAT_LENGTH                0x00000001
-
-#define _I2C1ASTAT_I2CPOV_POSITION               0x00000006
-#define _I2C1ASTAT_I2CPOV_MASK                   0x00000040
-#define _I2C1ASTAT_I2CPOV_LENGTH                 0x00000001
-
-#define _I2C1ASTAT_w_POSITION                    0x00000000
-#define _I2C1ASTAT_w_MASK                        0xFFFFFFFF
-#define _I2C1ASTAT_w_LENGTH                      0x00000020
-
 #define _I2C3STAT_TBF_POSITION                   0x00000000
 #define _I2C3STAT_TBF_MASK                       0x00000001
 #define _I2C3STAT_TBF_LENGTH                     0x00000001
@@ -18830,82 +17647,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C3STAT_w_POSITION                     0x00000000
 #define _I2C3STAT_w_MASK                         0xFFFFFFFF
 #define _I2C3STAT_w_LENGTH                       0x00000020
-
-#define _I2C2ACON_SEN_POSITION                   0x00000000
-#define _I2C2ACON_SEN_MASK                       0x00000001
-#define _I2C2ACON_SEN_LENGTH                     0x00000001
-
-#define _I2C2ACON_RSEN_POSITION                  0x00000001
-#define _I2C2ACON_RSEN_MASK                      0x00000002
-#define _I2C2ACON_RSEN_LENGTH                    0x00000001
-
-#define _I2C2ACON_PEN_POSITION                   0x00000002
-#define _I2C2ACON_PEN_MASK                       0x00000004
-#define _I2C2ACON_PEN_LENGTH                     0x00000001
-
-#define _I2C2ACON_RCEN_POSITION                  0x00000003
-#define _I2C2ACON_RCEN_MASK                      0x00000008
-#define _I2C2ACON_RCEN_LENGTH                    0x00000001
-
-#define _I2C2ACON_ACKEN_POSITION                 0x00000004
-#define _I2C2ACON_ACKEN_MASK                     0x00000010
-#define _I2C2ACON_ACKEN_LENGTH                   0x00000001
-
-#define _I2C2ACON_ACKDT_POSITION                 0x00000005
-#define _I2C2ACON_ACKDT_MASK                     0x00000020
-#define _I2C2ACON_ACKDT_LENGTH                   0x00000001
-
-#define _I2C2ACON_STREN_POSITION                 0x00000006
-#define _I2C2ACON_STREN_MASK                     0x00000040
-#define _I2C2ACON_STREN_LENGTH                   0x00000001
-
-#define _I2C2ACON_GCEN_POSITION                  0x00000007
-#define _I2C2ACON_GCEN_MASK                      0x00000080
-#define _I2C2ACON_GCEN_LENGTH                    0x00000001
-
-#define _I2C2ACON_SMEN_POSITION                  0x00000008
-#define _I2C2ACON_SMEN_MASK                      0x00000100
-#define _I2C2ACON_SMEN_LENGTH                    0x00000001
-
-#define _I2C2ACON_DISSLW_POSITION                0x00000009
-#define _I2C2ACON_DISSLW_MASK                    0x00000200
-#define _I2C2ACON_DISSLW_LENGTH                  0x00000001
-
-#define _I2C2ACON_A10M_POSITION                  0x0000000A
-#define _I2C2ACON_A10M_MASK                      0x00000400
-#define _I2C2ACON_A10M_LENGTH                    0x00000001
-
-#define _I2C2ACON_STRICT_POSITION                0x0000000B
-#define _I2C2ACON_STRICT_MASK                    0x00000800
-#define _I2C2ACON_STRICT_LENGTH                  0x00000001
-
-#define _I2C2ACON_SCLREL_POSITION                0x0000000C
-#define _I2C2ACON_SCLREL_MASK                    0x00001000
-#define _I2C2ACON_SCLREL_LENGTH                  0x00000001
-
-#define _I2C2ACON_SIDL_POSITION                  0x0000000D
-#define _I2C2ACON_SIDL_MASK                      0x00002000
-#define _I2C2ACON_SIDL_LENGTH                    0x00000001
-
-#define _I2C2ACON_ON_POSITION                    0x0000000F
-#define _I2C2ACON_ON_MASK                        0x00008000
-#define _I2C2ACON_ON_LENGTH                      0x00000001
-
-#define _I2C2ACON_IPMIEN_POSITION                0x0000000B
-#define _I2C2ACON_IPMIEN_MASK                    0x00000800
-#define _I2C2ACON_IPMIEN_LENGTH                  0x00000001
-
-#define _I2C2ACON_I2CSIDL_POSITION               0x0000000D
-#define _I2C2ACON_I2CSIDL_MASK                   0x00002000
-#define _I2C2ACON_I2CSIDL_LENGTH                 0x00000001
-
-#define _I2C2ACON_I2CEN_POSITION                 0x0000000F
-#define _I2C2ACON_I2CEN_MASK                     0x00008000
-#define _I2C2ACON_I2CEN_LENGTH                   0x00000001
-
-#define _I2C2ACON_w_POSITION                     0x00000000
-#define _I2C2ACON_w_MASK                         0xFFFFFFFF
-#define _I2C2ACON_w_LENGTH                       0x00000020
 
 #define _I2C4CON_SEN_POSITION                    0x00000000
 #define _I2C4CON_SEN_MASK                        0x00000001
@@ -18983,66 +17724,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C4CON_w_MASK                          0xFFFFFFFF
 #define _I2C4CON_w_LENGTH                        0x00000020
 
-#define _I2C2ASTAT_TBF_POSITION                  0x00000000
-#define _I2C2ASTAT_TBF_MASK                      0x00000001
-#define _I2C2ASTAT_TBF_LENGTH                    0x00000001
-
-#define _I2C2ASTAT_RBF_POSITION                  0x00000001
-#define _I2C2ASTAT_RBF_MASK                      0x00000002
-#define _I2C2ASTAT_RBF_LENGTH                    0x00000001
-
-#define _I2C2ASTAT_R_W_POSITION                  0x00000002
-#define _I2C2ASTAT_R_W_MASK                      0x00000004
-#define _I2C2ASTAT_R_W_LENGTH                    0x00000001
-
-#define _I2C2ASTAT_S_POSITION                    0x00000003
-#define _I2C2ASTAT_S_MASK                        0x00000008
-#define _I2C2ASTAT_S_LENGTH                      0x00000001
-
-#define _I2C2ASTAT_P_POSITION                    0x00000004
-#define _I2C2ASTAT_P_MASK                        0x00000010
-#define _I2C2ASTAT_P_LENGTH                      0x00000001
-
-#define _I2C2ASTAT_D_A_POSITION                  0x00000005
-#define _I2C2ASTAT_D_A_MASK                      0x00000020
-#define _I2C2ASTAT_D_A_LENGTH                    0x00000001
-
-#define _I2C2ASTAT_I2COV_POSITION                0x00000006
-#define _I2C2ASTAT_I2COV_MASK                    0x00000040
-#define _I2C2ASTAT_I2COV_LENGTH                  0x00000001
-
-#define _I2C2ASTAT_IWCOL_POSITION                0x00000007
-#define _I2C2ASTAT_IWCOL_MASK                    0x00000080
-#define _I2C2ASTAT_IWCOL_LENGTH                  0x00000001
-
-#define _I2C2ASTAT_ADD10_POSITION                0x00000008
-#define _I2C2ASTAT_ADD10_MASK                    0x00000100
-#define _I2C2ASTAT_ADD10_LENGTH                  0x00000001
-
-#define _I2C2ASTAT_GCSTAT_POSITION               0x00000009
-#define _I2C2ASTAT_GCSTAT_MASK                   0x00000200
-#define _I2C2ASTAT_GCSTAT_LENGTH                 0x00000001
-
-#define _I2C2ASTAT_BCL_POSITION                  0x0000000A
-#define _I2C2ASTAT_BCL_MASK                      0x00000400
-#define _I2C2ASTAT_BCL_LENGTH                    0x00000001
-
-#define _I2C2ASTAT_TRSTAT_POSITION               0x0000000E
-#define _I2C2ASTAT_TRSTAT_MASK                   0x00004000
-#define _I2C2ASTAT_TRSTAT_LENGTH                 0x00000001
-
-#define _I2C2ASTAT_ACKSTAT_POSITION              0x0000000F
-#define _I2C2ASTAT_ACKSTAT_MASK                  0x00008000
-#define _I2C2ASTAT_ACKSTAT_LENGTH                0x00000001
-
-#define _I2C2ASTAT_I2CPOV_POSITION               0x00000006
-#define _I2C2ASTAT_I2CPOV_MASK                   0x00000040
-#define _I2C2ASTAT_I2CPOV_LENGTH                 0x00000001
-
-#define _I2C2ASTAT_w_POSITION                    0x00000000
-#define _I2C2ASTAT_w_MASK                        0xFFFFFFFF
-#define _I2C2ASTAT_w_LENGTH                      0x00000020
-
 #define _I2C4STAT_TBF_POSITION                   0x00000000
 #define _I2C4STAT_TBF_MASK                       0x00000001
 #define _I2C4STAT_TBF_LENGTH                     0x00000001
@@ -19102,82 +17783,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C4STAT_w_POSITION                     0x00000000
 #define _I2C4STAT_w_MASK                         0xFFFFFFFF
 #define _I2C4STAT_w_LENGTH                       0x00000020
-
-#define _I2C3ACON_SEN_POSITION                   0x00000000
-#define _I2C3ACON_SEN_MASK                       0x00000001
-#define _I2C3ACON_SEN_LENGTH                     0x00000001
-
-#define _I2C3ACON_RSEN_POSITION                  0x00000001
-#define _I2C3ACON_RSEN_MASK                      0x00000002
-#define _I2C3ACON_RSEN_LENGTH                    0x00000001
-
-#define _I2C3ACON_PEN_POSITION                   0x00000002
-#define _I2C3ACON_PEN_MASK                       0x00000004
-#define _I2C3ACON_PEN_LENGTH                     0x00000001
-
-#define _I2C3ACON_RCEN_POSITION                  0x00000003
-#define _I2C3ACON_RCEN_MASK                      0x00000008
-#define _I2C3ACON_RCEN_LENGTH                    0x00000001
-
-#define _I2C3ACON_ACKEN_POSITION                 0x00000004
-#define _I2C3ACON_ACKEN_MASK                     0x00000010
-#define _I2C3ACON_ACKEN_LENGTH                   0x00000001
-
-#define _I2C3ACON_ACKDT_POSITION                 0x00000005
-#define _I2C3ACON_ACKDT_MASK                     0x00000020
-#define _I2C3ACON_ACKDT_LENGTH                   0x00000001
-
-#define _I2C3ACON_STREN_POSITION                 0x00000006
-#define _I2C3ACON_STREN_MASK                     0x00000040
-#define _I2C3ACON_STREN_LENGTH                   0x00000001
-
-#define _I2C3ACON_GCEN_POSITION                  0x00000007
-#define _I2C3ACON_GCEN_MASK                      0x00000080
-#define _I2C3ACON_GCEN_LENGTH                    0x00000001
-
-#define _I2C3ACON_SMEN_POSITION                  0x00000008
-#define _I2C3ACON_SMEN_MASK                      0x00000100
-#define _I2C3ACON_SMEN_LENGTH                    0x00000001
-
-#define _I2C3ACON_DISSLW_POSITION                0x00000009
-#define _I2C3ACON_DISSLW_MASK                    0x00000200
-#define _I2C3ACON_DISSLW_LENGTH                  0x00000001
-
-#define _I2C3ACON_A10M_POSITION                  0x0000000A
-#define _I2C3ACON_A10M_MASK                      0x00000400
-#define _I2C3ACON_A10M_LENGTH                    0x00000001
-
-#define _I2C3ACON_STRICT_POSITION                0x0000000B
-#define _I2C3ACON_STRICT_MASK                    0x00000800
-#define _I2C3ACON_STRICT_LENGTH                  0x00000001
-
-#define _I2C3ACON_SCLREL_POSITION                0x0000000C
-#define _I2C3ACON_SCLREL_MASK                    0x00001000
-#define _I2C3ACON_SCLREL_LENGTH                  0x00000001
-
-#define _I2C3ACON_SIDL_POSITION                  0x0000000D
-#define _I2C3ACON_SIDL_MASK                      0x00002000
-#define _I2C3ACON_SIDL_LENGTH                    0x00000001
-
-#define _I2C3ACON_ON_POSITION                    0x0000000F
-#define _I2C3ACON_ON_MASK                        0x00008000
-#define _I2C3ACON_ON_LENGTH                      0x00000001
-
-#define _I2C3ACON_IPMIEN_POSITION                0x0000000B
-#define _I2C3ACON_IPMIEN_MASK                    0x00000800
-#define _I2C3ACON_IPMIEN_LENGTH                  0x00000001
-
-#define _I2C3ACON_I2CSIDL_POSITION               0x0000000D
-#define _I2C3ACON_I2CSIDL_MASK                   0x00002000
-#define _I2C3ACON_I2CSIDL_LENGTH                 0x00000001
-
-#define _I2C3ACON_I2CEN_POSITION                 0x0000000F
-#define _I2C3ACON_I2CEN_MASK                     0x00008000
-#define _I2C3ACON_I2CEN_LENGTH                   0x00000001
-
-#define _I2C3ACON_w_POSITION                     0x00000000
-#define _I2C3ACON_w_MASK                         0xFFFFFFFF
-#define _I2C3ACON_w_LENGTH                       0x00000020
 
 #define _I2C5CON_SEN_POSITION                    0x00000000
 #define _I2C5CON_SEN_MASK                        0x00000001
@@ -19254,66 +17859,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C5CON_w_POSITION                      0x00000000
 #define _I2C5CON_w_MASK                          0xFFFFFFFF
 #define _I2C5CON_w_LENGTH                        0x00000020
-
-#define _I2C3ASTAT_TBF_POSITION                  0x00000000
-#define _I2C3ASTAT_TBF_MASK                      0x00000001
-#define _I2C3ASTAT_TBF_LENGTH                    0x00000001
-
-#define _I2C3ASTAT_RBF_POSITION                  0x00000001
-#define _I2C3ASTAT_RBF_MASK                      0x00000002
-#define _I2C3ASTAT_RBF_LENGTH                    0x00000001
-
-#define _I2C3ASTAT_R_W_POSITION                  0x00000002
-#define _I2C3ASTAT_R_W_MASK                      0x00000004
-#define _I2C3ASTAT_R_W_LENGTH                    0x00000001
-
-#define _I2C3ASTAT_S_POSITION                    0x00000003
-#define _I2C3ASTAT_S_MASK                        0x00000008
-#define _I2C3ASTAT_S_LENGTH                      0x00000001
-
-#define _I2C3ASTAT_P_POSITION                    0x00000004
-#define _I2C3ASTAT_P_MASK                        0x00000010
-#define _I2C3ASTAT_P_LENGTH                      0x00000001
-
-#define _I2C3ASTAT_D_A_POSITION                  0x00000005
-#define _I2C3ASTAT_D_A_MASK                      0x00000020
-#define _I2C3ASTAT_D_A_LENGTH                    0x00000001
-
-#define _I2C3ASTAT_I2COV_POSITION                0x00000006
-#define _I2C3ASTAT_I2COV_MASK                    0x00000040
-#define _I2C3ASTAT_I2COV_LENGTH                  0x00000001
-
-#define _I2C3ASTAT_IWCOL_POSITION                0x00000007
-#define _I2C3ASTAT_IWCOL_MASK                    0x00000080
-#define _I2C3ASTAT_IWCOL_LENGTH                  0x00000001
-
-#define _I2C3ASTAT_ADD10_POSITION                0x00000008
-#define _I2C3ASTAT_ADD10_MASK                    0x00000100
-#define _I2C3ASTAT_ADD10_LENGTH                  0x00000001
-
-#define _I2C3ASTAT_GCSTAT_POSITION               0x00000009
-#define _I2C3ASTAT_GCSTAT_MASK                   0x00000200
-#define _I2C3ASTAT_GCSTAT_LENGTH                 0x00000001
-
-#define _I2C3ASTAT_BCL_POSITION                  0x0000000A
-#define _I2C3ASTAT_BCL_MASK                      0x00000400
-#define _I2C3ASTAT_BCL_LENGTH                    0x00000001
-
-#define _I2C3ASTAT_TRSTAT_POSITION               0x0000000E
-#define _I2C3ASTAT_TRSTAT_MASK                   0x00004000
-#define _I2C3ASTAT_TRSTAT_LENGTH                 0x00000001
-
-#define _I2C3ASTAT_ACKSTAT_POSITION              0x0000000F
-#define _I2C3ASTAT_ACKSTAT_MASK                  0x00008000
-#define _I2C3ASTAT_ACKSTAT_LENGTH                0x00000001
-
-#define _I2C3ASTAT_I2CPOV_POSITION               0x00000006
-#define _I2C3ASTAT_I2CPOV_MASK                   0x00000040
-#define _I2C3ASTAT_I2CPOV_LENGTH                 0x00000001
-
-#define _I2C3ASTAT_w_POSITION                    0x00000000
-#define _I2C3ASTAT_w_MASK                        0xFFFFFFFF
-#define _I2C3ASTAT_w_LENGTH                      0x00000020
 
 #define _I2C5STAT_TBF_POSITION                   0x00000000
 #define _I2C5STAT_TBF_MASK                       0x00000001
@@ -19647,90 +18192,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _I2C2STAT_w_MASK                         0xFFFFFFFF
 #define _I2C2STAT_w_LENGTH                       0x00000020
 
-#define _SPI1ACON_SRXISEL_POSITION               0x00000000
-#define _SPI1ACON_SRXISEL_MASK                   0x00000003
-#define _SPI1ACON_SRXISEL_LENGTH                 0x00000002
-
-#define _SPI1ACON_STXISEL_POSITION               0x00000002
-#define _SPI1ACON_STXISEL_MASK                   0x0000000C
-#define _SPI1ACON_STXISEL_LENGTH                 0x00000002
-
-#define _SPI1ACON_MSTEN_POSITION                 0x00000005
-#define _SPI1ACON_MSTEN_MASK                     0x00000020
-#define _SPI1ACON_MSTEN_LENGTH                   0x00000001
-
-#define _SPI1ACON_CKP_POSITION                   0x00000006
-#define _SPI1ACON_CKP_MASK                       0x00000040
-#define _SPI1ACON_CKP_LENGTH                     0x00000001
-
-#define _SPI1ACON_SSEN_POSITION                  0x00000007
-#define _SPI1ACON_SSEN_MASK                      0x00000080
-#define _SPI1ACON_SSEN_LENGTH                    0x00000001
-
-#define _SPI1ACON_CKE_POSITION                   0x00000008
-#define _SPI1ACON_CKE_MASK                       0x00000100
-#define _SPI1ACON_CKE_LENGTH                     0x00000001
-
-#define _SPI1ACON_SMP_POSITION                   0x00000009
-#define _SPI1ACON_SMP_MASK                       0x00000200
-#define _SPI1ACON_SMP_LENGTH                     0x00000001
-
-#define _SPI1ACON_MODE16_POSITION                0x0000000A
-#define _SPI1ACON_MODE16_MASK                    0x00000400
-#define _SPI1ACON_MODE16_LENGTH                  0x00000001
-
-#define _SPI1ACON_MODE32_POSITION                0x0000000B
-#define _SPI1ACON_MODE32_MASK                    0x00000800
-#define _SPI1ACON_MODE32_LENGTH                  0x00000001
-
-#define _SPI1ACON_DISSDO_POSITION                0x0000000C
-#define _SPI1ACON_DISSDO_MASK                    0x00001000
-#define _SPI1ACON_DISSDO_LENGTH                  0x00000001
-
-#define _SPI1ACON_SIDL_POSITION                  0x0000000D
-#define _SPI1ACON_SIDL_MASK                      0x00002000
-#define _SPI1ACON_SIDL_LENGTH                    0x00000001
-
-#define _SPI1ACON_ON_POSITION                    0x0000000F
-#define _SPI1ACON_ON_MASK                        0x00008000
-#define _SPI1ACON_ON_LENGTH                      0x00000001
-
-#define _SPI1ACON_ENHBUF_POSITION                0x00000010
-#define _SPI1ACON_ENHBUF_MASK                    0x00010000
-#define _SPI1ACON_ENHBUF_LENGTH                  0x00000001
-
-#define _SPI1ACON_SPIFE_POSITION                 0x00000011
-#define _SPI1ACON_SPIFE_MASK                     0x00020000
-#define _SPI1ACON_SPIFE_LENGTH                   0x00000001
-
-#define _SPI1ACON_FRMCNT_POSITION                0x00000018
-#define _SPI1ACON_FRMCNT_MASK                    0x07000000
-#define _SPI1ACON_FRMCNT_LENGTH                  0x00000003
-
-#define _SPI1ACON_FRMSYPW_POSITION               0x0000001B
-#define _SPI1ACON_FRMSYPW_MASK                   0x08000000
-#define _SPI1ACON_FRMSYPW_LENGTH                 0x00000001
-
-#define _SPI1ACON_MSSEN_POSITION                 0x0000001C
-#define _SPI1ACON_MSSEN_MASK                     0x10000000
-#define _SPI1ACON_MSSEN_LENGTH                   0x00000001
-
-#define _SPI1ACON_FRMPOL_POSITION                0x0000001D
-#define _SPI1ACON_FRMPOL_MASK                    0x20000000
-#define _SPI1ACON_FRMPOL_LENGTH                  0x00000001
-
-#define _SPI1ACON_FRMSYNC_POSITION               0x0000001E
-#define _SPI1ACON_FRMSYNC_MASK                   0x40000000
-#define _SPI1ACON_FRMSYNC_LENGTH                 0x00000001
-
-#define _SPI1ACON_FRMEN_POSITION                 0x0000001F
-#define _SPI1ACON_FRMEN_MASK                     0x80000000
-#define _SPI1ACON_FRMEN_LENGTH                   0x00000001
-
-#define _SPI1ACON_w_POSITION                     0x00000000
-#define _SPI1ACON_w_MASK                         0xFFFFFFFF
-#define _SPI1ACON_w_LENGTH                       0x00000020
-
 #define _SPI3CON_SRXISEL_POSITION                0x00000000
 #define _SPI3CON_SRXISEL_MASK                    0x00000003
 #define _SPI3CON_SRXISEL_LENGTH                  0x00000002
@@ -19815,50 +18276,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _SPI3CON_w_MASK                          0xFFFFFFFF
 #define _SPI3CON_w_LENGTH                        0x00000020
 
-#define _SPI1ASTAT_SPIRBF_POSITION               0x00000000
-#define _SPI1ASTAT_SPIRBF_MASK                   0x00000001
-#define _SPI1ASTAT_SPIRBF_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SPITBF_POSITION               0x00000001
-#define _SPI1ASTAT_SPITBF_MASK                   0x00000002
-#define _SPI1ASTAT_SPITBF_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SPITBE_POSITION               0x00000003
-#define _SPI1ASTAT_SPITBE_MASK                   0x00000008
-#define _SPI1ASTAT_SPITBE_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SPIRBE_POSITION               0x00000005
-#define _SPI1ASTAT_SPIRBE_MASK                   0x00000020
-#define _SPI1ASTAT_SPIRBE_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SPIROV_POSITION               0x00000006
-#define _SPI1ASTAT_SPIROV_MASK                   0x00000040
-#define _SPI1ASTAT_SPIROV_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SRMT_POSITION                 0x00000007
-#define _SPI1ASTAT_SRMT_MASK                     0x00000080
-#define _SPI1ASTAT_SRMT_LENGTH                   0x00000001
-
-#define _SPI1ASTAT_SPITUR_POSITION               0x00000008
-#define _SPI1ASTAT_SPITUR_MASK                   0x00000100
-#define _SPI1ASTAT_SPITUR_LENGTH                 0x00000001
-
-#define _SPI1ASTAT_SPIBUSY_POSITION              0x0000000B
-#define _SPI1ASTAT_SPIBUSY_MASK                  0x00000800
-#define _SPI1ASTAT_SPIBUSY_LENGTH                0x00000001
-
-#define _SPI1ASTAT_TXBUFELM_POSITION             0x00000010
-#define _SPI1ASTAT_TXBUFELM_MASK                 0x001F0000
-#define _SPI1ASTAT_TXBUFELM_LENGTH               0x00000005
-
-#define _SPI1ASTAT_RXBUFELM_POSITION             0x00000018
-#define _SPI1ASTAT_RXBUFELM_MASK                 0x1F000000
-#define _SPI1ASTAT_RXBUFELM_LENGTH               0x00000005
-
-#define _SPI1ASTAT_w_POSITION                    0x00000000
-#define _SPI1ASTAT_w_MASK                        0xFFFFFFFF
-#define _SPI1ASTAT_w_LENGTH                      0x00000020
-
 #define _SPI3STAT_SPIRBF_POSITION                0x00000000
 #define _SPI3STAT_SPIRBF_MASK                    0x00000001
 #define _SPI3STAT_SPIRBF_LENGTH                  0x00000001
@@ -19902,90 +18319,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _SPI3STAT_w_POSITION                     0x00000000
 #define _SPI3STAT_w_MASK                         0xFFFFFFFF
 #define _SPI3STAT_w_LENGTH                       0x00000020
-
-#define _SPI2ACON_SRXISEL_POSITION               0x00000000
-#define _SPI2ACON_SRXISEL_MASK                   0x00000003
-#define _SPI2ACON_SRXISEL_LENGTH                 0x00000002
-
-#define _SPI2ACON_STXISEL_POSITION               0x00000002
-#define _SPI2ACON_STXISEL_MASK                   0x0000000C
-#define _SPI2ACON_STXISEL_LENGTH                 0x00000002
-
-#define _SPI2ACON_MSTEN_POSITION                 0x00000005
-#define _SPI2ACON_MSTEN_MASK                     0x00000020
-#define _SPI2ACON_MSTEN_LENGTH                   0x00000001
-
-#define _SPI2ACON_CKP_POSITION                   0x00000006
-#define _SPI2ACON_CKP_MASK                       0x00000040
-#define _SPI2ACON_CKP_LENGTH                     0x00000001
-
-#define _SPI2ACON_SSEN_POSITION                  0x00000007
-#define _SPI2ACON_SSEN_MASK                      0x00000080
-#define _SPI2ACON_SSEN_LENGTH                    0x00000001
-
-#define _SPI2ACON_CKE_POSITION                   0x00000008
-#define _SPI2ACON_CKE_MASK                       0x00000100
-#define _SPI2ACON_CKE_LENGTH                     0x00000001
-
-#define _SPI2ACON_SMP_POSITION                   0x00000009
-#define _SPI2ACON_SMP_MASK                       0x00000200
-#define _SPI2ACON_SMP_LENGTH                     0x00000001
-
-#define _SPI2ACON_MODE16_POSITION                0x0000000A
-#define _SPI2ACON_MODE16_MASK                    0x00000400
-#define _SPI2ACON_MODE16_LENGTH                  0x00000001
-
-#define _SPI2ACON_MODE32_POSITION                0x0000000B
-#define _SPI2ACON_MODE32_MASK                    0x00000800
-#define _SPI2ACON_MODE32_LENGTH                  0x00000001
-
-#define _SPI2ACON_DISSDO_POSITION                0x0000000C
-#define _SPI2ACON_DISSDO_MASK                    0x00001000
-#define _SPI2ACON_DISSDO_LENGTH                  0x00000001
-
-#define _SPI2ACON_SIDL_POSITION                  0x0000000D
-#define _SPI2ACON_SIDL_MASK                      0x00002000
-#define _SPI2ACON_SIDL_LENGTH                    0x00000001
-
-#define _SPI2ACON_ON_POSITION                    0x0000000F
-#define _SPI2ACON_ON_MASK                        0x00008000
-#define _SPI2ACON_ON_LENGTH                      0x00000001
-
-#define _SPI2ACON_ENHBUF_POSITION                0x00000010
-#define _SPI2ACON_ENHBUF_MASK                    0x00010000
-#define _SPI2ACON_ENHBUF_LENGTH                  0x00000001
-
-#define _SPI2ACON_SPIFE_POSITION                 0x00000011
-#define _SPI2ACON_SPIFE_MASK                     0x00020000
-#define _SPI2ACON_SPIFE_LENGTH                   0x00000001
-
-#define _SPI2ACON_FRMCNT_POSITION                0x00000018
-#define _SPI2ACON_FRMCNT_MASK                    0x07000000
-#define _SPI2ACON_FRMCNT_LENGTH                  0x00000003
-
-#define _SPI2ACON_FRMSYPW_POSITION               0x0000001B
-#define _SPI2ACON_FRMSYPW_MASK                   0x08000000
-#define _SPI2ACON_FRMSYPW_LENGTH                 0x00000001
-
-#define _SPI2ACON_MSSEN_POSITION                 0x0000001C
-#define _SPI2ACON_MSSEN_MASK                     0x10000000
-#define _SPI2ACON_MSSEN_LENGTH                   0x00000001
-
-#define _SPI2ACON_FRMPOL_POSITION                0x0000001D
-#define _SPI2ACON_FRMPOL_MASK                    0x20000000
-#define _SPI2ACON_FRMPOL_LENGTH                  0x00000001
-
-#define _SPI2ACON_FRMSYNC_POSITION               0x0000001E
-#define _SPI2ACON_FRMSYNC_MASK                   0x40000000
-#define _SPI2ACON_FRMSYNC_LENGTH                 0x00000001
-
-#define _SPI2ACON_FRMEN_POSITION                 0x0000001F
-#define _SPI2ACON_FRMEN_MASK                     0x80000000
-#define _SPI2ACON_FRMEN_LENGTH                   0x00000001
-
-#define _SPI2ACON_w_POSITION                     0x00000000
-#define _SPI2ACON_w_MASK                         0xFFFFFFFF
-#define _SPI2ACON_w_LENGTH                       0x00000020
 
 #define _SPI2CON_SRXISEL_POSITION                0x00000000
 #define _SPI2CON_SRXISEL_MASK                    0x00000003
@@ -20071,50 +18404,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _SPI2CON_w_MASK                          0xFFFFFFFF
 #define _SPI2CON_w_LENGTH                        0x00000020
 
-#define _SPI2ASTAT_SPIRBF_POSITION               0x00000000
-#define _SPI2ASTAT_SPIRBF_MASK                   0x00000001
-#define _SPI2ASTAT_SPIRBF_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SPITBF_POSITION               0x00000001
-#define _SPI2ASTAT_SPITBF_MASK                   0x00000002
-#define _SPI2ASTAT_SPITBF_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SPITBE_POSITION               0x00000003
-#define _SPI2ASTAT_SPITBE_MASK                   0x00000008
-#define _SPI2ASTAT_SPITBE_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SPIRBE_POSITION               0x00000005
-#define _SPI2ASTAT_SPIRBE_MASK                   0x00000020
-#define _SPI2ASTAT_SPIRBE_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SPIROV_POSITION               0x00000006
-#define _SPI2ASTAT_SPIROV_MASK                   0x00000040
-#define _SPI2ASTAT_SPIROV_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SRMT_POSITION                 0x00000007
-#define _SPI2ASTAT_SRMT_MASK                     0x00000080
-#define _SPI2ASTAT_SRMT_LENGTH                   0x00000001
-
-#define _SPI2ASTAT_SPITUR_POSITION               0x00000008
-#define _SPI2ASTAT_SPITUR_MASK                   0x00000100
-#define _SPI2ASTAT_SPITUR_LENGTH                 0x00000001
-
-#define _SPI2ASTAT_SPIBUSY_POSITION              0x0000000B
-#define _SPI2ASTAT_SPIBUSY_MASK                  0x00000800
-#define _SPI2ASTAT_SPIBUSY_LENGTH                0x00000001
-
-#define _SPI2ASTAT_TXBUFELM_POSITION             0x00000010
-#define _SPI2ASTAT_TXBUFELM_MASK                 0x001F0000
-#define _SPI2ASTAT_TXBUFELM_LENGTH               0x00000005
-
-#define _SPI2ASTAT_RXBUFELM_POSITION             0x00000018
-#define _SPI2ASTAT_RXBUFELM_MASK                 0x1F000000
-#define _SPI2ASTAT_RXBUFELM_LENGTH               0x00000005
-
-#define _SPI2ASTAT_w_POSITION                    0x00000000
-#define _SPI2ASTAT_w_MASK                        0xFFFFFFFF
-#define _SPI2ASTAT_w_LENGTH                      0x00000020
-
 #define _SPI2STAT_SPIRBF_POSITION                0x00000000
 #define _SPI2STAT_SPIRBF_MASK                    0x00000001
 #define _SPI2STAT_SPIRBF_LENGTH                  0x00000001
@@ -20158,90 +18447,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _SPI2STAT_w_POSITION                     0x00000000
 #define _SPI2STAT_w_MASK                         0xFFFFFFFF
 #define _SPI2STAT_w_LENGTH                       0x00000020
-
-#define _SPI3ACON_SRXISEL_POSITION               0x00000000
-#define _SPI3ACON_SRXISEL_MASK                   0x00000003
-#define _SPI3ACON_SRXISEL_LENGTH                 0x00000002
-
-#define _SPI3ACON_STXISEL_POSITION               0x00000002
-#define _SPI3ACON_STXISEL_MASK                   0x0000000C
-#define _SPI3ACON_STXISEL_LENGTH                 0x00000002
-
-#define _SPI3ACON_MSTEN_POSITION                 0x00000005
-#define _SPI3ACON_MSTEN_MASK                     0x00000020
-#define _SPI3ACON_MSTEN_LENGTH                   0x00000001
-
-#define _SPI3ACON_CKP_POSITION                   0x00000006
-#define _SPI3ACON_CKP_MASK                       0x00000040
-#define _SPI3ACON_CKP_LENGTH                     0x00000001
-
-#define _SPI3ACON_SSEN_POSITION                  0x00000007
-#define _SPI3ACON_SSEN_MASK                      0x00000080
-#define _SPI3ACON_SSEN_LENGTH                    0x00000001
-
-#define _SPI3ACON_CKE_POSITION                   0x00000008
-#define _SPI3ACON_CKE_MASK                       0x00000100
-#define _SPI3ACON_CKE_LENGTH                     0x00000001
-
-#define _SPI3ACON_SMP_POSITION                   0x00000009
-#define _SPI3ACON_SMP_MASK                       0x00000200
-#define _SPI3ACON_SMP_LENGTH                     0x00000001
-
-#define _SPI3ACON_MODE16_POSITION                0x0000000A
-#define _SPI3ACON_MODE16_MASK                    0x00000400
-#define _SPI3ACON_MODE16_LENGTH                  0x00000001
-
-#define _SPI3ACON_MODE32_POSITION                0x0000000B
-#define _SPI3ACON_MODE32_MASK                    0x00000800
-#define _SPI3ACON_MODE32_LENGTH                  0x00000001
-
-#define _SPI3ACON_DISSDO_POSITION                0x0000000C
-#define _SPI3ACON_DISSDO_MASK                    0x00001000
-#define _SPI3ACON_DISSDO_LENGTH                  0x00000001
-
-#define _SPI3ACON_SIDL_POSITION                  0x0000000D
-#define _SPI3ACON_SIDL_MASK                      0x00002000
-#define _SPI3ACON_SIDL_LENGTH                    0x00000001
-
-#define _SPI3ACON_ON_POSITION                    0x0000000F
-#define _SPI3ACON_ON_MASK                        0x00008000
-#define _SPI3ACON_ON_LENGTH                      0x00000001
-
-#define _SPI3ACON_ENHBUF_POSITION                0x00000010
-#define _SPI3ACON_ENHBUF_MASK                    0x00010000
-#define _SPI3ACON_ENHBUF_LENGTH                  0x00000001
-
-#define _SPI3ACON_SPIFE_POSITION                 0x00000011
-#define _SPI3ACON_SPIFE_MASK                     0x00020000
-#define _SPI3ACON_SPIFE_LENGTH                   0x00000001
-
-#define _SPI3ACON_FRMCNT_POSITION                0x00000018
-#define _SPI3ACON_FRMCNT_MASK                    0x07000000
-#define _SPI3ACON_FRMCNT_LENGTH                  0x00000003
-
-#define _SPI3ACON_FRMSYPW_POSITION               0x0000001B
-#define _SPI3ACON_FRMSYPW_MASK                   0x08000000
-#define _SPI3ACON_FRMSYPW_LENGTH                 0x00000001
-
-#define _SPI3ACON_MSSEN_POSITION                 0x0000001C
-#define _SPI3ACON_MSSEN_MASK                     0x10000000
-#define _SPI3ACON_MSSEN_LENGTH                   0x00000001
-
-#define _SPI3ACON_FRMPOL_POSITION                0x0000001D
-#define _SPI3ACON_FRMPOL_MASK                    0x20000000
-#define _SPI3ACON_FRMPOL_LENGTH                  0x00000001
-
-#define _SPI3ACON_FRMSYNC_POSITION               0x0000001E
-#define _SPI3ACON_FRMSYNC_MASK                   0x40000000
-#define _SPI3ACON_FRMSYNC_LENGTH                 0x00000001
-
-#define _SPI3ACON_FRMEN_POSITION                 0x0000001F
-#define _SPI3ACON_FRMEN_MASK                     0x80000000
-#define _SPI3ACON_FRMEN_LENGTH                   0x00000001
-
-#define _SPI3ACON_w_POSITION                     0x00000000
-#define _SPI3ACON_w_MASK                         0xFFFFFFFF
-#define _SPI3ACON_w_LENGTH                       0x00000020
 
 #define _SPI4CON_SRXISEL_POSITION                0x00000000
 #define _SPI4CON_SRXISEL_MASK                    0x00000003
@@ -20326,50 +18531,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _SPI4CON_w_POSITION                      0x00000000
 #define _SPI4CON_w_MASK                          0xFFFFFFFF
 #define _SPI4CON_w_LENGTH                        0x00000020
-
-#define _SPI3ASTAT_SPIRBF_POSITION               0x00000000
-#define _SPI3ASTAT_SPIRBF_MASK                   0x00000001
-#define _SPI3ASTAT_SPIRBF_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SPITBF_POSITION               0x00000001
-#define _SPI3ASTAT_SPITBF_MASK                   0x00000002
-#define _SPI3ASTAT_SPITBF_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SPITBE_POSITION               0x00000003
-#define _SPI3ASTAT_SPITBE_MASK                   0x00000008
-#define _SPI3ASTAT_SPITBE_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SPIRBE_POSITION               0x00000005
-#define _SPI3ASTAT_SPIRBE_MASK                   0x00000020
-#define _SPI3ASTAT_SPIRBE_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SPIROV_POSITION               0x00000006
-#define _SPI3ASTAT_SPIROV_MASK                   0x00000040
-#define _SPI3ASTAT_SPIROV_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SRMT_POSITION                 0x00000007
-#define _SPI3ASTAT_SRMT_MASK                     0x00000080
-#define _SPI3ASTAT_SRMT_LENGTH                   0x00000001
-
-#define _SPI3ASTAT_SPITUR_POSITION               0x00000008
-#define _SPI3ASTAT_SPITUR_MASK                   0x00000100
-#define _SPI3ASTAT_SPITUR_LENGTH                 0x00000001
-
-#define _SPI3ASTAT_SPIBUSY_POSITION              0x0000000B
-#define _SPI3ASTAT_SPIBUSY_MASK                  0x00000800
-#define _SPI3ASTAT_SPIBUSY_LENGTH                0x00000001
-
-#define _SPI3ASTAT_TXBUFELM_POSITION             0x00000010
-#define _SPI3ASTAT_TXBUFELM_MASK                 0x001F0000
-#define _SPI3ASTAT_TXBUFELM_LENGTH               0x00000005
-
-#define _SPI3ASTAT_RXBUFELM_POSITION             0x00000018
-#define _SPI3ASTAT_RXBUFELM_MASK                 0x1F000000
-#define _SPI3ASTAT_RXBUFELM_LENGTH               0x00000005
-
-#define _SPI3ASTAT_w_POSITION                    0x00000000
-#define _SPI3ASTAT_w_MASK                        0xFFFFFFFF
-#define _SPI3ASTAT_w_LENGTH                      0x00000020
 
 #define _SPI4STAT_SPIRBF_POSITION                0x00000000
 #define _SPI4STAT_SPIRBF_MASK                    0x00000001
@@ -20871,66 +19032,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U1STA_w_MASK                            0xFFFFFFFF
 #define _U1STA_w_LENGTH                          0x00000020
 
-#define _U1BMODE_STSEL_POSITION                  0x00000000
-#define _U1BMODE_STSEL_MASK                      0x00000001
-#define _U1BMODE_STSEL_LENGTH                    0x00000001
-
-#define _U1BMODE_PDSEL_POSITION                  0x00000001
-#define _U1BMODE_PDSEL_MASK                      0x00000006
-#define _U1BMODE_PDSEL_LENGTH                    0x00000002
-
-#define _U1BMODE_BRGH_POSITION                   0x00000003
-#define _U1BMODE_BRGH_MASK                       0x00000008
-#define _U1BMODE_BRGH_LENGTH                     0x00000001
-
-#define _U1BMODE_RXINV_POSITION                  0x00000004
-#define _U1BMODE_RXINV_MASK                      0x00000010
-#define _U1BMODE_RXINV_LENGTH                    0x00000001
-
-#define _U1BMODE_ABAUD_POSITION                  0x00000005
-#define _U1BMODE_ABAUD_MASK                      0x00000020
-#define _U1BMODE_ABAUD_LENGTH                    0x00000001
-
-#define _U1BMODE_LPBACK_POSITION                 0x00000006
-#define _U1BMODE_LPBACK_MASK                     0x00000040
-#define _U1BMODE_LPBACK_LENGTH                   0x00000001
-
-#define _U1BMODE_WAKE_POSITION                   0x00000007
-#define _U1BMODE_WAKE_MASK                       0x00000080
-#define _U1BMODE_WAKE_LENGTH                     0x00000001
-
-#define _U1BMODE_IREN_POSITION                   0x0000000C
-#define _U1BMODE_IREN_MASK                       0x00001000
-#define _U1BMODE_IREN_LENGTH                     0x00000001
-
-#define _U1BMODE_SIDL_POSITION                   0x0000000D
-#define _U1BMODE_SIDL_MASK                       0x00002000
-#define _U1BMODE_SIDL_LENGTH                     0x00000001
-
-#define _U1BMODE_ON_POSITION                     0x0000000F
-#define _U1BMODE_ON_MASK                         0x00008000
-#define _U1BMODE_ON_LENGTH                       0x00000001
-
-#define _U1BMODE_PDSEL0_POSITION                 0x00000001
-#define _U1BMODE_PDSEL0_MASK                     0x00000002
-#define _U1BMODE_PDSEL0_LENGTH                   0x00000001
-
-#define _U1BMODE_PDSEL1_POSITION                 0x00000002
-#define _U1BMODE_PDSEL1_MASK                     0x00000004
-#define _U1BMODE_PDSEL1_LENGTH                   0x00000001
-
-#define _U1BMODE_USIDL_POSITION                  0x0000000D
-#define _U1BMODE_USIDL_MASK                      0x00002000
-#define _U1BMODE_USIDL_LENGTH                    0x00000001
-
-#define _U1BMODE_UARTEN_POSITION                 0x0000000F
-#define _U1BMODE_UARTEN_MASK                     0x00008000
-#define _U1BMODE_UARTEN_LENGTH                   0x00000001
-
-#define _U1BMODE_w_POSITION                      0x00000000
-#define _U1BMODE_w_MASK                          0xFFFFFFFF
-#define _U1BMODE_w_LENGTH                        0x00000020
-
 #define _U4MODE_STSEL_POSITION                   0x00000000
 #define _U4MODE_STSEL_MASK                       0x00000001
 #define _U4MODE_STSEL_LENGTH                     0x00000001
@@ -20990,94 +19091,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U4MODE_w_POSITION                       0x00000000
 #define _U4MODE_w_MASK                           0xFFFFFFFF
 #define _U4MODE_w_LENGTH                         0x00000020
-
-#define _U1BSTA_URXDA_POSITION                   0x00000000
-#define _U1BSTA_URXDA_MASK                       0x00000001
-#define _U1BSTA_URXDA_LENGTH                     0x00000001
-
-#define _U1BSTA_OERR_POSITION                    0x00000001
-#define _U1BSTA_OERR_MASK                        0x00000002
-#define _U1BSTA_OERR_LENGTH                      0x00000001
-
-#define _U1BSTA_FERR_POSITION                    0x00000002
-#define _U1BSTA_FERR_MASK                        0x00000004
-#define _U1BSTA_FERR_LENGTH                      0x00000001
-
-#define _U1BSTA_PERR_POSITION                    0x00000003
-#define _U1BSTA_PERR_MASK                        0x00000008
-#define _U1BSTA_PERR_LENGTH                      0x00000001
-
-#define _U1BSTA_RIDLE_POSITION                   0x00000004
-#define _U1BSTA_RIDLE_MASK                       0x00000010
-#define _U1BSTA_RIDLE_LENGTH                     0x00000001
-
-#define _U1BSTA_ADDEN_POSITION                   0x00000005
-#define _U1BSTA_ADDEN_MASK                       0x00000020
-#define _U1BSTA_ADDEN_LENGTH                     0x00000001
-
-#define _U1BSTA_URXISEL_POSITION                 0x00000006
-#define _U1BSTA_URXISEL_MASK                     0x000000C0
-#define _U1BSTA_URXISEL_LENGTH                   0x00000002
-
-#define _U1BSTA_TRMT_POSITION                    0x00000008
-#define _U1BSTA_TRMT_MASK                        0x00000100
-#define _U1BSTA_TRMT_LENGTH                      0x00000001
-
-#define _U1BSTA_UTXBF_POSITION                   0x00000009
-#define _U1BSTA_UTXBF_MASK                       0x00000200
-#define _U1BSTA_UTXBF_LENGTH                     0x00000001
-
-#define _U1BSTA_UTXEN_POSITION                   0x0000000A
-#define _U1BSTA_UTXEN_MASK                       0x00000400
-#define _U1BSTA_UTXEN_LENGTH                     0x00000001
-
-#define _U1BSTA_UTXBRK_POSITION                  0x0000000B
-#define _U1BSTA_UTXBRK_MASK                      0x00000800
-#define _U1BSTA_UTXBRK_LENGTH                    0x00000001
-
-#define _U1BSTA_URXEN_POSITION                   0x0000000C
-#define _U1BSTA_URXEN_MASK                       0x00001000
-#define _U1BSTA_URXEN_LENGTH                     0x00000001
-
-#define _U1BSTA_UTXINV_POSITION                  0x0000000D
-#define _U1BSTA_UTXINV_MASK                      0x00002000
-#define _U1BSTA_UTXINV_LENGTH                    0x00000001
-
-#define _U1BSTA_UTXISEL_POSITION                 0x0000000E
-#define _U1BSTA_UTXISEL_MASK                     0x0000C000
-#define _U1BSTA_UTXISEL_LENGTH                   0x00000002
-
-#define _U1BSTA_ADDR_POSITION                    0x00000010
-#define _U1BSTA_ADDR_MASK                        0x00FF0000
-#define _U1BSTA_ADDR_LENGTH                      0x00000008
-
-#define _U1BSTA_ADM_EN_POSITION                  0x00000018
-#define _U1BSTA_ADM_EN_MASK                      0x01000000
-#define _U1BSTA_ADM_EN_LENGTH                    0x00000001
-
-#define _U1BSTA_URXISEL0_POSITION                0x00000006
-#define _U1BSTA_URXISEL0_MASK                    0x00000040
-#define _U1BSTA_URXISEL0_LENGTH                  0x00000001
-
-#define _U1BSTA_URXISEL1_POSITION                0x00000007
-#define _U1BSTA_URXISEL1_MASK                    0x00000080
-#define _U1BSTA_URXISEL1_LENGTH                  0x00000001
-
-#define _U1BSTA_UTXISEL0_POSITION                0x0000000E
-#define _U1BSTA_UTXISEL0_MASK                    0x00004000
-#define _U1BSTA_UTXISEL0_LENGTH                  0x00000001
-
-#define _U1BSTA_UTXISEL1_POSITION                0x0000000F
-#define _U1BSTA_UTXISEL1_MASK                    0x00008000
-#define _U1BSTA_UTXISEL1_LENGTH                  0x00000001
-
-#define _U1BSTA_UTXSEL_POSITION                  0x0000000E
-#define _U1BSTA_UTXSEL_MASK                      0x0000C000
-#define _U1BSTA_UTXSEL_LENGTH                    0x00000002
-
-#define _U1BSTA_w_POSITION                       0x00000000
-#define _U1BSTA_w_MASK                           0xFFFFFFFF
-#define _U1BSTA_w_LENGTH                         0x00000020
 
 #define _U4STA_URXDA_POSITION                    0x00000000
 #define _U4STA_URXDA_MASK                        0x00000001
@@ -21167,82 +19180,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U4STA_w_MASK                            0xFFFFFFFF
 #define _U4STA_w_LENGTH                          0x00000020
 
-#define _U2AMODE_STSEL_POSITION                  0x00000000
-#define _U2AMODE_STSEL_MASK                      0x00000001
-#define _U2AMODE_STSEL_LENGTH                    0x00000001
-
-#define _U2AMODE_PDSEL_POSITION                  0x00000001
-#define _U2AMODE_PDSEL_MASK                      0x00000006
-#define _U2AMODE_PDSEL_LENGTH                    0x00000002
-
-#define _U2AMODE_BRGH_POSITION                   0x00000003
-#define _U2AMODE_BRGH_MASK                       0x00000008
-#define _U2AMODE_BRGH_LENGTH                     0x00000001
-
-#define _U2AMODE_RXINV_POSITION                  0x00000004
-#define _U2AMODE_RXINV_MASK                      0x00000010
-#define _U2AMODE_RXINV_LENGTH                    0x00000001
-
-#define _U2AMODE_ABAUD_POSITION                  0x00000005
-#define _U2AMODE_ABAUD_MASK                      0x00000020
-#define _U2AMODE_ABAUD_LENGTH                    0x00000001
-
-#define _U2AMODE_LPBACK_POSITION                 0x00000006
-#define _U2AMODE_LPBACK_MASK                     0x00000040
-#define _U2AMODE_LPBACK_LENGTH                   0x00000001
-
-#define _U2AMODE_WAKE_POSITION                   0x00000007
-#define _U2AMODE_WAKE_MASK                       0x00000080
-#define _U2AMODE_WAKE_LENGTH                     0x00000001
-
-#define _U2AMODE_UEN_POSITION                    0x00000008
-#define _U2AMODE_UEN_MASK                        0x00000300
-#define _U2AMODE_UEN_LENGTH                      0x00000002
-
-#define _U2AMODE_RTSMD_POSITION                  0x0000000B
-#define _U2AMODE_RTSMD_MASK                      0x00000800
-#define _U2AMODE_RTSMD_LENGTH                    0x00000001
-
-#define _U2AMODE_IREN_POSITION                   0x0000000C
-#define _U2AMODE_IREN_MASK                       0x00001000
-#define _U2AMODE_IREN_LENGTH                     0x00000001
-
-#define _U2AMODE_SIDL_POSITION                   0x0000000D
-#define _U2AMODE_SIDL_MASK                       0x00002000
-#define _U2AMODE_SIDL_LENGTH                     0x00000001
-
-#define _U2AMODE_ON_POSITION                     0x0000000F
-#define _U2AMODE_ON_MASK                         0x00008000
-#define _U2AMODE_ON_LENGTH                       0x00000001
-
-#define _U2AMODE_PDSEL0_POSITION                 0x00000001
-#define _U2AMODE_PDSEL0_MASK                     0x00000002
-#define _U2AMODE_PDSEL0_LENGTH                   0x00000001
-
-#define _U2AMODE_PDSEL1_POSITION                 0x00000002
-#define _U2AMODE_PDSEL1_MASK                     0x00000004
-#define _U2AMODE_PDSEL1_LENGTH                   0x00000001
-
-#define _U2AMODE_UEN0_POSITION                   0x00000008
-#define _U2AMODE_UEN0_MASK                       0x00000100
-#define _U2AMODE_UEN0_LENGTH                     0x00000001
-
-#define _U2AMODE_UEN1_POSITION                   0x00000009
-#define _U2AMODE_UEN1_MASK                       0x00000200
-#define _U2AMODE_UEN1_LENGTH                     0x00000001
-
-#define _U2AMODE_USIDL_POSITION                  0x0000000D
-#define _U2AMODE_USIDL_MASK                      0x00002000
-#define _U2AMODE_USIDL_LENGTH                    0x00000001
-
-#define _U2AMODE_UARTEN_POSITION                 0x0000000F
-#define _U2AMODE_UARTEN_MASK                     0x00008000
-#define _U2AMODE_UARTEN_LENGTH                   0x00000001
-
-#define _U2AMODE_w_POSITION                      0x00000000
-#define _U2AMODE_w_MASK                          0xFFFFFFFF
-#define _U2AMODE_w_LENGTH                        0x00000020
-
 #define _U3MODE_STSEL_POSITION                   0x00000000
 #define _U3MODE_STSEL_MASK                       0x00000001
 #define _U3MODE_STSEL_LENGTH                     0x00000001
@@ -21318,94 +19255,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U3MODE_w_POSITION                       0x00000000
 #define _U3MODE_w_MASK                           0xFFFFFFFF
 #define _U3MODE_w_LENGTH                         0x00000020
-
-#define _U2ASTA_URXDA_POSITION                   0x00000000
-#define _U2ASTA_URXDA_MASK                       0x00000001
-#define _U2ASTA_URXDA_LENGTH                     0x00000001
-
-#define _U2ASTA_OERR_POSITION                    0x00000001
-#define _U2ASTA_OERR_MASK                        0x00000002
-#define _U2ASTA_OERR_LENGTH                      0x00000001
-
-#define _U2ASTA_FERR_POSITION                    0x00000002
-#define _U2ASTA_FERR_MASK                        0x00000004
-#define _U2ASTA_FERR_LENGTH                      0x00000001
-
-#define _U2ASTA_PERR_POSITION                    0x00000003
-#define _U2ASTA_PERR_MASK                        0x00000008
-#define _U2ASTA_PERR_LENGTH                      0x00000001
-
-#define _U2ASTA_RIDLE_POSITION                   0x00000004
-#define _U2ASTA_RIDLE_MASK                       0x00000010
-#define _U2ASTA_RIDLE_LENGTH                     0x00000001
-
-#define _U2ASTA_ADDEN_POSITION                   0x00000005
-#define _U2ASTA_ADDEN_MASK                       0x00000020
-#define _U2ASTA_ADDEN_LENGTH                     0x00000001
-
-#define _U2ASTA_URXISEL_POSITION                 0x00000006
-#define _U2ASTA_URXISEL_MASK                     0x000000C0
-#define _U2ASTA_URXISEL_LENGTH                   0x00000002
-
-#define _U2ASTA_TRMT_POSITION                    0x00000008
-#define _U2ASTA_TRMT_MASK                        0x00000100
-#define _U2ASTA_TRMT_LENGTH                      0x00000001
-
-#define _U2ASTA_UTXBF_POSITION                   0x00000009
-#define _U2ASTA_UTXBF_MASK                       0x00000200
-#define _U2ASTA_UTXBF_LENGTH                     0x00000001
-
-#define _U2ASTA_UTXEN_POSITION                   0x0000000A
-#define _U2ASTA_UTXEN_MASK                       0x00000400
-#define _U2ASTA_UTXEN_LENGTH                     0x00000001
-
-#define _U2ASTA_UTXBRK_POSITION                  0x0000000B
-#define _U2ASTA_UTXBRK_MASK                      0x00000800
-#define _U2ASTA_UTXBRK_LENGTH                    0x00000001
-
-#define _U2ASTA_URXEN_POSITION                   0x0000000C
-#define _U2ASTA_URXEN_MASK                       0x00001000
-#define _U2ASTA_URXEN_LENGTH                     0x00000001
-
-#define _U2ASTA_UTXINV_POSITION                  0x0000000D
-#define _U2ASTA_UTXINV_MASK                      0x00002000
-#define _U2ASTA_UTXINV_LENGTH                    0x00000001
-
-#define _U2ASTA_UTXISEL_POSITION                 0x0000000E
-#define _U2ASTA_UTXISEL_MASK                     0x0000C000
-#define _U2ASTA_UTXISEL_LENGTH                   0x00000002
-
-#define _U2ASTA_ADDR_POSITION                    0x00000010
-#define _U2ASTA_ADDR_MASK                        0x00FF0000
-#define _U2ASTA_ADDR_LENGTH                      0x00000008
-
-#define _U2ASTA_ADM_EN_POSITION                  0x00000018
-#define _U2ASTA_ADM_EN_MASK                      0x01000000
-#define _U2ASTA_ADM_EN_LENGTH                    0x00000001
-
-#define _U2ASTA_URXISEL0_POSITION                0x00000006
-#define _U2ASTA_URXISEL0_MASK                    0x00000040
-#define _U2ASTA_URXISEL0_LENGTH                  0x00000001
-
-#define _U2ASTA_URXISEL1_POSITION                0x00000007
-#define _U2ASTA_URXISEL1_MASK                    0x00000080
-#define _U2ASTA_URXISEL1_LENGTH                  0x00000001
-
-#define _U2ASTA_UTXISEL0_POSITION                0x0000000E
-#define _U2ASTA_UTXISEL0_MASK                    0x00004000
-#define _U2ASTA_UTXISEL0_LENGTH                  0x00000001
-
-#define _U2ASTA_UTXISEL1_POSITION                0x0000000F
-#define _U2ASTA_UTXISEL1_MASK                    0x00008000
-#define _U2ASTA_UTXISEL1_LENGTH                  0x00000001
-
-#define _U2ASTA_UTXSEL_POSITION                  0x0000000E
-#define _U2ASTA_UTXSEL_MASK                      0x0000C000
-#define _U2ASTA_UTXSEL_LENGTH                    0x00000002
-
-#define _U2ASTA_w_POSITION                       0x00000000
-#define _U2ASTA_w_MASK                           0xFFFFFFFF
-#define _U2ASTA_w_LENGTH                         0x00000020
 
 #define _U3STA_URXDA_POSITION                    0x00000000
 #define _U3STA_URXDA_MASK                        0x00000001
@@ -21495,66 +19344,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U3STA_w_MASK                            0xFFFFFFFF
 #define _U3STA_w_LENGTH                          0x00000020
 
-#define _U2BMODE_STSEL_POSITION                  0x00000000
-#define _U2BMODE_STSEL_MASK                      0x00000001
-#define _U2BMODE_STSEL_LENGTH                    0x00000001
-
-#define _U2BMODE_PDSEL_POSITION                  0x00000001
-#define _U2BMODE_PDSEL_MASK                      0x00000006
-#define _U2BMODE_PDSEL_LENGTH                    0x00000002
-
-#define _U2BMODE_BRGH_POSITION                   0x00000003
-#define _U2BMODE_BRGH_MASK                       0x00000008
-#define _U2BMODE_BRGH_LENGTH                     0x00000001
-
-#define _U2BMODE_RXINV_POSITION                  0x00000004
-#define _U2BMODE_RXINV_MASK                      0x00000010
-#define _U2BMODE_RXINV_LENGTH                    0x00000001
-
-#define _U2BMODE_ABAUD_POSITION                  0x00000005
-#define _U2BMODE_ABAUD_MASK                      0x00000020
-#define _U2BMODE_ABAUD_LENGTH                    0x00000001
-
-#define _U2BMODE_LPBACK_POSITION                 0x00000006
-#define _U2BMODE_LPBACK_MASK                     0x00000040
-#define _U2BMODE_LPBACK_LENGTH                   0x00000001
-
-#define _U2BMODE_WAKE_POSITION                   0x00000007
-#define _U2BMODE_WAKE_MASK                       0x00000080
-#define _U2BMODE_WAKE_LENGTH                     0x00000001
-
-#define _U2BMODE_IREN_POSITION                   0x0000000C
-#define _U2BMODE_IREN_MASK                       0x00001000
-#define _U2BMODE_IREN_LENGTH                     0x00000001
-
-#define _U2BMODE_SIDL_POSITION                   0x0000000D
-#define _U2BMODE_SIDL_MASK                       0x00002000
-#define _U2BMODE_SIDL_LENGTH                     0x00000001
-
-#define _U2BMODE_ON_POSITION                     0x0000000F
-#define _U2BMODE_ON_MASK                         0x00008000
-#define _U2BMODE_ON_LENGTH                       0x00000001
-
-#define _U2BMODE_PDSEL0_POSITION                 0x00000001
-#define _U2BMODE_PDSEL0_MASK                     0x00000002
-#define _U2BMODE_PDSEL0_LENGTH                   0x00000001
-
-#define _U2BMODE_PDSEL1_POSITION                 0x00000002
-#define _U2BMODE_PDSEL1_MASK                     0x00000004
-#define _U2BMODE_PDSEL1_LENGTH                   0x00000001
-
-#define _U2BMODE_USIDL_POSITION                  0x0000000D
-#define _U2BMODE_USIDL_MASK                      0x00002000
-#define _U2BMODE_USIDL_LENGTH                    0x00000001
-
-#define _U2BMODE_UARTEN_POSITION                 0x0000000F
-#define _U2BMODE_UARTEN_MASK                     0x00008000
-#define _U2BMODE_UARTEN_LENGTH                   0x00000001
-
-#define _U2BMODE_w_POSITION                      0x00000000
-#define _U2BMODE_w_MASK                          0xFFFFFFFF
-#define _U2BMODE_w_LENGTH                        0x00000020
-
 #define _U6MODE_STSEL_POSITION                   0x00000000
 #define _U6MODE_STSEL_MASK                       0x00000001
 #define _U6MODE_STSEL_LENGTH                     0x00000001
@@ -21614,94 +19403,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U6MODE_w_POSITION                       0x00000000
 #define _U6MODE_w_MASK                           0xFFFFFFFF
 #define _U6MODE_w_LENGTH                         0x00000020
-
-#define _U2BSTA_URXDA_POSITION                   0x00000000
-#define _U2BSTA_URXDA_MASK                       0x00000001
-#define _U2BSTA_URXDA_LENGTH                     0x00000001
-
-#define _U2BSTA_OERR_POSITION                    0x00000001
-#define _U2BSTA_OERR_MASK                        0x00000002
-#define _U2BSTA_OERR_LENGTH                      0x00000001
-
-#define _U2BSTA_FERR_POSITION                    0x00000002
-#define _U2BSTA_FERR_MASK                        0x00000004
-#define _U2BSTA_FERR_LENGTH                      0x00000001
-
-#define _U2BSTA_PERR_POSITION                    0x00000003
-#define _U2BSTA_PERR_MASK                        0x00000008
-#define _U2BSTA_PERR_LENGTH                      0x00000001
-
-#define _U2BSTA_RIDLE_POSITION                   0x00000004
-#define _U2BSTA_RIDLE_MASK                       0x00000010
-#define _U2BSTA_RIDLE_LENGTH                     0x00000001
-
-#define _U2BSTA_ADDEN_POSITION                   0x00000005
-#define _U2BSTA_ADDEN_MASK                       0x00000020
-#define _U2BSTA_ADDEN_LENGTH                     0x00000001
-
-#define _U2BSTA_URXISEL_POSITION                 0x00000006
-#define _U2BSTA_URXISEL_MASK                     0x000000C0
-#define _U2BSTA_URXISEL_LENGTH                   0x00000002
-
-#define _U2BSTA_TRMT_POSITION                    0x00000008
-#define _U2BSTA_TRMT_MASK                        0x00000100
-#define _U2BSTA_TRMT_LENGTH                      0x00000001
-
-#define _U2BSTA_UTXBF_POSITION                   0x00000009
-#define _U2BSTA_UTXBF_MASK                       0x00000200
-#define _U2BSTA_UTXBF_LENGTH                     0x00000001
-
-#define _U2BSTA_UTXEN_POSITION                   0x0000000A
-#define _U2BSTA_UTXEN_MASK                       0x00000400
-#define _U2BSTA_UTXEN_LENGTH                     0x00000001
-
-#define _U2BSTA_UTXBRK_POSITION                  0x0000000B
-#define _U2BSTA_UTXBRK_MASK                      0x00000800
-#define _U2BSTA_UTXBRK_LENGTH                    0x00000001
-
-#define _U2BSTA_URXEN_POSITION                   0x0000000C
-#define _U2BSTA_URXEN_MASK                       0x00001000
-#define _U2BSTA_URXEN_LENGTH                     0x00000001
-
-#define _U2BSTA_UTXINV_POSITION                  0x0000000D
-#define _U2BSTA_UTXINV_MASK                      0x00002000
-#define _U2BSTA_UTXINV_LENGTH                    0x00000001
-
-#define _U2BSTA_UTXISEL_POSITION                 0x0000000E
-#define _U2BSTA_UTXISEL_MASK                     0x0000C000
-#define _U2BSTA_UTXISEL_LENGTH                   0x00000002
-
-#define _U2BSTA_ADDR_POSITION                    0x00000010
-#define _U2BSTA_ADDR_MASK                        0x00FF0000
-#define _U2BSTA_ADDR_LENGTH                      0x00000008
-
-#define _U2BSTA_ADM_EN_POSITION                  0x00000018
-#define _U2BSTA_ADM_EN_MASK                      0x01000000
-#define _U2BSTA_ADM_EN_LENGTH                    0x00000001
-
-#define _U2BSTA_URXISEL0_POSITION                0x00000006
-#define _U2BSTA_URXISEL0_MASK                    0x00000040
-#define _U2BSTA_URXISEL0_LENGTH                  0x00000001
-
-#define _U2BSTA_URXISEL1_POSITION                0x00000007
-#define _U2BSTA_URXISEL1_MASK                    0x00000080
-#define _U2BSTA_URXISEL1_LENGTH                  0x00000001
-
-#define _U2BSTA_UTXISEL0_POSITION                0x0000000E
-#define _U2BSTA_UTXISEL0_MASK                    0x00004000
-#define _U2BSTA_UTXISEL0_LENGTH                  0x00000001
-
-#define _U2BSTA_UTXISEL1_POSITION                0x0000000F
-#define _U2BSTA_UTXISEL1_MASK                    0x00008000
-#define _U2BSTA_UTXISEL1_LENGTH                  0x00000001
-
-#define _U2BSTA_UTXSEL_POSITION                  0x0000000E
-#define _U2BSTA_UTXSEL_MASK                      0x0000C000
-#define _U2BSTA_UTXSEL_LENGTH                    0x00000002
-
-#define _U2BSTA_w_POSITION                       0x00000000
-#define _U2BSTA_w_MASK                           0xFFFFFFFF
-#define _U2BSTA_w_LENGTH                         0x00000020
 
 #define _U6STA_URXDA_POSITION                    0x00000000
 #define _U6STA_URXDA_MASK                        0x00000001
@@ -21867,82 +19568,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U2MODE_w_MASK                           0xFFFFFFFF
 #define _U2MODE_w_LENGTH                         0x00000020
 
-#define _U3AMODE_STSEL_POSITION                  0x00000000
-#define _U3AMODE_STSEL_MASK                      0x00000001
-#define _U3AMODE_STSEL_LENGTH                    0x00000001
-
-#define _U3AMODE_PDSEL_POSITION                  0x00000001
-#define _U3AMODE_PDSEL_MASK                      0x00000006
-#define _U3AMODE_PDSEL_LENGTH                    0x00000002
-
-#define _U3AMODE_BRGH_POSITION                   0x00000003
-#define _U3AMODE_BRGH_MASK                       0x00000008
-#define _U3AMODE_BRGH_LENGTH                     0x00000001
-
-#define _U3AMODE_RXINV_POSITION                  0x00000004
-#define _U3AMODE_RXINV_MASK                      0x00000010
-#define _U3AMODE_RXINV_LENGTH                    0x00000001
-
-#define _U3AMODE_ABAUD_POSITION                  0x00000005
-#define _U3AMODE_ABAUD_MASK                      0x00000020
-#define _U3AMODE_ABAUD_LENGTH                    0x00000001
-
-#define _U3AMODE_LPBACK_POSITION                 0x00000006
-#define _U3AMODE_LPBACK_MASK                     0x00000040
-#define _U3AMODE_LPBACK_LENGTH                   0x00000001
-
-#define _U3AMODE_WAKE_POSITION                   0x00000007
-#define _U3AMODE_WAKE_MASK                       0x00000080
-#define _U3AMODE_WAKE_LENGTH                     0x00000001
-
-#define _U3AMODE_UEN_POSITION                    0x00000008
-#define _U3AMODE_UEN_MASK                        0x00000300
-#define _U3AMODE_UEN_LENGTH                      0x00000002
-
-#define _U3AMODE_RTSMD_POSITION                  0x0000000B
-#define _U3AMODE_RTSMD_MASK                      0x00000800
-#define _U3AMODE_RTSMD_LENGTH                    0x00000001
-
-#define _U3AMODE_IREN_POSITION                   0x0000000C
-#define _U3AMODE_IREN_MASK                       0x00001000
-#define _U3AMODE_IREN_LENGTH                     0x00000001
-
-#define _U3AMODE_SIDL_POSITION                   0x0000000D
-#define _U3AMODE_SIDL_MASK                       0x00002000
-#define _U3AMODE_SIDL_LENGTH                     0x00000001
-
-#define _U3AMODE_ON_POSITION                     0x0000000F
-#define _U3AMODE_ON_MASK                         0x00008000
-#define _U3AMODE_ON_LENGTH                       0x00000001
-
-#define _U3AMODE_PDSEL0_POSITION                 0x00000001
-#define _U3AMODE_PDSEL0_MASK                     0x00000002
-#define _U3AMODE_PDSEL0_LENGTH                   0x00000001
-
-#define _U3AMODE_PDSEL1_POSITION                 0x00000002
-#define _U3AMODE_PDSEL1_MASK                     0x00000004
-#define _U3AMODE_PDSEL1_LENGTH                   0x00000001
-
-#define _U3AMODE_UEN0_POSITION                   0x00000008
-#define _U3AMODE_UEN0_MASK                       0x00000100
-#define _U3AMODE_UEN0_LENGTH                     0x00000001
-
-#define _U3AMODE_UEN1_POSITION                   0x00000009
-#define _U3AMODE_UEN1_MASK                       0x00000200
-#define _U3AMODE_UEN1_LENGTH                     0x00000001
-
-#define _U3AMODE_USIDL_POSITION                  0x0000000D
-#define _U3AMODE_USIDL_MASK                      0x00002000
-#define _U3AMODE_USIDL_LENGTH                    0x00000001
-
-#define _U3AMODE_UARTEN_POSITION                 0x0000000F
-#define _U3AMODE_UARTEN_MASK                     0x00008000
-#define _U3AMODE_UARTEN_LENGTH                   0x00000001
-
-#define _U3AMODE_w_POSITION                      0x00000000
-#define _U3AMODE_w_MASK                          0xFFFFFFFF
-#define _U3AMODE_w_LENGTH                        0x00000020
-
 #define _U2STA_URXDA_POSITION                    0x00000000
 #define _U2STA_URXDA_MASK                        0x00000001
 #define _U2STA_URXDA_LENGTH                      0x00000001
@@ -22031,154 +19656,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U2STA_w_MASK                            0xFFFFFFFF
 #define _U2STA_w_LENGTH                          0x00000020
 
-#define _U3ASTA_URXDA_POSITION                   0x00000000
-#define _U3ASTA_URXDA_MASK                       0x00000001
-#define _U3ASTA_URXDA_LENGTH                     0x00000001
-
-#define _U3ASTA_OERR_POSITION                    0x00000001
-#define _U3ASTA_OERR_MASK                        0x00000002
-#define _U3ASTA_OERR_LENGTH                      0x00000001
-
-#define _U3ASTA_FERR_POSITION                    0x00000002
-#define _U3ASTA_FERR_MASK                        0x00000004
-#define _U3ASTA_FERR_LENGTH                      0x00000001
-
-#define _U3ASTA_PERR_POSITION                    0x00000003
-#define _U3ASTA_PERR_MASK                        0x00000008
-#define _U3ASTA_PERR_LENGTH                      0x00000001
-
-#define _U3ASTA_RIDLE_POSITION                   0x00000004
-#define _U3ASTA_RIDLE_MASK                       0x00000010
-#define _U3ASTA_RIDLE_LENGTH                     0x00000001
-
-#define _U3ASTA_ADDEN_POSITION                   0x00000005
-#define _U3ASTA_ADDEN_MASK                       0x00000020
-#define _U3ASTA_ADDEN_LENGTH                     0x00000001
-
-#define _U3ASTA_URXISEL_POSITION                 0x00000006
-#define _U3ASTA_URXISEL_MASK                     0x000000C0
-#define _U3ASTA_URXISEL_LENGTH                   0x00000002
-
-#define _U3ASTA_TRMT_POSITION                    0x00000008
-#define _U3ASTA_TRMT_MASK                        0x00000100
-#define _U3ASTA_TRMT_LENGTH                      0x00000001
-
-#define _U3ASTA_UTXBF_POSITION                   0x00000009
-#define _U3ASTA_UTXBF_MASK                       0x00000200
-#define _U3ASTA_UTXBF_LENGTH                     0x00000001
-
-#define _U3ASTA_UTXEN_POSITION                   0x0000000A
-#define _U3ASTA_UTXEN_MASK                       0x00000400
-#define _U3ASTA_UTXEN_LENGTH                     0x00000001
-
-#define _U3ASTA_UTXBRK_POSITION                  0x0000000B
-#define _U3ASTA_UTXBRK_MASK                      0x00000800
-#define _U3ASTA_UTXBRK_LENGTH                    0x00000001
-
-#define _U3ASTA_URXEN_POSITION                   0x0000000C
-#define _U3ASTA_URXEN_MASK                       0x00001000
-#define _U3ASTA_URXEN_LENGTH                     0x00000001
-
-#define _U3ASTA_UTXINV_POSITION                  0x0000000D
-#define _U3ASTA_UTXINV_MASK                      0x00002000
-#define _U3ASTA_UTXINV_LENGTH                    0x00000001
-
-#define _U3ASTA_UTXISEL_POSITION                 0x0000000E
-#define _U3ASTA_UTXISEL_MASK                     0x0000C000
-#define _U3ASTA_UTXISEL_LENGTH                   0x00000002
-
-#define _U3ASTA_ADDR_POSITION                    0x00000010
-#define _U3ASTA_ADDR_MASK                        0x00FF0000
-#define _U3ASTA_ADDR_LENGTH                      0x00000008
-
-#define _U3ASTA_ADM_EN_POSITION                  0x00000018
-#define _U3ASTA_ADM_EN_MASK                      0x01000000
-#define _U3ASTA_ADM_EN_LENGTH                    0x00000001
-
-#define _U3ASTA_URXISEL0_POSITION                0x00000006
-#define _U3ASTA_URXISEL0_MASK                    0x00000040
-#define _U3ASTA_URXISEL0_LENGTH                  0x00000001
-
-#define _U3ASTA_URXISEL1_POSITION                0x00000007
-#define _U3ASTA_URXISEL1_MASK                    0x00000080
-#define _U3ASTA_URXISEL1_LENGTH                  0x00000001
-
-#define _U3ASTA_UTXISEL0_POSITION                0x0000000E
-#define _U3ASTA_UTXISEL0_MASK                    0x00004000
-#define _U3ASTA_UTXISEL0_LENGTH                  0x00000001
-
-#define _U3ASTA_UTXISEL1_POSITION                0x0000000F
-#define _U3ASTA_UTXISEL1_MASK                    0x00008000
-#define _U3ASTA_UTXISEL1_LENGTH                  0x00000001
-
-#define _U3ASTA_UTXSEL_POSITION                  0x0000000E
-#define _U3ASTA_UTXSEL_MASK                      0x0000C000
-#define _U3ASTA_UTXSEL_LENGTH                    0x00000002
-
-#define _U3ASTA_w_POSITION                       0x00000000
-#define _U3ASTA_w_MASK                           0xFFFFFFFF
-#define _U3ASTA_w_LENGTH                         0x00000020
-
-#define _U3BMODE_STSEL_POSITION                  0x00000000
-#define _U3BMODE_STSEL_MASK                      0x00000001
-#define _U3BMODE_STSEL_LENGTH                    0x00000001
-
-#define _U3BMODE_PDSEL_POSITION                  0x00000001
-#define _U3BMODE_PDSEL_MASK                      0x00000006
-#define _U3BMODE_PDSEL_LENGTH                    0x00000002
-
-#define _U3BMODE_BRGH_POSITION                   0x00000003
-#define _U3BMODE_BRGH_MASK                       0x00000008
-#define _U3BMODE_BRGH_LENGTH                     0x00000001
-
-#define _U3BMODE_RXINV_POSITION                  0x00000004
-#define _U3BMODE_RXINV_MASK                      0x00000010
-#define _U3BMODE_RXINV_LENGTH                    0x00000001
-
-#define _U3BMODE_ABAUD_POSITION                  0x00000005
-#define _U3BMODE_ABAUD_MASK                      0x00000020
-#define _U3BMODE_ABAUD_LENGTH                    0x00000001
-
-#define _U3BMODE_LPBACK_POSITION                 0x00000006
-#define _U3BMODE_LPBACK_MASK                     0x00000040
-#define _U3BMODE_LPBACK_LENGTH                   0x00000001
-
-#define _U3BMODE_WAKE_POSITION                   0x00000007
-#define _U3BMODE_WAKE_MASK                       0x00000080
-#define _U3BMODE_WAKE_LENGTH                     0x00000001
-
-#define _U3BMODE_IREN_POSITION                   0x0000000C
-#define _U3BMODE_IREN_MASK                       0x00001000
-#define _U3BMODE_IREN_LENGTH                     0x00000001
-
-#define _U3BMODE_SIDL_POSITION                   0x0000000D
-#define _U3BMODE_SIDL_MASK                       0x00002000
-#define _U3BMODE_SIDL_LENGTH                     0x00000001
-
-#define _U3BMODE_ON_POSITION                     0x0000000F
-#define _U3BMODE_ON_MASK                         0x00008000
-#define _U3BMODE_ON_LENGTH                       0x00000001
-
-#define _U3BMODE_PDSEL0_POSITION                 0x00000001
-#define _U3BMODE_PDSEL0_MASK                     0x00000002
-#define _U3BMODE_PDSEL0_LENGTH                   0x00000001
-
-#define _U3BMODE_PDSEL1_POSITION                 0x00000002
-#define _U3BMODE_PDSEL1_MASK                     0x00000004
-#define _U3BMODE_PDSEL1_LENGTH                   0x00000001
-
-#define _U3BMODE_USIDL_POSITION                  0x0000000D
-#define _U3BMODE_USIDL_MASK                      0x00002000
-#define _U3BMODE_USIDL_LENGTH                    0x00000001
-
-#define _U3BMODE_UARTEN_POSITION                 0x0000000F
-#define _U3BMODE_UARTEN_MASK                     0x00008000
-#define _U3BMODE_UARTEN_LENGTH                   0x00000001
-
-#define _U3BMODE_w_POSITION                      0x00000000
-#define _U3BMODE_w_MASK                          0xFFFFFFFF
-#define _U3BMODE_w_LENGTH                        0x00000020
-
 #define _U5MODE_STSEL_POSITION                   0x00000000
 #define _U5MODE_STSEL_MASK                       0x00000001
 #define _U5MODE_STSEL_LENGTH                     0x00000001
@@ -22238,94 +19715,6 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define _U5MODE_w_POSITION                       0x00000000
 #define _U5MODE_w_MASK                           0xFFFFFFFF
 #define _U5MODE_w_LENGTH                         0x00000020
-
-#define _U3BSTA_URXDA_POSITION                   0x00000000
-#define _U3BSTA_URXDA_MASK                       0x00000001
-#define _U3BSTA_URXDA_LENGTH                     0x00000001
-
-#define _U3BSTA_OERR_POSITION                    0x00000001
-#define _U3BSTA_OERR_MASK                        0x00000002
-#define _U3BSTA_OERR_LENGTH                      0x00000001
-
-#define _U3BSTA_FERR_POSITION                    0x00000002
-#define _U3BSTA_FERR_MASK                        0x00000004
-#define _U3BSTA_FERR_LENGTH                      0x00000001
-
-#define _U3BSTA_PERR_POSITION                    0x00000003
-#define _U3BSTA_PERR_MASK                        0x00000008
-#define _U3BSTA_PERR_LENGTH                      0x00000001
-
-#define _U3BSTA_RIDLE_POSITION                   0x00000004
-#define _U3BSTA_RIDLE_MASK                       0x00000010
-#define _U3BSTA_RIDLE_LENGTH                     0x00000001
-
-#define _U3BSTA_ADDEN_POSITION                   0x00000005
-#define _U3BSTA_ADDEN_MASK                       0x00000020
-#define _U3BSTA_ADDEN_LENGTH                     0x00000001
-
-#define _U3BSTA_URXISEL_POSITION                 0x00000006
-#define _U3BSTA_URXISEL_MASK                     0x000000C0
-#define _U3BSTA_URXISEL_LENGTH                   0x00000002
-
-#define _U3BSTA_TRMT_POSITION                    0x00000008
-#define _U3BSTA_TRMT_MASK                        0x00000100
-#define _U3BSTA_TRMT_LENGTH                      0x00000001
-
-#define _U3BSTA_UTXBF_POSITION                   0x00000009
-#define _U3BSTA_UTXBF_MASK                       0x00000200
-#define _U3BSTA_UTXBF_LENGTH                     0x00000001
-
-#define _U3BSTA_UTXEN_POSITION                   0x0000000A
-#define _U3BSTA_UTXEN_MASK                       0x00000400
-#define _U3BSTA_UTXEN_LENGTH                     0x00000001
-
-#define _U3BSTA_UTXBRK_POSITION                  0x0000000B
-#define _U3BSTA_UTXBRK_MASK                      0x00000800
-#define _U3BSTA_UTXBRK_LENGTH                    0x00000001
-
-#define _U3BSTA_URXEN_POSITION                   0x0000000C
-#define _U3BSTA_URXEN_MASK                       0x00001000
-#define _U3BSTA_URXEN_LENGTH                     0x00000001
-
-#define _U3BSTA_UTXINV_POSITION                  0x0000000D
-#define _U3BSTA_UTXINV_MASK                      0x00002000
-#define _U3BSTA_UTXINV_LENGTH                    0x00000001
-
-#define _U3BSTA_UTXISEL_POSITION                 0x0000000E
-#define _U3BSTA_UTXISEL_MASK                     0x0000C000
-#define _U3BSTA_UTXISEL_LENGTH                   0x00000002
-
-#define _U3BSTA_ADDR_POSITION                    0x00000010
-#define _U3BSTA_ADDR_MASK                        0x00FF0000
-#define _U3BSTA_ADDR_LENGTH                      0x00000008
-
-#define _U3BSTA_ADM_EN_POSITION                  0x00000018
-#define _U3BSTA_ADM_EN_MASK                      0x01000000
-#define _U3BSTA_ADM_EN_LENGTH                    0x00000001
-
-#define _U3BSTA_URXISEL0_POSITION                0x00000006
-#define _U3BSTA_URXISEL0_MASK                    0x00000040
-#define _U3BSTA_URXISEL0_LENGTH                  0x00000001
-
-#define _U3BSTA_URXISEL1_POSITION                0x00000007
-#define _U3BSTA_URXISEL1_MASK                    0x00000080
-#define _U3BSTA_URXISEL1_LENGTH                  0x00000001
-
-#define _U3BSTA_UTXISEL0_POSITION                0x0000000E
-#define _U3BSTA_UTXISEL0_MASK                    0x00004000
-#define _U3BSTA_UTXISEL0_LENGTH                  0x00000001
-
-#define _U3BSTA_UTXISEL1_POSITION                0x0000000F
-#define _U3BSTA_UTXISEL1_MASK                    0x00008000
-#define _U3BSTA_UTXISEL1_LENGTH                  0x00000001
-
-#define _U3BSTA_UTXSEL_POSITION                  0x0000000E
-#define _U3BSTA_UTXSEL_MASK                      0x0000C000
-#define _U3BSTA_UTXSEL_LENGTH                    0x00000002
-
-#define _U3BSTA_w_POSITION                       0x00000000
-#define _U3BSTA_w_MASK                           0xFFFFFFFF
-#define _U3BSTA_w_LENGTH                         0x00000020
 
 #define _U5STA_URXDA_POSITION                    0x00000000
 #define _U5STA_URXDA_MASK                        0x00000001
@@ -40889,8 +38278,58 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define __DDPSTAT_BASE_ADDRESS                   0xBF880140
 #define __STRO_BASE_ADDRESS                      0xBF880170
 
+/*  The following device macros are predefined by the MPLAB XC32
+ *  compiler when compiling with the -mprocessor=<device> option.
+ *  We also define them here to help the MPLAB X editor evaluate
+ *  them correctly.
+ */
+#ifndef __32MX795F512L
+#  define __32MX795F512L 1
+#endif
+#ifndef __32MX795F512L__
+#  define __32MX795F512L__ 1
+#endif
+#ifndef __PIC32MX
+#  define __PIC32MX 1
+#endif
+#ifndef __PIC32MX__
+#  define __PIC32MX__ 1
+#endif
+#ifndef __PIC32_FEATURE_SET
+#  define __PIC32_FEATURE_SET 795
+#endif
+#ifndef __PIC32_FEATURE_SET__
+#  define __PIC32_FEATURE_SET__ 795
+#endif
+#ifndef __PIC32_MEMORY_SIZE
+#  define __PIC32_MEMORY_SIZE 512
+#endif
+#ifndef __PIC32_MEMORY_SIZE__
+#  define __PIC32_MEMORY_SIZE__ 512
+#endif
+#ifndef __PIC32_PIN_SET
+#  define __PIC32_PIN_SET 'L'
+#endif
+
+#ifndef __PIC32_PIN_SET__
+#  define __PIC32_PIN_SET__ 'L'
+#endif
+
+/*  The following device macros indicate which core features are
+ *  available on this device.
+ */
+#ifndef __PIC32_HAS_MIPS32R2
+# define __PIC32_HAS_MIPS32R2 1
+#endif
+#ifndef __PIC32_HAS_MIPS16
+# define __PIC32_HAS_MIPS16 1
+#endif
+
 /* include generic header file for backwards compatibility with old C32 v1.xx code */
+/* WARNING: Macros from this file are deprecated and should not be used in new     */
+/*          source code.                                                           */
 #include "ppic32mx.h"
+
 
 
 #endif

@@ -62,6 +62,9 @@
             Nop();    
         }
 
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
+
         #ifndef ENABLE_UART3
         void Serial3Interrupt(void)
         {
@@ -89,6 +92,9 @@
             Nop();
         }
         #endif
+
+    #endif
+
     #endif // __SERIAL__
 
 

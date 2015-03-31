@@ -1,5 +1,6 @@
 /*-------------------------------------------------------------------------
  * PIC32MX460F512L processor header
+ * Build date : Jul 22 2014
  *
  * This software is developed by Microchip Technology Inc. and its
  * subsidiaries ("Microchip").
@@ -31,6 +32,7 @@
  * 
  *-------------------------------------------------------------------------*/
 
+#pragma once
 #ifndef __32MX460F512L_H
 #define __32MX460F512L_H
 
@@ -12558,8 +12560,58 @@ extern volatile __DEVCFG0bits_t DEVCFG0bits __asm__ ("DEVCFG0") __attribute__((s
 #define __DDPSTAT_BASE_ADDRESS                   0xBF880140
 #define __STRO_BASE_ADDRESS                      0xBF880170
 
+/*  The following device macros are predefined by the MPLAB XC32
+ *  compiler when compiling with the -mprocessor=<device> option.
+ *  We also define them here to help the MPLAB X editor evaluate
+ *  them correctly.
+ */
+#ifndef __32MX460F512L
+#  define __32MX460F512L 1
+#endif
+#ifndef __32MX460F512L__
+#  define __32MX460F512L__ 1
+#endif
+#ifndef __PIC32MX
+#  define __PIC32MX 1
+#endif
+#ifndef __PIC32MX__
+#  define __PIC32MX__ 1
+#endif
+#ifndef __PIC32_FEATURE_SET
+#  define __PIC32_FEATURE_SET 460
+#endif
+#ifndef __PIC32_FEATURE_SET__
+#  define __PIC32_FEATURE_SET__ 460
+#endif
+#ifndef __PIC32_MEMORY_SIZE
+#  define __PIC32_MEMORY_SIZE 512
+#endif
+#ifndef __PIC32_MEMORY_SIZE__
+#  define __PIC32_MEMORY_SIZE__ 512
+#endif
+#ifndef __PIC32_PIN_SET
+#  define __PIC32_PIN_SET 'L'
+#endif
+
+#ifndef __PIC32_PIN_SET__
+#  define __PIC32_PIN_SET__ 'L'
+#endif
+
+/*  The following device macros indicate which core features are
+ *  available on this device.
+ */
+#ifndef __PIC32_HAS_MIPS32R2
+# define __PIC32_HAS_MIPS32R2 1
+#endif
+#ifndef __PIC32_HAS_MIPS16
+# define __PIC32_HAS_MIPS16 1
+#endif
+
 /* include generic header file for backwards compatibility with old C32 v1.xx code */
+/* WARNING: Macros from this file are deprecated and should not be used in new     */
+/*          source code.                                                           */
 #include "ppic32mx.h"
+
 
 
 #endif

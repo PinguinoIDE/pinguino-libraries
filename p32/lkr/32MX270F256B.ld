@@ -35,29 +35,6 @@ _ebase_address           = 0x9D003000;
 _RESET_ADDR              = 0x9D004000;
 
 /***********************************************************************
- * A Bootstrap exception is an exception which occurs while bootstrap code
- * is running (StatusBEV=1).
- * All Bootstrap exceptions are vectored to 0xBFC00380.
- * At this location, the Compiler places a branch instruction targeting
- * the function named ‘_bootstrap_exception_handler()’. See crt0.S
- **********************************************************************/
-
-_BEV_EXCPT_ADDR          = _RESET_ADDR + 0x380;
-
-/***********************************************************************
- * A general exception is any non-interrupt exception that occurs during
- * program execution outside of bootstrap code (StatusBEV=0).
- * General exceptions are vectored to offset 0x180 from EBase.
- * At this location, the Compiler places a branch instruction targeting
- * the function named ‘_general_exception_context()’. See crt0.S
- * The provided implementation of this function saves context,
- * calls an application handler function, restores context and performs
- * a return from the exception instruction.
- **********************************************************************/
-
-_GEN_EXCPT_ADDR          = _ebase_address + 0x180;
-
-/***********************************************************************
  * Memory Regions
  ***********************************************************************
  * - exception_mem  contains interrupt vector table starting at ebase (cacheable)
@@ -81,7 +58,14 @@ MEMORY
  * 0x200 + 64 vectors * 32 bytes = 0xA00
  **********************************************************************/
 
-exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0x1000
+exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0xA00
+
+/**********************************************************************
+ * kseg0_boot_mem (cacheable) contains C startup module (cacheable)
+ * Startup code is 0x1B0 bytes long
+ **********************************************************************/
+
+kseg0_boot_mem             : ORIGIN = 0x9D003A00, LENGTH = 0x200
 
 /**********************************************************************
  * kseg1_boot_mem (non-cacheable) contains
@@ -91,14 +75,7 @@ exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0x1000
  * Note : Bootloader code between 0x9D001000 and 0x9D004000
  **********************************************************************/
 
-kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x390
-
-/**********************************************************************
- * kseg0_boot_mem (cacheable) contains C startup module (cacheable)
- * Startup code is 0x1B0 bytes long
- **********************************************************************/
-
-kseg0_boot_mem             : ORIGIN = 0x9D004390, LENGTH = 0x200
+kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
 
 /***********************************************************************
  * User Program code
@@ -109,7 +86,7 @@ kseg0_boot_mem             : ORIGIN = 0x9D004390, LENGTH = 0x200
  * 0x40000 − 0x5000 = 0x3B000 bytes free
  **********************************************************************/
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D005000, LENGTH = 0x3B000
+kseg0_program_mem    (rx)  : ORIGIN = 0x9D004010, LENGTH = 0x3BFF0
   
 /***********************************************************************
  * Device Configuration Registers (configuration bits)

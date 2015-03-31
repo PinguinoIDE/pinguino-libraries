@@ -98,7 +98,7 @@ volatile unsigned char needreordering=0;
 #define TotalPICpins   18
 #define TotalPICports   3
 
-#elif defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
+#elif defined(PINGUINO47J53)
 #define TotalPICpins   32
 #define TotalPICports   5
 
@@ -126,7 +126,7 @@ volatile unsigned char needreordering=0;
 // 4 ports:
 // #elif defined(PICUNO_EQUO)
 // 5 ports:
-// #elif defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+// #elif defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
 //
 // #endif
 
@@ -192,13 +192,13 @@ static void ServosPulseDown()
         {
             PORTA = PORTA ^ timings[timingindex][pA];
             PORTB = PORTB ^ timings[timingindex][pB];
-            #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+            #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
             PORTC = PORTC ^ timings[timingindex][pC];
             #endif
-            #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+            #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
             PORTD = PORTD ^ timings[timingindex][pD];
             #endif
-            #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+            #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
             PORTE = PORTE ^ timings[timingindex][pE];
             #endif
             timingindex++;
@@ -227,13 +227,13 @@ static void ServosPulseUp()
 {
     PORTA = PORTA | activatedservos[pA];
     PORTB = PORTB | activatedservos[pB];
-    #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+    #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
     PORTC = PORTC | activatedservos[pC];
     #endif
-    #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
     PORTD = PORTD | activatedservos[pD];
     #endif
-    #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
     PORTE = PORTE | activatedservos[pE];
     #endif
 }
@@ -252,13 +252,13 @@ static void SortServoTimings()
         timevalue[t]=255; 
         timings[t][pA]=0x00;
         timings[t][pB]=0x00;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         timings[t][pC]=0x00;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
         timings[t][pD]=0x00;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
         timings[t][pE]=0x00;
         #endif
     }
@@ -286,13 +286,13 @@ static void SortServoTimings()
                                         timevalue[t]=servovalues[s];
                                         timings[t][pA]=mask[s];
                                         timings[t][pB]=0x00;
-                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                                         timings[t][pC]=0x00;
                                         #endif
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
                                         timings[t][pD]=0x00;
                                         #endif
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
                                         timings[t][pE]=0x00;
                                         #endif
                                         numservos=1;
@@ -311,13 +311,13 @@ static void SortServoTimings()
                                         timevalue[t]=servovalues[s];
                                         timings[t][pA]=0x00;
                                         timings[t][pB]=mask[s];
-                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                                         timings[t][pC]=0x00;
                                         #endif
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
                                         timings[t][pD]=0x00;
                                         #endif
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
                                         timings[t][pE]=0x00;
                                         #endif
                                         numservos=1;
@@ -328,7 +328,7 @@ static void SortServoTimings()
                                     }
                                     break;
 
-                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                         case pC:
                                     if (mask[s] & mascaratotal[pC] & activatedservos[pC]){
                                         break;
@@ -338,10 +338,10 @@ static void SortServoTimings()
                                         timings[t][pA]=0x00;
                                         timings[t][pB]=0x00;
                                         timings[t][pC]=mask[s];
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
                                         timings[t][pD]=0x00;
                                         #endif
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
                                         timings[t][pE]=0x00;
                                         #endif
                                         numservos=1;
@@ -353,7 +353,7 @@ static void SortServoTimings()
                                     break;
                         #endif
 
-                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
                         case pD:
                                     if (mask[s] & mascaratotal[pD] & activatedservos[pD]){
                                         break;
@@ -364,7 +364,7 @@ static void SortServoTimings()
                                         timings[t][pB]=0x00;
                                         timings[t][pC]=0x00;
                                         timings[t][pD]=mask[s];
-                                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
                                         timings[t][pE]=0x00;
                                         #endif
                                         numservos=1;
@@ -376,7 +376,7 @@ static void SortServoTimings()
                                     break;
                         #endif
 
-                        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
                         case pE:
                                     if (mask[s] & mascaratotal[pE] & activatedservos[pE]){
                                         break;
@@ -400,13 +400,13 @@ static void SortServoTimings()
         }
         mascaratotal[pA] |= timings[t][pA];
         mascaratotal[pB] |= timings[t][pB];
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50)  || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50)  || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         mascaratotal[pC] |= timings[t][pC];
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
         mascaratotal[pD] |= timings[t][pD];
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
         mascaratotal[pE] |= timings[t][pE];
         #endif
                                         
@@ -431,19 +431,19 @@ void ServoAttach(unsigned char pin)
                 activatedservos[pB] = activatedservos[pB] | mask[pin];  // list pin as servo driver.
                 TRISB = TRISB & (~mask[pin]); 					// set as output pin
                 break;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         case pC: 
                 activatedservos[pC] = activatedservos[pC] | mask[pin];  // list pin as servo driver.
                 TRISC = TRISC & (~mask[pin]); 					// set as output pin
                 break;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)				    
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)				    
         case pD: 
                 activatedservos[pD] = activatedservos[pD] | mask[pin];  // list pin as servo driver.
                 TRISD = TRISD & (~mask[pin]); 					// set as output pin
                 break;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
         case pE: 
                 activatedservos[pE] = activatedservos[pE] | mask[pin];  // list pin as servo driver.
                 TRISE = TRISE & (~mask[pin]); 					// set as output pin
@@ -462,15 +462,15 @@ void ServoDetach(unsigned char pin)
                 break;
         case pB: activatedservos[pB] = activatedservos[pB] ^ mask[pin];
                 break;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         case pC: activatedservos[pC] = activatedservos[pC] ^ mask[pin];
                 break;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO) 
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO) 
         case pD: activatedservos[pD] = activatedservos[pD] ^ mask[pin];
                 break;
         #endif
-        #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
+        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
         case pE: activatedservos[pE] = activatedservos[pE] ^ mask[pin];
                 break;
         #endif

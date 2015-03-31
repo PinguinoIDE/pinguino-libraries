@@ -60,7 +60,7 @@ void pinmode(unsigned char pin, unsigned char state)
             break;
         #if defined(PINGUINO4455)   || defined(PINGUINO4550)  || \
             defined(PINGUINO45K50)  || defined(PINGUINO46J50) || \
-            defined(PINGUINO47J53A) || defined(PICUNO_EQUO)
+            defined(PINGUINO47J53) || defined(PICUNO_EQUO)
         case pD:
             if (state) TRISD=TRISD | mask[pin];
             else TRISD=TRISD & (255-mask[pin]);

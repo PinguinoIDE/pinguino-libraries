@@ -144,7 +144,7 @@ const unsigned char port[36]={
                     };
 
 /**********************************************************************/
-#elif defined(PINGUINO46J50) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
+#elif defined(PINGUINO46J50) || defined(PINGUINO47J53) || defined(PINGUINO47J53B)
 /**********************************************************************/
                                                     // Pinguino pin number
 const unsigned char mask[32]={

@@ -141,6 +141,7 @@ vector_\_XX\()_ISR_wrapper:
 
     /*
     ** Create wrappers for ISRs used in specific libraries
+    ** 32MX2xx and 32MX4xx do not have UART3,4,5 AND 6
     */
 
     ISR_wrapper _TIMER_1_VECTOR, Timer1Interrupt

@@ -436,8 +436,7 @@
     #endif
 
 /**********************************************************************/
-#elif defined(PINGUINO46J50)  || \
-      defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
+#elif defined(PINGUINO46J50) || defined(PINGUINO47J53)
 /**********************************************************************/
 
     //#error "*** BREAKPOINT ***"

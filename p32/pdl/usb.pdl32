@@ -1,5 +1,3 @@
-CDC.begin CDC_begin#include <cdc.h>
-CDC.polling CDC_polling#include <cdc.h>#define __USBCDCPOLLING__
 CDC.write CDC_print#include <cdc.h>#define CDCWRITE
 CDC.print CDC_print#include <cdc.h>#define CDCPRINT
 CDC.println CDC_println#include <cdc.h>#define CDCPRINTLN
