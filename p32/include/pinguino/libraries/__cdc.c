@@ -213,7 +213,7 @@ void CDC_init()
  * write a string on CDC port
  **********************************************************************/
 
-void CDCputs(u8 *buffer, u8 length)
+void CDC_puts(u8 *buffer, u8 length)
 {
     u16 i;
 
@@ -257,7 +257,7 @@ void CDCputs(u8 *buffer, u8 length)
  * get a string from CDC port
  **********************************************************************/
 
-u8 CDCgets(u8 *buffer)
+u8 CDC_gets(u8 *buffer)
 {
     u8 numBytesRead;
         
@@ -293,14 +293,14 @@ u8 CDCgets(u8 *buffer)
  **********************************************************************/
 
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
-void CDCprint(char *string)
+void CDC_print(char *string)
 {
-    CDCputs(string, strlen(string));
+    CDC_puts(string, strlen(string));
 }
 #endif
 
 /*
-void CDCprint(const u8 *fmt, ...)
+void CDC_print(const u8 *fmt, ...)
 {
     u8 s;
     va_list args;							// a list of arguments
@@ -311,26 +311,26 @@ void CDCprint(const u8 *fmt, ...)
     switch (s)
     {
         case FLOAT:
-            CDCprintf("%f", (u32)fmt);
+            CDC_printf("%f", (u32)fmt);
             break;
         case DEC:
-            CDCprintf("%d", (u32)fmt);
+            CDC_printf("%d", (u32)fmt);
             break;
         case HEX:
-            CDCprintf("%x", (u32)fmt);
+            CDC_printf("%x", (u32)fmt);
             break;
         case BYTE:
-            //CDCprintf("%d", (u8)fmt);
-            CDCprintf("%d", (u32)fmt);
+            //CDC_printf("%d", (u8)fmt);
+            CDC_printf("%d", (u32)fmt);
             break;
         case OCT:
-            CDCprintf("%o", (u32)fmt);
+            CDC_printf("%o", (u32)fmt);
             break;
         case BIN:
-            CDCprintf("%b", (u32)fmt);
+            CDC_printf("%b", (u32)fmt);
             break;           
         default:
-            CDCprintf(fmt);
+            CDC_printf(fmt);
             break;
     }
     va_end(args);
@@ -345,23 +345,23 @@ void CDCprint(const u8 *fmt, ...)
  **********************************************************************/
 
 #if defined(CDCPRINTLN)
-void CDCprintln(char *string)
+void CDC_println(char *string)
 {
-    CDCprint(string);
-    CDCprint("\n\r");
+    CDC_print(string);
+    CDC_print("\n\r");
 }
 #endif
 
 /*
-void CDCprintln(const u8 *fmt, ...)
+void CDC_println(const u8 *fmt, ...)
 {
     va_list args;							// a list of arguments
     va_start(args, fmt);					// initialize the list
 
-    CDCprintf(fmt, args);
-    CDCprintf("\n\r");
-    //CDCprintf(fmt);
-    //CDCprintf("\n\r");
+    CDC_printf(fmt, args);
+    CDC_printf("\n\r");
+    //CDC_printf(fmt);
+    //CDC_printf("\n\r");
 }
 */
 
@@ -373,7 +373,7 @@ void CDCprintln(const u8 *fmt, ...)
  **********************************************************************/
 
 #if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
-void CDCprintNumber(long value, u8 base)
+void CDC_printNumber(long value, u8 base)
 {  
     u8 sign;
     u8 length;
@@ -389,7 +389,7 @@ void CDCprintNumber(long value, u8 base)
 
     if (value==0)
     {
-        CDCputs("0", 1);
+        CDC_puts("0", 1);
         return;
     }
     
@@ -425,7 +425,7 @@ void CDCprintNumber(long value, u8 base)
     // end of string
     *sp = 0;
 
-    CDCputs(string, length);
+    CDC_puts(string, length);
 }
 #endif
 
@@ -437,7 +437,7 @@ void CDCprintNumber(long value, u8 base)
  **********************************************************************/
 
 #if defined(CDCPRINTFLOAT)
-void CDCprintFloat(float number, u8 digits)
+void CDC_printFloat(float number, u8 digits)
 { 
     u8 i, toPrint;
     u16 int_part;
@@ -446,7 +446,7 @@ void CDCprintFloat(float number, u8 digits)
     // Handle negative numbers
     if (number < 0.0)
     {
-        CDCputs('-', 1);
+        CDC_puts('-', 1);
         number = -number;
     }
 
@@ -460,18 +460,18 @@ void CDCprintFloat(float number, u8 digits)
     // Extract the integer part of the number and print it  
     int_part = (u16)number;
     remainder = number - (float)int_part;
-    CDCprintNumber(int_part, 10);
+    CDC_printNumber(int_part, 10);
 
     // Print the decimal point, but only if there are digits beyond
     if (digits > 0)
-        CDCputs('.', 1); 
+        CDC_puts('.', 1); 
 
     // Extract digits from the remainder one at a time
     while (digits-- > 0)
     {
         remainder *= 10.0;
         toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-        CDCprintNumber(toPrint, 10);
+        CDC_printNumber(toPrint, 10);
         remainder -= toPrint; 
     }
 }
@@ -485,21 +485,21 @@ void CDCprintFloat(float number, u8 digits)
 
 /*
 #if defined(CDCPRINTF)
-void CDCprintf(const u8 *fmt, ...)
+void CDC_printf(const u8 *fmt, ...)
 {
     u8 length;
     va_list	args;
 
     va_start(args, fmt);
     length = psprintf2(_cdc_buffer, fmt, args);
-    CDCputs(_cdc_buffer, length);
+    CDC_puts(_cdc_buffer, length);
     va_end(args);
 }
 #endif
 */
 
 #if defined(CDCPRINTF)
-void CDCprintf(const u8 *fmt, ...)
+void CDC_printf(const u8 *fmt, ...)
 {
     u8 buffer[_CDCBUFFERLENGTH_];
     u8 length;
@@ -507,7 +507,7 @@ void CDCprintf(const u8 *fmt, ...)
 
     va_start(args, fmt);
     length = psprintf2(buffer, fmt, args);
-    CDCputs(buffer,length);
+    CDC_puts(buffer,length);
     va_end(args);
 }
 #endif
@@ -519,21 +519,21 @@ void CDCprintf(const u8 *fmt, ...)
  **********************************************************************/
 
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
-u8 CDCgetkey(void)
+u8 CDC_getkey(void)
 {
     u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
 
-    while (!CDCgets(buffer));
+    while (!CDC_gets(buffer));
     return (buffer[0]);	// return only the first character
 }
 #endif
 
 /*
-char CDCgetkey()
+char CDC_getkey()
 {
     u8 buffer[64];		// always get a full packet
 
-    while (!CDCgets(buffer));
+    while (!CDC_gets(buffer));
     return (buffer[0]);	// return only the first character
 }
 */
@@ -545,15 +545,15 @@ char CDCgetkey()
  **********************************************************************/
 
 #if defined(CDCGETSTRING)
-u8 * CDCgetstring(void)
+u8 * CDC_getstring(void)
 {
     u8 c, i = 0;
     static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
     
     do {
-        c = CDCgetkey();
+        c = CDC_getkey();
         buffer[i++] = c;
-        CDCputs(&buffer[i-1], 1);
+        CDC_puts(&buffer[i-1], 1);
     } while (c != '\r');
     buffer[i] = '\0';
     return buffer;
@@ -561,14 +561,14 @@ u8 * CDCgetstring(void)
 #endif
 
 /*
-char * CDCgetstring(void)
+char * CDC_getstring(void)
 {
     u8 c, i = 0;
     static u8 buffer[80];
     
     do {
-        c = CDCgetkey();
-        CDCprintf("%c", c);
+        c = CDC_getkey();
+        CDC_printf("%c", c);
         buffer[i++] = c;
     } while (c != '\r');
     buffer[i] = '\0';
@@ -584,7 +584,7 @@ char * CDCgetstring(void)
 
 BOOL CDCUSBNotConnected = false;
 
-BOOL CDCUSBIsConnected(void)
+BOOL CDC_USBIsConnected(void)
 {
     if ( (U1OTGSTATbits.VBUSVD != 0) && (U1OTGSTATbits.SESVD != 0) )
     {
@@ -622,7 +622,7 @@ extern u8 control_signal_bitmap;    // in libusb.a
 
 BOOL CDCDTRIsReady(void)
 {
-    if (CDCUSBIsConnected() == true)
+    if (CDC_USBIsConnected() == true)
     {
         //if(control_signal_bitmap.DTE_PRESENT == 1)
         if((control_signal_bitmap & 0x01) == 0x01)
