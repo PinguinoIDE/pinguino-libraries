@@ -124,6 +124,7 @@
 
 /* CDC Bulk IN transfer states */
 #define CDC_TX_READY                    0
+#define CDC_TX_BUSY                     1
 #define CDC_TX_BUSY_ZLP                 2   // ZLP: Zero Length Packet
 #define CDC_TX_COMPLETING               3
 
@@ -280,22 +281,6 @@ typedef union __attribute__((packed)) _CDC_NOTICE
     u8 packet[CDC_COMM_IN_EP_SIZE];
 } CDC_NOTICE, *PCDC_NOTICE;
 
-/**
-ZLP zero packet length
-Used to aknoledge a set_control_line request
-**/
-typedef struct
-{
-	u8 wValue0;
-	u8 wValue1;
-	u8 wValue2;
-	u8 wValue3;
-	u8 wValue4;
-	u8 wValue5;
-	u8 wValue6;
-	u8 wValue7;
-} Zero_Packet_Length;
-
 /*
  * E X T E R N S
  */
@@ -311,10 +296,10 @@ extern LINE_CODING cdc_line_coding;
  */
 void usb_check_cdc_request(void);
 void cdc_init_endpoint(void);
-u8 cdc_consume(void (*func) (u32));
+//u8 cdc_consume(void (*func) (u32));
 char cdc_getc();
 u8 cdc_gets(char *buffer);
-u8 cdc_putc(char c);
+void cdc_putc(char c);
 void cdc_puts(const char *buffer, u8 length);
 void cdc_tx_service(void);
 

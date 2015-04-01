@@ -84,8 +84,8 @@ typedef union __attribute__ ((packed))__BDT
     struct __attribute__ ((packed))
     {
         BD_STAT     STAT;
-        unsigned    CNT:10;
-        u8 *ADR;		//Buffer Address
+        u16         CNT:10;
+        u32         ADR;		//Buffer Address
     };
     struct __attribute__ ((packed))
     {
@@ -107,7 +107,7 @@ typedef union __attribute__ ((packed))__BDT
 #define USTAT_EP0_IN_EVEN   0x08
 #define USTAT_EP0_IN_ODD    0x0C
 
-#define UEP_STALL 0x0002
+#define UEP_STALL           0x0002
 
 //#define USB_PING_PONG__NO_PING_PONG	0x00
 //#define USB_PING_PONG__EP0_OUT_ONLY	0x01
@@ -115,6 +115,11 @@ typedef union __attribute__ ((packed))__BDT
 //#define USB_PING_PONG__ALL_BUT_EP0	0x03
 
 // Translate virtual address to physical one.
+#if 1
+
+#define ConvertToPhysicalAddress(va)       ( (u32) (va) & 0x1FFFFFFF )
+
+#else
 static inline void *ConvertToPhysicalAddress (volatile void *addr)
 {
     u32 virt = (u32) addr;
@@ -140,13 +145,6 @@ static inline void *ConvertToPhysicalAddress (volatile void *addr)
     }
     return (void*) phys;
 }
+#endif
 
-// This macro is used to disable the USB module
-#define usb_module_disable() {\
-    U1CON = 0;\
-    U1IE = 0;\
-    U1OTGIE = 0;\
-    U1PWR |= _U1PWRC_USBPWR_MASK;\
-    usb_device_state = DETACHED_STATE;\
-}
 #endif

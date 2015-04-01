@@ -25,18 +25,16 @@
 #ifndef USBFUNCTIONCDC_C
 #define USBFUNCTIONCDC_C
 
-#include <p32xxxx.h>
 #include <typedef.h>
 #include <usb/usb_device.h>
 #include <usb/usb_function_cdc.h>
 
-u8 cdc_trf_state;              // States are defined cdc.h
-u8 cdc_tx_len;                 // total tx length
-
-extern u32 cdc_bps; // CDC baud rate (cf. cdc.c)
+u8  cdc_trf_state;              // States are defined cdc.h
+u8  cdc_rx_len;                 // total rx length
+u8  cdc_tx_len;                 // total tx length
+u32 cdc_bps;                    // CDC baud rate (cf. cdc.c)
 
 LINE_CODING cdc_line_coding;    // Buffer to store line coding information
-//Zero_Packet_Length zlp;
 
 static USB_HANDLE data_out;
 static USB_HANDLE data_in;
@@ -103,6 +101,7 @@ void usb_check_cdc_request()
 
     switch (usb_setup_pkt.bRequest)
     {
+        // Required command
         case CDC_SEND_ENCAPSULATED_COMMAND:
             #ifdef DEBUG
             //SerialPrint(UART,"SEND_ENCAPSULATED_COMMAND\r\n");
@@ -115,6 +114,7 @@ void usb_check_cdc_request()
             usb_in_pipe.info.bits.busy = 1;
             break;
 
+        // Required command
         case CDC_GET_ENCAPSULATED_RESPONSE:
             #ifdef DEBUG
             //SerialPrint(UART,"GET_ENCAPSULATED_RESPONSE\r\n");
@@ -127,7 +127,7 @@ void usb_check_cdc_request()
 
         case CDC_SET_LINE_CODING:
             #ifdef DEBUG
-            //SerialPrint(UART,"SET_LINE_CODING\r\n");
+            SerialPrint(UART,"SET_LINE_CODING\r\n");
             #endif
             
             usb_out_pipe.wCount = usb_setup_pkt.wLength;
@@ -138,7 +138,7 @@ void usb_check_cdc_request()
 
         case CDC_GET_LINE_CODING:
             #ifdef DEBUG
-            //SerialPrint(UART,"GET_LINE_CODING\r\n");
+            SerialPrint(UART,"GET_LINE_CODING\r\n");
             #endif
             
             usb_ep0_send_ram_ptr ((u8*) &cdc_line_coding,
@@ -147,7 +147,7 @@ void usb_check_cdc_request()
 
         case CDC_SET_CONTROL_LINE_STATE:
             #ifdef DEBUG
-            //SerialPrint(UART,"SET_CONTROL_LINE_STATE\r\n");
+            SerialPrint(UART,"SET_CONTROL_LINE_STATE\r\n");
             #endif
             
             control_signal_bitmap._byte = (u8)usb_setup_pkt.W_Value;
@@ -185,18 +185,11 @@ void cdc_init_endpoint()
     cdc_line_coding.bParityType = CDC_DEFAULT_PARITY;   // No parity
     cdc_line_coding.bDataBits   = CDC_DEFAULT_NUM_BITS; // 5,6,7,8, or 16
 
+    // Flush all of the data in the CDC buffer
     cdc_trf_state = CDC_TX_READY;
     cdc_tx_len = 0;
-/*
-    zlp.wValue0=0;
-    zlp.wValue1=0;
-    zlp.wValue2=0;
-    zlp.wValue3=0;
-    zlp.wValue4=0;
-    zlp.wValue5=0;
-    zlp.wValue6=0;
-    zlp.wValue7=0;
-*/
+    cdc_rx_len = 0;
+
     /* Do not have to init Cnt of IN pipes here.
      * Reason:  Number of BYTEs to send to the host varies from one
      * transaction to another. Cnt should equal the exact number of
@@ -207,9 +200,8 @@ void cdc_init_endpoint()
     usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
     usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
 
-    data_out = usb_rx_one_packet(CDC_DATA_EP, (u8*) &cdc_data_rx, sizeof(cdc_data_rx));
-
-    data_in = 0;
+    data_out = usb_rx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+    data_in  = 0;
 }
 
 /***********************************************************************
@@ -235,7 +227,7 @@ u8 cdc_consume (void (*func) (u32))
 
     // Prepare dual-ram buffer for next OUT transaction
     data_out = usb_rx_one_packet (CDC_DATA_EP,
-            (u8*) &cdc_data_rx, sizeof(cdc_data_rx));
+            (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
 
     return len;
 }
@@ -247,16 +239,22 @@ u8 cdc_consume (void (*func) (u32))
  
 u8 cdc_gets(char *buffer)
 {
-    u8 len;
+    u8 len = 0;
+   
+    cdc_rx_len = 0;
 
-    if (! data_out || usb_handle_busy(data_out))
-        return 0;
+    //if (! data_out || usb_handle_busy(data_out))
+    if (!usb_handle_busy(data_out))
+    {
+        len = usb_handle_get_length(data_out);
 
-    len = usb_handle_get_length(data_out);
-    *buffer = *cdc_data_rx;
-
-    data_out = usb_rx_one_packet (CDC_DATA_EP,
-            (u8*) &cdc_data_rx, sizeof(cdc_data_rx));
+        // Copy data from dual-ram buffer to user's buffer
+        for (cdc_rx_len = 0; cdc_rx_len < len; cdc_rx_len++)
+            buffer[cdc_rx_len] = cdc_data_rx[cdc_rx_len];
+        
+        data_out = usb_rx_one_packet (CDC_DATA_EP,
+                (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+    }
 
     return len;
 }
@@ -283,14 +281,16 @@ char cdc_getc()
  * Return a number of free bytes in transmit buffer.
  **********************************************************************/
  
-u8 cdc_putc(char c)
+void cdc_putc(char c)
 {
-    if (cdc_trf_state != CDC_TX_READY || cdc_tx_len >= sizeof(cdc_data_tx))
-        return 0;
-
-    cdc_data_tx[cdc_tx_len++] = c;
-    
-    return sizeof(cdc_data_tx) - cdc_tx_len;
+    //|| cdc_tx_len >= sizeof(cdc_data_tx))
+    if (cdc_trf_state == CDC_TX_READY)
+    {
+        cdc_tx_len = 1;
+        cdc_trf_state = CDC_TX_BUSY;
+        cdc_data_tx[0] = c;
+    }
+    //return sizeof(cdc_data_tx) - cdc_tx_len;
 }
 
 /***********************************************************************
@@ -298,11 +298,13 @@ u8 cdc_putc(char c)
  * Régis Blanchot 23-01-2015 
  **********************************************************************/
  
-void cdc_puts(const char *buffer, u8 length)
+void cdc_puts(const char *buffer, u8 len)
 {
-    while (length--)
+    if (cdc_trf_state == CDC_TX_READY)
     {
-        cdc_putc(*buffer++);
+        cdc_tx_len = len;
+        cdc_trf_state = CDC_TX_BUSY;
+        *cdc_data_tx = *buffer;
     }
 }
 
@@ -314,44 +316,54 @@ void cdc_puts(const char *buffer, u8 length)
 
 void cdc_tx_service()
 {
+    u8 byte_to_send, i;
+    
     #ifdef DEBUG
     //SerialPrint(UART,"> cdc_tx_service\r\n");
     #endif
 
     // Check that USB connection is established.
-    if ((usb_device_state < CONFIGURED_STATE) || U1PWRCbits.USUSPEND)
-        return;
+    //if ((usb_device_state < CONFIGURED_STATE) || U1PWRCbits.USUSPEND)
+    //    return;
 
     if (usb_handle_busy(data_in))
         return;
         
     if (cdc_trf_state == CDC_TX_COMPLETING)
-    {
         cdc_trf_state = CDC_TX_READY;
-        cdc_tx_len = 0;
-    }
 
+    // If CDC_TX_READY state, nothing to do, just return.
+    if(cdc_trf_state == CDC_TX_READY)
+        return;
+    
     // If CDC_TX_BUSY_ZLP state, send zero length packet
     if (cdc_trf_state == CDC_TX_BUSY_ZLP)
     {
         data_in = usb_tx_one_packet(CDC_DATA_EP, 0, 0);
         cdc_trf_state = CDC_TX_COMPLETING;
-        return;
     }
 
-    // Send a next packet.
-    if ((cdc_trf_state == CDC_TX_READY) && (cdc_tx_len > 0))
+    else if (cdc_trf_state == CDC_TX_BUSY)
     {
-        /*
-         * Determine if a zero length packet state is necessary.
-         * See explanation in USB Specification 2.0: Section 5.8.3
-         */
-         
-        if (cdc_tx_len == CDC_DATA_IN_EP_SIZE)
-            cdc_trf_state = CDC_TX_BUSY_ZLP;
+        // First, have to figure out how many byte of data to send.
+        if (cdc_tx_len > sizeof(cdc_data_tx))
+            byte_to_send = sizeof(cdc_data_tx);
         else
-            cdc_trf_state = CDC_TX_COMPLETING;
+            byte_to_send = cdc_tx_len;
 
+        // Subtract the number of bytes just about to be sent from the total.
+        cdc_tx_len = cdc_tx_len - byte_to_send;
+        
+        // Lastly, determine if a zero length packet state is necessary.
+        if (cdc_tx_len == 0)
+        {
+            if(byte_to_send == CDC_DATA_IN_EP_SIZE)
+                cdc_trf_state = CDC_TX_BUSY_ZLP;
+            else
+                cdc_trf_state = CDC_TX_COMPLETING;
+        }
+        
+        // send packet
         data_in = usb_tx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_tx, cdc_tx_len);
     }
 }
