@@ -30,10 +30,8 @@
 
     void __attribute__((weak)) Serial1Interrupt() { Nop(); }
     void __attribute__((weak)) Serial2Interrupt() {}
-    #if !defined(__32MX220F032D__) && \
-        !defined(__32MX220F032B__) && \
-        !defined(__32MX250F128B__) && \
-        !defined(__32MX270F256B__)
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
     void __attribute__((weak)) Serial3Interrupt() {}
     void __attribute__((weak)) Serial4Interrupt() {}
     void __attribute__((weak)) Serial5Interrupt() {}
@@ -52,45 +50,26 @@
 #else
 
     #ifndef __SERIAL__
-        void Serial1Interrupt(void)
-        {
-            Nop();    
-        }
-
-        void Serial2Interrupt(void)
-        {
-            Nop();    
-        }
+        void Serial1Interrupt(void) { Nop(); }
+        void Serial2Interrupt(void) { Nop(); }
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
 
         #ifndef ENABLE_UART3
-        void Serial3Interrupt(void)
-        {
-            Nop();
-        }
+        void Serial3Interrupt(void) { Nop(); }
         #endif
 
         #ifndef ENABLE_UART4
-        void Serial4Interrupt(void)
-        {
-            Nop();
-        }
+        void Serial4Interrupt(void) { Nop(); }
         #endif
 
         #ifndef ENABLE_UART5
-        void Serial5Interrupt(void)
-        {
-            Nop();
-        }
+        void Serial5Interrupt(void) { Nop(); }
         #endif
 
         #ifndef ENABLE_UART6
-        void Serial6Interrupt(void)
-        {
-            Nop();
-        }
+        void Serial6Interrupt(void) { Nop(); }
         #endif
 
     #endif
@@ -98,69 +77,45 @@
     #endif // __SERIAL__
 
 
-    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // TO REMOVE
-    void Timer1Interrupt(void)
-    {
-        Nop();    
-    }
+    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // DCF77 TO MOVE
+    void Timer1Interrupt(void) { Nop(); }
     #endif
 
     #if !defined(TMR2INT) && !defined(__SERVOS__) && !defined(__AUDIO__)
-    void Timer2Interrupt(void)
-    {
-        Nop();    
-    }
+    void Timer2Interrupt(void) { Nop(); }
     #endif
 
     #if !defined(TMR3INT) && !defined(__IRREMOTE__) //&& !defined(__PWM__)
-    void Timer3Interrupt(void)
-    {
-        Nop();    
-    }
+    void Timer3Interrupt(void) { Nop(); }
     #endif
 
     #if !defined(TMR4INT) && !defined(__STEPPER__)
-    void Timer4Interrupt(void)
-    {
-        Nop();    
-    }
+    void Timer4Interrupt(void) { Nop(); }
     #endif
 
     #if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
-    void Timer5Interrupt(void)
-    {
-        Nop();    
-    }
+    void Timer5Interrupt(void) { Nop(); }
     #endif
 
     #ifndef __SPI__
         #if (SPIx != 1)
-        void SPI1Interrupt(void)
-        {
-            Nop();    
-        }
+        void SPI1Interrupt(void) { Nop(); }
         #endif
         
-        #if (SPIx != 2)
-        void SPI2Interrupt(void)
-        {
-            Nop();    
-        }
+        #if !defined(__32MX795F512L__) && \
+            !defined(__32MX795F512H__)
+            #if (SPIx != 2)
+            void SPI2Interrupt(void) { Nop(); }
+            #endif
         #endif
     #endif // __SPI__
 
     #ifndef __RTCC__
-    void RTCCInterrupt(void)
-    {
-        Nop();    
-    }
+    void RTCCInterrupt(void) { Nop(); }
     #endif // __RTCC__
 
     #if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) || 
-    void USBInterrupt(void)
-    {
-        Nop();    
-    }
+    void USBInterrupt(void) { Nop(); }
     #endif
 
 #endif

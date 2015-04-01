@@ -30,6 +30,8 @@
 /**********************************************************************/
 
             // UBW32 build-in leds
+            #define USERLED                 59 //PORTEbits.RE3      // led2
+
             #define LED1                    63 //PORTEbits.RE2      // white led
             #define LED2                    59 //PORTEbits.RE1      // red led
             #define LED3                    58 //PORTEbits.RE0      // yellow led
@@ -37,19 +39,20 @@
 
             #define WHITELED                63 //PORTEbits.RE2      // led1
             #define GREENLED                59 //PORTEbits.RE3      // led2
-            #define USERLED         59 //PORTEbits.RE3      // led2
             #define YELLOWLED               58 //PORTEbits.RE0      // led3
             #define REDLED                  64 //PORTEbits.RE1      // led4
 
             // UBW32 build-in buttons
-            #define PROGBUTTON          68 //PORTEbits.RE7 = prog button
-            #define USERBUTTON          69 //PORTEbits.RE6 = user button
+            #define PROGBUTTON              68 //PORTEbits.RE7 = prog button
+            #define USERBUTTON              69 //PORTEbits.RE6 = user button
 
 /**********************************************************************/
     #elif defined(PIC32_PINGUINO_T795)
 /**********************************************************************/
 
             // Olimex PIC32-T795 build-in leds
+            #define USERLED                 36 //PORTBbits.RB15     // green
+
             #define LED1                    36 //PORTBbits.RB15     // green
             #define LED2                    19 //PORTBbits.RB12     // yellow
 
@@ -57,18 +60,19 @@
             #define YELLOWLED               19 //PORTBbits.RB12     // yellow
 
             // UBW32 build-in buttons
-            #define PROGBUTTON          24 //PORTDbits.RD0 = prog button
+            #define PROGBUTTON              24 //PORTDbits.RD0 = prog button
              
 /**********************************************************************/
     #elif defined(EMPEROR460) || defined(EMPEROR795)
 /**********************************************************************/
 
             // EMPEROR build-in leds
+            #define USERLED                 49 //pin49 PORTEbits.RE2    // led1
+
             #define LED1                    49 //PORTEbits.RE2      // blue led
             #define LED2                    48 //PORTEbits.RE3      // red led
 
-            #define BLUELED             49 //pin49 PORTEbits.RE2    // led1
-            #define USERLED             49 //pin49 PORTEbits.RE2    // led1
+            #define BLUELED                 49 //pin49 PORTEbits.RE2    // led1
             #define REDLED                  48 //pin48 PORTEbits.RE3        // led2
 
             // UBW32 build-in buttons
@@ -78,12 +82,13 @@
     #elif defined (PIC32_PINGUINO_MICRO)
 /**********************************************************************/
 
-            #define USERLED             32  //PORTGbits.RG6 // led1
-            #define GREENLED                32      //PORTGbits.RG6 // led1
-            #define YELLOWLED               10      //PORTDbits.RD1 // led2
+            #define USERLED                 32  //PORTGbits.RG6 // led1
 
             #define LED1                    GREENLED
             #define LED2                    YELLOWLED
+
+            #define GREENLED                32      //PORTGbits.RG6 // led1
+            #define YELLOWLED               10      //PORTDbits.RD1 // led2
 
             // P1_1 refers to CON1 pin 1, P1_2 CON1 pin 2, and so on
             #define P1_1    31
@@ -125,7 +130,7 @@
     #elif defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
 /**********************************************************************/
 
-            // Arduino's digital pins
+            // Digital pins
             #define D0              0
             #define D1              1
             #define D2              2
@@ -141,7 +146,8 @@
             #define D11             11
             #define D12             12
             #define D13             13
-            // Arduino's analog pins
+
+            // Analog pins
             #if defined(__ANALOG__)
                     #define A0              0
                     #define A1              1
@@ -161,11 +167,13 @@
                     #define A6              20
                     #define A7              21
             #endif
+
             // OLIMEX build-in leds
+            #define USERLED            	    13	    //PORTGbits.RG6 // led1
+
             #define LED1                    13      //PORTGbits.RG6 // green led
             #define LED2                    30      //PORTDbits.RD1 // yellow led
 
-            #define USERLED            	    13	    //PORTGbits.RG6 // led1
             #define GREENLED                13      //PORTGbits.RG6 // led1
             #define YELLOWLED               30      //PORTDbits.RD1 // led2
 
@@ -178,8 +186,8 @@
           defined(PINGUINO32MX270)
 /**********************************************************************/
 
-            #define USERBUTTON      14
             #define USERLED         13
+            #define USERBUTTON      14
    
             #define PWM0            8
             #define PWM1            7
@@ -211,7 +219,7 @@
 
             // OLIMEX build-in leds
             #define LED1                    USERLED
-            #define LED2                     9      //PORTAbits.RA10 // red LED
+            #define LED2                    9      //PORTAbits.RA10 // red LED
 
             #define GREENLED                USERLED
             #define REDLED                  LED2

@@ -151,8 +151,14 @@ vector_\_XX\()_ISR_wrapper:
     ISR_wrapper _TIMER_5_VECTOR, Timer5Interrupt
 
     ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
+
+    #if !defined(__32MX795F512L__) && \
+        !defined(__32MX795F512H__)
+
     ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
 
+    #endif
+    
     ISR_wrapper _UART_1_VECTOR,  Serial1Interrupt
     ISR_wrapper _UART_2_VECTOR,  Serial2Interrupt
 
