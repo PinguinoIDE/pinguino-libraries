@@ -8,6 +8,9 @@
     --------------------------------------------------------------------
     CHANGELOG:
     --------------------------------------------------------------------
+    NOTE: P32MX795 share some vectors : 
+
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -26,37 +29,70 @@
 #ifndef ISRWRAPPER_C
 #define ISRWRAPPER_C
 
-#if 0
+#if 0 // p32-gcc doen't emit any weak attribute ... Don't know why ...
 
-    void __attribute__((weak)) Serial1Interrupt() { Nop(); }
-    void __attribute__((weak)) Serial2Interrupt() {}
+    void __DoNothing() { /* do something */; }
+    // SERIAL
+    void Serial1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Serial2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
-    void __attribute__((weak)) Serial3Interrupt() {}
-    void __attribute__((weak)) Serial4Interrupt() {}
-    void __attribute__((weak)) Serial5Interrupt() {}
-    void __attribute__((weak)) Serial6Interrupt() {}
+    void Serial3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Serial4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Serial5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Serial6Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     #endif
-    void __attribute__((weak)) Timer1Interrupt()  {}
-    void __attribute__((weak)) Timer2Interrupt()  {}
-    void __attribute__((weak)) Timer3Interrupt()  {}
-    void __attribute__((weak)) Timer4Interrupt()  {}
-    void __attribute__((weak)) Timer5Interrupt()  {}
-    void __attribute__((weak)) SPI1Interrupt()    {}
-    void __attribute__((weak)) SPI2Interrupt()    {}
-    void __attribute__((weak)) RTCCInterrupt()    {}
-    void __attribute__((weak)) USBInterrupt()     {}
+    // TIMER
+    void Timer1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Timer2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Timer3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Timer4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Timer5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    // SPI
+    void SPI1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void SPI2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    #if !defined(__32MX795F512L__) && \
+        !defined(__32MX795F512H__)
+    void SPI3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void SPI4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    #endif
+    // I2C
+    void I2C1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void I2C2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    #if !defined(__32MX795F512L__) && \
+        !defined(__32MX795F512H__)
+    void I2C3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void I2C4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void I2C5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    #endif
+    // OTHER
+    void RTCCInterrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void USBInterrupt() __attribute__ ((weak, alias ("__DoNothing")));
 
 #else
 
+    /**************************************************************************/
+
     #ifndef __SERIAL__
-        void Serial1Interrupt(void) { Nop(); }
-        void Serial2Interrupt(void) { Nop(); }
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
 
-        #ifndef ENABLE_UART3
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if !defined(ENABLE_UART1) && (SPIx != 3) && (I2Cx != 3)
+        void Serial1Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if !defined(ENABLE_UART2) && (SPIx != 4) && (I2Cx != 5)
+        void Serial2Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if !defined(ENABLE_UART3) && (SPIx != 2) && (I2Cx != 4)
         void Serial3Interrupt(void) { Nop(); }
         #endif
 
@@ -72,10 +108,16 @@
         void Serial6Interrupt(void) { Nop(); }
         #endif
 
+    #else // all other processors
+
+        void Serial1Interrupt(void) { Nop(); }
+        void Serial2Interrupt(void) { Nop(); }
+
     #endif
 
     #endif // __SERIAL__
 
+    /**************************************************************************/
 
     #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // DCF77 TO MOVE
     void Timer1Interrupt(void) { Nop(); }
@@ -97,18 +139,91 @@
     void Timer5Interrupt(void) { Nop(); }
     #endif
 
-    #ifndef __SPI__
+    /**************************************************************************/
+
+    #ifndef __I2C__
+
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
+
+        void I2C1Interrupt(void) { Nop(); }
+        void I2C2Interrupt(void) { Nop(); }
+
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if !defined(ENABLE_UART1) && (SPIx != 3) && (I2Cx != 3)
+        void I2C3Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if !defined(ENABLE_UART3) && (SPIx != 2) && (I2Cx != 4)
+        void I2C4Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if !defined(ENABLE_UART2) && (SPIx != 4) && (I2Cx != 5)
+        void I2C5Interrupt(void) { Nop(); }
+        #endif
+
+    #else // all other processors
+
+        void I2C1Interrupt(void) { Nop(); }
+        void I2C2Interrupt(void) { Nop(); }
+
+    #endif
+
+    #endif
+    
+    /**************************************************************************/
+
+    //#ifndef __SPI__
+
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
+
         #if (SPIx != 1)
         void SPI1Interrupt(void) { Nop(); }
         #endif
-        
-        #if !defined(__32MX795F512L__) && \
-            !defined(__32MX795F512H__)
-            #if (SPIx != 2)
-            void SPI2Interrupt(void) { Nop(); }
-            #endif
+
+        #if (SPIx != 2)
+        void SPI2Interrupt(void) { Nop(); }
         #endif
-    #endif // __SPI__
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if !defined(ENABLE_UART3) && (SPIx != 2) && (I2Cx != 4)
+        void SPI2Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if !defined(ENABLE_UART1) && (SPIx != 3) && (I2Cx != 3)
+        void SPI3Interrupt(void) { Nop(); }
+        #endif
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if !defined(ENABLE_UART2) && (SPIx != 4) && (I2Cx != 5)
+        void SPI4Interrupt(void) { Nop(); }
+        #endif
+
+    #else // all other processors
+
+        #if (SPIx != 1)
+        void SPI1Interrupt(void) { Nop(); }
+        #endif
+
+        #if (SPIx != 2)
+        void SPI2Interrupt(void) { Nop(); }
+        #endif
+
+    #endif
+
+    //#endif // __SPI__
+
+    /**************************************************************************/
 
     #ifndef __RTCC__
     void RTCCInterrupt(void) { Nop(); }

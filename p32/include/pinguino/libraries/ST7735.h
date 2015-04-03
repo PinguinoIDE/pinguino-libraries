@@ -192,7 +192,7 @@ void ST7735_init(u8, u8, u8, u8);
 #else
 void ST7735_init(u8, u8);
 #endif
-void ST7735_setOrientation(u8);
+void ST7735_setOrientation(u16);
 void ST7735_setWindow(u8,u8,u8,u8);
 void ST7735_setColor(u16);
 void ST7735_setBackgroundColor(u16);

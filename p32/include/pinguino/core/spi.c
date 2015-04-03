@@ -48,7 +48,8 @@
 #include <interrupt.c>
 
 #ifndef SPIx                            // Use SPI port 1, see PIC32 Datasheet
-    #if defined(PIC32_PINGUINO_OTG) || defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_MICRO)  //dk MICRO added
+    #if defined(PIC32_PINGUINO_OTG) || defined(PIC32_PINGUINO) || \
+        defined(PIC32_PINGUINO_MICRO)  //dk MICRO added
         #define SPIx 2                  // default SPI port is 2 for 32MX440F256H which has only one SPI port
     #elif defined(PIC32_PINGUINO_T795)  //Olimex PIC32-T795 default on header
         #define SPIx 3                  // default SPI port is 2 for 32MX440F256H which has only one SPI port
@@ -58,8 +59,8 @@
 #endif
 
 #if defined(UBW32_460) || defined(EMPEROR460) || \
-    defined(PIC32_PINGUINO_220) || \
-    defined(PINGUINO32MX250) || defined(PINGUINO32MX270) || defined(PINGUINO32MX220)
+    defined(PIC32_PINGUINO_220) || defined(PINGUINO32MX220) || \
+    defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
 
     #if (SPIx == 1)
         #define BUFFER		SPI1BUF
@@ -107,11 +108,16 @@
     #define CKP         SPI2CONbits.CKP
     #define CKE         SPI2CONbits.CKE
     #define SMP         SPI2CONbits.SMP
+    #define MODE16      SPI2CONbits.MODE16
+    #define MODE32      SPI2CONbits.MODE32
     #define MSTEN       SPI2CONbits.MSTEN
 #endif
 
 //Only 795 boards have SPI3 and SPI4
-#if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
+//#if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
+
+#if defined(__32MX795F512L__) || \
+    defined(__32MX795F512H__)
 
     #if (SPIx == 3)
         #define BUFFER		SPI3BUF
@@ -495,11 +501,11 @@ unsigned char SPI_read(void)
 }
 
 /**
- * SPIInterrupt
- * TODO: move this to interrupt library and add it to main32.c ?
+ * SPI1Interrupt
  **/
 
-void SPIxInterrupt(void)
+#if (SPIx == 1)
+void SPI1Interrupt(void)
 {
     unsigned char rData;
 
@@ -515,5 +521,72 @@ void SPIxInterrupt(void)
         IntClearFlag(INTTXDONE);
     }
 }
+#endif
+
+/**
+ * SPI2Interrupt
+ **/
+
+#if (SPIx == 2)
+void SPI2Interrupt(void)
+{
+    unsigned char rData;
+
+    // Is this an RX interrupt ?
+    if (IntGetFlag(INTRXDONE))
+    {
+        rData = BUFFER;			// Read SPI data buffer
+        IntClearFlag(INTRXDONE);
+    }
+    // Is this an TX interrupt ?
+    if (IntGetFlag(INTTXDONE))
+    {
+        IntClearFlag(INTTXDONE);
+    }
+}
+#endif
+
+#if defined(__32MX795F512L__) || \
+    defined(__32MX795F512H__)
+
+#if (SPIx != 3)
+void SPI3Interrupt(void)
+{
+    unsigned char rData;
+
+    // Is this an RX interrupt ?
+    if (IntGetFlag(INTRXDONE))
+    {
+        rData = BUFFER;			// Read SPI data buffer
+        IntClearFlag(INTRXDONE);
+    }
+    // Is this an TX interrupt ?
+    if (IntGetFlag(INTTXDONE))
+    {
+        IntClearFlag(INTTXDONE);
+    }
+}
+#endif
+
+#if (SPIx != 4)
+void SPI4Interrupt(void)
+{
+    unsigned char rData;
+
+    // Is this an RX interrupt ?
+    if (IntGetFlag(INTRXDONE))
+    {
+        rData = BUFFER;			// Read SPI data buffer
+        IntClearFlag(INTRXDONE);
+    }
+    // Is this an TX interrupt ?
+    if (IntGetFlag(INTTXDONE))
+    {
+        IntClearFlag(INTTXDONE);
+    }
+}
+#endif
+
+#endif /* __32MX795F512x__ */
 
 #endif	/* __SPI__ */

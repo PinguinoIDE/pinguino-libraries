@@ -197,7 +197,7 @@ void ST7735_init(u8 cs, u8 dc)
 /// Set the display orientation to 0, 90, 180, or 270 degrees
 ///	--------------------------------------------------------------------
 
-void ST7735_setOrientation(u8 degrees)
+void ST7735_setOrientation(u16 degrees)
 {
     u8 arg;
     

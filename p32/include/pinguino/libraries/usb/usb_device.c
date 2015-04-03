@@ -37,7 +37,7 @@ volatile BDT_ENTRY *pBDTEntryEP0OutCurrent;
 volatile BDT_ENTRY *pBDTEntryEP0OutNext;
 volatile BDT_ENTRY *pBDTEntryOut[USB_EP_NUM+1];
 volatile BDT_ENTRY *pBDTEntryIn[USB_EP_NUM+1];
-USBVOLATILE u8 USBCableConnected = FALSE;      // Current VBUS level 
+USBVOLATILE u8 USBCableConnected;      // Current VBUS level 
 USBVOLATILE u8 usb_alternate_interface[USB_INT_NUM];
 USBVOLATILE u8 short_packet_status;
 USBVOLATILE u8 control_transfer_state;
@@ -137,6 +137,9 @@ void usb_device_init(void)
     #endif
     U1OTGIR = _U1OTGIR_SESVDIF_MASK;
     
+    // Indicate if USB cable is plugged or not
+    USBCableConnected = U1OTGSTATbits.SESVD; 
+
     // Indicate that we are in the detached state
     usb_device_state = DETACHED_STATE;
 }
@@ -349,8 +352,8 @@ void usb_device_tasks(void)
                    //_U1IR_RESUMEIF_MASK;
 
             #ifdef DEBUG
-            U1IR |= _U1IR_UERRIF_MASK; 
             U1IE |= _U1IE_UERRIE_MASK;
+            U1IR |= _U1IR_UERRIF_MASK; 
             U1EIE = 0xFF;
             U1EIR = 0xFF;
             #endif

@@ -10,15 +10,14 @@ INPUT("processor.o")
  *************************************************************************/
 PROVIDE(_vector_spacing = 0x00000001);
 
-/*************************************************************************
- * Memory Address Equates
- * _RESET_ADDR                    -- Reset Vector
- * _BEV_EXCPT_ADDR                -- Boot exception Vector
- * _DBG_EXCPT_ADDR                -- In-circuit Debugging Exception Vector
- * _DBG_CODE_ADDR                 -- In-circuit Debug Executive address
- * _DBG_CODE_SIZE                 -- In-circuit Debug Executive size
- * _GEN_EXCPT_ADDR                -- General Exception Vector
- *************************************************************************/
+/**********************************************************************
+ * _ebase_address value MUST BE same as the ORIGIN value of exception_mem
+ * _RESET_ADDR value MUST BE same as the ORIGIN value of kseg1_boot_mem
+ *
+ * After any kind of reset, the PIC32 CPU will jump to the reset vector,
+ * that resides at the fixed virtual address 0x9FC00000 (0xBFC00000).
+ * which points to _reset (cf. crt0.S)
+ **********************************************************************/
 
 _ebase_address           = 0x9D003000;
 _RESET_ADDR              = 0x9D004000;
@@ -26,17 +25,9 @@ _RESET_ADDR              = 0x9D004000;
 /*************************************************************************
  * Memory Regions
  *
- * Memory regions without attributes cannot be used for orphaned sections.
- * Only sections specifically assigned to these regions can be allocated
- * into these regions.
- *
- * The internal boot flash memory is divided into several regions.
- * After all those allocations, it is usually too small for any meaningful bootloader firmware.
  * - exception_mem  contains interrupt vector table starting at ebase (cacheable)
  * - kseg1_boot_mem contains reset vector, bootstrap exception handler, debug exception handler (non-cacheable)
  * - kseg0_boot_mem contains C startup module (cacheable)
- * - debug_exec_mem containing debug supporting code for running ICD3/RealICE during a debug session (non-cacheable)
- * - configuration words (non-cacheable)
  *************************************************************************/
 MEMORY
 {
@@ -56,8 +47,7 @@ MEMORY
 }
 
 /*************************************************************************
- * Configuration-word sections. Map the config-pragma input sections to
- * absolute-address output sections.
+ * Configuration-word sections.
  *************************************************************************/
 
 SECTIONS

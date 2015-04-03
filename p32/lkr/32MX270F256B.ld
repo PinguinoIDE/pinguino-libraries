@@ -2,7 +2,7 @@
  * PIC32MX270F256B object file
  * Contains Memory Regions definitions
  * 2015-03-24 Régis Blanchot
- * TO USE ONLY WITH PINGUINO HID USB BOOTLOADER v1.1 or sup.
+ * TO USE ONLY WITH PINGUINO HID USB BOOTLOADER v1.3 or sup.
  * more info :
  * https://sourceware.org/binutils/docs-2.23.1/ld/File-Commands.html#File-Commands
  **********************************************************************/
@@ -20,15 +20,13 @@ BMXDUPBA = 0xBF882030;
 BMXDKPBA = 0xBF882010;
 BMXDUDBA = 0xBF882020;
 
-/***********************************************************************
- * Base address of interrupt vector table (length = 0x1000)
- * _ebase_address value MUST BE the same as the ORIGIN value of exception_mem
+/**********************************************************************
+ * _ebase_address value MUST BE same as the ORIGIN value of exception_mem
  * _RESET_ADDR value MUST BE same as the ORIGIN value of kseg1_boot_mem
- * When the PIC is reset, it goes to the reset address 0xBFC00000,
- * which is the location of the boot flash, and executes the code there:
- * crt0.S which takes care of some initialization tasks,
- * then calls the code for the bootloader,
- * which resides in the KSEG0 program flash (kseg0_program_mem) memory block.
+ * They MUST BE ALIGNED with 4K address boundary
+ * After any kind of reset, the PIC32 CPU will jump to the reset vector,
+ * that resides at the fixed virtual address 0x9FC00000 (0xBFC00000).
+ * which points to _reset (cf. crt0.S)
  **********************************************************************/
 
 _ebase_address           = 0x9D003000;
@@ -39,77 +37,41 @@ _RESET_ADDR              = 0x9D004000;
  ***********************************************************************
  * - exception_mem  contains interrupt vector table starting at ebase (cacheable)
  * - kseg1_boot_mem contains reset vector, bootstrap exception handler,
- *   debug exception handler (non-cacheable)
  * - kseg0_boot_mem contains C startup module (cacheable)
- * - debug_exec_mem containing debug supporting code for running
- *   ICD3/RealICE during a debug session (non-cacheable)
- * - configuration words (non-cacheable)
- * - length = 0x200 + 64 vectors * 32 bytes = 0xA00 < 0xBF0
 **********************************************************************/
 
 MEMORY
 {
 
-/**********************************************************************
- * exception_mem  contains INTERRUPT VECTOR TABLE starting at ebase (cacheable)
- * exception_mem value MUST BE same as value of _ebase_address
- * exception_mem must align with 4K address boundary
- * SPACE SHARED BETWEEN THE BOOTLOADER AND THE PINGUINO APPLICATION
- * 0x200 + 64 vectors * 32 bytes = 0xA00
- **********************************************************************/
+    /* 0x200 + 64 vectors * 32 bytes = 0xA00 */
 
-exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0xA00
+    exception_mem              : ORIGIN = 0x9D003000, LENGTH = 0xA00
 
-/**********************************************************************
- * kseg0_boot_mem (cacheable) contains C startup module (cacheable)
- * Startup code is 0x1B0 bytes long
- **********************************************************************/
+    /* Startup code is 0x1B0 bytes long */
 
-kseg0_boot_mem             : ORIGIN = 0x9D003A00, LENGTH = 0x200
+    kseg0_boot_mem             : ORIGIN = 0x9D003A00, LENGTH = 0x200
 
-/**********************************************************************
- * kseg1_boot_mem (non-cacheable) contains
- * - Reset vector (0x000)
- * - Bootstrap exception handler (0x380)
- * - Debug exception handler (0x480)
- * Note : Bootloader code between 0x9D001000 and 0x9D004000
- **********************************************************************/
+    /* Reset vector */
 
-kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
+    kseg1_boot_mem             : ORIGIN = 0x9D004000, LENGTH = 0x10
 
-/***********************************************************************
- * User Program code
- * in cacheable PROGRAM FLASH
- * from 0x9D000000 to 0x9D040000 (PIC32MX270F256B = 256 KB flash = 0x40000) 
- * Bootloader Interrupt Vector Table is placed between 0x9D000000 to 0x9D001000
- * Bootloader Code is placed between 0x9D001000 and 0x9D004000
- * 0x40000 − 0x5000 = 0x3B000 bytes free
- **********************************************************************/
+    /* User Program code 0x40000 − 0x4210 = 0x3B000 bytes free */
 
-kseg0_program_mem    (rx)  : ORIGIN = 0x9D004010, LENGTH = 0x3BFF0
+    kseg0_program_mem    (rx)  : ORIGIN = 0x9D004010, LENGTH = 0x3BFF0
   
-/***********************************************************************
- * Device Configuration Registers (configuration bits)
- **********************************************************************/
+    /* Device Configuration Registers (configuration bits) */
 
-configsfrs                 : ORIGIN = 0xBFC00BF0, LENGTH = 0x10
-config3                    : ORIGIN = 0xBFC00BF0, LENGTH = 0x4
-config2                    : ORIGIN = 0xBFC00BF4, LENGTH = 0x4
-config1                    : ORIGIN = 0xBFC00BF8, LENGTH = 0x4
-config0                    : ORIGIN = 0xBFC00BFC, LENGTH = 0x4
+    configsfrs                 : ORIGIN = 0xBFC00BF0, LENGTH = 0x10
+    config3                    : ORIGIN = 0xBFC00BF0, LENGTH = 0x4
+    config2                    : ORIGIN = 0xBFC00BF4, LENGTH = 0x4
+    config1                    : ORIGIN = 0xBFC00BF8, LENGTH = 0x4
+    config0                    : ORIGIN = 0xBFC00BFC, LENGTH = 0x4
+    sfrs                       : ORIGIN = 0xBF800000, LENGTH = 0x100000
 
-/***********************************************************************
- * all SFRS
- **********************************************************************/
+    /* PIC32MX270F256B has 64 KB RAM, or 0x10000 */
 
-sfrs                       : ORIGIN = 0xBF800000, LENGTH = 0x100000
-
-/***********************************************************************
- * PIC32MX270F256B has 64 KB RAM, or 0x10000
- **********************************************************************/
-
-boot_software_key          : ORIGIN = 0xA0000000, LENGTH = 0x4
-kseg1_data_mem       (w!x) : ORIGIN = 0xA0000004, LENGTH = 0xFFFC
+    boot_software_key          : ORIGIN = 0xA0000000, LENGTH = 0x4
+    kseg1_data_mem       (w!x) : ORIGIN = 0xA0000004, LENGTH = 0xFFFC
 
 }
 

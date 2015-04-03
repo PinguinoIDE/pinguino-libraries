@@ -87,9 +87,9 @@ int main()
     CDC_init();
     #endif    
 
-    #ifdef __RTCC__
-    RTCC_init();
-    #endif    
+    //#ifdef __RTCC__
+    //RTCC_init();
+    //#endif    
     
     #ifdef __SERVOS__
     servos_init();
