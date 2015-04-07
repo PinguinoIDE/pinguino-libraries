@@ -203,9 +203,9 @@ void serial1flush(void)
 BOOL serial1clearrxerror(void)
 {
     #ifdef PIC32_PINGUINO_220
-        return(ClearRxError(UART2));
+        return(SerialClearRxError(UART2));
     #else
-        return(ClearRxError(UART1));
+        return(SerialClearRxError(UART1));
 #endif
 }
 

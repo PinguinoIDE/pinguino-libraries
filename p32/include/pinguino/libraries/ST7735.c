@@ -859,6 +859,7 @@ void ST7735_drawHLine(u16 x, u16 y, u16 w)
 ------------------------------------------------------------------*/
 
 #ifdef ST7735GRAPHICS
+
 void drawPixel(u16 x, u16 y)
 {
     ST7735_drawPixel(x, y);
@@ -884,6 +885,11 @@ void ST7735_drawRect(u16 x1, u16 y1, u16 x2, u16 y2)
     drawRect(x1, y1, x2, y2);
 }
 
+void ST7735_drawRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    drawRoundRect(x1, y1, x2, y2);
+}
+
 void ST7735_drawCircle(u16 x, u16 y, u16 radius)
 {
     drawCircle(x, y, radius);
@@ -894,6 +900,15 @@ void ST7735_fillCircle(u16 x, u16 y, u16 radius)
     fillCircle(x, y, radius);
 }
 
+void ST7735_fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    fillRect(x1, y1, x2, y2);
+}
+
+void ST7735_fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    fillRoundRect(x1, y1, x2, y2);
+}
 /*
 void ST7735_drawBitmap(u16 x, u16 y, u16 w, u16 h, u16* bitmap)
 {

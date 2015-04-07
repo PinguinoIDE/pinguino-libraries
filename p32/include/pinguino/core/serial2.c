@@ -189,9 +189,9 @@ void serial2flush(void)
 BOOL serial2clearrxerror(void)
 {
 #ifdef PIC32_PINGUINO_220
-    return(ClearRxError(UART1));
+    return(SerialClearRxError(UART1));
 #else
-    return(ClearRxError(UART2));
+    return(SerialClearRxError(UART2));
 #endif
 }
 #endif /* __SERIAL2__ */

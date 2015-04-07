@@ -561,7 +561,8 @@ MCP23S17.digitalWrite(2, LOW,&McpS1);
  if ( (Valo & 0x0400) == 0)
   Valo1 |= 0x0008;
  if ( (Valo & 0x0800) == 0)
-  Valo1 |= 0x0002; MCP23S17.writeGPIO_AB(Valo1,&McpS1);
+  Valo1 |= 0x0002;
+ MCP23S17.writeGPIO_AB(Valo1,&McpS1);
 #endif
 
 

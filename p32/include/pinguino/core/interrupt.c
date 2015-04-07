@@ -839,16 +839,16 @@ void MIPS32 IntConfigureSystem(u8 mode)
     temp |= 0x00400000;         // Set BEV bit <22>
     _CP0_SET_STATUS(temp);      // Update Status
     
-    /// Set EASE value
-    #if defined(PIC32_PINGUINO_220) || \
-        defined(PINGUINO32MX220)    || \
-        defined(PINGUINO32MX250)
+    /// Set EASE value (see lkr/your_proc.ld)
+    #if defined(PINGUINO32MX270)
+
+        _CP0_SET_EBASE(0xBD002000);
+
+    #elif defined(PIC32_PINGUINO_220) || \
+          defined(PINGUINO32MX220)    || \
+          defined(PINGUINO32MX250)
         
         _CP0_SET_EBASE(0xBD003000);
-
-    #elif defined(PINGUINO32MX270)
-
-        _CP0_SET_EBASE(0xBD004000);
 
     #else
     

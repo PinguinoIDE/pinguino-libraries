@@ -23,6 +23,8 @@ cosr cosr#include <trigo.c>
 min min#include <macro.h>
 max max#include <macro.h>
 abs abs#include <math.c>
+randomSeed srand#include <stdlib.h>
+random random#include <math.c>
 constrain constrain#include <macro.h>
 round round#include <macro.h>
 radians radians#include <macro.h>

@@ -55,7 +55,7 @@ void setup()
 void loop()
 {
     ST7735.printf("f=%.3f\r\n",f);
-    f = f + 0.001;
+    f = f + 0.001f;
     toggle(USERLED);
     delay(100);
 }

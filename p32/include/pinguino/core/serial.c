@@ -1394,7 +1394,7 @@ void Serial6Interrupt(void)
     ClearRxError
     ------------------------------------------------------------------*/
 
-BOOL SerailClearRxError(u8 port)
+BOOL SerialClearRxError(u8 port)
 {
     switch (port)
     {

@@ -31,3 +31,6 @@ ST7735.drawCircle ST7735_drawCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.fillCircle ST7735_fillCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.drawLine ST7735_drawLine#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.drawRect ST7735_drawRect#include <ST7735.c>#define ST7735GRAPHICS
+ST7735.drawRoundRect ST7735_drawRoundRect#include <ST7735.c>#define ST7735GRAPHICS
+ST7735.fillRect ST7735_fillRect#include <ST7735.c>#define ST7735GRAPHICS
+ST7735.fillRoundRect ST7735_fillRoundRect#include <ST7735.c>#define ST7735GRAPHICS

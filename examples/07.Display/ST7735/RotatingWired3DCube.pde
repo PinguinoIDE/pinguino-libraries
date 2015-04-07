@@ -218,7 +218,7 @@ void loop()
         // display
         ST7735.clearScreen();
         ST7735.printf("%u fps (max. %u)", fps, maxfps);
-        //drawCube();
+        drawCube();
 
         // update angles
         xa = (xa + 1) % 360;

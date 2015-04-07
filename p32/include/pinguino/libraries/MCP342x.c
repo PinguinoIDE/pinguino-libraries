@@ -65,7 +65,7 @@ DataSheet http://ww1.microchip.com/downloads/en/DeviceDoc/22226a.pdf
 #ifndef MCP342x_h
 #define MCP342x_h
 
-#include <pinguinoi2c1.c> 
+#include <i2c1.c> 
 #include <millis.c>
 
 #ifdef DEBUGI2C

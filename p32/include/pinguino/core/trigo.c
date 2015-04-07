@@ -12,6 +12,9 @@
     Feb 08 2013 - added some comments for better understanding
     Mar 18 2014 - added fast and accurate float sine/cosine
     ----------------------------------------------------------------------------
+    TODO :
+    Redundant with fastmath lib. ?
+    ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either

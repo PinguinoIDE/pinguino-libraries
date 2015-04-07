@@ -100,13 +100,13 @@ typedef struct
 
 
 #ifdef MODBUSS_SER1_OK
- #include <pinguinoserial1.c> 
+ #include <serial1.c> 
 #endif
 #ifdef MODBUSS_SER2_OK
- #include <pinguinoserial2.c> 
+ #include <serial2.c> 
 #endif
 #ifdef MODBUSS_SER3_OK
- //#include <pinguinoserial3.c> 
+ //#include <serial3.c> 
 #endif
 
 

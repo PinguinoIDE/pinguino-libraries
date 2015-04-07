@@ -58,7 +58,7 @@
 
 #include <typedef.h>
 #include <macro.h>
-#include <pinguinoi2c.c>
+#include <i2c.c>
 #include <pcf8574.h>
 
 /**	----------------------------------------------------------------------------

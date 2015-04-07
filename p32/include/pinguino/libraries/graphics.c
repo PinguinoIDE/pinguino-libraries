@@ -9,6 +9,7 @@
     LAST RELEASE:	03 Apr. 2012
     ----------------------------------------------------------------------------
     CHANGELOG : 
+    ----------------------------------------------------------------------------
 
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
@@ -31,14 +32,11 @@
 
 #define _abs_(a) (((a)> 0) ? (a) : -(a))
 
+// Specific to each display
 extern void drawPixel(u16, u16);
 extern void drawVLine(u16, u16, u16);
 extern void drawHLine(u16, u16, u16);
 //extern void setColor(u16 c);
-
-/*	--------------------------------------------------------------------
-    Prototypes
-    ------------------------------------------------------------------*/
 
 void drawCircle(u16 x, u16 y, u16 radius)
 {

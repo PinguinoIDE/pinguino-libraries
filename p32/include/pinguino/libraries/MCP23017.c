@@ -100,7 +100,7 @@ typedef struct tagMCP23017
 
 #endif  
 
-#include <pinguinoi2c1.c>
+#include <i2c1.c>
 
 u16 MCP23017_Fault_V;
 

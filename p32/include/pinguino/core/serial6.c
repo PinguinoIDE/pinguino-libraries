@@ -118,7 +118,7 @@ void serial6flush(void)
 
 BOOL serial6clearrxerror(void)
 {
-    return(ClearRxError(UART6));
+    return(SerialClearRxError(UART6));
 }
 
 #endif /* __SERIAL6__ */

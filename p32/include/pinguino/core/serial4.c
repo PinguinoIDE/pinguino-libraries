@@ -119,7 +119,7 @@ void serial4flush(void)
 
 BOOL serial4clearrxerror(void)
 {
-    return(ClearRxError(UART4));
+    return(SerialClearRxError(UART4));
 }
 
 #endif /* __SERIAL4__ */

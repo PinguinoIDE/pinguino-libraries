@@ -18,11 +18,11 @@
 /*********************************************
  * Modified: nuelectronics.com -- Ethershield for Arduino
  *********************************************/
-//@{
-
 
 #ifndef ENC28J60_H
 #define ENC28J60_H
+
+#include <typedef.h>
 
 // ENC28J60 Control Registers
 // Control register definitions are a combination of address,
@@ -262,20 +262,20 @@
 //#define MAX_FRAMELEN     600
 
 
-// functions
-extern uint8_t enc28j60ReadOp(uint8_t op, uint8_t address);
-extern void enc28j60WriteOp(uint8_t op, uint8_t address, uint8_t data);
-extern void enc28j60ReadBuffer(uint16_t len, uint8_t* data);
-extern void enc28j60WriteBuffer(uint16_t len, uint8_t* data);
-extern void enc28j60SetBank(uint8_t address);
-extern uint8_t enc28j60Read(uint8_t address);
-extern void enc28j60Write(uint8_t address, uint8_t data);
-extern void enc28j60PhyWrite(uint8_t address, uint16_t data);
-extern void enc28j60clkout(uint8_t clk);
-extern void enc28j60Init(uint8_t* macaddr);
-extern void enc28j60PacketSend(uint16_t len, uint8_t* packet);
-extern uint16_t enc28j60PacketReceive(uint16_t maxlen, uint8_t* packet);
-extern uint8_t enc28j60getrev(void);
+// prototypes
+u8 enc28j60ReadOp(u8, u8);
+void enc28j60WriteOp(u8, u8, u8);
+void enc28j60ReadBuffer(u16, u8*);
+void enc28j60WriteBuffer(u16, u8*);
+void enc28j60SetBank(u8);
+u8 enc28j60Read(u8);
+void enc28j60Write(u8, u8);
+void enc28j60PhyWrite(u8, u16);
+void enc28j60clkout(u8);
+void enc28j60Init(u8*);
+void enc28j60PacketSend(u16, u8*);
+u16 enc28j60PacketReceive(u16, u8*);
+u8 enc28j60getrev(void);
 
-#endif
-//@}
+#endif // ENC28J60_H
+

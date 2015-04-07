@@ -58,15 +58,18 @@ void setup()
 
 void loop()
 {
-    u16 x1 = random(0, 159);     // coordinate x E [0,159]
-    u16 y1 = random(0, 127);     // coordinate y E [0, 127]
-    u16 x2 = random(0, 159);     // coordinate x E [0,159]
-    u16 y2 = random(0, 127);     // coordinate y E [0, 127]
-    u16 c  = random(0, 0xFFFF);  // color c E [0, 65535]
+    u16 x = random(0, 159);     // coordinate x E [0,159]
+    u16 y = random(0, 127);     // coordinate y E [0, 127]
+    u16 r = random(0, 63);      // radius r E [0,63]
+    u16 c  = random(0, 0xFFFF); // color c E [0, 65535]
+    u8 f   = random(0, 100);       // form c E [0, 1]
     
     // display
     ST7735.setColor(c);
-    ST7735.drawLine(x1, y1, x2, y2);
+    if (f>49)
+        ST7735.fillCircle(x, y, r);
+    else
+        ST7735.drawCircle(x, y, r);
     
     // delay
     delay(150);

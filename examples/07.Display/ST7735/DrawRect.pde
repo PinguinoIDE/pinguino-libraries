@@ -63,10 +63,19 @@ void loop()
     u16 x2 = random(0, 159);     // coordinate x E [0,159]
     u16 y2 = random(0, 127);     // coordinate y E [0, 127]
     u16 c  = random(0, 0xFFFF);  // color c E [0, 65535]
-    
+    u8 f   = random(0, 399);       // form c E [0, 399]
+        
     // display
     ST7735.setColor(c);
-    ST7735.drawLine(x1, y1, x2, y2);
+    
+    if (f<100)
+        ST7735.drawRect(x1, y1, x2, y2);
+    else if (f<200)
+        ST7735.drawRoundRect(x1, y1, x2, y2);
+    else if (f<300)
+        ST7735.fillRect(x1, y1, x2, y2);
+    else if (f<400)
+        ST7735.fillRoundRect(x1, y1, x2, y2);
     
     // delay
     delay(150);

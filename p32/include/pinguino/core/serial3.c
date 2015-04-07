@@ -118,7 +118,7 @@ void serial3flush(void)
 
 BOOL serial3clearrxerror(void)
 {
-	return(ClearRxError(UART3));
+	return(SerialClearRxError(UART3));
 }
 
 #endif /* __SERIAL3__ */

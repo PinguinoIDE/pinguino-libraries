@@ -25,11 +25,28 @@
 #define __MATH_C
 
 #include <typedef.h>
+#include <stdlib.h>
 
+/**	----------------------------------------------------------------------------
+	---------- random
+ 	----------------------------------------------------------------------------
+	Description	: returns pseudo random number between mini and maxi
+	Parameters	:
+	Returns		: integer between mini and maxi
+    Nota        : random number generator must be initialize with randomSeed function
+ 	--------------------------------------------------------------------------*/
+
+long random(long mini, long maxi)
+{
+    return ((rand()%maxi) + mini);
+}
+
+/*
 long abs(long x)
 {
     return ((x)>0?(x):-(x));
 }
+*/
 
 long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
