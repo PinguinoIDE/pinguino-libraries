@@ -30,20 +30,33 @@ void i2c_hw_slave_init(u8 height_bits_icaddress)
 {
 u8 i;
    // only slave 7bit address
-   SSPCON1 = 0b00110110;
-   SSPCON1 = SSPCON1 | 0b00001000;   // enable start/stop interrupts
+    #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+    SSP1CON1= 0b00110110;		// Master Mode, clock = FOSC/(4 * (SSPADD + 1))
+    SSP1CON1 = SSP1CON1 | 0b00001000;   // enable start/stop interrupts
     // I2C slave hardware
     // This address must not be one bit left-shifted when used for R/W operations
-    SSPADD = height_bits_icaddress;
-
-
+    SSP1ADD = height_bits_icaddress;
     // init SSPSTAT
+    SSP1STATbits.BF = 0;
+    SSP1CON1bits.WCOL = 0;
+    SSP1CON1bits.SSPOV = 0;
+    PIR1bits.SSP1IF = 0;
+    // enable interrupts
+    PIE1bits.SSP1IE = 1;
+    #else
+    SSPCON1 = 0b00110110;
+    SSPCON1 = SSPCON1 | 0b00001000;   // enable start/stop interrupts
+    SSPADD = height_bits_icaddress;
     SSPSTATbits.BF = 0;
     SSPCON1bits.WCOL = 0;
     SSPCON1bits.SSPOV = 0;
     PIR1bits.SSPIF = 0;
     // enable interrupts
     PIE1bits.SSPIE = 1;
+    #endif
+	
     INTCONbits.GIE = 1;
     INTCONbits.PEIE = 1;
     
@@ -59,7 +72,13 @@ u8 i;
 // read a byte from i2c buffer and returns it
 u8 i2c_hw_slave_read_i2c()
 {    u8 tmpbuf;
+    #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+    tmpbuf = SSP1BUF;
+	#else
     tmpbuf = SSPBUF;
+	#endif
     return tmpbuf;
 }
 
@@ -68,7 +87,21 @@ u8 i2c_hw_slave_read_i2c()
 void i2c_hw_slave_write_i2c(u8 what)
     // wait 'til buffer is empty
 {  u8 dosend; 
-   while ( SSPSTATbits.BF);
+    #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+    while ( SSP1STATbits.BF);
+    dosend = 1;
+    while (dosend) {
+        SSP1CON1bits.WCOL = 0;
+        // try to write into buffer, checking collision
+        SSP1BUF = what;
+        if (! SSP1CON1bits.WCOL)
+            dosend = 0;
+    }
+    SSP1CON1bits.CKP = 1;
+    #else
+    while ( SSPSTATbits.BF);
     dosend = 1;
     while (dosend) {
         SSPCON1bits.WCOL = 0;
@@ -78,6 +111,7 @@ void i2c_hw_slave_write_i2c(u8 what)
             dosend = 0;
     }
     SSPCON1bits.CKP = 1;
+	#endif
 }
 
 void i2c_call_process_message()
@@ -177,6 +211,24 @@ u8 tmpstat;
 u8 _trash;
 u8 rcv;
 LA7=1;
+   #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+
+   if (! PIR1bits.SSP1IF)
+      return;
+
+   PIR1bits.SSP1IF = 0;
+   tmpstat = SSP1STAT;
+
+   // check for overflow
+   if (SSP1CON1bits.SSPOV)
+   {
+      _trash = i2c_hw_slave_read_i2c();
+      _trash = i2c_hw_slave_read_i2c();
+      SSP1CON1bits.SSPOV = 0;
+   }
+   #else
    if (! PIR1bits.SSPIF)
       return;
 
@@ -190,7 +242,7 @@ LA7=1;
       _trash = i2c_hw_slave_read_i2c();
       SSPCON1bits.SSPOV = 0;
    }
-
+   #endif
    // start & stop handlers are necessary
 
          if ((tmpstat & 0b00001111) == 0b00001000)
@@ -255,8 +307,13 @@ LA7=1;
       {
 
          // check CKP bit to distinguish between state 4 and 5
-         if ( SSPCON1bits.CKP == 0 )
-
+      #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+        if ( SSP1CON1bits.CKP == 0 )
+      #else
+        if ( SSPCON1bits.CKP == 0 )
+      #endif
             // state 4: read operation, last byte is data, buffer empty
             // master still wants to get a value from us
             //
@@ -284,6 +341,12 @@ LA7=1;
 
       // always clear CKP so clock line will be released (HW will set CKP
       // bit when clock stretching feature is enabled
+      #if defined(__18f25k50) || defined(__18f45k50) || \
+                defined(__18f26j53) || defined(__18f46j53) || \
+                defined(__18f27j53) || defined(__18f47j53)
+      SSP1CON1bits.CKP = 1;
+      #else
       SSPCON1bits.CKP = 1;
+      #endif
 }
 #endif

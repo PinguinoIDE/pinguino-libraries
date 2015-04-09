@@ -61,67 +61,91 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
 {
     //IFSxCLR = ;
     //IPCxCLR = ;		// clear the priority level
+
     switch (vector)
     {
         case INT_CORE_TIMER_VECTOR:
             break;
+            
         case INT_CORE_SOFTWARE0_VECTOR:
             break;
+            
         case INT_CORE_SOFTWARE1_VECTOR:
             break;
+            
         case INT_EXTERNAL0_VECTOR:
             break;
+            
         case INT_TIMER1_VECTOR:
             IFS0bits.T1IF = 0;
             IPC1bits.T1IP = pri;
             IPC1bits.T1IS = sub;
             break;
+            
         case INT_INPUT_CAPTURE1_VECTOR:
             break;
+            
         case INT_OUTPUT_COMPARE1_VECTOR:
             break;
+            
         case INT_EXTERNAL1_VECTOR:
-            break;    
+            break;
+            
         case INT_TIMER2_VECTOR:
             IFS0bits.T2IF = 0;
             IPC2bits.T2IP = pri;
             IPC2bits.T2IS = sub;
             break;
+            
         case INT_INPUT_CAPTURE2_VECTOR:
             break;
+            
         case INT_OUTPUT_COMPARE2_VECTOR:
             break;
+            
         case INT_EXTERNAL2_VECTOR:
-            break;    
+            break;
+            
         case INT_TIMER3_VECTOR:
             IFS0bits.T3IF = 0;
             IPC3bits.T3IP = pri;
             IPC3bits.T3IS = sub;
             break;
+            
         case INT_INPUT_CAPTURE3_VECTOR:
             break;
+            
         case INT_OUTPUT_COMPARE3_VECTOR:
             break;
+            
         case INT_EXTERNAL3_VECTOR:
-            break;     
+            break;
+            
         case INT_TIMER4_VECTOR:
             IFS0bits.T4IF = 0;
             IPC4bits.T4IP = pri;
             IPC4bits.T4IS = sub;
             break;
+            
         case INT_INPUT_CAPTURE4_VECTOR:
             break;
+            
         case INT_OUTPUT_COMPARE4_VECTOR:
             break;
+            
         case INT_EXTERNAL4_VECTOR:
             break;
+            
         case INT_TIMER5_VECTOR:
             break;
+            
         case INT_INPUT_CAPTURE5_VECTOR:
             break;
+            
         case INT_OUTPUT_COMPARE5_VECTOR:
             break;
-#if defined(UBW32_460) || defined(EMPEROR460)
+
+        #if defined(UBW32_460) || defined(EMPEROR460)
         case INT_SPI1_VECTOR:
             IFS0bits.SPI1EIF  = 0;
             IFS0bits.SPI1TXIF = 0;
@@ -129,49 +153,56 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC5bits.SPI1IP = pri;
             IPC5bits.SPI1IS = sub;
             break;  
-#endif
+        #endif
+        
         case INT_UART1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS1bits.U1TXIF = 0;
             IFS1bits.U1RXIF = 0;
             IFS1bits.U1EIF  = 0;
             IPC8bits.U1IP = pri;
             IPC8bits.U1IS = sub;
-#else
+        #else
             IFS0bits.U1TXIF = 0;
             IFS0bits.U1RXIF = 0;
             IFS0bits.U1EIF  = 0;
             IPC6bits.U1IP = pri;
             IPC6bits.U1IS = sub;
-#endif
-            break; 
+        #endif
+            break;
+             
         case INT_I2C1_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS1bits.I2C1MIF = 0;
             IFS1bits.I2C1SIF = 0;
             IFS1bits.I2C1BIF  = 0;
             IPC8bits.I2C1IP = pri;
             IPC8bits.I2C1IS = sub;
-#else
+        #else
             IFS0bits.I2C1MIF = 0;
             IFS0bits.I2C1SIF = 0;
             IFS0bits.I2C1BIF = 0;
             IPC6bits.I2C1IP = pri;
             IPC6bits.I2C1IS = sub;
-#endif					
+        #endif
             break;
+
         case INT_INPUT_CHANGE_VECTOR:
             break;
+
         case INT_ADC1_CONVERT_DONE_VECTOR:
             break;       
+
         case INT_PARALLEL_MASTER_PORT_VECTOR:
             break;
+
         case INT_COMPARATOR1_VECTOR:
             break;         
+
         //case INT_COMPARATOR2_VECTOR:
         //	break;
 
-#ifdef ENABLE_UART3
+        #ifdef ENABLE_UART3
         case INT_UART3_VECTOR:
             IFS1bits.U2ATXIF = 0;
             IFS1bits.U2ARXIF = 0;
@@ -179,57 +210,67 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC7bits.U2AIP = pri;
             IPC7bits.U2AIS = sub;
             break;
-#else     
+        #else     
         case INT_SPI2_VECTOR:
             IFS1bits.SPI2EIF = 0;
             IFS1bits.SPI2TXIF = 0;
             IFS1bits.SPI2RXIF  = 0;
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+            #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC9bits.SPI2IP = pri;
             IPC9bits.SPI2IS = sub;
-#else
+            #else
             IPC7bits.SPI2IP = pri;
             IPC7bits.SPI2IS = sub;
-#endif
+            #endif
             break;
-#endif
+        #endif
+
         case INT_UART2_VECTOR:
             IFS1bits.U2TXIF = 0;
             IFS1bits.U2RXIF = 0;
             IFS1bits.U2EIF  = 0;
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC9bits.U2IP = pri;
             IPC9bits.U2IS = sub;
-#else
+        #else
             IPC8bits.U2IP = pri;
             IPC8bits.U2IS = sub;
-#endif
+        #endif
             break;
+
         case INT_I2C2_VECTOR:
             break;
+            
         case INT_FSCM_VECTOR:
             break;
+
         case INT_RTCC_VECTOR:
-#if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
+        #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IFS0bits.RTCCIF = 0;
             IPC6bits.RTCCIP = pri;
             IPC6bits.RTCCIS = sub;
-#else
+        #else
             IFS1bits.RTCCIF = 0;
             IPC8bits.RTCCIP = pri;
             IPC8bits.RTCCIS = sub;
-#endif
+        #endif
             break;
+
         case INT_DMA0_VECTOR:
             break;
+            
         case INT_DMA1_VECTOR:
             break;
+            
         case INT_DMA2_VECTOR:
             break;
+            
         case INT_DMA3_VECTOR:
             break;
+            
         case INT_FCE_VECTOR:
             break;
+
         case INT_USB_VECTOR:
         #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
             IPC7bits.USBIP = pri;
@@ -239,15 +280,19 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC11bits.USBIS = sub;
         #endif
             break;
-   #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
+
+        #if defined(UBW32_795) || defined(EMPEROR795) || defined(PIC32_PINGUINO_T795)
         case INT_CAN1_VECTOR:
             break;
+            
         case INT_CAN2_VECTOR:
             break;
+            
         case INT_ETH_VECTOR:
             break;
-   #endif
-#ifdef ENABLE_UART4
+        #endif
+
+        #ifdef ENABLE_UART4
         case INT_UART4_VECTOR:
             IFS2bits.U1BTXIF = 0;
             IFS2bits.U1BRXIF = 0;
@@ -255,8 +300,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC12bits.U1BIP = pri;
             IPC12bits.U1BIS = sub;
             break;
-#endif
-#ifdef ENABLE_UART5
+        #endif
+
+        #ifdef ENABLE_UART5
         case INT_UART5_VECTOR:
             IFS2bits.U3BTXIF = 0;
             IFS2bits.U3BRXIF = 0;
@@ -264,8 +310,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC12bits.U3BIP = pri;
             IPC12bits.U3BIS = sub;
             break;
-#endif
-#ifdef ENABLE_UART6
+        #endif
+
+        #ifdef ENABLE_UART6
         case INT_UART6_VECTOR:
             IFS2bits.U2BTXIF = 0;
             IFS2bits.U2BRXIF = 0;
@@ -273,7 +320,7 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             IPC12bits.U2BIP = pri;
             IPC12bits.U2BIS = sub;
             break;
-#endif
+        #endif
     }
 }
 
