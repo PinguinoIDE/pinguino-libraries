@@ -1,24 +1,16 @@
 #ifndef __SPI_C__
 #define __SPI_C__
 
-#ifndef SPI
-#define SPI
+#ifndef __SPI__
+#define __SPI__
 #endif
+
 //#define SPIINIT // requested because V11 IDE doesn't generate #define from .pde applications
+
 #include <spi.h>
 #include <delayms.c>
-
-/* Port Controls  (Platform dependent) */
-#define SELECT()	SD_CS = 0 // device selection
-#define DESELECT()	SD_CS = 1 // it stops device selection
-#define LA7 LATBbits.LATB5
-#define LA6 LATBbits.LATB4
-
-u8 this_mode = SPI_MODE0;
-u8 this_clock = SPI_MASTER_FOSC_64;
-u8 this_role = SPI_CLOCK_DIV64;
-u8 this_bitorder = SPI_MSBFIRST;
-u8 this_phase = SPI_SMPEND;
+#include <digitalp.c>
+#include <digitalw.c>
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -56,14 +48,19 @@ u8 this_phase = SPI_SMPEND;
 #ifdef SPIINIT
 /** -----------------------------------------------------------------**/
 
+#define SELECT()	SD_CS = 0 // device selection
+#define DESELECT()	SD_CS = 1 // it stops device selection
+/* Port Controls  (Platform dependent) */
+#define LA7 LATBbits.LATB5
+#define LA6 LATBbits.LATB4
+
 void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
 {
     DESELECT();
-    ENABLE = 0;
-    STATUS &= 0x3F;                // power on state
-    CONFIG = 0x00;                 // power on state
-    CONFIG |= sync_mode;           // select serial mode
-    STATUS |= smp_phase;           // select data input sample phase
+    SSPCON1bits.SSPEN = 0;
+    SSPSTAT &= 0x3F;                // power on state
+    SSPSTAT |= smp_phase;           // select data input sample phase
+    SSPCON1 = sync_mode;            // select serial mode
 
     switch( bus_mode )
     {
@@ -99,16 +96,16 @@ void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
     
     SDIPIN = 1;       // define SDI pin as input  
     SDOPIN = 0;       // define SDO pin as output
-    ENABLE = 1;
+    SSPCON1bits.SSPEN = 1;
     Delayms(30);
 
     #ifdef SPIINT
-    SSPIE = 1;
+    PIE1bits.SSPIE = 1;
     INTCONbits.GIEH = 1;
     INTCONbits.GIEL = 1;
     INTCONbits.PEIE = 1;
-    //SSPHPE = 1;
-    FLAG = 0;
+    //IPR1bits.SSPIP = 1;
+    PIR1bits.SSP1IF = 0;
     #endif
 }
 
@@ -116,67 +113,222 @@ void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
 #else
 /** -----------------------------------------------------------------**/
 
-//#ifdef SPIBEGIN
-void SPI_begin()
+/**
+ *  This function init the SPI module to default values
+ *  Called from main.c
+ */
+
+void spi_init()
 {
-    DESELECT();
-    ENABLE = 0;
-    STATUS = 0x3F;                 // power on state (SMP=0) 
-    CONFIG = this_clock;           // select serial mode
+    u8 i;
 
-    if (this_phase == SPI_SMPEND)
-        SMP = 1;                   // input data sampled at end of data output time
-
-    switch( this_mode )
+    for (i=0; i<NUMOFSPI; i++)
     {
-        case SPI_MODE0:              // SPI bus mode 0,0
-          CKP = 0;
-          CKE = 0;                   // data transmitted on falling edge
-          break;    
-        case SPI_MODE1:              // default SPI bus mode 0,1
-          CKP = 0;
-          CKE = 1;                   // data transmitted on falling edge
-          break;
-        case SPI_MODE2:              // SPI bus mode 1,0
-          CKP = 1;                   // clock idle state high
-          CKE = 0;                   // data transmitted on rising edge
-          break;
-        case SPI_MODE3:              // SPI bus mode 1,1
-          CKP = 1;                   // clock idle state high
-          CKE = 1;                   // data transmitted on falling edge
-          break;
+        SPI[i].mode     = SPI_MODE0;
+        SPI[i].divider  = SPI_CLOCK_DIV4;
+        SPI[i].role     = SPI_MASTER;
+        SPI[i].bitorder = SPI_MSBFIRST;
+        SPI[i].phase    = SPI_SMPEND;
     }
+}
 
-    switch( this_role )
+/**
+ *  This function set SPI software pins
+ */
+
+void SPI_setPin(u8 module, u8 sda, u8 sck)//, u8 cs)
+{
+    if (module == SPISW)
     {
-        case SPI_SLAVE_SS:           // slave mode w /SS enable
-            SSPIN = 1;               // define /SS pin as input
-            SCKPIN = 1;              // define clock pin as input
-            break;
-
-        case SPI_SLAVE:              // slave mode w/o /SS enable
-            SCKPIN = 1;              // define clock pin as input
-            break;
-
-        default:                     // master mode, define clock en SS pin as output
-            SSPIN  = 0;              // define SS  pin as output
-            SCKPIN = 0;              // define clock pin as output
-            break;
+        SPI[module].sda = sda;
+        SPI[module].sck = sck;
+        //SPI[module].cs  = cs;
+        pinmode(SPI[module].sda, OUTPUT);
+        pinmode(SPI[module].sck, OUTPUT);
+        //pinmode(SPI[module].cs,  OUTPUT);
     }
+}
 
-    SDIPIN = 1;                    // define SDI pin as input
-    SDOPIN = 0;                    // define SDO pin as output
-    ENABLE = 1;
-    Delayms(30);
+/**
+ *  This function select a SPI module
+ */
 
-    #ifdef SPIINT
-        SSPIE = 1;
-        INTCONbits.GIEH = 1;
-        INTCONbits.GIEL = 1;
-        INTCONbits.PEIE = 1;
-        //SSPHPE = 1;
-        FLAG = 0;
-    #endif
+void SPI_select(u8 module)
+{
+    switch(module)
+    {
+        case SPI1:
+            SD_CS = LOW;
+            digitalwrite(SPI[SPI1].cs, LOW);
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SD_CS2 = LOW;
+            digitalwrite(SPI[SPI2].cs, LOW);
+            break;
+        #endif
+    }
+}
+
+/**
+ *  This function deselect a SPI module
+ */
+
+void SPI_deselect(u8 module)
+{
+    switch(module)
+    {
+        case SPI1:
+            SD_CS = HIGH;
+            digitalwrite(SPI[SPI1].cs, HIGH);
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SD_CS2 = HIGH;
+            digitalwrite(SPI[SPI2].cs, HIGH);
+            break;
+        #endif
+    }
+}
+
+//#ifdef SPIBEGIN
+void SPI_begin(u8 module)
+{
+    SPI_deselect(module);
+    
+    switch(module)
+    {
+        case SPI1:
+            SSPCON1bits.SSPEN = 0;
+            SSPSTAT = 0x3F;                 // power on state (SMP=0) 
+            SSPCON1 = SPI[SPI1].divider;      // select serial mode
+
+            if (SPI[SPI1].phase == SPI_SMPEND)
+            {
+                SSPSTATbits.SMP = 1;         // input data sampled at end of data output time
+            }
+
+            switch(SPI[SPI1].mode)
+            {
+                case SPI_MODE0:              // SPI bus mode 0,0
+                  SSPCON1bits.CKP = 0;       // clock idle state low
+                  SSPSTATbits.CKE = 0;       // data transmitted on falling edge
+                  break;    
+                case SPI_MODE1:              // default SPI bus mode 0,1
+                  SSPCON1bits.CKP = 0;       // clock idle state low
+                  SSPSTATbits.CKE = 1;       // data transmitted on falling edge
+                  break;
+                case SPI_MODE2:              // SPI bus mode 1,0
+                  SSPCON1bits.CKP = 1;       // clock idle state high
+                  SSPSTATbits.CKE = 0;       // data transmitted on rising edge
+                  break;
+                case SPI_MODE3:              // SPI bus mode 1,1
+                  SSPCON1bits.CKP = 1;       // clock idle state high
+                  SSPSTATbits.CKE = 1;       // data transmitted on falling edge
+                  break;
+            }
+
+            switch(SPI[SPI1].role)
+            {
+                case SPI_SLAVE_SS:           // slave mode w /SS enable
+                    SSPIN = 1;               // define /SS pin as input
+                    SCKPIN = 1;              // define clock pin as input
+                    break;
+
+                case SPI_SLAVE:              // slave mode w/o /SS enable
+                    SCKPIN = 1;              // define clock pin as input
+                    break;
+
+                default:                     // master mode, define clock en SS pin as output
+                    SSPIN  = 0;              // define SS  pin as output
+                    SCKPIN = 0;              // define clock pin as output
+                    break;
+            }
+
+            SDIPIN = 1;                    // define SDI pin as input
+            SDOPIN = 0;                    // define SDO pin as output
+            SSPCON1bits.SSPEN = 1;
+            Delayms(30);
+
+            #ifdef SPIINT
+                PIE1bits.SSPIE = 1;
+                INTCONbits.GIEH = 1;
+                INTCONbits.GIEL = 1;
+                INTCONbits.PEIE = 1;
+                //IPR1bits.SSPIP = 1;
+                PIR1bits.SSP1IF = 0;
+            #endif
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SSP2CON1bits.SSPEN = 0;
+            SSP2STAT = 0x3F;                 // power on state (SMP=0) 
+            SSP2CON1 = SPI[SPI2].divider;    // select serial mode
+
+            if (SPI[SPI2].phase == SPI_SMPEND)
+            {
+                SSP2STATbits.SMP = 1;       // input data sampled at end of data output time
+            }
+            
+            switch(SPI[SPI2].mode)
+            {
+                case SPI_MODE0:             // SPI bus mode 0,0
+                  SSP2CON1bits.CKP = 0;     // clock idle state low
+                  SSP2STATbits.CKE = 0;     // data transmitted on falling edge
+                  break;    
+                case SPI_MODE1:             // default SPI bus mode 0,1
+                  SSP2CON1bits.CKP = 0;     // clock idle state low
+                  SSP2STATbits.CKE = 1;     // data transmitted on falling edge
+                  break;
+                case SPI_MODE2:             // SPI bus mode 1,0
+                  SSP2CON1bits.CKP = 1;     // clock idle state high
+                  SSP2STATbits.CKE = 0;     // data transmitted on rising edge
+                  break;
+                case SPI_MODE3:             // SPI bus mode 1,1
+                  SSP2CON1bits.CKP = 1;     // clock idle state high
+                  SSP2STATbits.CKE = 1;     // data transmitted on falling edge
+                  break;
+            }
+
+            switch(SPI[SPI2].role)
+            {
+                case SPI_SLAVE_SS:          // slave mode w /SS enable
+                    SS2PIN = 1;             // define /SS pin as input
+                    SCK2PIN = 1;            // define clock pin as input
+                    break;
+
+                case SPI_SLAVE:             // slave mode w/o /SS enable
+                    SCK2PIN = 1;            // define clock pin as input
+                    break;
+
+                default:                    // master mode, define clock en SS pin as output
+                    SS2PIN  = 0;            // define SS  pin as output
+                    SCK2PIN = 0;            // define clock pin as output
+                    break;
+            }
+
+            SDI2PIN = 1;                    // define SDI pin as input
+            SDO2PIN = 0;                    // define SDO pin as output
+            SSP2CON1bits.SSPEN = 1;
+            Delayms(30);
+
+            #ifdef SPIINT
+                PIE3bits.SSP2IE = 1;
+                INTCONbits.GIEH = 1;
+                INTCONbits.GIEL = 1;
+                INTCONbits.PEIE = 1;
+                //IPR1bits.SSPIP = 1;
+                PIR3bits.SSP1IF = 0;
+            #endif
+            break;
+        #endif
+    }
 }
 //#endif
 
@@ -186,9 +338,21 @@ void SPI_begin()
  */
 
 //#ifdef SPISETBITORDER
-void SPI_setBitOrder(u8 bitorder)
+void SPI_setBitOrder(u8 module, u8 bitorder)
 {
-	this_bitorder = bitorder;
+    switch(module)
+    {
+        case SPI1:
+            SPI[SPI1].bitorder = bitorder;
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SPI[SPI2].bitorder = bitorder;
+            break;
+        #endif
+    }
 }
 
 /**
@@ -203,17 +367,48 @@ void SPI_setBitOrder(u8 bitorder)
 //#endif
 
 //#ifdef SPISETDATAMODE
-void SPI_setDataMode(u8 mode)
+void SPI_setDataMode(u8 module, u8 mode)
 {
-	this_mode = mode;
+    switch(module)
+    {
+        case SPI1:
+            SPI[SPI1].mode = mode;
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SPI[SPI2].mode = mode;
+            break;
+        #endif
+    }
 }
 //#endif
 
+/**
+ * This function sets the SPI mode.
+ * Possible values are SPI_MASTER or SPI_SLAVE.
+ * The default setting is SPI_MASTER.
+ */
+
 //#ifdef SPISETMODE
-void SPI_setMode(u8 mode)
+void SPI_setMode(u8 module, u8 mode)
 {
-	this_role  = mode;
-	this_clock = mode;
+    switch(module)
+    {
+        case SPI1:
+            SPI[SPI1].role  = mode;
+            SPI[SPI1].divider = mode;
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SPI[SPI2].role  = mode;
+            SPI[SPI2].divider = mode;
+            break;
+        #endif
+    }
 }
 //#endif
 
@@ -225,10 +420,23 @@ void SPI_setMode(u8 mode)
  */
 
 //#ifdef SPISETCLOCKDIVIDER
-void SPI_setClockDivider(u8 clock)
+void SPI_setClockDivider(u8 module, u8 divider)
 {
-	this_clock = clock;
-	this_role  = clock;
+    switch(module)
+    {
+        case SPI1:
+            SPI[SPI1].divider = divider;
+            SPI[SPI1].role  = divider;
+            break;
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            SPI[SPI2].divider = divider;
+            SPI[SPI2].role  = divider;
+            break;
+        #endif
+    }
 }
 //#endif
 
@@ -237,45 +445,84 @@ void SPI_setClockDivider(u8 clock)
 /** -----------------------------------------------------------------**/
 
 //#ifdef SPIWRITE
-u8 SPI_write(u8 datax) {
+u8 SPI_write(u8 module, u8 datax)
+{
     u8 clear;
-    clear = BUFFER;        // clear BF
-    FLAG = 0;              // enable SPI2 interrupt
-    WCOL = 0;
-    BUFFER = datax;        // send data
 
-    if (WCOL)
-        return (1);
-    else
-	    while (!FLAG);
-    return(0);
+    switch(module)
+    {
+        case SPI1:
+            clear = SSP1BUF;        // clear BF
+            PIR1bits.SSP1IF = 0;              // enable SPI2 interrupt
+            SSPCON1bits.WCOL = 0;
+            SSP1BUF = datax;        // send data
+
+            if (SSPCON1bits.WCOL)
+                return (1);
+            else
+                while (!PIR1bits.SSP1IF);
+            return (0);
+
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            clear = SSP2BUF;        // clear BF
+            PIR3bits.SSP2IF = 0;              // enable SPI2 interrupt
+            SSP2CON1bits.WCOL = 0;
+            SSP2BUF = datax;        // send data
+
+            if (SSP2CON1bits.WCOL)
+                return (1);
+            else
+                while (!PIR3bits.SSP2IF);
+            return (0);
+
+        #endif
+    }
 }
 //#endif
 
-//#ifdef SPIREAD
-u8 SPI_read(void) {
-    u8 clear;
-    clear = BUFFER; //clear BF
-    FLAG = 0;
-    BUFFER = 0xFF; // Initiate bus cycle
-    while (!FLAG);
-    return(BUFFER);
-}
-//#endif
+#define SPI_read(module) SPI_write(module, 0xFF)
 
-void SPI_interrupt()
-{
-u8 c;
-   if (! FLAG)
-      return;
-   c = BUFFER;
-   FLAG = 0;
-   BUFFER = SPI_onEvent_func(c);
-}  // end of interrupt routine SPI_STC_vect
+/**
+ *  Interrupt routines 
+ */
 
-static void SPI_onEvent(u8(*func)(u8))
+void spi1_interrupt()
 {
-  SPI_onEvent_func = func;
+    u8 c;
+    if (PIR1bits.SSP1IF)
+    {
+        c = SSP1BUF;
+        SSP1BUF = SPI1_onEvent_func(c);
+        PIR1bits.SSP1IF = 0;
+    }
 }
 
-#endif /* __SPI_C__ */
+static void SPI1_onEvent(u8(*func)(u8))
+{
+  SPI1_onEvent_func = func;
+}
+
+#if defined(__18f26j50)|| defined(__18f46j50) || \
+    defined(__18f27j53)|| defined(__18f47j53)
+
+void spi2_interrupt()
+{
+    u8 c;
+    if (PIR3bits.SSP2IF)
+    {
+        c = SSP2BUF;
+        SSP2BUF = SPI2_onEvent_func(c);
+        PIR3bits.SSP2IF = 0;
+    }
+}
+
+static void SPI2_onEvent(u8(*func)(u8))
+{
+  SPI2_onEvent_func = func;
+}
+
+#endif // __18f47j53__ ...
+
+#endif // __SPI_C__

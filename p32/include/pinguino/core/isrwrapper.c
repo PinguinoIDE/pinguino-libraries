@@ -178,18 +178,12 @@
     
     /**************************************************************************/
 
-    //#ifndef __SPI__
+    #ifndef __SPI__
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
 
-        #if (SPIx != 1)
         void SPI1Interrupt(void) { Nop(); }
-        #endif
-
-        #if (SPIx != 2)
-        void SPI2Interrupt(void) { Nop(); }
-        #endif
 
         // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
 
@@ -211,17 +205,14 @@
 
     #else // all other processors
 
-        #if (SPIx != 1)
+        #if !defined(__32MX440F256H__)
         void SPI1Interrupt(void) { Nop(); }
         #endif
-
-        #if (SPIx != 2)
         void SPI2Interrupt(void) { Nop(); }
-        #endif
 
     #endif
 
-    //#endif // __SPI__
+    #endif // __SPI__
 
     /**************************************************************************/
 

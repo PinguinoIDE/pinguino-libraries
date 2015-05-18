@@ -158,19 +158,26 @@ void IOsetRemap()
             // Serial 1
             U1RXRbits.U1RXR = 0b0100;   // Define U1RX as RB2 ( D10 )
             RPB3Rbits.RPB3R = 0b0001;   // Define U1TX as RB3 ( D9 )
-            // Serail 2
+            // Serial 2
             U2RXRbits.U2RXR = 0b0010;   // Define U2RX as RB1 (D11)
             RPB0Rbits.RPB0R = 0b0010;   // Define U2TX as RB0 (D12)
         #endif
 
+        // SDI2 : 0011 = RPB13 (D2) or 0100 = RPB2 (D10)
+        // SDO2 : RA1 (D14), RA4 (D7), RB1 (D11), RB2 (D10), RB5 (D8), RB8 (D4)
         #ifdef __SPI__
-            // Input
-            //SS1Rbits.SS1R   = 0b0100;   // Define SS1  as RB7 ( D5 )
+            // SPI1
             SDI1Rbits.SDI1R = 0b0001;   // Define SDI1 as RB5 ( D6 )
-            // Output
-            //RPB7Rbits.RPB7R = 0b0011;   // Define SS1  as RB7 ( D5 )
             RPA4Rbits.RPA4R = 0b0011;   // Define SDO1 as RA4 ( D7 )
-            // NB : SCK1 is not a remappable pin (SCK1 = RB14 = D1)
+            // SCK1 is not remappable             SCK1 = RB14 ( D1 )
+            
+            // SPI2
+            SDI2Rbits.SDI2R = 0b0011;   // Define SDI2 as RB13 ( D2 )
+            RPB8Rbits.RPB8R = 0b0100;   // Define SDO2 as RB8  ( D4 )
+            // SCK2 is not remappable             SCK2 = RB15  ( D0 )
+
+            //SS1Rbits.SS1R   = 0b0100;   // Define SS1  as RB7 ( D5 )
+            //RPB7Rbits.RPB7R = 0b0011;   // Define SS1  as RB7 ( D5 )
         #endif
 
         #if defined(__PWM__) || defined(__AUDIO__)

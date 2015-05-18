@@ -8,9 +8,11 @@
             . default mode
             . SPI operations are handled by the CPU
             . pins have to be the CPU SPI pins
+            . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
+            . PINGUINO 8  have only one SPI module (SPI1)
         - Software SPI
-            . activated with #define SPISW
-            . SPI operations are handled by the ST7735 library
+            . SPISW
+            . SPI operations are handled by the SPI library
             . pins can be any digital pin
         
         Wiring :
@@ -27,18 +29,7 @@
         VSS       VSS (+5V or +3.3V)
 **/
 
-//#define SPISW
-
-/**
-    Load one or more fonts and active them with ST7735.setFont()
-**/
-
-#include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
+#define SPIMODULE SPI2
 
 void setup()
 {
@@ -47,13 +38,9 @@ void setup()
     seed = millis();
     randomSeed(seed);
 
-    // if SPISW is defined
-    // ST7735_init(cs, dc, sda, sck);
-
-    ST7735.init(0, 2); // CS and DC
-    ST7735.setFont(font6x8);
-    ST7735.setBackgroundColor(ST7735_BLACK);
-    ST7735.clearScreen();
+    ST7735.init(SPIMODULE, 6, 5, 0, 0); // CS and DC
+    ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
+    ST7735.clearScreen(SPIMODULE);
 }   
 
 void loop()
@@ -61,15 +48,16 @@ void loop()
     u16 x = random(0, 159);     // coordinate x E [0,159]
     u16 y = random(0, 127);     // coordinate y E [0, 127]
     u16 r = random(0, 63);      // radius r E [0,63]
-    u16 c  = random(0, 0xFFFF); // color c E [0, 65535]
-    u8 f   = random(0, 100);       // form c E [0, 1]
+    //u16 c  = random(0, 0xFFFF); // color c E [0, 65535]
+    u16 c = millis() % 0xFFFF;
+    u8 f   = random(0, 100);    // form c E [0, 1]
     
     // display
-    ST7735.setColor(c);
+    ST7735.setColor(SPIMODULE, c);
     if (f>49)
-        ST7735.fillCircle(x, y, r);
+        ST7735.fillCircle(SPIMODULE, x, y, r);
     else
-        ST7735.drawCircle(x, y, r);
+        ST7735.drawCircle(SPIMODULE, x, y, r);
     
     // delay
     delay(150);

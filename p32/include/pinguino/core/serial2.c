@@ -28,7 +28,9 @@
 #define __SERIAL2__
 
 #include <stdarg.h>
+#ifdef SERIALPRINTF
 #include <printf.c>
+#endif
 #include <serial.c>
 #include <typedef.h>
 
@@ -41,7 +43,8 @@ void serial2init(u32 speed)
     #endif
 }
 
-void serial2printf(char *fmt, ...)		
+#ifdef SERIALPRINTF
+void serial2printf(char *fmt, ...)
 {
     va_list args;
 
@@ -53,146 +56,113 @@ void serial2printf(char *fmt, ...)
     #endif
     va_end(args);
 }
+#endif
 
-/*******************************************************************************
-    And For Compatibility Reasons ....
-    16-08-2011: fixed bug in print - Régis Blanchot & Tiew Weng Khai
-    29-10-2011: fixed uncompatible arg. *s / serial2printf - Régis Blanchot
-*******************************************************************************/
-
-void serial2print(char *fmt,...)
+#if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
+    defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+void serial2print(char *string)
 {
-    //	unsigned char *s;
-    unsigned char s;
-    va_list args;					// list of arguments
-
-    va_start(args, fmt);			// initialize the list
-    // s = va_start(args, fmt);
-    s = (unsigned char) va_arg(args, int);		// get the first variable arg.
-
-    //switch (*s)
-    switch (s)
-    {
-        case DEC:
-            serial2printf("%d",fmt);
-            break;
-        case HEX:
-            serial2printf("%x",fmt);
-            break;
-        case BYTE:
-            serial2printf("%d",fmt);
-            break;
-        case OCT:
-            serial2printf("%o",fmt);
-            break;
-        case BIN:
-            serial2printf("%b",fmt);
-            break;           
-        default:
-            serial2printf(fmt);
-            break;
-    }
+    #ifdef PIC32_PINGUINO_220
+        SerialPrint(UART1, string);
+    #else
+        SerialPrint(UART2, string);
+    #endif
 }
+#endif
 
-/*
-void serial2print(char *fmt,...)
+#if defined(SERIALPRINTLN)
+void serial2println(char *string)
 {
-    va_list args;
-    va_start(args, fmt);
-
-    switch (*args)
-    {
-        case DEC:
-            serial2printf("%d",(int)fmt);
-            break;
-        case HEX:
-            serial2printf("%x",(int)fmt);
-            break;
-        case BYTE:
-            serial2printf("%d",(unsigned char)fmt);
-            break;
-        case OCT:
-            serial2printf("%o",(int)fmt);
-            break;
-        case BIN:
-            serial2printf("%b",(int)fmt);
-            break;           
-        default:
-            serial2printf(fmt);
-            break;
-    }
-
-    va_end(ap);
+    serial2print(string);
+    serial2print("\r\n");
 }
-*/
+#endif
 
-void serial2println(char *fmt,...)
+#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+void serial2printNumber(long value, u8 base)
 {
-    serial2printf(fmt);
-    serial2printf("\r\n");
+    #ifdef PIC32_PINGUINO_220
+        SerialPrintNumber(UART1, value, base);
+    #else
+        SerialPrintNumber(UART2, value, base);
+    #endif
 }
+#endif
 
+#if defined(SERIALPRINTFLOAT)
+void serial2printFloat(float number, u8 digits)
+{ 
+    #ifdef PIC32_PINGUINO_220
+        SerialPrintFloat(UART1, number, digits);
+    #else
+        SerialPrintFloat(UART2, number, digits);
+    #endif
+}
+#endif
+    
+    
 void serial2write(char c)
 {
-#ifdef PIC32_PINGUINO_220
-    SerialUART1WriteChar(c);
-#else
-    SerialUART2WriteChar(c);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        SerialUART1WriteChar(c);
+    #else
+        SerialUART2WriteChar(c);
+    #endif
 }
 
 char serial2getkey(void)
 {
-#ifdef PIC32_PINGUINO_220
-    return SerialGetKey(UART1);
-#else
-    return SerialGetKey(UART2);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        return SerialGetKey(UART1);
+    #else
+        return SerialGetKey(UART2);
+    #endif
 }
 
 char * serial2getstring(void)
 {
-#ifdef PIC32_PINGUINO_220
-    return SerialGetString(UART1);
-#else
-    return SerialGetString(UART2);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        return SerialGetString(UART1);
+    #else
+        return SerialGetString(UART2);
+    #endif
 }
 
 char serial2available(void)
 {
-#ifdef PIC32_PINGUINO_220
-    return SerialAvailable(UART1);
-#else
-    return SerialAvailable(UART2);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        return SerialAvailable(UART1);
+    #else
+        return SerialAvailable(UART2);
+    #endif
 }
 
 char serial2read(void)
 {
-#ifdef PIC32_PINGUINO_220
-    return SerialRead(UART1);
-#else
-    return SerialRead(UART2);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        return SerialRead(UART1);
+    #else
+        return SerialRead(UART2);
+    #endif
 }
 
 void serial2flush(void)
 {
-#ifdef PIC32_PINGUINO_220
-    SerialFlush(UART1);
-#else
-    SerialFlush(UART2);
-#endif
+    #ifdef PIC32_PINGUINO_220
+        SerialFlush(UART1);
+    #else
+        SerialFlush(UART2);
+    #endif
 }
 
 BOOL serial2clearrxerror(void)
 {
-#ifdef PIC32_PINGUINO_220
-    return(SerialClearRxError(UART1));
-#else
-    return(SerialClearRxError(UART2));
-#endif
+    #ifdef PIC32_PINGUINO_220
+        return(SerialClearRxError(UART1));
+    #else
+        return(SerialClearRxError(UART2));
+    #endif
 }
+
 #endif /* __SERIAL2__ */
 

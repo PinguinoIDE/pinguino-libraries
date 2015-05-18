@@ -435,11 +435,13 @@ void SystemClocksWriteSettings(const SystemClocksSettings *s)
     OSCCONbits.PBDIV = s->PBDIV;
 
     // Set wait states
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    // TODO
-    //PMMODEbits.WAITB = 0b00;								// Data wait of 1 TPB
-    #else
+    #if !defined(PIC32_PINGUINO_220) && \
+        !defined(PINGUINO32MX220)    && \
+        !defined(PINGUINO32MX250)    && \
+        !defined(PINGUINO32MX270)
+
     CHECON = (SystemClocksGetCpuFrequency(s) / 20) - 1;		// FlashWaitStates
+
     #endif
   
   //
@@ -475,10 +477,13 @@ u32 GetPeripheralClock()
 void SetFlashWaitStates_old()
 {
     SystemUnlock();
-    #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-    //PMMODEbits.WAITB = 0b00;					// Data wait of 1 TPB
-    #else
-    CHECON = (GetSystemClock() / 20) - 1;		// FlashWaitStates
+    #if !defined(PIC32_PINGUINO_220) && \
+        !defined(PINGUINO32MX220)    && \
+        !defined(PINGUINO32MX250)    && \
+        !defined(PINGUINO32MX270)
+    
+        CHECON = (GetSystemClock() / 20) - 1;		// FlashWaitStates
+    
     #endif
     SystemLock();
 }

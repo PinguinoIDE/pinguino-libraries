@@ -47,17 +47,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <spi.h>
 #include <ST7735.h>
 #include <digitalw.c>
-#include <delay.c>
+#include <digitalp.c>
+//#include <delay.c>
 #include <spi.c>
 
 // Printf
 #ifdef ST7735PRINTF
     #include <stdarg.h>
-    #ifdef __PIC32MX__
-        #include <printf.c>
-    #else
-        #include <stdio.c>
-    #endif
+    #include <stdio.c>
 #endif
 
 // Graphics Library
@@ -96,23 +93,23 @@ void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
     
     ST7735[module].pin.dc = dc;
     ST7735[module].pin.cs = cs;
-    output(ST7735[module].pin.dc);
-    output(ST7735[module].pin.cs);
+    pinmode(ST7735[module].pin.dc, OUTPUT);
+    pinmode(ST7735[module].pin.cs, OUTPUT);
     
     // init SPI communication
 
     if (module == SPISW)
     {
-        SPI_setPin(ST7735_SPI, sda, sck);
-        SPI_setBitOrder(ST7735_SPI, SPI_MSBFIRST);
+        SPI_setPin(module, sda, sck);
+        SPI_setBitOrder(module, SPI_MSBFIRST);
     }
     else
     {
-        SPI_setMode(ST7735_SPI, SPI_MASTER8);
-        SPI_setDataMode(ST7735_SPI, SPI_MODE1);
+        SPI_setMode(module, SPI_MASTER);
+        SPI_setDataMode(module, SPI_MODE1);
         //maximum baud rate possible = FPB/2
-        SPI_setClockDivider(ST7735_SPI, SPI_PBCLOCK_DIV2);
-        SPI_begin(ST7735_SPI);
+        SPI_setClockDivider(module, SPI_CLOCK_DIV4);
+        SPI_begin(module);
     }
     
     // default Screen Values
@@ -224,7 +221,7 @@ void ST7735_setWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     ST7735_low(ST7735[module].pin.cs);       // Chip select
     
     ST7735_low(ST7735[module].pin.dc);       // COMMAND = 0
-    SPI_write(module, ST7735_CASET);         // set column range (x0,x1)
+    SPI_write(module, ST7735_CASET);        // set column range (x0,x1)
 
     ST7735_high(ST7735[module].pin.dc);      // DATA = 1
     SPI_write(module,0);
@@ -233,7 +230,7 @@ void ST7735_setWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     SPI_write(module,x1);
 
     ST7735_low(ST7735[module].pin.dc);       // COMMAND = 0
-    SPI_write(module,ST7735_RASET);          // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);        // set row range (y0,y1)
 
     ST7735_high(ST7735[module].pin.dc);      // DATA = 1
     SPI_write(module,0);
@@ -266,17 +263,17 @@ void ST7735_setBackgroundColor(u8 module, u16 c)
 /// Gets pixel color
 ///	--------------------------------------------------------------------
 
-color_t ST7735_getColor(u8 module, u8 x, u8 y)
+color_t *ST7735_getColor(u8 module, u8 x, u8 y)
 {
-    color_t color;
+    color_t *color = NULL;
     u8 ch, cl;
     
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return 0;
 
     ST7735_low(ST7735[module].pin.cs);             // Chip select
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);                // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);              // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -285,7 +282,7 @@ color_t ST7735_getColor(u8 module, u8 x, u8 y)
     SPI_write(module,x);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);                // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);              // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -294,12 +291,12 @@ color_t ST7735_getColor(u8 module, u8 x, u8 y)
     SPI_write(module,y);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMRD);                // Read RAM
+    SPI_write(module,ST7735_RAMRD);              // Read RAM
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     ch = SPI_read(module);
     cl = SPI_read(module);
-    color.c = make16(ch, cl);
+    (*color).c = make16(ch, cl);
     
     ST7735_high(ST7735[module].pin.cs);            // Chip deselected
     
@@ -312,15 +309,15 @@ color_t ST7735_getColor(u8 module, u8 x, u8 y)
 /// Max values: Red 31, Green 63, Blue 31
 ///	--------------------------------------------------------------------
 
-color_t ST7735_packColor(u8 red, u8 green, u8 blue)
+color_t *ST7735_packColor(u8 red, u8 green, u8 blue)
 {
     u8 r, g, b;
-    color_t color;
+    color_t *color = NULL;
     
-    color.r = red & 0x1F;
-    color.g = green & 0x3F;
-    color.b = blue & 0x1F;
-    color.c = (r<<11)+(g<<5)+b;
+    r = red   & 0x1F;
+    g = green & 0x3F;
+    b = blue  & 0x1F;
+    (*color).c = (r<<11) + (g<<5) + b;
     return color;
 }
 
@@ -328,11 +325,11 @@ color_t ST7735_packColor(u8 red, u8 green, u8 blue)
 /// Reduces 16-bit color into component r,g,b values
 ///	--------------------------------------------------------------------
 
-void ST7735_unpackColor(color_t color)
+void ST7735_unpackColor(color_t *color)
 {
-    color.r = color.c>>11;
-    color.g = (color.c & 0x07E0)>>5;
-    color.b = color.c & 0x001F;
+    (*color).r =  (*color).c >> 11;
+    (*color).g = ((*color).c & 0x07E0)>>5;
+    (*color).b =  (*color).c & 0x001F;
 }
 
 ///	--------------------------------------------------------------------
@@ -348,7 +345,7 @@ void ST7735_clearScreen(u8 module)
     ST7735_low(ST7735[module].pin.cs);             // Chip select
 
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);                // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -357,7 +354,7 @@ void ST7735_clearScreen(u8 module)
     SPI_write(module,ST7735[module].screen.endx);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);                // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -366,7 +363,7 @@ void ST7735_clearScreen(u8 module)
     SPI_write(module,ST7735[module].screen.endy);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMWR);                // Write to RAM
+    SPI_write(module,ST7735_RAMWR);    // Write to RAM
         
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     for (i = 0; i < ST7735_SIZE; i++)
@@ -394,7 +391,7 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     ST7735_low(ST7735[module].pin.cs);             // Chip select
 
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);                // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
 
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -403,7 +400,7 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     SPI_write(module,x1);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);                // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
 
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -412,7 +409,7 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     SPI_write(module,y1);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMWR);                // Write to RAM
+    SPI_write(module,ST7735_RAMWR);    // Write to RAM
         
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     for (x = x0; x < x1; x++)
@@ -454,8 +451,8 @@ void ST7735_setFont(u8 module, const u8 *font)
 
 void ST7735_printChar(u8 module, u8 c)
 {
-    u8 height, width;
-    u8 b, tx, ty;
+    u8 h, w, b;
+    u8 tx, ty;
 
     while (ST7735[module].cursor.x >= ST7735[module].cursor.xmax)
     {
@@ -466,7 +463,7 @@ void ST7735_printChar(u8 module, u8 c)
     while (ST7735[module].cursor.y > ST7735[module].cursor.ymax)
     {
         ST7735[module].cursor.y = 0;
-        //ST7735_scrollUp();                      --->>> TODO
+        //ST7735_scrollUp();
         ST7735_clearScreen(module);
     }
 
@@ -487,20 +484,20 @@ void ST7735_printChar(u8 module, u8 c)
         default:
             tx = ST7735[module].cursor.x * ST7735[module].font.width;
             ty = ST7735[module].cursor.y * ST7735[module].font.height;
-            for (height = 0; height < ST7735[module].font.height; height++)
+            for (h = 0; h < ST7735[module].font.height; h++)
             {
-                b = ST7735[module].font.address[2 + (c - 32) * ST7735[module].font.width + height];
-                for (width = 0; width < ST7735[module].font.width; width++)
+                b = ST7735[module].font.address[2 + (c - 32) * ST7735[module].font.width + h];
+                for (w = 0; w < ST7735[module].font.width; w++)
                 {
                     if (b & 1)
-                        ST7735_drawPixel(module, tx + height, ty + width);
+                        ST7735_drawPixel(module,  tx + h, ty + w);
                     else
-                        ST7735_clearPixel(module, tx + height, ty + width);
+                        ST7735_clearPixel(module, tx + h, ty + w);
                     b >>= 1;
                 }
             }
             ST7735[module].cursor.x++;
-    }            
+    }
 }
 
 /*	--------------------------------------------------------------------
@@ -638,7 +635,7 @@ void ST7735_printf(u8 module, const u8 *fmt, ...)
     psprintf2(buffer, fmt, args);
     va_end(args);
 
-    while (*c != 0)
+    while (*c)
         ST7735_printChar(module, *c++);
 }
 #endif
@@ -680,7 +677,7 @@ void ST7735_drawPixel(u8 module, u8 x, u8 y)
     ST7735_low(ST7735[module].pin.cs);           // Chip select
     
     ST7735_low(ST7735[module].pin.dc);           // COMMAND = 0
-    SPI_write(module,ST7735_CASET);              // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);            // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc);          // DATA = 1
     SPI_write(module,0x00);
@@ -689,7 +686,7 @@ void ST7735_drawPixel(u8 module, u8 x, u8 y)
     //SPI_write(module,x);
     
     ST7735_low(ST7735[module].pin.dc);           // COMMAND = 0
-    SPI_write(module,ST7735_RASET);              // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);            // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc);          // DATA = 1
     SPI_write(module,0x00);
@@ -714,7 +711,7 @@ void ST7735_clearPixel(u8 module, u8 x, u8 y)
     ST7735_low(ST7735[module].pin.cs);           // Chip select
     
     ST7735_low(ST7735[module].pin.dc);           // COMMAND = 0
-    SPI_write(module,ST7735_CASET);              // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);            // set column range (x0,x1)
 
     ST7735_high(ST7735[module].pin.dc);          // DATA = 1
     SPI_write(module,0);
@@ -723,7 +720,7 @@ void ST7735_clearPixel(u8 module, u8 x, u8 y)
     SPI_write(module,x);
 
     ST7735_low(ST7735[module].pin.dc);           // COMMAND = 0
-    SPI_write(module,ST7735_RASET);              // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);            // set row range (y0,y1)
 
     ST7735_high(ST7735[module].pin.dc);          // DATA = 1
     SPI_write(module,0);
@@ -756,7 +753,7 @@ void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
     ST7735_low(ST7735[module].pin.cs);             // Chip select
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);                // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -765,7 +762,7 @@ void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
     SPI_write(module,x);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);                // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -799,7 +796,7 @@ void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
     ST7735_low(ST7735[module].pin.cs);             // Chip select
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);                // set column range (x0,x1)
+    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -808,7 +805,7 @@ void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
     SPI_write(module,x+w-1);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);                // set row range (y0,y1)
+    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     SPI_write(module,0x00);
@@ -885,15 +882,11 @@ void ST7735_fillCircle(u8 module, u16 x, u16 y, u16 radius)
     fillCircle(x, y, radius);
 }
 
-#endif // ST7735GRAPHICS
-
 void ST7735_fillRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
 {
     ST7735_SPI = module;
     fillRect(x1, y1, x2, y2);
 }
-
-#ifdef ST7735GRAPHICS
 
 void ST7735_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
 {

@@ -41,8 +41,10 @@ void loop()
 {
     u32 t,r;
     u8 d,h,m,s;
+    static u8 temp;
 
-    digitalWrite(USERLED, HIGH);// Switch build-in led on
+    // Switch build-in led off
+    digitalWrite(USERLED, LOW);
     
     t = millis() / 1000;   // time in sec.
     d = t / 86400;         // days
@@ -52,12 +54,17 @@ void loop()
     m = r / 60;            // minutes
     s = t % 60;            // seconds
 
-    // set the cursor to column 0, line 1
-    // (note: line 1 is the second row, since counting begins with 0):
-    lcd.setCursor(0, 1);
-    // print the number of seconds since reset:
-    lcd.printf("Uptime %02d:%02d:%02d", h,m,s);
-
-    digitalWrite(USERLED, LOW);// Switch build-in led off
-    delay(500);
+    if (s != temp)
+    {
+        // save the current value of s
+        temp = s;
+        // Switch build-in led on
+        digitalWrite(USERLED, HIGH);
+        delay(100);
+        // set the cursor to column 0, line 1
+        // (note: line 1 is the second row, since counting begins with 0)
+        lcd.setCursor(0, 1);
+        // print time since reset
+        lcd.printf("Uptime %02d:%02d:%02d", h,m,s);
+    }
 }

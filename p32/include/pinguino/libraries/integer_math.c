@@ -14,7 +14,8 @@
 #include "integer_math.h"
 
 //Integer SIN
-returntype sini(unsigned int x){
+returntype sini(unsigned int x)
+{
     x = x - 360*((int)(x/360));
     
 	if(x<=90){

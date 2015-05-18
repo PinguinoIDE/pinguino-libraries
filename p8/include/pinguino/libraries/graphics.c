@@ -50,9 +50,15 @@
 #ifndef __GRAPHICS_C
 #define __GRAPHICS_C
 
+#include <typedef.h>    // u8, u16, ..
+#include <macro.h>      // swap
 #include <mathlib.c>    // abs
+//#define _abs_(a) (((a)> 0) ? (a) : -(a))
 
-extern void drawPixel(u16 x, u16 y);
+// Specific to each display
+extern void drawPixel(u16, u16);
+extern void drawVLine(u16, u16, u16);
+extern void drawHLine(u16, u16, u16);
 //extern void setColor(u16 c);
 
 /*	--------------------------------------------------------------------
@@ -111,12 +117,12 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     s16 ystep;
     
     // simple clipping
-/*
+    /*
     if (( x0 < 0) || (x0 > HRES)) return;
     if (( x1 < 0) || (x1 > HRES)) return;
     if (( y0 < 0) || (y0 > VRES)) return;
     if (( y1 < 0) || (y1 > VRES)) return;
-*/
+    */
     
     steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -157,7 +163,6 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     }
 }
 
-/*
 void drawRect(u16 x1, u16 y1, u16 x2, u16 y2)
 {
     u16 tmp;
@@ -226,22 +231,10 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         y1=y2;
         y2=tmp;
     }
-
-    if (orient==PORTRAIT)
+    for (i=0; i<((x2-x1)/2)+1; i++)
     {
-        for (i=0; i<((y2-y1)/2)+1; i++)
-        {
-            drawHLine(x1, y1+i, x2-x1);
-            drawHLine(x1, y2-i, x2-x1);
-        }
-    }
-    else
-    {
-        for (i=0; i<((x2-x1)/2)+1; i++)
-        {
-            drawVLine(x1+i, y1, y2-y1);
-            drawVLine(x2-i, y1, y2-y1);
-        }
+        drawVLine(x1+i, y1, y2-y1);
+        drawVLine(x2-i, y1, y2-y1);
     }
 }
 
@@ -283,6 +276,7 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
     }
 }
 
+/*
 void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
     char i,j,ch;
     unsigned u16 temp;
@@ -361,171 +355,6 @@ void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
     }
 #endif
     fastWriteHigh(LCD_CS);
-}
-
-void myGLCD_print(char *st, u16 x, u16 y, u16 deg)
-{
-    u16 stl, i;
-
-    stl = strlen(st);
-
-    if (fsize==FONT_SMALL)
-    {
-        if (orient==PORTRAIT)
-        {
-        if (x==RIGHT)
-            x=240-(stl*8);
-        if (x==CENTER)
-            x=(240-(stl*8))/2;
-        }
-        else
-        {
-        if (x==RIGHT)
-            x=320-(stl*8);
-        if (x==CENTER)
-            x=(320-(stl*8))/2;
-        }
-    }
-    else
-    {
-        if (orient==PORTRAIT)
-        {
-        if (x==RIGHT)
-            x=240-(stl*16);
-        if (x==CENTER)
-            x=(240-(stl*16))/2;
-        }
-        else
-        {
-        if (x==RIGHT)
-            x=320-(stl*16);
-        if (x==CENTER)
-            x=(320-(stl*16))/2;
-        }
-    }
-
-    for (i=0; i<stl; i++)
-        if (deg==0)
-            printChar(*st++, x + (i*(fsize*8)), y);
-        else
-            rotateChar(*st++, x, y, i, deg);
-}
-
-void printNumI(long num, u16 x, u16 y){
-  char buf[25];
-  char st[27];
-  unsigned char neg=0;
-  u16 i,c=0;
-  
-  if (num==0)
-  {
-      st[0]=48;
-      st[1]=0;
-  }
-  else
-  {
-      if (num<0)
-      {
-        neg=1;
-        num=-num;
-      }
-      
-      while (num>0)
-      {
-        buf[c]=48+(num % 10);
-        c++;
-        num=(num-(num % 10))/10;
-      }
-      buf[c]=0;
-      
-      if (neg)
-      {
-        st[0]=45;
-      }
-      
-      for (i=0; i<c; i++)
-      {
-        st[i+neg]=buf[c-i-1];
-      }
-      st[c+neg]=0;
-  }
-
-  myGLCD_print(st,x,y,0);
-}
-
-void printNumF(double num, char dec, u16 x, u16 y){
-  char buf[25];
-  char st[27];
-  unsigned char neg=0;
-  u16 i,c=0;
-  u16 c2;
-  unsigned long inum;
-  
-  if (num==0)
-  {
-      st[0]=48;
-      st[1]=46;
-      for (i=0; i<dec; i++)
-          st[2+i]=48;
-      st[2+dec]=0;
-  }
-  else
-  {
-      if (num<0)
-      {
-        neg=1;
-        num=-num;
-      }
-      
-      if (dec<1)
-        dec=1;
-      if (dec>5)
-        dec=5;
-      
-      inum=(long)(num*powi(10,dec));
-      
-      while (inum>0)
-      {
-        buf[c]=48+(inum % 10);
-        c++;
-        inum=(inum-(inum % 10))/10;
-      }
-      if ((num<1) && (num>0))
-      {
-          buf[c]=48;
-          c++;
-      }
-      buf[c]=0;
-      
-      if (neg)
-      {
-        st[0]=45;
-      }
-      
-      c2=neg;
-      for (i=0; i<c; i++)
-      {
-        st[c2]=buf[c-i-1];
-        c2++;
-        if ((c-(c2-neg))==dec)
-        {
-          st[c2]=46;
-          c2++;
-        }
-      }
-      st[c2]=0;
-  }
-
-  myGLCD_print(st,x,y,0);
-}
-
-void fontSize(char size)
-{
-#ifdef _NO_BIG_FONT_
-    fsize = FONT_SMALL;
-#else
-    fsize = size;
-#endif
 }
 */
 

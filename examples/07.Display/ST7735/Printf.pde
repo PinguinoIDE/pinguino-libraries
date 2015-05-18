@@ -8,9 +8,11 @@
             . default mode
             . SPI operations are handled by the CPU
             . pins have to be the CPU SPI pins
+            . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
+            . PINGUINO 8  have only one SPI module (SPI1)
         - Software SPI
-            . activated with #define SPISW
-            . SPI operations are handled by the ST7735 library
+            . SPISW
+            . SPI operations are handled by the SPI library
             . pins can be any digital pin
         
         Wiring :
@@ -27,34 +29,24 @@
         VSS       VSS (+5V or +3.3V)
 **/
 
-//#define SPISW
-
-/**
-    Load one or more fonts and active them with ST7735.setFont()
-**/
-
+// Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
 
 float f;
 
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    ST7735.init(0, 2);
-    ST7735.setFont(font6x8);
-    ST7735.setBackgroundColor(ST7735_BLACK);
-    ST7735.setColor(ST7735_WHITE);
-    ST7735.clearScreen();
+    ST7735.init(SPI1, 6, 5, 0, 0);
+    ST7735.setFont(SPI1, font6x8);
+    ST7735.setBackgroundColor(SPI1, ST7735_BLACK);
+    ST7735.setColor(SPI1, ST7735_WHITE);
+    ST7735.clearScreen(SPI1);
 }
 
 void loop()
 {
-    ST7735.printf("f=%.3f\r\n",f);
+    ST7735.printf(SPI1, "f=%.3f\r\n",f);
     f = f + 0.001f;
     toggle(USERLED);
     delay(100);

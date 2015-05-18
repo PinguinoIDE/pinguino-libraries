@@ -9,14 +9,11 @@
     --------------------------------------------------------------------
     CHANGELOG:
 
-    22 Sep. 2011        Marcus Fazzi <anunakin@gmail.org>
-                        added UART3,4,5,6 support
-    14 Jan. 2015        Regis Blanchot <rblanchot@gmail.com>
-                        added OnTimerX support
-    03 Mar. 2015        Regis Blanchot <rblanchot@gmail.com>
-                        moved interrupt weak definitions in isrwrapper.c
-    20 Mar. 2015        removed SystemConfig() as CPU frequency is already
-                        defined in the bootloader
+    22 Sep. 2011    M.Fazzi added UART3,4,5,6 support
+    14 Jan. 2015    R.Blanchot added OnTimerX support
+    03 Mar. 2015    R.Blanchot moved interrupt weak definitions in isrwrapper.c
+    20 Mar. 2015    R.Blanchot removed SystemConfig() (defined in the bootloader)
+    14 Apr. 2015    R.Blanchot added SPI init.
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -90,6 +87,10 @@ int main()
     //#ifdef __RTCC__
     //RTCC_init();
     //#endif    
+
+    #ifdef __SPI__
+    SPI_init();
+    #endif    
     
     #ifdef __SERVOS__
     servos_init();

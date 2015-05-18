@@ -17,13 +17,13 @@
 
     /// BYTES
 
-    #define low8(x)				((unsigned char) ((x) & 0xFF))
-    #define high8(x)			((unsigned char) ((x) >> 8))
+    #define low8(x)             ((unsigned char) ((x) & 0xFF))
+    #define high8(x)            ((unsigned char) ((x) >> 8))
     // already defined in pinguino.pdl32
-    //#define lowByte(x)			((unsigned char) ((x) & 0xFF))
-    //#define highByte(x)			((unsigned char) ((x) >> 8))
-    #define make16(low, high)	(low | (high << 8))
-    #define make32(low, high)	(low | (high << 16))
+    //#define lowByte(x)        ((unsigned char) ((x) & 0xFF))
+    //#define highByte(x)       ((unsigned char) ((x) >> 8))
+    #define make16(low, high)   (low | (high << 8))
+    #define make32(low, high)   (low | (high << 16))
 
     /// BITWISE OPERATION
 

@@ -15,8 +15,19 @@
 #ifndef __FILEIO_H__
 #define __FILEIO_H__
 
-#include "sdmmc.h"
-#include "ff.h"
+//#define SD_DEBUG
+
+#include <typedef.h>
+#include <spi.h>
+#include <sd/sdmmc.h>
+#include <sd/ff.h>
+
+#ifdef SD_DEBUG
+    //#define CDCPRINTF
+    //#define  debugf          CDCprintf
+    #define SERIALPRINTF
+    #define  debugf          serial1printf
+#endif
 
 // FILEIO ERROR CODES
 #define FE_IDE_ERROR        1   // IDE command execution error
@@ -55,8 +66,15 @@ typedef struct {
 	long size;
 } DIRTABLE;
 
+typedef struct {
+    char cs; // chip select
+    char cd; // card connector
+    char wp; // write protect
+} SDPIN;
+
 // globals
-char SDCS;
+
+SDPIN SD[NUMOFSPI];
 
 char FError; // error mail box
 FATFS *Fat; // mounting info for storage device
@@ -84,16 +102,15 @@ FILINFO Finfo;
 // watch out, a processor trap will be generated if the address
 // is not word aligned
 #define ReadW( a, f) *(unsigned short*)(a+f)
-#define ReadL( a, f) *(unsigned short*)(a+f) + \
-(( *(unsigned short*)(a+f+2))<<16)
+#define ReadL( a, f) *(unsigned short*)(a+f) + (( *(unsigned short*)(a+f+2))<<16)
 
 // this is a "safe" versions of ReadW
 // to be used on odd address fields
 #define ReadOddW( a, f) (*(a+f) + ( *(a+f+1) << 8))
 
 // prototypes
-char mount(unsigned char);
-void unmount(void);
+char mount(u8, u8);
+void unmount(u8);
 
 char isReadOnly(FILINFO file);
 char isHidden(FILINFO file);
@@ -104,6 +121,6 @@ char isArchive(FILINFO file);
 unsigned listTYPE(DIRTABLE *list, int max, const char *ext);
 //unsigned listTYPE(char *list, int max, const char *ext);
 
-unsigned listDir(const char *path);
+unsigned listDir(u8, const char *path);
 
 #endif /* __FILEIO_H__ */

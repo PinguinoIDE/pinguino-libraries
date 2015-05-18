@@ -8,9 +8,11 @@
             . default mode
             . SPI operations are handled by the CPU
             . pins have to be the CPU SPI pins
+            . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
+            . PINGUINO 8  have only one SPI module (SPI1)
         - Software SPI
-            . activated with #define SPISW
-            . SPI operations are handled by the ST7735 library
+            . SPISW
+            . SPI operations are handled by the SPI library
             . pins can be any digital pin
         
         Wiring :
@@ -25,27 +27,11 @@
         CS        can be connected to any digital pin
         GND       GND
         VSS       VSS (+5V or +3.3V)
-        
-        PIC32 benchmark
-        ---------------------------------------
-        with cosf, sinf :
-        with cosr, sinr :
-        with fastersin, fastercos :
 **/
 
-//#define SPISW
-
-/**
-    Load one or more fonts and active them with ST7735.setFont()
-**/
-
+// Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
-
+#define SPIMODULE SPI2
 #define NBPOINTS 8
 
 typedef struct { float x, y, z, xy; } point3D;
@@ -154,8 +140,8 @@ void initCube()
 
 void ligne(u8 a, u8 b)
 {
-    ST7735.drawLine( Point2D[a].x, Point2D[a].y,
-                     Point2D[b].x, Point2D[b].y	);
+    ST7735.drawLine(SPIMODULE, Point2D[a].x, Point2D[a].y,
+                               Point2D[b].x, Point2D[b].y);
 }
 
 ///
@@ -185,15 +171,15 @@ void setup()
     //    Adjust the following according to your processor
     //System.setCpuFrequency(60000000);
     //System.setPeripheralFrequency(60000000);
-    ST7735.init(0, 2);  	// CS, DC
-    ST7735.setFont(font6x8);
-    ST7735.setBackgroundColor(ST7735_BLUE);
-    ST7735.setColor(ST7735_WHITE);
-    ST7735.clearScreen();
+    ST7735.init(SPIMODULE, 6, 5, 0, 0);  	// CS, DC
+    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setBackgroundColor(SPIMODULE, ST7735_BLUE);
+    ST7735.setColor(SPIMODULE, ST7735_WHITE);
+    ST7735.clearScreen(SPIMODULE);
     
     // Position du cube
-    Xoff = ST7735.screen.width  / 2;
-    Yoff = ST7735.screen.height / 2 + 9;
+    Xoff = ST7735[SPIMODULE].screen.width  / 2;
+    Yoff = ST7735[SPIMODULE].screen.height / 2 + 9;
     Zoff = 1800;
 
     // create 3D cube
@@ -216,8 +202,8 @@ void loop()
         Projection();
         
         // display
-        ST7735.clearScreen();
-        ST7735.printf("%u fps (max. %u)", fps, maxfps);
+        ST7735.clearScreen(SPIMODULE);
+        ST7735.printf(SPIMODULE, "%u fps (max. %u)", fps, maxfps);
         drawCube();
 
         // update angles

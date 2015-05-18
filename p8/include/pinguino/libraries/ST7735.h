@@ -216,17 +216,26 @@
 
 void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
+
 void ST7735_init(u8, u8, u8, u8, u8);
+
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
+
 void ST7735_setColor(u8, u16);
 void ST7735_setBackgroundColor(u8, u16);
+color_t *ST7735_getColor(u8, u8, u8);
+color_t *ST7735_packColor(u8, u8, u8);
+void ST7735_unpackColor(color_t*);
+
 void ST7735_clearScreen(u8);
 void ST7735_clearWindow(u8, u8, u8, u8, u8);
+
 //void ST7735_scrollRight();
 //void ST7735_scrollLeft();
 //void ST7735_scrollUp();
 //void ST7735_scrollDown();
+
 void ST7735_setFont(u8, const u8*);
 void ST7735_printChar(u8, u8);
 void ST7735_print(u8, u8*);
@@ -235,6 +244,7 @@ void ST7735_printNumber(u8, long, u8);
 void ST7735_printFloat(u8, float, u8);
 void ST7735_printf(u8, const u8*, ...);
 void ST7735_setCursor(u8, u8, u8);
+
 void ST7735_drawPixel(u8, u8, u8);
 void ST7735_clearPixel(u8, u8, u8);
 void ST7735_drawBitmap(u8, u16, u16, u16, u16, u16*);
@@ -248,8 +258,6 @@ void drawPixel(u16, u16);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
 
-color_t ST7735_getColor(u8, u8, u8);
-
 /**	--------------------------------------------------------------------
     Macros
     ------------------------------------------------------------------*/
@@ -260,8 +268,8 @@ color_t ST7735_getColor(u8, u8, u8);
 #define ST7735_normalDisplay(m)  ST7735_sendCommand(m, ST7735_INVOFF)
 #define ST7735_displayOn(m)      ST7735_sendCommand(m, ST7735_DISPON)
 #define ST7735_displayOff(m)     ST7735_sendCommand(m, ST7735_DISPOFF)
-#define ST7735_low(x)            low(x)
-#define ST7735_high(x)           high(x)
+#define ST7735_low(x)            digitalwrite(x, LOW)
+#define ST7735_high(x)           digitalwrite(x, HIGH)
 
 /**	--------------------------------------------------------------------
     Globals
@@ -269,16 +277,15 @@ color_t ST7735_getColor(u8, u8, u8);
 
 u8 ST7735_SPI;
 
-// SPISW, SPI1, SPI2, SPI3 and SPI4
-#if defined(__32MX795F512L__) || \
-    defined(__32MX795F512H__)
+// SPISW, SPI1, SPI2
+#if defined(__18f47j53__)
     
-lcd_t ST7735[5];
+lcd_t ST7735[3];
 
 // SPISW, SPI1 and SPI2
 #else
 
-lcd_t ST7735[3];
+lcd_t ST7735[2];
 
 #endif
 

@@ -5,6 +5,7 @@
 #define _DISKIOC
 
 #include <sd/diskio.h>
+#include <spi.h>
 #include <spi.c>
 #include <delayms.c>
 #include <serial.c>

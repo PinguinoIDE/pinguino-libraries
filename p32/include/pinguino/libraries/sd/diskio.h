@@ -2,19 +2,21 @@
 /  Low level disk interface modlue include file  R0.05   (C)ChaN, 2007
 /-----------------------------------------------------------------------*/
 
-#ifndef _DISKIO
+#ifndef _DISKIO_H
+#define _DISKIO_H
+
+#include <typedef.h>
+#include "integer.h"
 
 #define _READONLY	0	/* 1: Read-only mode */
 #define _USE_IOCTL	1
-
-#include "integer.h"
-
 
 /* Status of Disk Functions */
 typedef PF_BYTE	DSTATUS;
 
 /* Results of Disk Functions */
-typedef enum {
+typedef enum
+{
 	RES_OK = 0,		/* 0: Successful */
 	RES_ERROR,		/* 1: R/W Error */
 	RES_WRPRT,		/* 2: Write Protected */
@@ -22,28 +24,22 @@ typedef enum {
 	RES_PARERR		/* 4: Invalid Parameter */
 } DRESULT;
 
-/*---------------------------------------*/
 /* Prototypes for disk control functions */
-
-DSTATUS disk_initialize (PF_BYTE);
-DSTATUS disk_status (PF_BYTE);
-DRESULT disk_read (PF_BYTE, PF_BYTE*, DWORD, PF_BYTE);
+DSTATUS disk_initialize(u8, PF_BYTE);
+DSTATUS disk_status(PF_BYTE);
+DRESULT disk_read(u8, PF_BYTE, PF_BYTE*, DWORD, PF_BYTE);
 #if	_READONLY == 0
-DRESULT disk_write (PF_BYTE, const PF_BYTE*, DWORD, PF_BYTE);
+DRESULT disk_write(u8, PF_BYTE, const PF_BYTE*, DWORD, PF_BYTE);
 #endif
-DRESULT disk_ioctl (PF_BYTE, PF_BYTE, void*);
-void	disk_timerproc (void);
-
-DWORD 	get_fattime(void);
-static
-void 	put_rc (FRESULT);
+DRESULT disk_ioctl(u8, PF_BYTE, PF_BYTE, void*);
+void    disk_timerproc (u8);
+DWORD   get_fattime(void);
+static  void put_rc (FRESULT);
 
 /* Disk Status Bits (DSTATUS) */
-
 #define STA_NOINIT		0x01	/* Drive not initialized */
 #define STA_NODISK		0x02	/* No medium in the drive */
-#define STA_PROTECT		0x04	/* Write protected */
-
+#define STA_PROTECT     0x04	/* Write protected */
 
 /* Command code for disk_ioctrl() */
 
@@ -74,15 +70,11 @@ void 	put_rc (FRESULT);
 #define NAND_FORMAT			30	/* Create physical format */
 #define NAND_ERASE			31	/* Force erased a block */
 
-
 /* MMC/SDC card type definitions (CardType) */
-
 #define CT_MMC				0x01
 #define CT_SD1				0x02
 #define CT_SD2				0x04
 #define CT_SDC				(CT_SD1|CT_SD2)
 #define CT_BLOCK			0x08
 
-
-#define _DISKIO
-#endif
+#endif // _DISKIO_H

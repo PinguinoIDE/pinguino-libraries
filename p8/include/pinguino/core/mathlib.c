@@ -28,7 +28,8 @@
 #ifndef __MATHLIB_C
 #define __MATHLIB_C
 
-#include <typedef.h>
+//#include <typedef.h>
+#include <macro.h>
 #include <stdlib.h>
 
 int abs(int v)
@@ -47,7 +48,7 @@ int abs(int v)
 
 int random(int mini, int maxi)
 {
-    return ((rand()%maxi) + mini);
+    return ( (rand() % maxi ) - mini );
 }
 
 /**	----------------------------------------------------------------------------
@@ -58,7 +59,7 @@ int random(int mini, int maxi)
 	Returns		:
  	--------------------------------------------------------------------------*/
 
-s32 map(s32 x, s32 in_min, s32 in_max, s32 out_min, s32 out_max)
+int map(int x, int in_min, int in_max, int out_min, int out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

@@ -1,33 +1,29 @@
-- [ ] Pinguino 32MX250 Limited memory bug
+TODO
+==================
 
-- [ ] RTCC lib. : to modify to get the same syntax for both 8- and 32-bit version.
+- [x] updating SD lib. to support all Pinguino 32MX2x0 boards.
+- [x] updating SPI lib. to use SPI1, SPI2, SPI3 or SPI4 module for 32-bit.
+- [ ] modifying RTCC lib. to have the same syntax for both 8- and 32-bit version.
+      either RTCC.getTime(&cT); or cT = RTCC.getTime();
+- [ ] renaming rtccTime type to RTCCTIME
+- [ ] renaming C++ name.other to C name_other
 
-8-bit (SDCC):
+WORK IN PROGRES
+==================
 
-rtccTime cT;
+- [ ] completing CTMU lib. for both 8- and 32-bit version.
+- [ ] replacing libcdc.a with a new CDC lib. to get more control over.
 
-RTCC.getTime(&cT);
+    - [x] CDC.begin(u32 baudrate);
+    - [x] CDC Interrupt management (CDC.polling())
+    - [x] non-blocking CDC when USB cable is unplugged
+    
+- [ ] adding scroll routines to ST7735 lib. 
+- [ ] Generating Bitnap fonts from TTF fonts to use with all LCD/TFT display libraries
+      Tip : http://arduinoexplained.blogspot.nl/2012/05/generating-your-own-lcd-raster-fonts.html
+      
+DONE
+==================
 
-32-bit (GCC) :
-
-rtccTime cT;
-
-cT = RTCC.getTime();
-
-"SDCC" version is easy to implement under GCC but the use of pointers (&cT) is not "user-friendly".
-
-rtccTime -> RTCCTIME ???
-
-- [ ] CTMU lib. : to complete for both 8- and 32-bit version.
-
-- [ ] SPI lib. : to modify to use SPI1, SPI2, SPI3 or SPI4 module for 32-bit.
-
- (on the same model of Serial or I2C lib.)
-
-- [ ] CDC lib. : to replace call of libcdc.a and get more control over.
-
-CDC.begin(u32 baudrate);
-Interrupt management.
-CDC.polling();
-
-- [] ST7735 lib. : to add scroll routines
+- [x] Pinguino 32MX250 Limited memory bug
+      Fixed in the new bootloader

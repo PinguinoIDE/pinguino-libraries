@@ -1,7 +1,7 @@
 /*	----------------------------------------------------------------------------
     FILE:			graphic.c
     PROJECT:		pinguino
-    PURPOSE:		graphic routines
+    PURPOSE:		graphic routines for all TFT or OLED displays
     PROGRAMER:		Henning Karlsen http://www.henningkarlsen.com
                     Marcus Fazzi
                     Regis Blanchot
@@ -90,12 +90,12 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     s16 ystep;
     
     // simple clipping is done in the drawPixel routine
-/*
+    /*
     if (( x0 < 0) || (x0 > HRES)) return;
     if (( x1 < 0) || (x1 > HRES)) return;
     if (( y0 < 0) || (y0 > VRES)) return;
     if (( y1 < 0) || (y1 > VRES)) return;
-*/
+    */
     
     steep = _abs_(y1 - y0) > _abs_(x1 - x0);
 

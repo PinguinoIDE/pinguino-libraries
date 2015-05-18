@@ -216,6 +216,10 @@
     millis_init();
     #endif
 
+    #ifdef __SPI__
+    spi_init();
+    #endif
+
     #ifdef SERVOSLIBRARY        // Use Timer 1
     servos_init();
     #endif

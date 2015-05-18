@@ -1,3 +1,4 @@
+
 /**
         Author: 	Régis Blanchot (Mar. 2014)
         Tested on:	Pinguino 47J53 & Pinguino 32MX250
@@ -8,9 +9,11 @@
             . default mode
             . SPI operations are handled by the CPU
             . pins have to be the CPU SPI pins
+            . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
+            . PINGUINO 8  have only one SPI module (SPI1)
         - Software SPI
-            . activated with #define SPISW
-            . SPI operations are handled by the ST7735 library
+            . SPISW
+            . SPI operations are handled by the SPI library
             . pins can be any digital pin
         
         Wiring :
@@ -27,37 +30,30 @@
         VSS       VSS (+5V or +3.3V)
 **/
 
-//#define SPISW
-
-/**
-    Load one or more fonts and active them with ST7735.setFont()
-**/
-
+// Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
+
+#define SPIMODULE SPI2
 
 void setup()
 {
     pinMode(USERLED, OUTPUT);
     
-    // if SPISW is defined
-    // ST7735_init(cs, dc, sda, sck);
+    // SDA and SCK pins must be defined by user
+    // if module used is SPISW (SPI Software)
+    // ST7735.init(SPISW, 6, 5, 7, 1); // CS, DC, SDA, SCK
 
-    ST7735.init(0, 2); // CS and DC
-    ST7735.setFont(font6x8);
-    ST7735.setBackgroundColor(ST7735_BLACK);
-    ST7735.setColor(ST7735_YELLOW);
-    ST7735.clearScreen();
+    ST7735.init(SPIMODULE, 1, 3, 0, 0); // CS and DC
+    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
+    ST7735.setColor(SPIMODULE, ST7735_YELLOW);
+    ST7735.setOrientation(SPIMODULE, 270);
+    ST7735.clearScreen(SPIMODULE);
 }   
 
 void loop()
 {
-    ST7735.println("Hello World!");
-    //ST7735.refresh();
+    ST7735.println(SPIMODULE, "Hello World!");
     toggle(USERLED);
     delay(1000);
 }

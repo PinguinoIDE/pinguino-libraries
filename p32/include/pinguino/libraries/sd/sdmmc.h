@@ -22,43 +22,11 @@
 #ifndef __SDMMC_H__
 #define __SDMMC_H__
 
-#define FAIL    FALSE
-
-/*
-				PIC32MX4xx
-FUNCTION		SPI1 / SPI2
-SCK			RD10 / RG6  = OTG D13
-SDI			RC4  / RG7  = OTG D12
-SDO	 		RD0  / RG8  = OTG D11
-SS				RB1  / RG9  = OTG D10 but separate line used for SDCS
-CD				RF0  / NA
-WD				RF1  / NA
-
-Note: When using PIC32MX4xx (PIC32-Pinguino/OTG/Micro), as the SPI2 port is 
-		used the code has been be modified to ignore the CD and WD inputs.
-*/
-
-// I/O definitions
-// 07 May 2012 - not used SDCS now set via SD.mount() function for all boards
-#if defined(PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
-	//#define SDCS				 8	// RB13/MMC_#SS Card Select output
-	//#define READ_LED		30	// Yellow Led	
-	//#define WRITE_LED		30	// Yellow Led
-	//#define SDWP					// No Write Protect input
-	//#define SDCD					// No Card Detect input
-#endif
-
-#ifdef PIC32_PINGUINO_MICRO
-	//#define SDCS				40	// RB13/MMC_#SS Card Select output
-	//#define READ_LED		10	// Yellow Led
-	//#define WRITE_LED		10	// Yellow Led
-	//#define SDWP					// No Write Protect input
-	//#define SDCD					// No Card Detect input
-#endif
+#include <typedef.h>
 
 // SD card commands
-#define RESET           0 // a.k.a. GO_IDLE (CMD0)
-#define INIT            1 // a.k.a. SEND_OP_COND (CMD1)
+#define RESET           0           // a.k.a. GO_IDLE (CMD0)
+#define INIT            1           // a.k.a. SEND_OP_COND (CMD1)
 #define READ_SINGLE     17
 #define WRITE_SINGLE    24
 
@@ -67,7 +35,7 @@ Note: When using PIC32MX4xx (PIC32-Pinguino/OTG/Micro), as the SPI2 port is
 #define SEND_CID        10
 #define SET_BLEN        16
 #define APP_CMD         55
-#define SEND_APP_OP     41 // a.k.a. APP_SEND_OP_COND (ACMD41)
+#define SEND_APP_OP     41          // a.k.a. APP_SEND_OP_COND (ACMD41)
 
 // SD card responses
 #define DATA_START      0xFE
@@ -82,27 +50,18 @@ Note: When using PIC32MX4xx (PIC32-Pinguino/OTG/Micro), as the SPI2 port is
 #define E_COMMAND_ACK       0x80
 #define E_INIT_TIMEOUT      0x81
 
-typedef unsigned LBA;  // logic block address, 32 bit wide
+typedef unsigned LBA;               // logic block address, 32 bit wide
 
 // Function prototypes
-unsigned char writeSPI(unsigned char);
-                        // send one byte and receive one byte at the same time
-
-void initSD(void);		// initializes I/O pins and SPI
-
-void disableSD(void);	// deselect SD card
-void enableSD(void);		// select SD card
-
-int sendSDCmd(unsigned char, unsigned);
-                        // send command to SD card
-
-int initMedia(void);   // initializes the SD/MMC memory device
-
-int readSECTOR(LBA, char *);  // reads a block of data
-int writeSECTOR(LBA, char *);  // writes a block of data
-
-int getCD();            // check card presence
-int getWP();            // check write protection tab
+//void initSD(u8);                    // initializes I/O pins and SPI
+void disableSD(u8);                 // deselect SD card
+void enableSD(u8);                  // select SD card
+int sendSDCmd(u8, u8, unsigned);    // send command to SD card
+//int initMedia(u8);                  // initializes the SD/MMC memory device
+int readSECTOR(u8, LBA, char *);    // reads a block of data
+int writeSECTOR(u8, LBA, char *);   // writes a block of data
+int getCD(u8);                      // check card presence
+int getWP(u8);                      // check write protection tab
 
 #endif /* __SDMMC_H__ */
 
