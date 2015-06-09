@@ -13,7 +13,7 @@
     //#define noInterrupts()	asm volatile("di")
     
     //Already defined ???
-    #define nop()		asm volatile("nop")
+    #define nop()               asm volatile("nop")
 
     /// BYTES
 
@@ -27,27 +27,12 @@
 
     /// BITWISE OPERATION
 
-    // Lire le bit n de byte
-    //	((byte) = (byte) >> (n) & 1)
-    #define BitRead(byte, n) \
-        ( ((byte) >> (n)) & 1 )
-
-    // Met le bit n à 1 dans byte
-    #define BitSet(byte, n) \
-        ((byte) |= (1 << (n)))
-
-    // Met le bit n à 0 dans byte
-    #define BitClear(byte, n) \
-        ((byte) &= ~(1 << (n)))			//(byte &= !(1 << n))
-
-    #define BitWrite(value, bit, bitvalue) \
-        (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
-    
-    #define Bit(b) \
-        (1 << (b))
-
-    #define BitTest(byte,n) \
-        (((byte) & (1 << (n)))!=0)
+    #define Bit(b)              (1 << (b))
+    #define BitRead(b, n)       (((b) >> (n)) & 1 )
+    #define BitSet(b, n)        ((b) |= (1 << (n)))
+    #define BitClear(b, n)      ((b) &= ~(1 << (n)))	//(b &= !(1 << n))
+    #define BitTest(b, n)       (((b) & (1 << (n)))!=0)
+    #define BitWrite(b, n, v)   (v ? bitSet(b, n) : bitClear(b, n))
 
     /// MATH
 

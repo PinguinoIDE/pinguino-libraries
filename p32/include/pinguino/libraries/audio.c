@@ -68,6 +68,8 @@
         93,91,88,85,81,77,73,68,64,59,54,50,45,40,35,31,26,22,18,14,11,
         8,6,4,2,1,0,0,0,1,2,4,6,8,11,14,18,22,26,31,35,40,45 };
 
+    const u32 gPrescaler[8] = { 1, 2, 4, 8, 16, 32, 64, 256 };
+
     // Prototypes
     void Audio_init(u32 samplerate);
     void Audio_tone(u8 pin, u32 freq, u32 duration);
@@ -89,70 +91,77 @@
 
     void Audio_init(u32 samplerate)
     {
-        u8  prescaler;
-        u32 resolution = 0x400;
+        u32 tckps = 0;
         
         gSampleRate = samplerate;
 
         // TIMER2 period calculation
         gPeriodPlus1 = GetPeripheralClock() / samplerate;
 
-        // The PWM period must not exceed the width of the Period Register
+        // The PWM period must not exceed the resolution width
+        while ((gPeriodPlus1 > PWMRESOLUTION) & (tckps <= 8))
+            gPeriodPlus1 /= gPrescaler[tckps++];
+
+        if (tckps == 8) tckps = 7; // divided per 256
+
+/*
         
         if (gPeriodPlus1 < (resolution * 1))
         {
-            prescaler = 0b000;          // prescaler is 1
+            prescaler = 0b000;                  // prescaler is 1
         }
         else if (gPeriodPlus1 < (resolution * 2))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 1; // divided by 2
-            prescaler = 0b001;          // prescaler is 2
+            gPeriodPlus1 = gPeriodPlus1 >> 1;   // divided by 2
+            prescaler = 0b001;                  // prescaler is 2
         }
         else if (gPeriodPlus1 < (resolution * 4))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 2; // divided by 4
-            prescaler = 0b010;          // prescaler is 4
+            gPeriodPlus1 = gPeriodPlus1 >> 2;   // divided by 4
+            prescaler = 0b010;                  // prescaler is 4
         }
         else if (gPeriodPlus1 < (resolution * 8))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 3; // divided by 8
-            prescaler = 0b011;          // prescaler is 8
+            gPeriodPlus1 = gPeriodPlus1 >> 3;   // divided by 8
+            prescaler = 0b011;                  // prescaler is 8
         }
         else if (gPeriodPlus1 < (resolution * 16))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 4; // divided by 16
-            prescaler = 0b100;          // prescaler is 16
+            gPeriodPlus1 = gPeriodPlus1 >> 4;   // divided by 16
+            prescaler = 0b100;                  // prescaler is 16
         }
         else if (gPeriodPlus1 < (resolution * 32))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 5; // divided by 32
-            prescaler = 0b101;          // prescaler is 32
+            gPeriodPlus1 = gPeriodPlus1 >> 5;   // divided by 32
+            prescaler = 0b101;                  // prescaler is 32
         }
         else if (gPeriodPlus1 < (resolution * 64))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 6; // divided by 64
-            prescaler = 0b110;          // prescaler is 64
+            gPeriodPlus1 = gPeriodPlus1 >> 6;   // divided by 64
+            prescaler = 0b110;                  // prescaler is 64
         }
         else if (gPeriodPlus1 < (resolution * 256))
         {
-            gPeriodPlus1 = gPeriodPlus1 >> 8; // divided by 256
-            prescaler = 0b111;          // prescaler is 256
+            gPeriodPlus1 = gPeriodPlus1 >> 8;   // divided by 256
+            prescaler = 0b111;                  // prescaler is 256
         }
         else
         {
-            return;                     // period is too high
+            return;                             // period is too high
         }
-
-        // Timer configuration
-        PR2 = gPeriodPlus1 - 1;             // TIMER2 period
-        TMR2  = 0;
-        T2CON = 0x8000 | (prescaler<<4);    // Set prescaler and enable TIMER2
+*/
 
         // TIMER2 interrupt configuration
         IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-        IntSetVectorPriority(INT_TIMER2_VECTOR, 7, 3);
-        IntClearFlag(INT_TIMER2);
-        IntEnable(INT_TIMER2);
+        IntSetVectorPriority(_TIMER_2_VECTOR, 7, 3);
+        IntClearFlag(_TIMER_2_IRQ);
+        IntEnable(_TIMER_2_IRQ);
+
+        // Timer configuration
+        PR2   = gPeriodPlus1 - 1;               // TIMER2 period
+        TMR2  = 0;
+        //T2CON = 0x8000 | (prescaler<<4);        // Set prescaler and enable TIMER2
+        T2CON = 0x8000 | (tckps<<4);        // Set prescaler and enable TIMER2
     }
 
 /*  --------------------------------------------------------------------
@@ -164,6 +173,11 @@
     @param duration:    Duration in ms
     @return:            none
     @usage:             Audio.tone(PWM4, 440, 100); // LA 440Hz for 100 ms
+    
+    Note : When the output compare module is enabled, the I/O pin direction is
+    controlled by the compare module. The compare module returns the I/O pin
+    control back to the appropriate pin LAT and TRIS control bits when it is
+    disabled.
     ------------------------------------------------------------------*/
 
     void Audio_tone(u8 pin, u32 freq, u32 duration)
@@ -258,20 +272,18 @@
         }
 
         // 16-bit accumulator
-        // It will automatically goes back to zero once it reaches 0xFFFF
         gPhase = 0;
         
         // 16-bit accumulator's increment value = 65536 / (gSampleRate/freq)
         gFreq1Inc = 65536 * freq / gSampleRate;
 
-        //pinmode(pin, OUTPUT);   // PWM pin as OUTPUT
-
-        *pOCxCON = PWMMODE;     // PWM On
+        // PWMx On, PWMx pin set automatically as OUTPUT 
+        *pOCxCON = PWMMODE;
         
         Delayms(duration);
         
         if (gStaccato)
-            *pOCxCON = 0;      // staccato (PWM Off)
+            *pOCxCON = 0;      // staccato (PWMx Off)
     }
 
 /*  --------------------------------------------------------------------
@@ -282,6 +294,11 @@
     @param freq1:       1st frequency
     @param freq2:       2nd frequency
     @param duration:    Duration in ms
+    
+    Note : When the output compare module is enabled, the I/O pin direction is
+    controlled by the compare module. The compare module returns the I/O pin
+    control back to the appropriate pin LAT and TRIS control bits when it is
+    disabled.
     ------------------------------------------------------------------*/
 
     #ifdef AUDIODTMF
@@ -382,9 +399,9 @@
         gFreq1Inc = 65536 * freq1 / gSampleRate;
         gFreq2Inc = 65536 * freq2 / gSampleRate;
 
-        //pinmode(pin, OUTPUT);   // PWM pin as OUTPUT
-        //IntEnable(INT_TIMER2);  // Enable TIMER2 interrupt
-        *pOCxCON = PWMMODE;     // PWM On
+        // PWM On, PWM pin as OUTPUT
+        //IntEnable(_TIMER_2_IRQ);  // Enable TIMER2 interrupt
+        *pOCxCON = PWMMODE;
         
         Delayms(duration);
         
@@ -398,15 +415,19 @@
     noTone
     --------------------------------------------------------------------
     @param pin:         pin number where loudspeaker is connected
+    
+    Note : When the output compare module is enabled, the I/O pin direction is
+    controlled by the compare module. The compare module returns the I/O pin
+    control back to the appropriate pin LAT and TRIS control bits when it is
+    disabled.
     ------------------------------------------------------------------*/
 
     void Audio_noTone(u8 pin)
     {
-        //pinmode(pin, INPUT);    // PWM pin as INPUT
-        
         // We don't stop TIMER2 interrupt here
         // because user can use more than one PWM at a time
-        //IntDisable(INT_TIMER2); // Disable TIMER2 interrupt
+        //IntDisable(_TIMER_2_IRQ); // Disable TIMER2 interrupt
+        TMR2  = 0;
 
         switch (pin)            // PWM Off
         {
@@ -541,16 +562,18 @@
 void Timer2Interrupt(void)
 {
     // Enable interrupt again
-    IFS0CLR = 1 << INT_TIMER2;
+    //IntClearFlag(_TIMER_2_IRQ);
+    IFS0CLR = 1 << _TIMER_2_IRQ;
 
     // Increment the 16-bit phase accumulator
+    // It will automatically goes back to zero once it reaches 0xFFFF
     gPhase += gFreq1Inc;
     
     // Generates a new PWM output
-    *pOCxCON = 0;           // PWM Off
-    *pOCxR  = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
+    //*pOCxCON = 0;           // PWM Off
+    //*pOCxR  = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
     *pOCxRS = sine64[ gPhase & 0x3F ] * gPeriodPlus1 / 100;
-    *pOCxCON = PWMMODE;     // PWM On
+    //*pOCxCON = PWMMODE;     // PWM On
 }
 
 #endif // __AUDIO_C

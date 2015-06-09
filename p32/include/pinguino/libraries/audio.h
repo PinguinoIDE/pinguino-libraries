@@ -25,10 +25,18 @@
 #ifndef __AUDIO_H
     #define __AUDIO_H
     
-    #define PWMMODE         0x800E      // PWM mode on OCx; Fault pin disabled
-                                        // Timer3 is the clock source for this OCMP module
-                                        // Output Compare peripheral is enabled
-    
+    // OCM<2:0>: Output Compare Mode Select bits
+    // 110 = PWM mode on OCx; Fault pin disabled
+    // OCTSEL<3>: Output Compare Timer Select bit
+    // 1 = Timer3 is the clock source for this OCMP module
+    // 0 = Timer2 is the clock source for this OCMP module
+    // Timer3 is the clock source for this OCMP module
+    // Output Compare peripheral is enabled
+
+    //#define PWMMODE         0x800E      // Timer3
+    #define PWMMODE         0x8006      // Timer2
+    #define PWMRESOLUTION   1<<10       // 10-Bit
+
     // The hearing range of human ears is roughly 20 Hz to 20000 Hz.
     // The Nyquist–Shannon sampling theorem says the sampling frequency
     // must be greater than twice the maximum frequency we wish to reproduce.

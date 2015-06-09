@@ -113,7 +113,7 @@ const int portmask[]= {
                   pB,pB,pG,pG,pG,pG,pB,pB,	// 8-15
                   pB,pB,pD,pD,pB,pB,pE,pE,	// 16-23
                   pE,pE,pE,pE,pE,pE,pD,pF,	// 24-31
-                  pF};				// 32
+                  pF};				        // 32
 
 const int pinmask[]= {
                   _2,_3,_0,_5,_6,_7,_8,_11,		// 0-7
@@ -347,18 +347,18 @@ int pinread(int pin)
         #endif
         #if !defined(__32MX220F032B__) && !defined(__32MX220F032D__) && \
             !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
-			case pD:
-				reg = TRISD;
-				break;
-			case pE:
-				reg = TRISE;
-				break;
-			case pF:
-				reg = TRISF;
-				break;
-			case pG:
-				reg = TRISG;
-				break;
+            case pD:
+                reg = TRISD;
+                break;
+            case pE:
+                reg = TRISE;
+                break;
+            case pF:
+                reg = TRISF;
+                break;
+            case pG:
+                reg = TRISG;
+                break;
         #endif
     }
     if ((reg & pinmask[pin])!=0)
@@ -457,7 +457,7 @@ void low(int pin)
         #endif
 
         #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
-			!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+            !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
         case pD: PORTDCLR=pinmask[pin]; break;
         case pE: PORTECLR=pinmask[pin]; break;
         case pF: PORTFCLR=pinmask[pin]; break;
@@ -473,25 +473,25 @@ u8 digitalread(int pin)
     switch (portmask[pin])
     {
         #if !defined(__32MX440F256H__) && !defined(__32MX795F512H__)
-            case pA: return((PORTA&pinmask[pin])!=0);
+            case pA: return((PORTA & pinmask[pin])!=0);
                 break;
         #endif
-        case pB: return((PORTB&pinmask[pin])!=0);
+        case pB: return((PORTB & pinmask[pin])!=0);
                 break;
         #if !defined(__32MX220F032B__) && !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
-            case pC: return((PORTC&pinmask[pin])!=0);
+            case pC: return((PORTC & pinmask[pin])!=0);
                     break;
         #endif
         #if !defined(__32MX220F032D__) && !defined(__32MX220F032B__) && \
-			!defined(__32MX250F128B__) && !defined(__32MX270F256B__)
-			case pD: return((PORTD&pinmask[pin])!=0);
-					break;
-			case pE: return((PORTE&pinmask[pin])!=0);
-					break;
-			case pF: return((PORTF&pinmask[pin])!=0);
-					break;
-			case pG: return((PORTG&pinmask[pin])!=0);
-					break;
+            !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
+            case pD: return((PORTD & pinmask[pin])!=0);
+                    break;
+            case pE: return((PORTE & pinmask[pin])!=0);
+                    break;
+            case pF: return((PORTF & pinmask[pin])!=0);
+                    break;
+            case pG: return((PORTG & pinmask[pin])!=0);
+                    break;
         #endif
         default: return 255;
     }

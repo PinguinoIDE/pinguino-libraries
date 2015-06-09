@@ -43,6 +43,17 @@
 #include <system.c>
 #include <digitalw.c>
 
+// OCM<2:0>: Output Compare Mode Select bits
+// 110 = PWM mode on OCx; Fault pin disabled
+// OCTSEL<3>: Output Compare Timer Select bit
+// 1 = Timer3 is the clock source for this OCMP module
+// 0 = Timer2 is the clock source for this OCMP module
+// Timer3 is the clock source for this OCMP module
+// Output Compare peripheral is enabled
+
+#define PWMMODE         0x800E      // Timer3
+//#define PWMMODE         0x8006      // Timer2
+    
 /*  --------------------------------------------------------------------
     PWM_init
     --------------------------------------------------------------------
@@ -160,7 +171,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CON=0;       // PWM Off
             OC3R=setpoint;  // Timer3 will be compared to this values
             OC3RS=setpoint;
-            OC3CON=0x800E;  // PWM On
+            OC3CON=PWMMODE;  // PWM On
             return 1;
 
         case 3:
@@ -168,7 +179,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CON=0;		// PWM Off
             OC4R=setpoint;	// Timer3 will be compared to this values
             OC4RS=setpoint;
-            OC4CON=0x800E;	// PWM On
+            OC4CON=PWMMODE;	// PWM On
             return 1;
 
         case 11:
@@ -176,7 +187,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC2CON=0;		// PWM Off
             OC2R=setpoint;	// Timer3 will be compared to this values
             OC2RS=setpoint;
-            OC2CON=0x800E;	// PWM On
+            OC2CON=PWMMODE;	// PWM On
             return 1;
 
         case 12:
@@ -184,7 +195,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC5CON=0;		// PWM Off
             OC5R=setpoint;	// Timer3 will be compared to this values
             OC5RS=setpoint;
-            OC5CON=0x800E;  // PWM On
+            OC5CON=PWMMODE;  // PWM On
             return 1;
 
         case 13:
@@ -192,7 +203,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC1CON=0;		// PWM Off
             OC1R=setpoint;	// Timer3 will be compared to this values
             OC1RS=setpoint;
-            OC1CON=0x800E;  // PWM On
+            OC1CON=PWMMODE;  // PWM On
             return 1;
 
         default:
@@ -217,7 +228,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CONCLR=0x8000;           // PWM Off
             OC3R=setpoint;              // Timer3 will be compared to this values
             OC3RS=setpoint;             // OCxR = Compare register, OCxRS = Secondary Compare register
-            OC3CON=0x800E;              // PWM On, clock source = Timer3, PWM mode
+            OC3CON=PWMMODE;              // PWM On, clock source = Timer3, PWM mode
             return 1;
 
         case 2:                         // PWM3 = RB13 = pin 2
@@ -225,7 +236,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CONCLR=0x8000;           // PWM Off
             OC4R=setpoint;              // Timer3 will be compared to this values
             OC4RS=setpoint;             // OCxR = Compare register, OCxRS = Secondary Compare register
-            OC4CON=0x800E;              // PWM On, clock source = Timer3, PWM mode
+            OC4CON=PWMMODE;              // PWM On, clock source = Timer3, PWM mode
             return 1;
 
         case 6:                         // PWM2 = RB5 = pin 6
@@ -233,7 +244,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC2CONCLR=0x8000;           // PWM Off
             OC2R=setpoint;              // Timer3 will be compared to this values
             OC2RS=setpoint;             // OCxR = Compare register, OCxRS = Secondary Compare register
-            OC2CON=0x800E;              // PWM On, clock source = Timer3, PWM mode
+            OC2CON=PWMMODE;              // PWM On, clock source = Timer3, PWM mode
             return 1;
 
         case 7:                         // PWM1 = RA4 = pin 7
@@ -241,7 +252,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC5CONCLR=0x8000;           // PWM Off
             OC5R=setpoint;              // Timer3 will be compared to this values
             OC5RS=setpoint;             // OCxR = Compare register, OCxRS = Secondary Compare register
-            OC5CON=0x800E;              // PWM On, clock source = Timer3, PWM mode
+            OC5CON=PWMMODE;              // PWM On, clock source = Timer3, PWM mode
             return 1;
 
         case 8:                         // PWM0 = RB4 = pin 8
@@ -249,7 +260,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC1CONCLR=0x8000;           // PWM Off
             OC1R=setpoint;              // Timer3 will be compared to this values
             OC1RS=setpoint;             // OCxR = Compare register, OCxRS = Secondary Compare register
-            OC1CON=0x800E;              // PWM On, clock source = Timer3, PWM mode
+            OC1CON=PWMMODE;              // PWM On, clock source = Timer3, PWM mode
             return 1;
 
         default:
@@ -267,7 +278,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC2CON=0;		// PWM Off
             OC2R=setpoint;	// Timer3 will be compared to this values
             OC2RS=setpoint;
-            OC2CON=0x800E;	// PWM On
+            OC2CON=PWMMODE;	// PWM On
             return 1;
 
         case 11:
@@ -275,7 +286,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CON=0;		// PWM Off
             OC3R=setpoint;	// Timer3 will be compared to this values
             OC3RS=setpoint;
-            OC3CON=0x800E;	// PWM On
+            OC3CON=PWMMODE;	// PWM On
             return 1;
 
         case 12:
@@ -283,7 +294,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CON=0;		// PWM Off
             OC4R=setpoint;	// Timer3 will be compared to this values
             OC4RS=setpoint;
-            OC4CON=0x800E;	// PWM On
+            OC4CON=PWMMODE;	// PWM On
             return 1;
 
         case 13:
@@ -291,7 +302,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC5CON=0;		// PWM Off
             OC5R=setpoint;	// Timer3 will be compared to this values
             OC5RS=setpoint;
-            OC5CON=0x800E;	// PWM On
+            OC5CON=PWMMODE;	// PWM On
             return 1;
 
         default:
@@ -311,7 +322,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC1CON=0;
             OC1R=setpoint;
             OC1RS=setpoint;
-            OC1CON=0x800E;
+            OC1CON=PWMMODE;
             return 1;
 
         case 1:
@@ -319,7 +330,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CON=0;
             OC4R=setpoint;
             OC4RS=setpoint;
-            OC4CON=0x800E;
+            OC4CON=PWMMODE;
             return 1;
 
         case 0:
@@ -327,7 +338,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CON=0;
             OC3R=setpoint;
             OC3RS=setpoint;
-            OC3CON=0x800E;
+            OC3CON=PWMMODE;
             return 1;
 
         default:
@@ -347,7 +358,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC1CON=0;
             OC1R=setpoint;
             OC1RS=setpoint;
-            OC1CON=0x800E;
+            OC1CON=PWMMODE;
             return 1;
 
         case  1:
@@ -356,7 +367,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC2CON=0;
             OC2R=setpoint;
             OC2RS=setpoint;
-            OC2CON=0x800E;
+            OC2CON=PWMMODE;
             return 1;
 
         case  2:
@@ -365,7 +376,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CON=0;
             OC3R=setpoint;
             OC3RS=setpoint;
-            OC3CON=0x800E;
+            OC3CON=PWMMODE;
             return 1;
 
         case  3:
@@ -374,7 +385,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CON=0;
             OC4R=setpoint;
             OC4RS=setpoint;
-            OC4CON=0x800E;
+            OC4CON=PWMMODE;
             return 1;
 
         case  4:
@@ -383,7 +394,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC5CON=0;
             OC5R=setpoint;
             OC5RS=setpoint;
-            OC5CON=0x800E;
+            OC5CON=PWMMODE;
             return 1;
 
         default:
@@ -405,7 +416,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC1CON=0;
             OC1R=setpoint;
             OC1RS=setpoint;
-            OC1CON=0x800E;
+            OC1CON=PWMMODE;
             return 1;
 
         case  1:
@@ -415,7 +426,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC2CON=0;
             OC2R=setpoint;
             OC2RS=setpoint;
-            OC2CON=0x800E;
+            OC2CON=PWMMODE;
             return 1;
 
         case  2:
@@ -425,7 +436,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC3CON=0;
             OC3R=setpoint;
             OC3RS=setpoint;
-            OC3CON=0x800E;
+            OC3CON=PWMMODE;
             return 1;
 
         case  3:
@@ -435,7 +446,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC4CON=0;
             OC4R=setpoint;
             OC4RS=setpoint;
-            OC4CON=0x800E;
+            OC4CON=PWMMODE;
             return 1;
 
         case  4:
@@ -445,7 +456,7 @@ u8 analogwrite(u8 pin, u16 setpoint)
             OC5CON=0;
             OC5R=setpoint;
             OC5RS=setpoint;
-            OC5CON=0x800E;
+            OC5CON=PWMMODE;
             return 1;
 
         default:

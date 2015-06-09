@@ -444,8 +444,8 @@ void SystemClocksWriteSettings(const SystemClocksSettings *s)
 
     #endif
   
-  //
-  SystemLock();
+    //
+    SystemLock();
 }
 
 /*	----------------------------------------------------------------------------

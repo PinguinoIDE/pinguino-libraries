@@ -31,7 +31,7 @@
 
 #if 0 // p32-gcc doen't emit any weak attribute ... Don't know why ...
 
-    void __DoNothing() { /* do something */; }
+    void __DoNothing() { /* do something */ };
     // SERIAL
     void Serial1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Serial2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));

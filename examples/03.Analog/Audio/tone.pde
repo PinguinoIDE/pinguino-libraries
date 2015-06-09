@@ -7,7 +7,7 @@
     PWM0 to PWM4 for almost all 32-bit boards
 */
 
-#define LINEOUT CCP1 //PWM4
+#define LINEOUT 10 //PWM2 //CCP1
 
 // Melody structure
 typedef struct
@@ -62,5 +62,5 @@ void loop()
     // stop the tone playing:
     Audio.noTone(LINEOUT);
     digitalWrite(USERLED, LOW);
-    delay(500);
+    delay(1000);
 }

@@ -82,14 +82,36 @@
     #elif defined (PIC32_PINGUINO_MICRO)
 /**********************************************************************/
 
-            #define USERLED                 32  //PORTGbits.RG6 // led1
-
+            #define USERLED                 32      //PORTGbits.RG6 // led1
+            #define GREENLED                32      //PORTGbits.RG6 // led1
+            #define YELLOWLED               10      //PORTDbits.RD1 // led2
             #define LED1                    GREENLED
             #define LED2                    YELLOWLED
 
-            #define GREENLED                32      //PORTGbits.RG6 // led1
-            #define YELLOWLED               10      //PORTDbits.RD1 // led2
+            #define USERBUTTON              41
 
+            #define PWM1                    41 // 0C1 (RD0 = pin 41 or ???   )
+            #define PWM2                    10 // OC2 (RD1 = pin 10 or CON2_6)
+            #define PWM3                    11 // OC3 (RD2 = pin 11 or CON2_5)
+            #define PWM4                    12 // OC4 (RD3 = pin 12 or CON2_4)
+            #define PWM5                    13 // OC5 (RD4 = pin 13 or CON2_3)
+            
+            /*
+             * RB 2015-06-09 : should be renamed and changed
+             * *********************************************
+             * 1/ this not logical
+             * 2/ there are 40 pins not 30
+             * 
+             * #define CON1_1  1
+             * ...
+             * #define CON1_20 20
+             * #define CON2_1  21
+             * ...
+             * #define CON2_20 40
+             * 
+             * see also digitalw.c
+             */
+             
             // P1_1 refers to CON1 pin 1, P1_2 CON1 pin 2, and so on
             #define P1_1    31
             #define P1_2    30
