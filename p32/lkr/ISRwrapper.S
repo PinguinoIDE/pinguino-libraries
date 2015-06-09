@@ -144,49 +144,113 @@ vector_\_XX\()_ISR_wrapper:
     ** 32MX2xx and 32MX4xx do not have UART3,4,5 AND 6
     */
 
+    /*** TIMERS ***************************************************************/
+
     ISR_wrapper _TIMER_1_VECTOR, Timer1Interrupt
     ISR_wrapper _TIMER_2_VECTOR, Timer2Interrupt
     ISR_wrapper _TIMER_3_VECTOR, Timer3Interrupt
     ISR_wrapper _TIMER_4_VECTOR, Timer4Interrupt
     ISR_wrapper _TIMER_5_VECTOR, Timer5Interrupt
 
-    #if defined(__32MX440F256H__)
-    
-    ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
+    /*** MISC *****************************************************************/
 
-    #elif defined(__32MX795F512L__) || \
-          defined(__32MX795F512H__)
+    ISR_wrapper _RTCC_VECTOR,    RTCCInterrupt
+    ISR_wrapper _USB_1_VECTOR,   USBInterrupt
 
-    ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
-    ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
-    ISR_wrapper _SPI_3_VECTOR,   SPI3Interrupt
-    ISR_wrapper _SPI_4_VECTOR,   SPI4Interrupt
-
-    #else
-    
-    ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
-    ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
-
-    #endif
-    
-    ISR_wrapper _UART_1_VECTOR,  Serial1Interrupt
-    ISR_wrapper _UART_2_VECTOR,  Serial2Interrupt
+    /*** SERIAL ***************************************************************/
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
 
-        #ifdef ENABLE_UART3
-    ISR_wrapper _UART_3_VECTOR,  Serial3Interrupt
-        #else
-    ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if defined(ENABLE_UART1) && (SPIx != 3) && (I2Cx != 3)
+        ISR_wrapper _UART_1_VECTOR,  Serial1Interrupt
         #endif
-        
-    ISR_wrapper _UART_4_VECTOR,  Serial4Interrupt
-    ISR_wrapper _UART_5_VECTOR,  Serial5Interrupt
-    ISR_wrapper _UART_6_VECTOR,  Serial6Interrupt
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if defined(ENABLE_UART2) && (SPIx != 4) && (I2Cx != 5)
+        ISR_wrapper _UART_2_VECTOR,  Serial2Interrupt
+        #endif
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if defined(ENABLE_UART3) && (SPIx != 2) && (I2Cx != 4)
+        ISR_wrapper _UART_3_VECTOR,  Serial3Interrupt
+        #endif
+
+        ISR_wrapper _UART_4_VECTOR,  Serial4Interrupt
+        ISR_wrapper _UART_5_VECTOR,  Serial5Interrupt
+        ISR_wrapper _UART_6_VECTOR,  Serial6Interrupt
+
+    #else // all other processors
+
+        ISR_wrapper _UART_1_VECTOR,  Serial1Interrupt
+        ISR_wrapper _UART_2_VECTOR,  Serial2Interrupt
 
     #endif
-    
-    ISR_wrapper _RTCC_VECTOR,    RTCCInterrupt
 
-    ISR_wrapper _USB_1_VECTOR,   USBInterrupt
+    /*** I2C ******************************************************************/
+
+    ISR_wrapper _I2C_1_VECTOR,   I2C1Interrupt
+    ISR_wrapper _I2C_2_VECTOR,   I2C2Interrupt
+
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
+
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if !defined(ENABLE_UART1) && (SPIx != 3) && (I2Cx == 3)
+        ISR_wrapper _I2C_3_VECTOR,   I2C3Interrupt
+        #endif
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if !defined(ENABLE_UART3) && (SPIx != 2) && (I2Cx == 4)
+        ISR_wrapper _I2C_4_VECTOR,   I2C4Interrupt
+        #endif
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if !defined(ENABLE_UART2) && (SPIx != 4) && (I2Cx == 5)
+        ISR_wrapper _I2C_5_VECTOR,   I2C5Interrupt
+        #endif
+
+    #endif
+
+    /*** SPI ******************************************************************/
+
+    #if defined(__32MX795F512L__) || \
+        defined(__32MX795F512H__)
+
+        ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
+
+        // _UART_3_VECTOR = _SPI_2_VECTOR = _I2C_4_VECTOR = 31
+
+        #if !defined(ENABLE_UART3) && (SPIx == 2) && (I2Cx != 4)
+        ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
+        #endif
+
+        // _UART_1_VECTOR = _SPI_3_VECTOR = _I2C_3_VECTOR = 24
+
+        #if !defined(ENABLE_UART1) && (SPIx == 3) && (I2Cx != 3)
+        ISR_wrapper _SPI_3_VECTOR,   SPI3Interrupt
+        #endif
+
+        // _UART_2_VECTOR = _SPI_4_VECTOR = _I2C_5_VECTOR = 32
+
+        #if !defined(ENABLE_UART2) && (SPIx == 4) && (I2Cx != 5)
+        ISR_wrapper _SPI_4_VECTOR,   SPI4Interrupt
+        #endif
+
+    #else // all other processors
+
+        #if !defined(__32MX440F256H__)
+        ISR_wrapper _SPI_1_VECTOR,   SPI1Interrupt
+        #endif
+        ISR_wrapper _SPI_2_VECTOR,   SPI2Interrupt
+
+    #endif
+
+    /**************************************************************************/
