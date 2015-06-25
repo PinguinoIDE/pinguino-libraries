@@ -60,26 +60,35 @@ void IOsetDigital()
 
 /***********************************************************************
  * Set all Pins as Output
+ * Unused I/O pins should not be allowed to float as inputs.
+ * They can be configured as outputs and driven to a logic-low state.
  **********************************************************************/
 
 void IOsetSpecial()
 {
     #if !defined(__32MX440F256H__) && !defined(__32MX795F512H__)
-    TRISA  = 0;
+    TRISA = 0;
+    LATA  = 0;
     #endif
     
-    TRISB  = 0;
+    TRISB = 0;
+    LATB  = 0;
 
     #if !defined(__32MX220F032B__) && \
         !defined(__32MX250F128B__) && !defined(__32MX270F256B__)
 
-        TRISC  = 0;
+        TRISC = 0;
+        LATC  = 0;
 
         #if !defined(__32MX220F032D__)
-            TRISD  = 0;
-            TRISE  = 0;
-            TRISF  = 0;
-            TRISG  = 0;
+            TRISD = 0;
+            LATD  = 0;
+            TRISE = 0;
+            LATE  = 0;
+            TRISF = 0;
+            LATF  = 0;
+            TRISG = 0;
+            LATG  = 0;
         #endif
 
     #endif

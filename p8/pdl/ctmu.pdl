@@ -1,0 +1,6 @@
+CTMU.init CTMU_init#include <ctmu.c>
+CTMU.getVoltage CTMU_getVoltage#include <ctmu.c>#define CTMUGETVOLTAGE
+CTMU.getCurrent CTMU_getCurrent#include <ctmu.c>#define CTMUGETCURRENT
+CTMU.getCapacitance CTMU_getCapacitance#include <ctmu.c>#define CTMUGETCAPACITANCE
+CTMU.getTime CTMU_getTime#include <ctmu.c>#define CTMUGETTIME
+CTMU.isPressed CTMU_isPressed#include <ctmu.c>#define CTMUISPRESSED

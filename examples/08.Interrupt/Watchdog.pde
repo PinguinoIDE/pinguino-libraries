@@ -7,7 +7,7 @@
 void setup()
 {
     // Switch to Internal Oscillator
-    System.intOsc(_31KHZ_);
+    //System.intOsc(_31KHZ_);
     // We want to use the Built-in led
     pinMode(USERLED, OUTPUT);
     // Enable Watchdog Timer

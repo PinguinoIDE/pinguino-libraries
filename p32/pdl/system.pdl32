@@ -1,6 +1,8 @@
 System.unlock SystemUnlock#include <system.c>
 System.lock SystemLock#include <system.c>
 System.reset SystemReset#include <system.c>#define SYSTEMRESET
+System.sleep SystemSleep#include <system.c>#define SYSTEMSLEEP
+System.idle SystemIdle#include <system.c>#define SYSTEMIDLE
 System.getCpuFrequency GetSystemClock#include <system.c>
 System.getPeripheralFrequency GetPeripheralClock#include <system.c>
 System.setCpuFrequency SystemSetSystemClock#include <system.c>
@@ -15,4 +17,4 @@ System.resetCoreTimer ResetCoreTimer#include <mips.h>
 System.readCoreTimer ReadCoreTimer#include <mips.h>
 System.readCoreRegister ReadCoreRegister#include <mips.h>
 System.writeCoreRegister WriteCoreRegister#include <mips.h>
-System.restoreIterruptStatus RestoreIterruptStatus#include <mips.h>
+System.restoreInterruptStatus RestoreInterruptStatus#include <mips.h>

@@ -68,6 +68,11 @@ int main()
     #endif
 
     // Different init.
+    
+    #ifdef __WATCHDOG__
+    watchdog_init();
+    #endif
+
     #ifdef __ANALOG__
     analog_init();
     #endif

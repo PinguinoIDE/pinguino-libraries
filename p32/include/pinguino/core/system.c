@@ -202,6 +202,40 @@ void SystemReset()
 }
 #endif
 
+/*	----------------------------------------------------------------------------
+    Sleep mode
+    --------------------------------------------------------------------------*/
+
+#ifdef SYSTEMSLEEP
+void SystemSleep()
+{
+    u16 dummy;
+
+    OSCCONSET = 1<<4; // Enable sleep mode after wait instruction
+
+    SystemUnlock();
+    asm volatile ("wait");
+    SystemLock();
+}
+#endif
+
+/*	----------------------------------------------------------------------------
+    Idle mode
+    --------------------------------------------------------------------------*/
+
+#ifdef SYSTEMIDLE
+void SystemIdle()
+{
+    u16 dummy;
+
+    OSCCONCLR = 1<<4; // Enable idle mode after wait instruction
+
+    SystemUnlock();
+    asm volatile ("wait");
+    SystemLock();
+}
+#endif
+
 
 /**
  * Read in all relevant clock settings

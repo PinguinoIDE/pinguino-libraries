@@ -39,9 +39,9 @@
 	#define INT_FALLING_EDGE	0			// Interrupt on falling edge
 	#define INT_NOT_USED		0
 	#define INT_USED			0xFF
-	#define INT_MICROSEC		1
-	#define INT_MILLISEC		2
-	#define INT_SEC				3
+	#define INT_MICROSEC		1000000
+	#define INT_MILLISEC		1000
+	#define INT_SEC				1
 
 	/// Interrupts list (these #define can be used in Pinguino's Code Source)
 
@@ -167,7 +167,7 @@
         #define T1_8BIT				(0) 	// 8-bit mode
 
         // bit 6 T1RUN: Timer1 System Clock Status bit
-        #define T1_RUN_FROM_OSC		(1<<6)  // 1 = Device clock is derived from Timer1 oscillator
+        #define T1_SOURCE_FOSC		(1<<6)  // 1 = Device clock is derived from Timer1 oscillator
         #define T1_RUN_FROM_ANOTHER	(0)     // 0 = Device clock is derived from another source
 
         // bit 3 T1OSCEN: Timer1 Oscillator Enable bit
@@ -176,26 +176,30 @@
 
         // bit 1 TMR1CS: Timer1 Clock Source Select bit
         #define T1_SOURCE_EXT		(1<<1)  // 1 = External clock from RC0/T13CKI
-        #define T1_SOURCE_INT		(0)     // 0 = Internal clock source (FOSC/4)
+        #define T1_SOURCE_FOSCDIV4	(0)     // 0 = Internal clock source (FOSC/4)
 
     #elif defined(__18f25k50) || defined(__18f45k50) || \
           defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
-          
+
         // bit 7-6 TMR1CS<1:0>: Timer1 Clock Source Select bits
-        #define T1_SOURCE_EXT       (1<<7)  // Timer1 clock source is the T1OSC or T1CKI pin
-        #define T1_RUN_FROM_OSC     (1<<6)  // Timer1 clock source is the system clock (FOSC)(1)
-        #define T1_SOURCE_INT       (0)     // Timer1 clock source is the instruction clock (FOSC/4)
+        #define T1_SOURCE_EXT      (0b10<<6)  // Timer1 clock source is the T1OSC or T1CKI pin
+        #define T1_SOURCE_FOSC     (0b01<<6)  // Timer1 clock source is the system clock FOSC
+        #define T1_SOURCE_FOSCDIV4 (0)        // Timer1 clock source is the instruction clock FOSC/4
 
         #if defined(__18f25k50) || defined(__18f45k50)
+
         // bit 3 SOSCEN: Secondary Oscillator Enable bit
         #define T1_SOSC_ON			(1<<3)  // Timer 1 second oscilator is enabled
         #define T1_SOSC_OFF			(0)     // Timer 1 second oscilator is disabled
-        #else // x6j50
+
+        #else // x6j50, xxj53
+
         // bit 3 T1OSCEN: Timer1 Oscillator Enable bit
-        #define T1_OSC_OFF			(1<<3)  // Timer 1 oscilator is shut off
-        #define T1_OSC_ON			(0)     // Timer 1 oscilator enable on
+        #define T1_OSC_ON			(1<<3)  // Timer 1 oscilator is shut off
+        #define T1_OSC_OFF			(0)     // Timer 1 oscilator enable on
+
         #endif
         
         // bit 1 RD16: 16-Bit Read/Write Mode Enable bit
@@ -258,7 +262,7 @@
         #define T3_8BIT				(0) 	// 8-bit mode
 
         // bit 6 T3RUN: timer3 System Clock Status bit
-        #define T3_RUN_FROM_OSC		(1<<6)  // 1 = Device clock is derived from timer3 oscillator
+        #define T3_SOURCE_FOSC		(1<<6)  // 1 = Device clock is derived from timer3 oscillator
         #define T3_RUN_FROM_ANOTHER	(0)     // 0 = Device clock is derived from another source
 
         // bit 3 T3OSCEN: timer3 Oscillator Enable bit
@@ -267,7 +271,7 @@
 
         // bit 1 TMR3CS: timer3 Clock Source Select bit
         #define T3_SOURCE_EXT		(1<<1)  // 1 = External clock from RC0/T13CKI
-        #define T3_SOURCE_INT		(0)     // 0 = Internal clock source (FOSC/4)
+        #define T3_SOURCE_FOSCDIV4		(0)     // 0 = Internal clock source (FOSC/4)
 
     #elif defined(__18f25k50) || defined(__18f45k50) || \
           defined(__18f26j50) || defined(__18f46j50) || \
@@ -276,8 +280,8 @@
 
         // bit 7-6 TMR3CS<1:0>: timer3 Clock Source Select bits
         #define T3_SOURCE_EXT       (1<<7)  // timer3 clock source is the T3OSC or T3CKI pin
-        #define T3_RUN_FROM_OSC     (1<<6)  // timer3 clock source is the system clock (FOSC)(1)
-        #define T3_SOURCE_INT       (0)     // timer3 clock source is the instruction clock (FOSC/4)
+        #define T3_SOURCE_FOSC     (1<<6)  // timer3 clock source is the system clock (FOSC)(1)
+        #define T3_SOURCE_FOSCDIV4       (0)     // timer3 clock source is the instruction clock (FOSC/4)
 
         #if defined(__18f25k50) || defined(__18f45k50)
             // bit 3 SOSCEN: Secondary Oscillator Enable bit
@@ -351,8 +355,8 @@
     
         // bit 7-6 TMR5CS<1:0>: Timer5 Clock Source Select bits
         #define T5_SOURCE_EXT       (0b10<<6)   // Timer5 clock source is the T1OSC or T1CKI pin
-        #define T5_RUN_FROM_OSC     (0b01<<6)   // Timer5 clock source is the system clock (FOSC)(1)
-        #define T5_SOURCE_INT       (0b00<<6)   // Timer5 clock source is the instruction clock (FOSC/4)
+        #define T5_SOURCE_FOSC     (0b01<<6)   // Timer5 clock source is the system clock (FOSC)(1)
+        #define T5_SOURCE_FOSCDIV4       (0b00<<6)   // Timer5 clock source is the instruction clock (FOSC/4)
 
         // bit 5-4 T5CKPS1:T5CKPS0: Timer5 Input Clock Prescale Select bits
         #define T5_PS_1_8			(0b11<<4)   // 1:8 Prescale value
@@ -364,7 +368,7 @@
         // When TMR5CS<1:0> = T5_SOURCE_EXT:
         #define T5_SOURCE_T1OSC     (1<<3)      // Power up the Timer1 crystal driver (T1OSC) and supply the Timer3 clock from the crystal output
         #define T5_SOURCE_T3OSC     (0)         // Timer1 crystal driver is off, Timer3 clock is from the T3CKI digital input pin assigned in PPS module(2)
-        // When TMR5CS<1:0> = T5_RUN_FROM_OSC or T5_SOURCE_INT:
+        // When TMR5CS<1:0> = T5_SOURCE_FOSC or T5_SOURCE_FOSCDIV4:
         //#define T5_SOURCE_T1OSC   (1<<3)      // Power up the Timer1 crystal driver (T1OSC)
         #define T5_SOURCE_T1OFF     (0)         // Timer1 crystal driver is off(2)
 

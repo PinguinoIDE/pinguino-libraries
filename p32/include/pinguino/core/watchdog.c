@@ -1,32 +1,35 @@
 //	watchdog.c
 //	pic32-pinguino watchdog lib
 //	djpark@astsb.info
+//  11-06-2015 : rblanchot@gmail.com : renamed all the functions
 
 #ifndef __WATCHDOG__
 #define __WATCHDOG__
 
+#include <p32xxxx.h>
+
 //--	watchdog in lib
-#define EnableWDT()         (WDTCONSET = _WDTCON_ON_MASK)
-#define DisableWDT()        (WDTCONCLR = _WDTCON_ON_MASK)
-#define ClearWDT()          (WDTCONSET = _WDTCON_WDTCLR_MASK)
-#define ClearEventWDT()     (RCONCLR = _RCON_WDTO_MASK)
-#define ReadEventWDT()      (RCONbits.WDTO)
-#define ReadPostscalerWDT() (WDTCONbits.WDTPSTA)
+#define Watchdog_enable()         (WDTCONSET = _WDTCON_ON_MASK)
+#define Watchdog_disable()        (WDTCONCLR = _WDTCON_ON_MASK)
+#define Watchdog_clear()          (WDTCONSET = _WDTCON_WDTCLR_MASK)
+#define Watchdog_clearEvent()     (RCONCLR = _RCON_WDTO_MASK)
+#define Watchdog_readEvent()      (RCONbits.WDTO)
+#define Watchdog_readPostscaler() (WDTCONbits.WDTPSTA)
 
 u8 boot_from_watchdog = 0;
 
-void init_watchdog()
+void watchdog_init()
 {
 	// enable watchdog (8.2 seconds)
-	if (ReadEventWDT())
+	if (Watchdog_readEvent())
 		boot_from_watchdog = 1;
-	//EnableWDT();
-	DisableWDT();
-	ClearEventWDT();
-	ClearWDT();
+	//Watchdog_enable();
+	Watchdog_disable();
+	Watchdog_clearEvent();
+	Watchdog_clear();
 }
 
-#define EventWDT() (boot_from_watchdog)
+#define Watchdog_event() (boot_from_watchdog)
 
 #endif	// __WATCHDOG__
 

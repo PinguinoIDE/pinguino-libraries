@@ -76,7 +76,7 @@
             #define REDLED                  48 //pin48 PORTEbits.RE3        // led2
 
             // UBW32 build-in buttons
-            #define USERBUTTON          43 //PORTEbits.RE7 = user button
+            #define USERBUTTON              43 //PORTEbits.RE7 = user button
 
 /**********************************************************************/
     #elif defined (PIC32_PINGUINO_MICRO)
