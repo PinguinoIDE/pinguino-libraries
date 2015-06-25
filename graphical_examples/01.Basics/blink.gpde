@@ -1,0 +1,99 @@
+[Block-1]
+self_id = 0x7f266073edd0
+from = []
+name = function
+constructor = [['label', 'loop'], ['syntax', '()']]
+position = (206, 271)
+basename = loop
+inside = []
+to = []
+nested = ['0x7f266074e5f0']
+
+[Block-2]
+self_id = 0x7f26605fed40
+from = []
+name = function
+constructor = [['label', 'setup'], ['syntax', '()']]
+position = (207, 81)
+basename = setup
+inside = []
+to = []
+nested = ['0x7f2660603878']
+
+[Block-3]
+self_id = 0x7f265f575518
+from = ['0x7f266074e5f0']
+name = linear
+constructor = [['label', 'delay'], ['syntax', '('], ['space'], ['syntax', ')']]
+position = (218, 349)
+basename = delay
+inside = ['0x7f265f575b90']
+to = []
+nested = []
+
+[Block-4]
+self_id = 0x7f265f575b90
+from = ['0x7f265f575518']
+name = output
+constructor = [['spin_int', '500', -100, 100]]
+position = (0, 0)
+basename = spin-int
+inside = []
+to = []
+nested = []
+
+[Block-5]
+self_id = 0x7f266074e5f0
+from = ['0x7f266073edd0']
+name = linear
+constructor = [['label', 'toggle'], ['syntax', '('], ['space'], ['syntax', ')']]
+position = (218, 310)
+basename = toggle
+inside = ['0x7f266075e5a8']
+to = ['0x7f265f575518']
+nested = []
+
+[Block-6]
+self_id = 0x7f266075e5a8
+from = ['0x7f266074e5f0']
+name = output
+constructor = [['spin_choice', 'USERLED', ['GREENLED', 'YELLOWLED', 'USERBUTTON', 'RUNLED', 'USERLED']]]
+position = (569, 241)
+basename = choice_user
+inside = []
+to = []
+nested = []
+
+[Block-7]
+self_id = 0x7f2660603878
+from = ['0x7f26605fed40']
+name = linear
+constructor = [['label', 'pinMode'], ['syntax', '('], ['space'], ['syntax', ', '], ['space'], ['syntax', ')']]
+position = (219, 120)
+basename = pinMode
+inside = ['0x7f2660607a28', '0x7f2660607248']
+to = []
+nested = []
+
+[Block-8]
+self_id = 0x7f2660607a28
+from = ['0x7f2660603878']
+name = output
+constructor = [['spin_choice', 'USERLED', ['GREENLED', 'YELLOWLED', 'USERBUTTON', 'RUNLED', 'USERLED']]]
+position = (497, 165)
+basename = choice_user
+inside = []
+to = []
+nested = []
+
+[Block-9]
+self_id = 0x7f2660607248
+from = ['0x7f2660603878']
+name = output
+constructor = [['spin_choice', 'INPUT', ['INPUT', 'OUTPUT']]]
+position = (554, 165)
+basename = choice-io
+inside = []
+to = []
+nested = []
+
