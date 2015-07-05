@@ -3,8 +3,8 @@
 	Result is sent on usb-serial bus and can be read with index.php
 	author			Régis Blanchot
 	first release	14/09/2010
-	last update		10/06/2011
-	IDE				Pinguino > b9.5
+	last update		6/05/2015
+	IDE				Pinguino > 11
 	-----------------------------------------------------------------------
 	DS18B20 wiring
 	-----------------------------------------------------------------------
