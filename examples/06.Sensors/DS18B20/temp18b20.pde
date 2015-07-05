@@ -19,7 +19,8 @@
 	----------------------------------------------------------------------*/
 
 #define ONEWIREBUS	14						// DQ line						
-
+int ifar;
+int ffar;
 void setup()
 {
 }
@@ -27,11 +28,17 @@ void setup()
 void loop()
 {
 	TEMPERATURE t;
-	
+	ifar = t.integer * 100;
+          ifar += t.fraction;
+
+          ifar = ((ifar * 9) / 5) + 3200;
+          ffar = ifar % 100;   
+          ifar /= 100;
 	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
 	{
 		if (t.sign) CDC.printf("-");
-		CDC.printf("%d.%d°C \r", t.integer, t.fraction);
+		//CDC.printf("%d.%d°C \r", t.integer, t.fraction);
+		CDC.printf("%d.%d°C \r", ifar,ffar);
 	}
 	delay(1000);
 }
