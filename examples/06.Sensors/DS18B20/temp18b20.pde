@@ -19,7 +19,8 @@
 	----------------------------------------------------------------------*/
 
 #define ONEWIREBUS	14						// DQ line						
-
+int ifar;
+int ffar;
 void setup()
 {
 }
