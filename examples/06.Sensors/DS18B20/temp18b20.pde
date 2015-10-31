@@ -43,12 +43,9 @@ void loop()
 	if (DS18B20.read(ONEWIREBUS, SKIPROM,  &t))
 {                 
 	CDC.printf("Temp: %c%2d.%02d C || %c%3d.%02d F\r\n",  temp_sign, t.integer, t.fraction, temp_sign, ifar,ffar);
-	if (ifar > 73) {
-    
-                                   
-                   
+	
 	}
 	delay(1000);
-}
+        }
 }
 
