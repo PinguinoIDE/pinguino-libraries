@@ -31,7 +31,10 @@ void setup()
 }
 void loop()
 {
-	TEMPERATURE t; 
+	TEMPERATURE t;
+	if (DS18B20.read(ONEWIREBUS, SKIPROM,  &t))
+{                 
+	
         temp_sign = t.sign ? '-' : '+';
           
 	ifar = t.integer * 100;
@@ -40,12 +43,11 @@ void loop()
           //ifar = ((ifar * 1.8)  + 3200);
           ffar = ifar % 100;   
           ifar /= 100;
-	if (DS18B20.read(ONEWIREBUS, SKIPROM,  &t))
-{                 
+	        
 	CDC.printf("Temp: %c%2d.%02d C || %c%3d.%02d F\r\n",  temp_sign, t.integer, t.fraction, temp_sign, ifar,ffar);
 	
 	}
 	delay(1000);
         }
-}
+
 
