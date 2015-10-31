@@ -3,8 +3,8 @@
 	Result is sent on usb-serial bus and can be read with index.php
 	author			Régis Blanchot
 	first release	14/09/2010
-	last update		6/05/2015
-	IDE				Pinguino > 11
+	last update		10/06/2011
+	IDE				Pinguino > b9.5
 	-----------------------------------------------------------------------
 	DS18B20 wiring
 	-----------------------------------------------------------------------
@@ -18,27 +18,37 @@
 	Maybe you will have to add your user name to the dialup group
 	----------------------------------------------------------------------*/
 
-#define ONEWIREBUS	14						// DQ line						
-int ifar;
-int ffar;
+#define ONEWIREBUS	2
+#define RES_12BIT
+						 
+char temp_sign = 0;	
+u16 ifar; 
+u8 ffar;				
+
 void setup()
 {
-}
 
+}
 void loop()
 {
-	TEMPERATURE t;
+	TEMPERATURE t; 
+        temp_sign = t.sign ? '-' : '+';
+          
 	ifar = t.integer * 100;
           ifar += t.fraction;
-
-          ifar = ((ifar * 9) / 5) + 3200;
+          ifar = (((long)ifar * 9) / 5) + 3200;
+          //ifar = ((ifar * 1.8)  + 3200);
           ffar = ifar % 100;   
           ifar /= 100;
-	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
-	{
-		if (t.sign) CDC.printf("-");
-		//CDC.printf("%d.%d°C \r", t.integer, t.fraction);
-		CDC.printf("%d.%d°C \r", ifar,ffar);
+	if (DS18B20.read(ONEWIREBUS, SKIPROM,  &t))
+{                 
+	CDC.printf("Temp: %c%2d.%02d C || %c%3d.%02d F\r\n",  temp_sign, t.integer, t.fraction, temp_sign, ifar,ffar);
+	if (ifar > 73) {
+    
+                                   
+                   
 	}
 	delay(1000);
 }
+}
+
