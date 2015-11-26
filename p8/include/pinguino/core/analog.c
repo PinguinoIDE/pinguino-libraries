@@ -12,7 +12,7 @@
 #define DEFAULT		0
 #define	EXTERNAL	1
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <pin.h>
 //#include <macro.h>
@@ -180,7 +180,7 @@ u16 analogread(u8 channel)
     ADCON0bits.ADON=1;                  // A/D Converter module is enabled
 
     for (result=1;result<10;result++)   // Acquisition time
-        __asm NOP __endasm;
+        __asm__("NOP");
 
     ADCON0bits.GO=1;                    // Start A/D Conversion
 

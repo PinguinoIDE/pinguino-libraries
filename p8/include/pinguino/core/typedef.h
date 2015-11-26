@@ -34,11 +34,19 @@
     --------------------------------------------------------------------------*/
 
     typedef unsigned char		byte;
-    typedef unsigned char		BOOL;//bool;					// not compatible with c++
+    typedef unsigned char		BOOL;       //bool is not compatible with c++
     typedef unsigned char		boolean;	
 
     typedef unsigned int		word;	
 
     typedef unsigned long 		dword;
+
+/*	----------------------------------------------------------------------------
+    other types
+    --------------------------------------------------------------------------*/
+
+    typedef unsigned char       BYTE;
+    typedef unsigned int        WORD;
+    typedef unsigned long       DWORD;
 
 #endif

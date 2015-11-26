@@ -37,7 +37,7 @@
 #ifndef __PWMCLOSE_C_
 #define __PWMCLOSE_C_
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <pin.h>
 #include <digital.h>
 //#include <typedef.h>

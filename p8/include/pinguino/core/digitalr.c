@@ -37,15 +37,15 @@
 #ifndef __DIGITALR__
 #define __DIGITALR__
 
-#include <pic18fregs.h>
-//#include <typedef.h>
+#include <compiler.h>
+#include <typedef.h>
 #include <pin.h>
 #include <digital.h>
 #if defined(ANALOGWRITE) || defined(__PWM__)
 #include <pwmclose.c>
 #endif
 
-unsigned char digitalread(unsigned char pin)
+u8 digitalread(u8 pin)
 {
     #if defined(ANALOGWRITE) || defined(__PWM__)
     PWM_close(pin);
@@ -54,31 +54,27 @@ unsigned char digitalread(unsigned char pin)
     switch (port[pin])
     {
         case pA:
-            if ((PORTA & mask[pin])!=0) return (1);
-            else return (0);
-            break;
+            return ((PORTA & mask[pin])!=0);
+
         case pB:
-            if ((PORTB & mask[pin])!=0) return (1);
-            else return (0);
-            break;
+            return ((PORTB & mask[pin])!=0);
+
         case pC:
-            if ((PORTC & mask[pin])!=0) return (1);
-            else return (0);
-            break;
+            return ((PORTC & mask[pin])!=0);
+
         #if defined(PINGUINO4455)   || defined(PINGUINO4550)  || \
             defined(PINGUINO45K50)  || defined(PINGUINO46J50) || \
             defined(PINGUINO47J53A) || defined(PICUNO_EQUO)
+
         case pD:
-            if ((PORTD & mask[pin])!=0) return (1);
-            else return (0);
-            break;
+            return ((PORTD & mask[pin])!=0);
+
         case pE:
-            if ((PORTE & mask[pin])!=0) return (1);
-            else return (0);
-            break;
+            return ((PORTE & mask[pin])!=0);
+
         #endif
     }
-    return (0);
+    return 0;
 }
 
 #endif /* __DIGITALR__ */

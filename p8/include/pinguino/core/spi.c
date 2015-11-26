@@ -1,3 +1,33 @@
+/*	----------------------------------------------------------------------------
+    FILE:			spi.c
+    PROJECT:		pinguino
+    PURPOSE:		Include all functions to handle SPI communication
+                    Master and Slave
+    PROGRAMER:		Régis Blanchot
+    FIRST RELEASE:	03 Apr. 2010
+    LAST RELEASE:	01 Oct. 2015
+    ----------------------------------------------------------------------------
+    CHANGELOG
+    01 Oct. 2015    RB  added SPI2 support
+    ----------------------------------------------------------------------------
+    TODO
+    * added 16F1459 support
+    ----------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    --------------------------------------------------------------------------*/
+
 #ifndef __SPI_C__
 #define __SPI_C__
 
@@ -11,6 +41,14 @@
 #include <delayms.c>
 #include <digitalp.c>
 #include <digitalw.c>
+
+#if defined(__18f2455) || defined(__18f4455) || \
+    defined(__18f2550) || defined(__18f4550)
+    #define SSP1BUF SSPBUF
+    #define SSP1IF PIR1bits.SSPIF
+#else
+    #define SSP1IF PIR1bits.SSP1IF
+#endif
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -105,7 +143,7 @@ void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
     INTCONbits.GIEL = 1;
     INTCONbits.PEIE = 1;
     //IPR1bits.SSPIP = 1;
-    PIR1bits.SSP1IF = 0;
+    SSP1IF = 0;
     #endif
 }
 
@@ -114,7 +152,7 @@ void SPI_init(u8 sync_mode, u8 bus_mode, u8 smp_phase)
 /** -----------------------------------------------------------------**/
 
 /**
- *  This function init the SPI module to default values
+ *  This function initializes the SPI module to default values
  *  Called from main.c
  */
 
@@ -133,7 +171,7 @@ void spi_init()
 }
 
 /**
- *  This function set SPI software pins
+ *  This function sets SPI software pins
  */
 
 void SPI_setPin(u8 module, u8 sda, u8 sck)//, u8 cs)
@@ -150,7 +188,7 @@ void SPI_setPin(u8 module, u8 sda, u8 sck)//, u8 cs)
 }
 
 /**
- *  This function select a SPI module
+ *  This function selects a SPI module
  */
 
 void SPI_select(u8 module)
@@ -159,14 +197,14 @@ void SPI_select(u8 module)
     {
         case SPI1:
             SD_CS = LOW;
-            digitalwrite(SPI[SPI1].cs, LOW);
+            //digitalwrite(SPI[SPI1].cs, LOW);
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)
         case SPI2:
             SD_CS2 = LOW;
-            digitalwrite(SPI[SPI2].cs, LOW);
+            //digitalwrite(SPI[SPI2].cs, LOW);
             break;
         #endif
     }
@@ -182,14 +220,14 @@ void SPI_deselect(u8 module)
     {
         case SPI1:
             SD_CS = HIGH;
-            digitalwrite(SPI[SPI1].cs, HIGH);
+            //digitalwrite(SPI[SPI1].cs, HIGH);
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)
         case SPI2:
             SD_CS2 = HIGH;
-            digitalwrite(SPI[SPI2].cs, HIGH);
+            //digitalwrite(SPI[SPI2].cs, HIGH);
             break;
         #endif
     }
@@ -260,7 +298,7 @@ void SPI_begin(u8 module)
                 INTCONbits.GIEL = 1;
                 INTCONbits.PEIE = 1;
                 //IPR1bits.SSPIP = 1;
-                PIR1bits.SSP1IF = 0;
+                SSP1IF = 0;
             #endif
             break;
 
@@ -331,6 +369,45 @@ void SPI_begin(u8 module)
     }
 }
 //#endif
+
+/**
+ * Disable all SPIx interrupts
+ * Stops and resets the SPIx
+ * Clears the receive buffer
+ **/
+ 
+void SPI_close(u8 module)
+{
+    u8 rData;
+    
+    switch(module)
+    {
+        case SPI1:
+            // 1.  Disable the SPI interrupts in the respective IEC0/1 register.
+            //IntDisable(INT_SPI1_FAULT); 
+            //IntDisable(INT_SPI1_TRANSFER_DONE); 
+            //IntDisable(INT_SPI1_RECEIVE_DONE);
+            // 2.  Stop and reset the SPI module by clearing the ON bit.
+            SSPCON1 = 0;
+            // 3.  Clear the receive buffer.
+            rData=SSP1BUF;
+            break;
+        
+        #if defined(__18f26j50)|| defined(__18f46j50) || \
+            defined(__18f27j53)|| defined(__18f47j53)
+        case SPI2:
+            // 1.  Disable the SPI interrupts in the respective IEC0/1 register.
+            //IntDisable(INT_SPI1_FAULT); 
+            //IntDisable(INT_SPI1_TRANSFER_DONE); 
+            //IntDisable(INT_SPI1_RECEIVE_DONE);
+            // 2.  Stop and reset the SPI module by clearing the ON bit.
+            SSP2CON1 = 0;
+            // 3.  Clear the receive buffer.
+            rData=SSP2BUF;
+            break;
+        #endif
+    }
+}
 
 /**
  * This function sets the order of the bits shifted out of and into the SPI bus,
@@ -452,33 +529,39 @@ u8 SPI_write(u8 module, u8 datax)
     switch(module)
     {
         case SPI1:
-            clear = SSP1BUF;        // clear BF
-            PIR1bits.SSP1IF = 0;              // enable SPI2 interrupt
-            SSPCON1bits.WCOL = 0;
-            SSP1BUF = datax;        // send data
+            clear = SSP1BUF;                // clears buffer
+            SSP1IF = 0;                     // enables SPI1 interrupt
+            SSPCON1bits.WCOL = 0;           // must be cleared in software
+            SSP1BUF = datax;                // send data
 
-            if (SSPCON1bits.WCOL)
-                return (1);
+            if (SSPCON1bits.WCOL)           // still transmitting the previous data 
+                return -1;                  // abort transmission
             else
-                while (!PIR1bits.SSP1IF);
-            return (0);
+                while (!SSP1IF);            // wait for transfer is complete
+
+            return SSP1BUF;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)
+            
         case SPI2:
-            clear = SSP2BUF;        // clear BF
-            PIR3bits.SSP2IF = 0;              // enable SPI2 interrupt
+            clear = SSP2BUF;                // clears buffer
+            PIR3bits.SSP2IF = 0;            // enables SPI2 interrupt
             SSP2CON1bits.WCOL = 0;
-            SSP2BUF = datax;        // send data
+            SSP2BUF = datax;                // send data
 
-            if (SSP2CON1bits.WCOL)
-                return (1);
+            if (SSP2CON1bits.WCOL)          // still transmitting the previous data 
+                return -1;                  // abort transmission
             else
-                while (!PIR3bits.SSP2IF);
-            return (0);
+                while (!PIR3bits.SSP2IF);   // wait for transfer is complete
+
+            return SSP2BUF;
 
         #endif
     }
+    
+    // error, not a valid SPI module
+    return -1;
 }
 //#endif
 
@@ -491,11 +574,11 @@ u8 SPI_write(u8 module, u8 datax)
 void spi1_interrupt()
 {
     u8 c;
-    if (PIR1bits.SSP1IF)
+    if (SSP1IF)
     {
         c = SSP1BUF;
         SSP1BUF = SPI1_onEvent_func(c);
-        PIR1bits.SSP1IF = 0;
+        SSP1IF = 0;
     }
 }
 

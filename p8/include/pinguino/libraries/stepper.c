@@ -100,7 +100,7 @@
 
 #define __STEPPER__
 
-#include <pic18fregs.h>             // PIC registers
+#include <compiler.h>             // PIC registers
 #include <typedef.h>                // u8, u16, u32
 #include <const.h>                  // INPUT, OUTPUT, USERLED
 #include <macro.h>                  // BitRead, high8, low8

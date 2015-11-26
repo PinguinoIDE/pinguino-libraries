@@ -32,7 +32,7 @@
 
 #define __I2C__
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
 #include <const.h>

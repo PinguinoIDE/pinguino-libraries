@@ -10,7 +10,8 @@ void loop()
 {
     char c;
 
-    Serial.println("TEST");
+    Serial.println("Press a key ...");
+
     if (Serial.available())
     {
         c = Serial.read();
@@ -27,5 +28,6 @@ void loop()
         
         delay(1000);
     }
+
     delay(100);
 }

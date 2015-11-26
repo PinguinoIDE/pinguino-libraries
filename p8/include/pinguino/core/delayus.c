@@ -32,7 +32,7 @@
 #include <typedef.h>
 //#include <macro.h>
 //#include <system.c>
-#include <delay.h>
+#include <oscillator.c>             // System_getPeripheralFrequency
 
 /*
     the delayNNtcy family of functions performs a delay of NN cycles.
@@ -60,6 +60,12 @@ void Delayus(u16 p)
 }
 */
 
+#if defined(_PIC14E)
+    // TO FIX : replace with System_getCpuFrequency()
+    #define _XTAL_FREQ  48000000
+    #define Delayus(x)  __delay_us(x)
+#else
+
 void Delayus(unsigned int microseconds)
 {
     unsigned int i;
@@ -67,5 +73,6 @@ void Delayus(unsigned int microseconds)
     for (i=0; i<microseconds; i++)
         ;
 }
+#endif // _PIC14E
 
-#endif /* __DELAY_C__ */
+#endif // __DELAYUS_C__ 

@@ -26,7 +26,7 @@
 #ifndef __LOWPOWER_C
 #define __LOWPOWER_C
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>

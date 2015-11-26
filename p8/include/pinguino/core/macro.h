@@ -7,18 +7,18 @@
 #ifndef __MACRO_H
     #define __MACRO_H
 
-    #include <pic18fregs.h>         // PIC Registers definitions
+    #include <compiler.h>           // PIC Registers definitions
     #include <typedef.h>            // u8, u16, u32, ...
     #include <const.h>              // DEG_TO_RAD, RAD_TO_DEG, ...
 
     /// ASM
 
-    #define nop()					do { __asm nop    __endasm; } while (0)
-    #define clrwdt()				do { __asm clrwdt __endasm; } while (0)
-    #define reset()				    do { __asm reset  __endasm; } while (0)
-    #define sleep()				    do { __asm sleep  __endasm; } while (0)
-    #define interrupts()			do { INTCONbits.GIEH  = 1; INTCONbits.GIEL  = 1; } while (0)
-    #define noInterrupts()		    do { INTCONbits.GIEH  = 0; INTCONbits.GIEL  = 0; } while (0)
+    #define nop()					do { __asm__("nop");    } while (0)
+    #define clrwdt()				do { __asm__("clrwdt"); } while (0)
+    #define reset()				    do { __asm__("reset");  } while (0)
+    #define sleep()				    do { __asm__("sleep");  } while (0)
+    #define interrupts()			do { INTCONbits.GIEH = 1; INTCONbits.GIEL = 1; } while (0)
+    #define noInterrupts()		    do { INTCONbits.GIEH = 0; INTCONbits.GIEL = 0; } while (0)
 
     /// C
 
@@ -34,11 +34,13 @@
 
     /// MATH
 
-    #define min(a,b)				((a)<(b)?(a):(b))
-    //#define min(x, y)               (y ^ ((x ^ y) & -(x < y)))
-    #define max(a,b)				((a)>(b)?(a):(b))
-    //#define max(x, y)               (x ^ ((x ^ y) & -(x < y)))
-
+    #ifndef __XC8__
+        #define min(a,b)            ((a)<(b)?(a):(b))
+        //#define min(x, y)           (y ^ ((x ^ y) & -(x < y)))
+        #define max(a,b)            ((a)>(b)?(a):(b))
+        //#define max(x, y)           (x ^ ((x ^ y) & -(x < y)))
+    #endif
+    
     //already defined in stdlib.h / mathlib.c
     //#define abs(x)					((x)>0?(x):-(x))
     #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
@@ -56,6 +58,7 @@
 
     /// BITWISE OPERATION
 
+    /* Outdated, SDCC supports binary numbers
     #define BIN_BIT(value, bit, dec) \
         (((((u32)(value##.0))/dec)&1 == 1)? (1<<bit) : 0)
 
@@ -68,30 +71,14 @@
         BIN_BIT(value,  5, 100000) | \
         BIN_BIT(value,  6, 1000000) | \
         BIN_BIT(value,  7, 10000000))
-
-    // Read bit #n from octet
-    #define BitRead(octet, n) \
-        (((octet) >> (n)) & 1)
-
-    // Set bit #n from octet
-    #define BitSet(octet, n) \
-        ((octet) |= (1 << (n)))
-
-    // Clear (0) bit #n from octet
-    #define BitClear(octet, n) \
-        ((octet) &= ~(1 << (n)))			//(octet &= !(1 << n))
-
-    // Inverse bit #n from octet
-    #define BitInv(octet, n) \
-        ((octet) ^= (1 << (n)))
-
-    #define BitWrite(value, bit, bitvalue) \
-        (bitvalue ? BitSet(value, bit) : BitClear(value, bit))
+    */
     
-    #define Bit(b) \
-        (1 << (b))
+    #define Bit(n)                  (1 << (n))
+    #define BitRead(val, n)         (((val) >> (n)) & 1)
+    #define BitSet(val, n)          ((val) |= (1 << (n)))
+    #define BitClear(val, n)        ((val) &= ~(1 << (n)))
+    #define BitInv(val, n)          ((val) ^= (1 << (n)))
+    #define BitWrite(val, n, b)     ((b) ? BitSet(val, n) : BitClear(val, n))
+    #define Not(n)                  (255 - (n))
 
-    #define Not(b) \
-        (255 - (b))
-        
 #endif

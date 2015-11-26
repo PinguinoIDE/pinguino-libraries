@@ -33,7 +33,7 @@
         #error "Error : this library is intended to be used only with 8-bit Pinguino with EEPROM" 
     #endif
 
-	#include <pic18fregs.h>
+	#include <compiler.h>
 	#include <typedef.h>
 	#include <macro.h>
 

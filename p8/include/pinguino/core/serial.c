@@ -1,13 +1,14 @@
-/*	--------------------------------------------------------------------
-    FILE:			Serial.c
-    PROJECT:		Pinguino
-    PURPOSE:		UART Library for 8-bit Pinguino
-                    using  2 wires or 4 wires
-    PROGRAMER:		Jean-Pierre MANDON 2008 jp.mandon@free.fr
+/*  --------------------------------------------------------------------
+    FILE:       serial.c
+    PROJECT:    Pinguino
+    PURPOSE:    UART Library for 8-bit Pinguino
+    PROGRAMER:  Jean-Pierre MANDON 2008 jp.mandon@free.fr
+    --------------------------------------------------------------------
     CHANGELOG:
-    23-11-2012		regis blanchot		added __18f120,1320,14k22,2455,4455,46j50 support
-    19-01-2013		regis blanchot		support of all clock frequency
-    14-04-2014		regis blanchot		added printNumber and printFloat function
+    23-11-2012  rblanchot  added __18f120,1320,14k22,2455,4455,46j50 support
+    19-01-2013  rblanchot  support of all clock frequency
+    14-04-2014  rblanchot  added printNumber and printFloat function
+    24-11-2015  rblanchot  added PIC16F1459 support
     --------------------------------------------------------------------
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -31,7 +32,7 @@
 #ifndef __SERIAL__
 #define __SERIAL__
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
 //#include <stdlib.h>       // no longer used (09-11-2012)
@@ -47,97 +48,135 @@
 
 // RX buffer length
 #ifndef RXBUFFERLENGTH
-    #if defined(__18f1220) || defined(__18f1320) || defined(__18f14k22)
+    #if defined(__16F1459) || \
+        defined(__18f1220) || defined(__18f1320) || \
+        defined(__18f14k22)
         #define RXBUFFERLENGTH 64
     #else
         #define RXBUFFERLENGTH 128
     #endif
 #endif
 
-char rx[RXBUFFERLENGTH];                // serial buffer
-unsigned char wpointer,rpointer;        // write and read pointer
+#define BaudRateDivisor(f, b)   ((f/(4*b))-1)
+
+char rx[RXBUFFERLENGTH];            // serial buffer
+u8 wpointer=1,rpointer=1;           // write and read pointer
 
 /***********************************************************************
  * Serial.begin()
  * Setup PIC18F UART
  **********************************************************************/
 
-void Serial_begin(unsigned long baudrate)
+void Serial_begin(u32 baudrate)
 {
-    unsigned long spbrg;
-    unsigned char highbyte,lowbyte;
-
-    //spbrg=(48000000/(4*baudrate))-1;
-    //spbrg=(_cpu_clock_/(4*baudrate))-1;
-    //spbrg=(SystemGetClock()/(4*baudrate))-1;
-    spbrg=(System_getCpuFrequency()/(4*baudrate))-1;
-
-    highbyte=spbrg/256;
-    lowbyte=spbrg%256;
+    // TO FIX
+    #if defined(__16F1459)
+    u16 spbrg = (u16)BaudRateDivisor(48*1000000UL, baudrate);
+    #else
+    u16 spbrg = (u16)BaudRateDivisor(System_getCpuFrequency(), baudrate);
+    #endif
     
-    #if defined(__18f1220) || defined(__18f1320) || \
-        defined(__18f14k22) || defined(__18lf14k22)
-        TXSTAbits.BRGH=1;               	  	// set BRGH bit
-        BAUDCTLbits.BRG16=1;					// set 16 bits SPBRG
-        SPBRGH=highbyte;                        // set UART speed SPBRGH
-        SPBRG=lowbyte;   						// set UART speed SPBRGL
-        RCSTA=0x90;                             // set RCEN and SPEN
-        BAUDCTLbits.RCIDL=1;			        // set receive active
-        PIE1bits.RCIE=1;                        // enable interrupt on RX
-        IPR1bits.RCIP=1;                        // define high priority for RX interrupt
-        TXSTAbits.TXEN=1;                       // enable TX
+    #if defined(__16F1459)
+    
+        // 8-bit asynchronous operation
+        RCSTA = 0;                  // 8-bit RX (RX9=0)
+        TXSTA = 0;                  // 8-bit TX (TX9=0), asynchronous (SYNC=0)
+        BAUDCON = 0;                // polarity : non-inverted
+        
+        // IO's
+        //TRISBbits.TRISB5 = 1;       // RX is an input
+        //TRISBbits.TRISB7 = 0;       // see SPEN bit below
+
+        // Baud Rate
+        SPBRGH = high8(spbrg);      // set UART speed SPBRGH
+        SPBRGL = low8(spbrg);       // set UART speed SPBRGL
+        TXSTAbits.BRGH = 1;         // High Baud Rate
+        BAUDCONbits.BRG16 = 1;      // Use 16-bit baud rate generator
+
+        // Enable EUSART
+        TXSTAbits.TXEN = 1;         // Transmit Enabled
+        RCSTAbits.CREN = 1;         // Receiver Enabled
+        RCSTAbits.SPEN = 1;         // Serial Port Enabled (RX/TX pins as input/output)
+
+        // Enable RX interrupt
+        PIR1bits.RCIF = 0;         // Clear RX interrupt flag
+        PIE1bits.RCIE = 1;         // Enable interrupt on RX
+
+    #elif defined(__18f1220) || defined(__18f1320) || \
+          defined(__18f14k22) || defined(__18lf14k22)
+
+        TXSTAbits.BRGH=1;           // set BRGH bit
+        BAUDCTLbits.BRG16=1;        // set 16 bits SPBRG
+        SPBRGH=high8(spbrg);        // set UART speed SPBRGH
+        SPBRG=low8(spbrg);          // set UART speed SPBRGL
+        RCSTA=0x90;                 // set RCEN and SPEN
+        BAUDCTLbits.RCIDL=1;        // set receive active
+        TXSTAbits.TXEN = 1;         // enable TX
+
+        // Enable RX interrupt
+        PIR1bits.RCIF = 0;         // Clear RX interrupt flag
+        IPR1bits.RCIP = 1;         // Define high priority for RX interrupt
+        PIE1bits.RCIE = 1;         // Enable interrupt on RX
 
     #elif defined(__18f2455) || defined(__18f4455) || \
           defined(__18f2550) || defined(__18f4550) || \
           defined(__18f25k50) || defined(__18f45k50)
-        TRISCbits.TRISC7	= 1;					/* Rx1	set input */
-        TXSTAbits.BRGH=1;               	  	// set BRGH bit
-        BAUDCONbits.BRG16=1;					// set 16 bits SPBRG
-        SPBRGH=highbyte;                        // set UART speed SPBRGH
-        SPBRG=lowbyte;   						// set UART speed SPBRGL
-        RCSTA=0x90;                             // set RCEN and SPEN
-        BAUDCONbits.RCIDL=1;			        // set receive active
-        TXSTAbits.TXEN=1;                       // enable TX
 
-        PIR1bits.RCIF = 0;                      // Clear interrupt flag
-        PIE1bits.RCIE=1;                        // enable interrupt on RX
-        IPR1bits.RCIP=1;                        // define high priority for RX interrupt
+        TRISCbits.TRISC7= 1;        // Rx1    set input
+        TXSTAbits.BRGH=1;           // set BRGH bit
+        BAUDCONbits.BRG16=1;        // set 16 bits SPBRG
+        SPBRGH=high8(spbrg);        // set UART speed SPBRGH
+        SPBRG=low8(spbrg);          // set UART speed SPBRGL
+        RCSTA=0x90;                 // set RCEN and SPEN
+        BAUDCONbits.RCIDL=1;        // set receive active
+        TXSTAbits.TXEN=1;           // enable TX
+
+        // Enable RX interrupt
+        PIR1bits.RCIF = 0;         // Clear RX interrupt flag
+        IPR1bits.RCIP = 1;         // Define high priority for RX interrupt
+        PIE1bits.RCIE = 1;         // Enable interrupt on RX
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
-        TRISCbits.TRISC7	= 1;					/* Rx1	set input */
-        TXSTA1bits.BRGH=1;               	  	// set BRGH bit
-        BAUDCON1bits.BRG16=1;					// set 16 bits SPBRG
-        SPBRGH1=highbyte;                       // set UART speed SPBRGH
-        SPBRG1=lowbyte;   						// set UART speed SPBRGL
-        RCSTA1=0x90;                            // set RCEN and SPEN
-        BAUDCON1bits.RCIDL=1;			        // set receive active
-        TXSTA1bits.TXEN=1;                      // enable TX
 
-        PIR1bits.RC1IF = 0;                     // Clear interrupt flag
-        PIE1bits.RC1IE=1;                       // enable interrupt on RX
-        IPR1bits.RC1IP=1;                       // define high priority for RX interrupt
+        TRISCbits.TRISC7= 1;        // Rx1    set input
+        TXSTA1bits.BRGH=1;          // set BRGH bit
+        BAUDCON1bits.BRG16=1;       // set 16 bits SPBRG
+        SPBRGH1=high8(spbrg);       // set UART speed SPBRGH
+        SPBRG1=low8(spbrg);         // set UART speed SPBRGL
+        RCSTA1=0x90;                // set RCEN and SPEN
+        BAUDCON1bits.RCIDL=1;       // set receive active
+        TXSTA1bits.TXEN=1;          // enable TX
 
-        PIR1bits.TX1IF=0;  //
-        PIE1bits.TX1IE=0;  //
+        // Enable RX interrupt
+        PIR1bits.RC1IF = 0;         // Clear RX interrupt flag
+        IPR1bits.RC1IP = 1;         // Define high priority for RX interrupt
+        PIE1bits.RC1IE = 1;         // Enable interrupt on RX
 
+        //PIR1bits.TX1IF = 0;         // Clear TX interrupt flag
+        //PIE1bits.TX1IE = 0;         // Disable TX interrupt
     #else
 
         #error "Processor Not Yet Supported. Please, Take Contact with Developpers."
 
     #endif
 
-    wpointer=1;                             // initialize write pointer
-    rpointer=1;                             // initialize read pointer
-    
-    //RB: IPEN is managed both by bootloader and main.c
-    //RCONbits.IPEN = 1;                      //  enable interrupt priorities
-    INTCONbits.GIEH = 1;                    // Enable global HP interrupts
-    INTCONbits.GIEL = 1;                    // Enable global LP interrupts
-    INTCONbits.PEIE = 1;                    // Enable peripheral interrupts
+    //wpointer=1;                     // initialize write pointer
+    //rpointer=1;                     // initialize read pointer
 
-    //Delayms(1000);                           // AG : 12-11-2012
+    INTCONbits.PEIE = 1;            // Enable peripheral interrupts
+
+    #if defined(__16F1459)
+    INTCONbits.GIE  = 1;            // Enable global interrupts
+    #else
+    //RB: IPEN is managed both by bootloader and main.c
+    //RCONbits.IPEN = 1;            //  enable interrupt priorities
+    INTCONbits.GIEH = 1;            // Enable global HP interrupts
+    INTCONbits.GIEL = 1;            // Enable global LP interrupts
+    #endif
+    
+    //Delayms(1000);                  // AG : 12-11-2012
 }
 
 /***********************************************************************
@@ -145,21 +184,14 @@ void Serial_begin(unsigned long baudrate)
  * return true if a new character has been received, otherwise false
  **********************************************************************/
 
-unsigned char Serial_available()
-{
-    return (wpointer!=rpointer);
-}
+#define Serial_available()          (wpointer != rpointer)
 
 /***********************************************************************
  * Serial.flush()
  * Clear RX buffer
  **********************************************************************/
 
-void Serial_flush(void)
-{
-    wpointer=1;
-    rpointer=1;
-}
+#define Serial_flush()              { wpointer=1; rpointer=1; }
 
 /***********************************************************************
  * Interruption routine called by main.c
@@ -167,19 +199,20 @@ void Serial_flush(void)
 
 void serial_interrupt(void)
 {
-    char caractere;
-    unsigned char newwp;
+    u8 caractere;
+    u8 newwp;
 
-    #if defined(__18f1220)  || defined(__18f1320)   || \
+    #if defined(__16F1459)  || \
+        defined(__18f1220)  || defined(__18f1320)   || \
         defined(__18f14k22) || defined(__18lf14k22) || \
+        defined(__18f2455)  || defined(__18f4455)   || \
         defined(__18f2550)  || defined(__18f4550)   || \
-        defined(__18f25k50) || defined(__18f45k50)  || \
-        defined(__18f2455)  || defined(__18f4455)
+        defined(__18f25k50) || defined(__18f45k50)
 
     if (PIR1bits.RCIF)
     { 
-        PIR1bits.RCIF=0;				// clear RX interrupt flag
-        caractere=RCREG;				// take received char
+        PIR1bits.RCIF=0;            // clear RX interrupt flag
+        caractere=RCREG;            // take received char
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
@@ -187,8 +220,8 @@ void serial_interrupt(void)
 
     if (PIR1bits.RC1IF) 
     {
-        PIR1bits.RC1IF=0;				// clear RX interrupt flag
-        caractere=RCREG1;				// take received char
+        PIR1bits.RC1IF=0;           // clear RX interrupt flag
+        caractere=RCREG1;           // take received char
 
     #else
 
@@ -196,17 +229,17 @@ void serial_interrupt(void)
 
     #endif
 
-        if (wpointer!=RXBUFFERLENGTH-1)	// if not last place in buffer
-            newwp=wpointer+1;			// place=place+1
+        if (wpointer!=RXBUFFERLENGTH-1)  // if not last place in buffer
+            newwp=wpointer+1;       // place=place+1
 
         else
-            newwp=1;					// else place=1
+            newwp=1;                // else place=1
 
-        if (rpointer!=newwp)			// if read pointer!=write pointer
-            rx[wpointer++]=caractere;	// store received char
+        if (rpointer!=newwp)        // if read pointer!=write pointer
+            rx[wpointer++]=caractere;// store received char
 
-        if (wpointer==RXBUFFERLENGTH)	// if write pointer=length buffer
-            wpointer=1;					// write pointer = 1
+        if (wpointer==RXBUFFERLENGTH)// if write pointer=length buffer
+            wpointer=1;             // write pointer = 1
     }
 }
 
@@ -215,22 +248,24 @@ void serial_interrupt(void)
  * Write a char on Serial port
  **********************************************************************/
 
-void Serial_putchar(unsigned char caractere)
+void Serial_putchar(u8 caractere)
 {
-    #if defined(__18f1220) || defined(__18f1320)    || \
+    #if defined(__16F1459)  || \
+        defined(__18f1220)  || defined(__18f1320)   || \
         defined(__18f14k22) || defined(__18lf14k22) || \
-        defined(__18f2455)                          || \
-        defined(__18f2550) || defined(__18f4550)    || \
+        defined(__18f2455)  || defined(__18f4455)   || \
+        defined(__18f2550)  || defined(__18f4550)   || \
         defined(__18f25k50) || defined(__18f45k50)
 
+        //while (!PIR1bits.TXIF);     // Ready ?
         while (!TXSTAbits.TRMT);
-        TXREG=caractere;		        // yes, send char
+        TXREG=caractere;            // yes, send char
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f27j53) || defined(__18f47j53)
 
-        while (!TXSTA1bits.TRMT);
-        TXREG1=caractere;		        // yes, send char
+        while (!TXSTA1bits.TRMT);   // Ready ?
+        TXREG1=caractere;           // yes, send char
 
     #else
 
@@ -245,17 +280,17 @@ void Serial_putchar(unsigned char caractere)
  **********************************************************************/
 
 #if defined(SERIALREAD) || defined(SERIALGETKEY) || defined(SERIALGETSTRING)
-unsigned char Serial_read()
+u8 Serial_read()
 {
-    unsigned char caractere=0;
+    u8 caractere=0;
 
     if (Serial_available())
     {
-        PIE1bits.RCIE=0;             // Atomic operation start
-        caractere=rx[rpointer++];
-        if (rpointer==RXBUFFERLENGTH)
-        rpointer=1;
-        PIE1bits.RCIE=1;             // Atomic operation end
+        PIE1bits.RCIE = 0;             // Atomic operation start
+        caractere = rx[rpointer++];
+        if (rpointer == RXBUFFERLENGTH)
+            rpointer = 1;
+        PIE1bits.RCIE = 1;             // Atomic operation end
     }
     return(caractere);
 }
@@ -272,11 +307,15 @@ unsigned char Serial_read()
 #if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 
-void Serial_print(char *string)
+void Serial_print(char *s)
 {
+    /*
     u8 i;
-    for( i=0; string[i]; i++)
+    for (i=0; string[i]; i++)
         Serial_putchar(string[i]);
+    */
+    while (*s++)
+        Serial_putchar(*s);
 }
 #endif /* SERIALPRINTSTRING */
 
@@ -289,8 +328,8 @@ void Serial_print(char *string)
 
 #if 0
 #if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN)
-#define Serial_print(m,type)	{ Serial_print_##type(m);  }
-#define Serial_println(m,type)	{ Serial_print_##type(m);  Serial_printf("\r\n"); }
+#define Serial_print(m,type)    { Serial_print_##type(m);  }
+#define Serial_println(m,type)    { Serial_print_##type(m);  Serial_printf("\r\n"); }
 void Serial_print_FLOAT(float m){ Serial_printf("%f",m); }
 void Serial_print_DEC(u16 m)    { Serial_printf("%d",m); }
 void Serial_print_HEX(u16 m)    { Serial_printf("%x",m); }
@@ -306,10 +345,10 @@ void Serial_print(const char *fmt,...)
 {
     //u8 *s;
     u8 s;
-    va_list args;							// a list of arguments
-    va_start(args, fmt);					// initialize the list
+    va_list args;                            // a list of arguments
+    va_start(args, fmt);                    // initialize the list
     //s = va_start(args, fmt);
-    s = (u8) va_arg(args, u32);				// get the first variable arg.
+    s = (u8) va_arg(args, u32);                // get the first variable arg.
 
     //switch (*s)
     switch (s)
@@ -426,41 +465,41 @@ void Serial_printNumber(long value, u8 base)
 #if defined(SERIALPRINTFLOAT)
 void Serial_printFloat(float number, u8 digits)
 { 
-	u8 i, toPrint;
-	u16 int_part;
-	float rounding, remainder;
+    u8 i, toPrint;
+    u16 int_part;
+    float rounding, remainder;
 
-	// Handle negative numbers
-	if (number < 0.0)
-	{
-		Serial_puts('-', 1);
-		number = -number;
-	}
+    // Handle negative numbers
+    if (number < 0.0)
+    {
+        Serial_puts('-', 1);
+        number = -number;
+    }
 
-	// Round correctly so that print(1.999, 2) prints as "2.00"  
-	rounding = 0.5;
-	for (i=0; i<digits; ++i)
-		rounding /= 10.0;
+    // Round correctly so that print(1.999, 2) prints as "2.00"  
+    rounding = 0.5;
+    for (i=0; i<digits; ++i)
+        rounding /= 10.0;
 
-	number += rounding;
+    number += rounding;
 
-	// Extract the integer part of the number and print it  
-	int_part = (u16)number;
-	remainder = number - (float)int_part;
-	Serial_printNumber(int_part, 10);
+    // Extract the integer part of the number and print it  
+    int_part = (u16)number;
+    remainder = number - (float)int_part;
+    Serial_printNumber(int_part, 10);
 
-	// Print the decimal point, but only if there are digits beyond
-	if (digits > 0)
-		Serial_puts('.', 1); 
+    // Print the decimal point, but only if there are digits beyond
+    if (digits > 0)
+        Serial_puts('.', 1); 
 
-	// Extract digits from the remainder one at a time
-	while (digits-- > 0)
-	{
-		remainder *= 10.0;
-		toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-		Serial_printNumber(toPrint, 10);
-		remainder -= toPrint; 
-	}
+    // Extract digits from the remainder one at a time
+    while (digits-- > 0)
+    {
+        remainder *= 10.0;
+        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+        Serial_printNumber(toPrint, 10);
+        remainder -= toPrint; 
+    }
 }
 #endif /* SERIALPRINTFLOAT */
 

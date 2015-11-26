@@ -4,9 +4,11 @@
     PURPOSE:        pinguino system functions
     PROGRAMER:      regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:  5 Jan. 2011
-    LAST RELEASE:   2 Feb. 2013
+    LAST RELEASE:   6 Oct. 2015
     ----------------------------------------------------------------------------
     CHANGELOG:
+    * 6 Oct. 2015 - RB - changed syntax to be the same on both P8 and P32
+                       - added 16F1459 support
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -26,67 +28,46 @@
 #ifndef __WATCHDOG_C
 #define __WATCHDOG_C
 
-#include <pic18fregs.h>
+#define __WATCHDOG__
+
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+#include <oscillator.c>
 
-/*  ----------------------------------------------------------------------------
-    Enable watchdog timer
-    --------------------------------------------------------------------------*/
-#ifdef SYSTEMWATCHDOG
-void System_watchdog()
+u8 boot_from_watchdog = 0;
+
+#define Watchdog_enable()               (WDTCONbits.SWDTEN = 1)
+#define Watchdog_disable()              (WDTCONbits.SWDTEN = 0)
+#define Watchdog_clear()                clrwdt()
+
+// TO: Watchdog Time-out Flag bit
+// 1 = Set by power-up, CLRWDT instruction or SLEEP instruction
+// 0 = A WDT time-out occurred
+
+#if defined(__16F1459)
+    #define Watchdog_readPostscaler()   (32 * (1 << WDTCONbits.WDTPS))
+    #define Watchdog_clearEvent()       (PCONbits.nRWDT = 1)
+    #define Watchdog_readEvent()        (!PCONbits.nRWDT)
+#else
+    #define Watchdog_readPostscaler()   (1 << (System_readFlashMemory(__CONFIG2H)))
+    #define Watchdog_clearEvent()       (RCONbits.TO = 1)
+    #define Watchdog_readEvent()        (!RCONbits.TO)
+#endif
+
+#define Watchdog_event()                (boot_from_watchdog)
+
+void watchdog_init()
 {
-    WDTCONbits.SWDTEN = 1;
+    // enable watchdog (8.2 seconds)
+    if (Watchdog_readEvent())
+        boot_from_watchdog = 1;
+    //Watchdog_enable();
+    Watchdog_disable();
+    Watchdog_clearEvent();
+    Watchdog_clear();
 }
-#endif
-
-/*  ----------------------------------------------------------------------------
-    Disable watchdog timer
-    --------------------------------------------------------------------------*/
-#ifdef SYSTEMNOWATCHDOG
-void System_noWatchdog()
-{
-    WDTCONbits.SWDTEN = 0;
-}
-#endif
-
-/*  ----------------------------------------------------------------------------
-    Clear watchdog timer
-    --------------------------------------------------------------------------*/
-#ifdef SYSTEMCLEARWATCHDOG
-#define System_clearWatchdog()   clrwdt()
-#endif
-
-/*  ----------------------------------------------------------------------------
-    Enable deep sleep watchdog timer
-    --------------------------------------------------------------------------*/
-#if defined(__18f26j50) || defined(__18f46j50)
-#ifdef SYSTEMDEEPWATCHDOG
-void System_deepWatchdog()
-{
-    WDTCONbits.SWDTEN = 1;
-}
-#endif
-#endif
-
-/*  ----------------------------------------------------------------------------
-    Disable deep sleep watchdog timer
-    --------------------------------------------------------------------------*/
-#if defined(__18f26j50) || defined(__18f46j50)
-#ifdef SYSTEMNODEEPWATCHDOG
-#define System_noDeepWatchdog()      do { WDTCONbits.SWDTEN = 0; } while (0)
-#endif
-#endif
-
-/*  ----------------------------------------------------------------------------
-    Clear watchdog timer
-    --------------------------------------------------------------------------*/
-#if defined(__18f26j50) || defined(__18f46j50)
-#ifdef SYSTEMCLEARDEEPWATCHDOG
-#define System_clearDeepWatchdog()   clrwdt()
-#endif
-#endif
 
 #endif /* __WATCHDOG_C */
 

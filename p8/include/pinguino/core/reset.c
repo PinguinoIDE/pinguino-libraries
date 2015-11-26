@@ -26,7 +26,7 @@
 #ifndef __RESET_C
 #define __RESET_C
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>

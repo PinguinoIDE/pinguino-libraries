@@ -11,13 +11,6 @@ System.unlock System_unlock#include <system.c>#define SYSTEMUNLOCK
 System.lock System_lock#include <system.c>#define SYSTEMLOCK
 System.reset System_reset#include <system.c>#define SYSTEMRESET
 
-System.watchdog System_watchdog#include <watchdog.c>#define SYSTEMWATCHDOG
-System.noWatchdog System_noWatchdog#include <watchdog.c>#define SYSTEMNOWATCHDOG
-System.clearWatchdog System_clearWatchdog#include <watchdog.c>#define SYSTEMCLEARWATCHDOG
-System.deepWatchdog System_deepWatchdog#include <watchdog.c>#define SYSTEMDEEPWATCHDOG
-System.noDeepWatchdog System_noDeepWatchdog#include <watchdog.c>#define SYSTEMNODEEPWATCHDOG
-System.clearDeepWatchdog System_clearDeepWatchdog#include <watchdog.c>#define SYSTEMCLEARDEEPWATCHDOG
-
 System.idle System_idle#include <lowpower.c>#define SYSTEMIDLE
 System.run System_run#include <lowpower.c>#define SYSTEMRUN
 System.sleep System_sleep#include <lowpower.c>#define SYSTEMSLEEP

@@ -28,7 +28,7 @@
 #ifndef __FLASH_C__
 #define __FLASH_C__
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 
 void EraseFlash(u16 address)

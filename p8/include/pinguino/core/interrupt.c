@@ -50,7 +50,7 @@
         #error "Error : this library is intended to be used only with 8-bit Pinguino" 
     #endif
     
-    #include <pic18fregs.h>
+    #include <compiler.h>
     #include <typedef.h>
     #include <interrupt.h>
     #include <macro.h>

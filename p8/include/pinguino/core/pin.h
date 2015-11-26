@@ -7,8 +7,9 @@
 	LAST RELEASE:	26 Jun 2014
 	----------------------------------------------------------------------------
 	CHANGELOG:
-	- rblanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
+                - rblanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
 	26 Jun 2014 - rblanchot - added Pinguino 45K50
+	09 Sep 2015 - rblanchot - added Pinguino 1459
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,13 @@
 #define __PIN_H
 
 /**********************************************************************/
-#if defined(__18f4685)		// Added by Andrej Golac
+#if defined(PINGUINO1459)
+/**********************************************************************/
+
+    #define USERLED     10
+    
+/**********************************************************************/
+#elif defined(__18f4685)		// Added by Andrej Golac
 /**********************************************************************/
 
 	#define RA0	0		/*-----------*/

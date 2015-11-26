@@ -3,15 +3,89 @@
 	File:	config.h
 	Descr.: configuration bits for supported PIC18F
 	Author:	Régis Blanchot <rblanchot@gmail.com>
-
+    ----------------------------------------------------------------------------
+    CHANGELOG :
+    09 Jul 2015 - Régis Blanchot - replaced #include <pic18fregs.h> by
+                                   #include <compiler.h> to enable compatibility
+                                   between SDCC and XC8
+    ----------------------------------------------------------------------------
 	This file is part of Pinguino (http://www.pinguino.cc)
 	Released under the LGPL license (http://www.gnu.org/licenses/lgpl.html)
 *******************************************************************************/
 
-#include <pic18fregs.h>
+#include <compiler.h>
 
 /**********************************************************************/
-#if   defined(__18f13k50) || defined(__18f14k50)
+#if   defined(__16F1459)
+/**********************************************************************/
+
+    /*
+     * Note: When using the PLLEN bit of the Configuration Words, the PLL cannot
+     * be disabled by software. The 8 MHz and 16 MHz HFINTOSC options will no
+     * longer be available. Therefore PLLEN is disabled here and enabled in
+     * main.c
+     */
+
+    #if (CRYSTAL == INTOSC)             // Internal 16 MHz Osc.
+        #pragma config FOSC = INTOSC    // Oscillator Selection (Internal oscillator)
+        #pragma config PLLEN = DISABLED // PLL is disabled
+        #pragma config PLLMULT = 3x     // PLL Selection (3x clock multiplier) => 3 x 16 = 48 MHz
+        #pragma config CPUDIV = NOCLKDIV// 1:1 mode (for 48MHz CPU)
+
+    #elif (CRYSTAL == 12)
+        #pragma config FOSC = HSH       // Oscillator Selection (External oscillator)
+        #pragma config PLLEN = DISABLED // PLL is disabled
+        #pragma config PLLMULT = 4x     // PLL Selection (4x clock multiplier) => 4 x 12 = 48 MHz
+        #pragma config CPUDIV = NOCLKDIV// 1:1 mode (for 48MHz CPU)
+
+    #elif (CRYSTAL == 16)
+        #pragma config FOSC = HSH       // Oscillator Selection (External oscillator)
+        #pragma config PLLEN = DISABLED // PLL is disabled
+        #pragma config PLLMULT = 3x     // PLL Selection (3x clock multiplier) => 3 x 16 = 48 MHz
+        #pragma config CPUDIV = NOCLKDIV// 1:1 mode (for 48MHz CPU)
+
+    #else
+
+        #error "    ---------------------------------    "
+        #error "    Crystal Frequency Not supported.     "
+        #error "    ---------------------------------    "
+
+    #endif
+
+    // CONFIG1
+    #pragma config FCMEN = OFF			// Fail Safe Clock Monitor
+    #pragma config IESO = ON			// Int/Ext switchover mode
+    #pragma config CLKOUTEN = OFF		// CLKOUT pin function as I/O
+    #pragma config BOREN = OFF 			// Brown Out
+    #pragma config CP = OFF				// Code Protect
+    #if defined(DEBUG)
+    #pragma config MCLRE = OFF			// MCLR
+    #else
+    #pragma config MCLRE = ON			// MCLR
+    #endif
+    #pragma config PWRTE = ON			// PowerUp Timer
+    #pragma config WDTE = OFF           // Watchdog controlled by SWDTEN bit
+
+    // CONFIG2
+    #if (VOLTAGE == 0)
+        #pragma config LVP = OFF		// High Voltage Programming
+    #else
+        #pragma config LVP = ON 		// Low Voltage Programming
+    #endif
+    //#pragma config DEBUG = OFF			// Background Debugging
+    #pragma config LPBOR = OFF          // Low-Power Brown-out Reset
+    #pragma config BORV = LO            // Brown-out Reset Voltage
+    #pragma config STVREN = ON			// Stack Overflow Reset
+    #pragma config WRT = OFF            // Flash memory write protection
+
+    #if (SPEED == LOW_SPEED)
+        #pragma config USBLSCLK = 24MHz
+    #else
+        #pragma config USBLSCLK = 48MHz
+    #endif
+
+/**********************************************************************/
+#elif   defined(__18f13k50) || defined(__18f14k50)
 /**********************************************************************/
 
     #error "    ---------------------------------    "

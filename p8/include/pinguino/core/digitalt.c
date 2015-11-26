@@ -37,16 +37,16 @@
 #ifndef __DIGITALT__
 #define __DIGITALT__
 
-#include <pic18fregs.h>
-//#include <typedef.h>
+#include <compiler.h>
+#include <typedef.h>
 #include <pin.h>
 #include <digital.h>
 #include <digitalw.c>       // digitalwrite
 #include <digitalr.c>       // digitalread
 
-void toggle(unsigned char pin)
+void toggle(u8 pin)
 {
-    unsigned char state;
+    u8 state;
     state = digitalread(pin);
     digitalwrite(pin, state^1);
 }

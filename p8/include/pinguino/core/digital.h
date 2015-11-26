@@ -29,9 +29,9 @@
 #ifndef __DIGITAL_H__
 #define __DIGITAL_H__
 
-//#include <pic18fregs.h>
+//#include <compiler.h>
 //#include <pin.h>
-//#include <typedef.h>
+#include <typedef.h>
 
 #define pA	0
 #define pB	1
@@ -51,14 +51,26 @@
 #define _7	0x80    // 1<<7 
 
 /**********************************************************************/
-#if defined(PINGUINO1220) || defined(PINGUINO1320)
+#if defined(PINGUINO1459)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[19]={
+const u8 mask[14]={
+                    _5,_4,_5,_4,_3,_6,_7,_7,        // 0 - 7
+                    _0,_1,_2,_4,_5,_6};             // 8 - 13
+
+const u8 port[14]={
+                    pA, pA, pC, pC, pC, pC, pC, pB, // 0 - 7
+                    pC, pC, pC, pB, pB, pB};        // 8 - 13
+
+/**********************************************************************/
+#elif defined(PINGUINO1220) || defined(PINGUINO1320)
+/**********************************************************************/
+                                                    // Pinguino pin number
+const u8 mask[14]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 0 - 7
                     _0,_1,_2,_3,_4,_5};             // 8 - 13
 
-const unsigned char port[19]={
+const u8 port[14]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 0 - 7
                     pA, pA, pA, pA, pA, pA};        // 8 - 13
 
@@ -66,11 +78,11 @@ const unsigned char port[19]={
 #elif defined(__18f14k22)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[19]={
+const u8 mask[19]={
                     _5,_4,_3,_5,_4,_3,_6,_7,_7,     // 0 - 8
                     _0,_1,_2,_0,_1,_2,_4,_5,_6};    // 9 - 17
 
-const unsigned char port[19]={
+const u8 port[19]={
                     pA, pA, pA, pC, pC, pC, pC, pC, pB, // 0 - 8
                     pA, pA, pA, pC, pC, pC, pB, pB, pB }; // 9 - 17
 
@@ -78,12 +90,12 @@ const unsigned char port[19]={
 #elif defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[19]={
+const u8 mask[19]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 0 - 7
                     _6,_7,_0,_1,_2,                 // 8 - 12
                     _0,_1,_2,_3,_5,_4};             // 13 - 18
 
-const unsigned char port[19]={
+const u8 port[19]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 0 - 7
                     pC, pC, pC, pC, pC,             // 8 - 12
                     pA, pA, pA, pA, pA, pA};        // 13 - 18
@@ -92,12 +104,12 @@ const unsigned char port[19]={
 #elif defined(PINGUINO26J50) || defined(PINGUINO27J53)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[18]={
+const u8 mask[18]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 0 - 7
                     _6,_7,_0,_1,_2,                 // 8 - 12
                     _0,_1,_2,_3,_5};                // 13 -17
 
-const unsigned char port[18]={
+const u8 port[18]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 0 -7
                     pC, pC, pC, pC, pC,             // 8 - 12
                     pA, pA, pA, pA, pA};            // 13 - 17
@@ -106,7 +118,7 @@ const unsigned char port[18]={
 #elif defined(PINGUINO4550)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[30]={
+const u8 mask[30]={
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 0 - 7
                     _6,_7,_0,_1,_2,					// 8 - 12
                     _0,_1,_2,_3,_5,				    // 13 - 17
@@ -115,7 +127,7 @@ const unsigned char mask[30]={
                     _4                              // 29
                     };
 
-const unsigned char port[30]={
+const u8 port[30]={
                     pB, pB, pB, pB, pB, pB, pB, pB,
                     pC, pC, pC, pC, pC,
                     pA, pA, pA, pA, pA,
@@ -127,7 +139,7 @@ const unsigned char port[30]={
 #elif defined(PINGUINO45K50)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[36]={
+const u8 mask[36]={
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 00 - 07
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 08 - 15
                     _0,_1,_2,_3,_4,_5,_6,_7,		// 16 - 23
@@ -135,7 +147,7 @@ const unsigned char mask[36]={
                     _0,_1,_2,_3						// 32 - 35
                     };
 
-const unsigned char port[36]={
+const u8 port[36]={
                     pB, pB, pB, pB, pB, pB, pB, pB,
                     pA, pA, pA, pA, pA, pA, pA, pA,
                     pC, pC, pC, pC, pC, pC, pC, pC,
@@ -147,14 +159,14 @@ const unsigned char port[36]={
 #elif defined(PINGUINO46J50) || defined(PINGUINO47J53) || defined(PINGUINO47J53B)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[32]={
+const u8 mask[32]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
                     _0,_1,_2,_3,_4,_0,_1,_2,        // 08 - 15
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 16 - 23
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 24 - 31
                     };            
 
-const unsigned char port[32]={
+const u8 port[32]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 00 - 07
                     pA, pA, pA, pA, pA, pE, pE, pE, // 08 - 15
                     pC, pC, pC, pC, pC, pC, pC, pC, // 16 - 23
@@ -165,52 +177,52 @@ const unsigned char port[32]={
 #elif defined(FREEJALDUINO)
 /**********************************************************************/
 
-const unsigned char mask[19]={
+const u8 mask[19]={
                     _7,_6,_4,_0,_1,_2,_3,_4,_5,_6,_7,_0,_1,_2,_0,_1,_2,_3, _5};
 
-const unsigned char port[19]={
+const u8 port[19]={
                     1,1,2,0,0,0,0,0,0,0,0,1,1,1,2,2,2,2,2};
 
 /**********************************************************************/
 #elif defined(PICUNO_EQUO)
 /**********************************************************************/
 
-#if defined(PICUNOV1) // Early version of PICUNO_EQUO (BLUE PCB)
-const unsigned char mask[22]={
-                    _7,_6,_4,_0,_1,_2,_3,_4,        // 0 - 7
-                    _5,_6,_7,_0,_1,_2,              // 8 - 13
-                    _0,_1,_2,_3,_5,_0,_1,           // 14 - 21
-                    };
-                    
-const unsigned char port[23]={
-                    pC, pC, pA, pB, pB, pB, pB, pB, // 0 - 7
-                    pB, pB, pB, pC, pC, pC,         // 8 - 13
-                    pA, pA, pA, pA, pA, pE, pE, pE  // 14 - 21
-                    };
-#else                // Second and last version (BLACK PCB)
-const unsigned char mask[21]={
-                    _7,_6,_2,_3,_0,_2,_1,_1,        // 0 - 7
-                    _2,_3,_4,_5,_6,_7,              // 8 - 13
-                    _0,_1,_2,_5,_0,_1,_4            // 14 - 20
-                    };
-                    
-const unsigned char port[21]={
-                    pC, pC, pB, pB, pD, pC, pC, pD,
-                    pD, pD, pD, pD, pD, pD,
-                    pA, pA, pA, pA, pE, pE, pA
-                    };
-#endif
+    #if defined(PICUNOV1) // Early version of PICUNO_EQUO (BLUE PCB)
+    const u8 mask[22]={
+                        _7,_6,_4,_0,_1,_2,_3,_4,        // 0 - 7
+                        _5,_6,_7,_0,_1,_2,              // 8 - 13
+                        _0,_1,_2,_3,_5,_0,_1,           // 14 - 21
+                        };
+                        
+    const u8 port[23]={
+                        pC, pC, pA, pB, pB, pB, pB, pB, // 0 - 7
+                        pB, pB, pB, pC, pC, pC,         // 8 - 13
+                        pA, pA, pA, pA, pA, pE, pE, pE  // 14 - 21
+                        };
+    #else                // Second and last version (BLACK PCB)
+    const u8 mask[21]={
+                        _7,_6,_2,_3,_0,_2,_1,_1,        // 0 - 7
+                        _2,_3,_4,_5,_6,_7,              // 8 - 13
+                        _0,_1,_2,_5,_0,_1,_4            // 14 - 20
+                        };
+                        
+    const u8 port[21]={
+                        pC, pC, pB, pB, pD, pC, pC, pD,
+                        pD, pD, pD, pD, pD, pD,
+                        pA, pA, pA, pA, pE, pE, pA
+                        };
+    #endif
 
 /**********************************************************************/
 #elif defined(CHRP3)
 /**********************************************************************/
                                                     // Pinguino pin number
-const unsigned char mask[21]={
+const u8 mask[21]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
                     _6,_7,_0,_1,_2,                 // 08 - 12
                     _0,_1,_2,_3,_4,_5,_6,_7};       // 13 - 20
 
-const unsigned char port[21]={
+const u8 port[21]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 00 - 07
                     pC, pC, pC, pC, pC,             // 08 - 12
                     pA, pA, pA, pA, pA, pA, pA, pA  // 13 - 20
@@ -220,14 +232,14 @@ const unsigned char port[21]={
 #elif defined(__18f4685)				// Added by Andrej Golac
 /**********************************************************************/
 
-const unsigned char mask[36] = {
+const u8 mask[36] = {
 			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT A pins
 			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT B pins
 			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT C pins
 			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT D pins
 			_0, _1, _2, _3			// PORT E pins
 			};
-const unsigned char port[36] = {
+const u8 port[36] = {
 			pA, pA, pA, pA, pA, pA, pA, pA,	// PORT A
 			pB, pB, pB, pB, pB, pB, pB, pB,	// PORT B
 			pC, pC, pC, pC, pC, pC, pC, pC,	// PORT C

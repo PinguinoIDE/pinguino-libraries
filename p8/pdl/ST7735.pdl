@@ -16,6 +16,7 @@ ST7735.setCursor ST7735_setCursor#include <ST7735.c>
 ST7735.printChar ST7735_printChar#include <ST7735.c>
 ST7735.print ST7735_print#include <ST7735.c>#define ST7735PRINT
 ST7735.println ST7735_println#include <ST7735.c>#define ST7735PRINTLN
+ST7735.printCenter ST7735_printCenter#include <ST7735.c>#define ST7735PRINTCENTER
 ST7735.printNumber ST7735_printNumber#include <ST7735.c>#define ST7735PRINTNUMBER
 ST7735.printFloat ST7735_printFloat#include <ST7735.c>#define ST7735PRINTFLOAT
 ST7735.printf ST7735_printf#include <ST7735.c>#define ST7735PRINTF

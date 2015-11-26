@@ -24,7 +24,7 @@ TODO:
 #ifndef PICUSB_H
 #define PICUSB_H
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 
 #ifdef USB_USE_UART

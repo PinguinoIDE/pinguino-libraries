@@ -31,7 +31,7 @@
 #ifndef __SYSTEM_C
 #define __SYSTEM_C
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>

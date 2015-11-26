@@ -1,0 +1,7 @@
+Watchdog.enable Watchdog_enable#include <watchdog.c>
+Watchdog.disable Watchdog_disable#include <watchdog.c>
+Watchdog.clear Watchdog_clear#include <watchdog.c>
+Watchdog.clearEvent Watchdog_clearEvent#include <watchdog.c>
+Watchdog.readEvent Watchdog_readEvent#include <watchdog.c>
+Watchdog.readPostScaler Watchdog_readPostscaler#include <watchdog.c>
+Watchdog.event Watchdog_event#include <watchdog.c>

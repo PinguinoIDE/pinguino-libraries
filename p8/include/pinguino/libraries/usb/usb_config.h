@@ -18,7 +18,7 @@ TODO: implement ;)
 **/
 #define USB_MAX_CONFIGURATION 1
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include "picUSB.h"
 #ifdef USB_USE_UART

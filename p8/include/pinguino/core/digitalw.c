@@ -37,15 +37,15 @@
 #ifndef __DIGITALW__
 #define __DIGITALW__
 
-#include <pic18fregs.h>
-//#include <typedef.h>
+#include <compiler.h>
+#include <typedef.h>
 #include <pin.h>
 #include <digital.h>
 #if defined(ANALOGWRITE) || defined(__PWM__)
 #include <pwmclose.c>
 #endif
 
-void digitalwrite(unsigned char pin, unsigned char state)
+void digitalwrite(u8 pin, u8 state)
 {
     #if defined(ANALOGWRITE) || defined(__PWM__)
     PWM_close(pin);

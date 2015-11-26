@@ -32,21 +32,24 @@
 // Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
 
+#define SPIMODULE SPI2
+
 float f;
 
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    ST7735.init(SPI1, 6, 5, 0, 0);
-    ST7735.setFont(SPI1, font6x8);
-    ST7735.setBackgroundColor(SPI1, ST7735_BLACK);
-    ST7735.setColor(SPI1, ST7735_WHITE);
-    ST7735.clearScreen(SPI1);
+    ST7735.init(SPIMODULE, 0, 4, 0, 0);
+    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
+    ST7735.setColor(SPIMODULE, ST7735_WHITE);
+    ST7735.setOrientation(SPIMODULE, 180);
+    ST7735.clearScreen(SPIMODULE);
 }
 
 void loop()
 {
-    ST7735.printf(SPI1, "f=%.3f\r\n",f);
+    ST7735.printf(SPIMODULE, "f=%.3f\r\n",f);
     f = f + 0.001f;
     toggle(USERLED);
     delay(100);

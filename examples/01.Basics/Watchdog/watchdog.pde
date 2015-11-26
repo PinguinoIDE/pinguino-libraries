@@ -2,40 +2,32 @@
 
 void setup()
 {
-	Watchdog.Init();	// disabled by default in init()
-	Watchdog.Clear();
+	Watchdog.clear();
 
-	pinMode(GREENLED, OUTPUT);
-	pinMode(YELLOWLED, OUTPUT);
+	pinMode(USERLED, OUTPUT);
 
 	// turn off all led
-	digitalWrite(GREENLED, LOW);
-	digitalWrite(YELLOWLED, LOW);
+	digitalWrite(USERLED, LOW);
 
-	// led indicates pinguino reset
-	// led indicates pinguino reset
-	if (Watchdog.Event())	// by watchdog
-		digitalWrite(YELLOWLED, HIGH);
-	else			// normal
-		digitalWrite(GREENLED, HIGH);
-	delay(1000);
-
-	digitalWrite(GREENLED, LOW);
-	digitalWrite(YELLOWLED, LOW);
+	// led indicates pinguino reset by watchdog
+	if (Watchdog.event())	
+          {
+	    digitalWrite(USERLED, HIGH);
+              delay(2000);
+              digitalWrite(USERLED, LOW);
+	}
 
 	// enable watchdog, start full wdt period
-	Watchdog.Enable();
-	Watchdog.Clear();
+	Watchdog.enable();
+	Watchdog.clear();
 }
 
 void loop()
 {
 	// blink led every second
-	digitalWrite(GREENLED, HIGH);
-	digitalWrite(YELLOWLED, HIGH);
+	digitalWrite(USERLED, HIGH);
 	delay(500);
-	digitalWrite(GREENLED, LOW);
-	digitalWrite(YELLOWLED, LOW);
+	digitalWrite(USERLED, LOW);
 	delay(500);
 
 	// watchdog should reset pinguino due to lack of clear

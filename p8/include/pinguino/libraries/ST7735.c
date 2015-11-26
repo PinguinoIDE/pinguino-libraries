@@ -1,28 +1,33 @@
 /*	--------------------------------------------------------------------
-FILE:			ST7735[module].c
-PROJECT:		pinguino
-PURPOSE:		Drive 1.8" 128x160 TFT display
-PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-FIRST RELEASE:	11 Dec. 2014
-LAST RELEASE:	12 Dec. 2014
-------------------------------------------------------------------------
-http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
-------------------------------------------------------------------------
-* Todo : scroll functions
-------------------------------------------------------------------------
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
+    FILE:			ST7735[module].c
+    PROJECT:		pinguino
+    PURPOSE:		Drive 1.8" 128x160 TFT display
+    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:	11 Dec. 2014
+    LAST RELEASE:	01 Oct. 2015
+    ------------------------------------------------------------------------
+    http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
+    ------------------------------------------------------------------------
+    CHANGELOG
+    * 01 Oct. 2015  RB  fixed ST7735_setOrientation()
+    * 03 Oct. 2015  RB  added new function ST7735_printCenter()
+    ------------------------------------------------------------------------
+    TODO
+    * scroll functions
+    ------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ----------------------------------------------------------------------*/
 
 /**	--------------------------------------------------------------------
@@ -91,10 +96,10 @@ void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
 {
     ST7735_SPI = module;
     
-    ST7735[module].pin.dc = dc;
     ST7735[module].pin.cs = cs;
-    pinmode(ST7735[module].pin.dc, OUTPUT);
+    ST7735[module].pin.dc = dc;
     pinmode(ST7735[module].pin.cs, OUTPUT);
+    pinmode(ST7735[module].pin.dc, OUTPUT);
     
     // init SPI communication
 
@@ -107,7 +112,7 @@ void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
     {
         SPI_setMode(module, SPI_MASTER);
         SPI_setDataMode(module, SPI_MODE1);
-        //maximum baud rate possible = FPB/2
+        //maximum baud rate possible = FPB = FOSC/4
         SPI_setClockDivider(module, SPI_CLOCK_DIV4);
         SPI_begin(module);
     }
@@ -138,7 +143,7 @@ void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
     ST7735_sendData(module,0x05);
     Delayms(10);
     ST7735_sendCommand(module,(u8)ST7735_MADCTL);  // RGB
-    ST7735_sendData(module, 0x60|ST7735_MADCTL_RGB);
+    ST7735_sendData(module, ST7735_MADCTL_RGB);    // portrait
     Delayms(10);
     ST7735_sendCommand(module,(u8)ST7735_DISPON);  // display on!
     Delayms(100);
@@ -171,27 +176,28 @@ void ST7735_setOrientation(u8 module, s16 degrees)
 
     switch (degrees)
     {
-        case  90:
+        case  90:// OK
             ST7735[module].screen.endx   = ST7735_HEIGHT - 1;
             ST7735[module].screen.endy   = ST7735_WIDTH  - 1;
             ST7735[module].screen.width  = ST7735_HEIGHT;
             ST7735[module].screen.height = ST7735_WIDTH;
             arg = ST7735_MADCTL_MX | ST7735_MADCTL_MV | ST7735_MADCTL_RGB; // 0x60;
             break;
-        case 180:
+        case 180:// OK
             ST7735[module].screen.endx   = ST7735_WIDTH - 1;
             ST7735[module].screen.endy   = ST7735_HEIGHT  - 1;
             ST7735[module].screen.width  = ST7735_WIDTH;
             ST7735[module].screen.height = ST7735_HEIGHT;
             arg = ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB; // 0xC0;
             break;
-        case 270:
+        case 270:// OK
             ST7735[module].screen.endx   = ST7735_HEIGHT - 1;
             ST7735[module].screen.endy   = ST7735_WIDTH  - 1;
             ST7735[module].screen.width  = ST7735_HEIGHT;
             ST7735[module].screen.height = ST7735_WIDTH;
             arg = ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_MADCTL_RGB; // 0xA0;
             break;
+        case 0:// OK
         default:
             ST7735[module].screen.endx   = ST7735_WIDTH  - 1;
             ST7735[module].screen.endy   = ST7735_HEIGHT - 1;
@@ -511,7 +517,7 @@ void ST7735_printChar(u8 module, u8 c)
 
 #if defined(ST7735PRINT)       || defined(ST7735PRINTLN)    || \
     defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT)
-void ST7735_print(u8 module, u8 *string)
+void ST7735_print(u8 module, const u8 *string)
 {
     while (*string != 0)
         ST7735_printChar(module, *string++);
@@ -519,10 +525,31 @@ void ST7735_print(u8 module, u8 *string)
 #endif
 
 #if defined(ST7735PRINTLN)
-void ST7735_println(u8 module, u8 *string)
+void ST7735_println(u8 module, const u8 *string)
 {
     ST7735_print(module, string);
-    ST7735_print(module, "\n\r");
+    ST7735_print(module, (u8*)"\n\r");
+}
+#endif
+
+#if defined(ST7735PRINTCENTER)
+void ST7735_printCenter(u8 module, const u8 *string)
+{
+    u8 strlen, nbspace;
+    const u8 *p;
+
+    for (p = string; *p; ++p);
+    strlen = p - string;
+
+    nbspace = (ST7735[module].screen.width / ST7735[module].font.width - strlen) / 2;
+    
+    // write spaces before
+    while(nbspace--)
+        ST7735_printChar(module, 32);
+
+    // write string
+    ST7735_print(module, string);
+    ST7735_print(module, (u8*)"\n\r");
 }
 #endif
 

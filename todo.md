@@ -27,3 +27,6 @@ DONE
 
 - [x] Pinguino 32MX250 Limited memory bug
       Fixed in the new bootloader
+- [x] Added XC8 support
+- [x] Added PIC16F1459 support
+

@@ -33,13 +33,14 @@
 #define __ST7735__
 
 /**	--------------------------------------------------------------------
-    Display size (default orientation is landscape)
+    Display size (default orientation is portrait)
     ------------------------------------------------------------------*/
 
-#define ST7735_WIDTH        160
-#define ST7735_HEIGHT       128
+#define ST7735_WIDTH        128
+#define ST7735_HEIGHT       160
 #define ST7735_SIZE         (ST7735_WIDTH * ST7735_HEIGHT)
 #define ST7735_TABSIZE      4
+
 /**	--------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
@@ -238,8 +239,9 @@ void ST7735_clearWindow(u8, u8, u8, u8, u8);
 
 void ST7735_setFont(u8, const u8*);
 void ST7735_printChar(u8, u8);
-void ST7735_print(u8, u8*);
-void ST7735_println(u8, u8*);
+void ST7735_print(u8, const u8*);
+void ST7735_println(u8, const u8*);
+void ST7735_printCenter(u8, const u8*);
 void ST7735_printNumber(u8, long, u8);
 void ST7735_printFloat(u8, float, u8);
 void ST7735_printf(u8, const u8*, ...);
@@ -278,7 +280,7 @@ void drawHLine(u16, u16, u16);
 u8 ST7735_SPI;
 
 // SPISW, SPI1, SPI2
-#if defined(__18f47j53__)
+#if defined(__18f47j53)
     
 lcd_t ST7735[3];
 

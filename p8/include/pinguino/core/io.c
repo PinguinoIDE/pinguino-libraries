@@ -13,6 +13,7 @@
                                    with EECON2 = 0x55; EECON2 = 0xAA;]
     28 Feb 2013 - Régis Blanchot - renamed functions
                                    added IO_init()
+    01 Oct 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -32,7 +33,7 @@
 #ifndef __IO_C
 #define __IO_C
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
@@ -43,15 +44,22 @@ void IO_init(void)
     // Initialize everything as an output
     
     // Set everything low
+
+    #if defined(__16F1459)
+    //LATA  = 0x00;
+    //LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
+    //LATC  = 0x00;
+    #else
     LATA  = 0x00;
     LATB  = 0x00;
-
+    #endif
+    
     #if defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f27j53) || defined(__18f47j53)
         #ifdef __SERIAL__
-        LATC  = 0x44;	// Except UART TX,TX2 bit (maintain high state to not emit extra low state) 
+        LATC  = 0x44;   // Except UART TX,TX2 bit (maintain high state to not emit extra low state) 
         #else
-        LATC  = 0x00;	
+        LATC  = 0x00;
         #endif
     #endif
     
@@ -59,9 +67,9 @@ void IO_init(void)
          defined(__18f2550)  || defined(__18f4550)  || \
          defined(__18f25k50) || defined(__18f45k50)
         #ifdef __SERIAL__
-        LATC  = 0x40;	// Except UART TX bit (maintain high state to not emit extra low state) 
+        LATC  = 0x40;   // Except UART TX bit (maintain high state to not emit extra low state) 
         #else
-        LATC  = 0x40;	
+        LATC  = 0x00;
         #endif
     #endif
 
@@ -76,11 +84,17 @@ void IO_init(void)
     #ifndef I2CINT
     TRISB = 0x00;
     #endif
+    
+    #if defined(__16F1459)
+    TRISC = 0x00;
+    #else
     TRISCbits.TRISC0 = 0x00;
     TRISCbits.TRISC1 = 0x00;
     TRISCbits.TRISC2 = 0x00;
     TRISCbits.TRISC6 = 0x00;
     TRISCbits.TRISC7 = 0x00;
+    #endif
+
     #if defined(__18f4455)  || defined(__18f4550)  || \
         defined(__18f45k50) || defined(__18f46j50) || \
         defined(__18f47j53)
@@ -109,7 +123,7 @@ void IO_digital(void)
         ADCON1 = 0x0F;				// AN0 to AN12 Digital I/O
         CMCON = 0x07;               // Comparators as Digital I/O
 
-    #elif defined(__18f25k50) || defined(__18f45k50)
+    #elif defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
 
         // Initialize all Analog pins as Digital I/O
         ANSELA = 0;
@@ -167,12 +181,30 @@ void IO_digital(void)
 // NB2 : pins must be explicitly reconfigured as digital I/O when used
 //       with a PPS
 
-#if defined(__18f26j50) || defined(__18f46j50) || \
+#if defined(__16F1459)  || \
+    defined(__18f26j50) || defined(__18f46j50) || \
     defined(__18f27j53) || defined(__18f47j53)
     
 void IO_remap(void)
 {
-    #if defined(__18f26j50) || defined(__18f46j50)
+    #if defined(__16F1459)
+
+        //bit 7 CLKRSEL: Pin Selection bit
+        //1 = CLKR function is on RC3
+        //0 = CLKR function is on RA4
+        APFCONbits.CLKRSEL = 1;                         // RC3
+
+        //bit 5 SSSEL: Pin Selection bit
+        //1 = SS function is on RA3
+        //0 = SS function is on RC6
+        APFCONbits.SSSEL = 0;                           // RC6
+
+        //bit 3 T1GSEL: Pin Selection bit
+        //1 = T1G function is on RA3
+        //0 = T1G function is on RA4
+        APFCONbits.T1GSEL = 1;                          // RA3
+
+    #elif defined(__18f26j50) || defined(__18f46j50)
 
         //SystemUnlock();
         EECON2 = 0x55;
@@ -243,9 +275,9 @@ void IO_remap(void)
          * prevent the module from receiving data on the SDI2 pin, as the
          * module uses the SCK2IN signal to latch the received data.
         **/
-        RPINR22 = 5;                    // 2014-20-03 fixed by AG (see above)
+        RPINR22 = 5;                    // RP5 (RB2) <- SCK2 [2014-20-03 - AG - fixed (see above)]
+        RPOR5 = 11;                     // RP5 (RB2) -> SCK2 (func. num. 11)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
-        RPOR5 = 11;                     // RP5 (RB2) -> SCK2
         RPOR4 = 10;                     // RP4 (RB1) -> SDO2 (func. num. 10)
    
         EECON2 = 0x55;

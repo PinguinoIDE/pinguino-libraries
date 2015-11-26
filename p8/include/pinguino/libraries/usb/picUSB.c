@@ -18,7 +18,7 @@
   // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   //
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <string.h>
 
 #include "picUSB.h"
@@ -92,11 +92,15 @@ u8 hidRxLen;                          // # of bytes put into buffer
     volatile BufferDescriptorTable __at (0x400) ep_bdt[32];
 #endif
 
-  // Put endpoint 0 buffers into dual port RAM
+// Put endpoint 0 buffers into dual port RAM
+#ifdef __XC8
+volatile setupPacketStruct __section("usbram5") SetupPacket;
+volatile byte __section("usbram5") controlTransferBuffer[EP0_BUFFER_SIZE];
+#else
 #pragma udata usbram5 SetupPacket controlTransferBuffer
-//volatile BufferDescriptorTable ep_bdt[32];
 volatile setupPacketStruct SetupPacket;
-volatile u8 controlTransferBuffer[EP0_BUFFER_SIZE];
+volatile byte controlTransferBuffer[EP0_BUFFER_SIZE];
+#endif
 
   //
   // Start of code to process standard requests (USB chapter 9)

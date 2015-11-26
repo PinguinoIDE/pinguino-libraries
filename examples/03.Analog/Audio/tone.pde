@@ -7,7 +7,7 @@
     PWM0 to PWM4 for almost all 32-bit boards
 */
 
-#define LINEOUT 10 //PWM2 //CCP1
+#define LINEOUT PWM0 //PWM2 //CCP1
 
 // Melody structure
 typedef struct

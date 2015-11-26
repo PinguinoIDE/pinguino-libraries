@@ -37,11 +37,11 @@
 
 #endif
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>			    // Pinguino's types definitions
 #include <const.h>				    // Pinguino's constants definitions
 #include <macro.h>				    // Pinguino's macros definitions
-#include <delay.c>                  // Pinguino's delays routines (ms and us)
+#include <delayus.c>                // Pinguino's delays routines (us)
 //#include <digitalw.c>               // Pinguino's Digital IO's definition
 #include <analog.c>                 // Pinguino's Analog IO's definition
 
@@ -75,17 +75,20 @@ the resistor value needed is calculated as
     RCAL = 2.31V/0.55 uA for a value of 4.2 MΩ.
 */
 
-#define RCAL (NOMINALCURRENT/).027                   // R value is 4200000 (4.2M)
-                                    // scaled so that result is in 1/100th of uA
+#define RCAL (NOMINALCURRENT/).027          // R value is 4200000 (4.2M)
+                                            // scaled so that result is in 1/100th of uA
+
+u8 TIME_CHARGE;
+u8 CTMU_WORKING;
 
 /// PROTOTYPES
 
-void CTMU_init(u8);
+void  CTMU_init();
 float CTMU_getVoltage(u8);
 float CTMU_getCurrent(u8);
 float CTMU_getCapacitance(u8);
 float CTMU_getTime(u8);
-u8 CTMU_isPressed(u8);
+u8    CTMU_isPressed(u8);
 
 /*******************************************************************************
  * CTMU setup
@@ -93,7 +96,7 @@ u8 CTMU_isPressed(u8);
  * param : channel = analog pin number (0 for A0, 1 for A1, ...)
  ******************************************************************************/
 
-void CTMU_init(u8 channel)
+void CTMU_init()
 {
     /// Setup CTMU module
 
@@ -106,7 +109,7 @@ void CTMU_init(u8 channel)
 
     /// Setup AD converter
     
-    analog_init(void);
+    analog_init();
 }
  
 /*******************************************************************************
@@ -126,21 +129,27 @@ float CTMU_getVoltage(u8 channel)
     u16 VTot = 0, Vread = 0;
     float Vavg, Vcal;
 
-    CTMU_init(channel);
+    CTMU_init();
 
     for(j=0;j<10;j++)
     {
         CTMUCONHbits.IDISSEN = 1;   // drain charge on the circuit
         Delayus(ETIME);             // Wait 125us
         CTMUCONHbits.IDISSEN = 0;   // end drain of circuit
+        
         CTMUCONLbits.EDG1STAT = 1;  // Begin charging the circuit
         Delayus(ETIME);             // Wait 125us
         CTMUCONLbits.EDG1STAT = 0;  // Stop charging circuit using CTMU current source
+        
+        Vread = analogread(channel);
+        /*
         PIR1bits.ADIF = 0;          // make sure A/D Int not set
         ADCON0bits.GO=1;            // and begin A/D conv.
         while(!PIR1bits.ADIF);      // Wait for A/D convert complete
         Vread = ADRES;              // Get the value from the A/D
         PIR1bits.ADIF = 0;          // Clear A/D Interrupt Flag
+        */
+        
         VTot += Vread;              // Add the reading to the total
     }
     
@@ -160,7 +169,7 @@ float CTMU_getCurrent(u8 channel)
     float Vcal=0;
     float CTMUISrc = 0;             // current value
 
-    CTMU_init(channel);
+    CTMU_init();
 
     CTMUCONHbits.CTMUEN = 1;        // Enable the CTMU
     CTMUCONLbits.EDG1STAT = 0;      // Set Edge status bits to zero
@@ -183,7 +192,7 @@ float CTMU_getCapacitance(u8 channel)
     float CTMUISrc = 0;             // current value
     float CTMUCap = 0;              // capacitance value
 
-    CTMU_init(channel);
+    CTMU_init();
 
     CTMUCONHbits.CTMUEN = 1;        // Enable the CTMU
     CTMUCONLbits.EDG1STAT = 0;      // Set Edge status bits to zero
@@ -212,7 +221,7 @@ float CTMU_getTime(u8 channel)
     float CTMUCap;
     float CTMUTime;
     
-    CTMU_init(channel);
+    CTMU_init();
 
     CTMUCONHbits.CTMUEN = 1;        // Enable the CTMU
     CTMUCONLbits.EDG1STAT = 0;      // Set Edge status bits to zero
@@ -236,7 +245,7 @@ u8 CTMU_isPressed(u8 channel)
 {
     u16 Vread;                      //storage for reading
     
-    CTMU_init(channel);
+    CTMU_init();
     
     CTMUCONHbits.CTMUEN = 1;        // Enable the CTMU
     CTMUCONLbits.EDG1STAT = 0;      // Set Edge status bits to zero
@@ -247,10 +256,16 @@ u8 CTMU_isPressed(u8 channel)
     CTMUCONLbits.EDG1STAT = 1;      // Begin charging the circuit using CTMU current source
     Delayus(ETIME);                 // Wait 125us
     CTMUCONLbits.EDG1STAT = 0;      // Stop charging circuit
-    PIR1bits.ADIF = 0;              // make sure A/D Int not set
-    ADCON0bits.GO=1;                // and begin A/D conv.
-    while(!PIR1bits.ADIF);          // Wait for A/D convert complete
-    Vread = ADRES;                  // Get the value from the A/D
+    
+    Vread = analogread(channel);
+    /*
+    PIR1bits.ADIF = 0;          // make sure A/D Int not set
+    ADCON0bits.GO=1;            // and begin A/D conv.
+    while(!PIR1bits.ADIF);      // Wait for A/D convert complete
+    Vread = ADRES;              // Get the value from the A/D
+    PIR1bits.ADIF = 0;          // Clear A/D Interrupt Flag
+    */
+
     if (Vread < OPENSW - TRIP)
     {
         return PRESSED;
@@ -264,7 +279,8 @@ u8 CTMU_isPressed(u8 channel)
 #endif
 
 /// Interrupt routine
- 
+
+/*
 void ctmu_interrupt(void)
 {
     // check timer0 irq 
@@ -333,5 +349,6 @@ void ctmu_interrupt(void)
     if (PIR1bits.TMR2IF)
         PIR1bits.TMR2IF = 0;
 }
+*/
 
 #endif /* __CTMU_C */

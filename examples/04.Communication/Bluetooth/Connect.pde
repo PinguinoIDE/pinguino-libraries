@@ -7,6 +7,7 @@
 	output : sudo minicom -o -D /dev/ttyACM0
 	---------------------------------------------------------------------------*/
 
+/*
 char * Serial2GetString()
 {
 	u8 i = 0;
@@ -24,6 +25,7 @@ char * Serial2GetString()
 
 	return (buffer);
 }
+*/
 
 void setup()
 {
@@ -41,7 +43,7 @@ void loop()
 	// Use Serial2 functions to send and/or receive data
 	BT.send(UART2, "It works !!!\r\n");
 //	Serial2.printf("AT");
-	CDC.printf("received [%s]|r|n", Serial2GetString() );
+//	CDC.printf("received [%s]|r|n", Serial2GetString() );
 //	Serial2.printf("It works !!!\r\n");
 //	CDC.printf("It works !!!\r\n");
 }

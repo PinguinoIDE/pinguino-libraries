@@ -7,7 +7,7 @@
 #ifndef _MILLIS_C_
 #define _MILLIS_C_
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 //#include <interrupt.h>
 //#include <interrupt.c>

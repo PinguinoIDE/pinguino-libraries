@@ -37,12 +37,11 @@
 #ifndef __DIGITALP__
 #define __DIGITALP__
 
-#include <pic18fregs.h>
-//#include <typedef.h>
-//#include <pin.h>
+#include <compiler.h>
+#include <typedef.h>
 #include <digital.h>
 
-void pinmode(unsigned char pin, unsigned char state)
+void pinmode(u8 pin, u8 state)
 {
     switch (port[pin])
     {

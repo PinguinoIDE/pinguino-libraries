@@ -3,8 +3,8 @@
     PROJECT:        pinguino
     PURPOSE:        pinguino system clock switching functions
     PROGRAMER:      regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:  5 Jan. 2011
-    LAST RELEASE:   2 jan. 2013
+    FIRST RELEASE:  5 Jan.  2011
+    LAST RELEASE:   8 Sept. 2015
     --------------------------------------------------------------------
     The Clock Switching mode is controlled by the SCS bits in the OSCCON
     register. These bits can be changed via software during run time to
@@ -19,7 +19,10 @@
     21-11-2012      regis blanchot  added PINGUINO1220,1320,14k22 support
     07-12-2012      regis blanchot  added PINGUINO25K50 and 45K50 support
                                     added low power functions
-    06-01-2015      regis blanchot  
+    06-01-2015      regis blanchot  fixed some bugs
+    08-09-2015      regis blanchot  added PINGUINO1459 support
+    20-09-2015      regis blanchot  added EUSART Receiver Idle Status check before
+                                    changing System Clock
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -39,7 +42,7 @@
 #ifndef __OSCILLATOR_C
 #define __OSCILLATOR_C
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
@@ -58,10 +61,21 @@ volatile u32 _cpu_clock_;
 // The indices are valid values for PLLDIV
 //static const u8 plldiv[] = { 12, 10, 6, 5, 4, 3, 2, 1 };
 
-#if defined(__18f14k22) || \
-    defined(__18f25k50) || defined(__18f45k50)
+#if defined(__16F1459)
 
-    #define FINTOSC     16000000    // INTOSC Frequency
+    // INTOSC Frequency
+    #define FINTOSC     16000000
+    // The indices are valid values for CPDIV
+    static const u8 cpudiv[] = { 6, 3, 2, 1 };	/* TODO */
+    static const u8 cpudiv_xtal[] = { 1, 1, 1, 1 };
+    // The indices are valid values for IRCF
+    static const u32 ircf[] = { 31000, 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
+
+#elif   defined(__18f14k22) || \
+        defined(__18f25k50) || defined(__18f45k50)
+
+    // INTOSC Frequency
+    #define FINTOSC     16000000
     // The indices are valid values for CPDIV
     static const u8 cpudiv[] = { 6, 3, 2, 1 };	/* TODO */
     static const u8 cpudiv_xtal[] = { 1, 1, 1, 1 };
@@ -71,7 +85,8 @@ volatile u32 _cpu_clock_;
 #elif   defined(__18f2455)  || defined(__18f4455)  || \
         defined(__18f2550)  || defined(__18f4550)   
 
-    #define FINTOSC     8000000     // INTOSC Frequency
+    // INTOSC Frequency
+    #define FINTOSC     8000000
     // The indices are valid values for CPDIV
     static const u8 cpudiv[] = { 2, 3, 4, 6 };
     static const u8 cpudiv_xtal[] = { 1, 2, 3, 4 };
@@ -81,12 +96,17 @@ volatile u32 _cpu_clock_;
 #elif   defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f27j53) || defined(__18f47j53)
 
-    #define FINTOSC     8000000     // INTOSC Frequency
+    // INTOSC Frequency
+    #define FINTOSC     8000000
     // The indices are valid values for CPDIV
     static const u8 cpudiv[] = { 6, 3, 2, 1 }; // rblanchot 2014-03-27 - fixed 
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000 };
 
+#else
+
+    #error "*** Processor not supported ***"
+    
 #endif
 
 // Different frequencies available
@@ -101,40 +121,88 @@ volatile u32 _cpu_clock_;
 #define _500KHZ_      500000
 #define _250KHZ_      250000
 #define _125KHZ_      125000
+#define _62K500HZ_     62500
 #define _32K768HZ_     32768
 #define _31K25HZ_      31250
 #define _31KHZ_        31000
 
-// 2014-09-05 RB -	Last versions of SDCC (>3.4.1) doesn't have
-//					CONFIG words definition for some PIC ...
+/*  --------------------------------------------------------------------
+    CONFIG words definition workaround
+    2014-09-05 - RB - PIC18F
+    2015-09-08 - RB - PIC16F
+    ------------------------------------------------------------------*/
 
-// CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
-#if !defined(__CONFIG1H)
-#define __CONFIG1H 0x300001
-#endif
+#if defined(__16F1459)
 
-// CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
-#if !defined(__CONFIG1L)
-#define __CONFIG1L 0x300000
+    // CONFIG1: CONFIGURATION REGISTER 1 (BYTE ADDRESS 8007h)    
+    #if !defined(__CONFIG1)
+    #define __CONFIG1 0x8007
+    #endif
+
+    // CONFIG2: CONFIGURATION REGISTER 2 (BYTE ADDRESS 8008h)    
+    #if !defined(__CONFIG2)
+    #define __CONFIG2 0x8008
+    #endif
+
+#else
+
+    // CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
+    #if !defined(__CONFIG1H)
+    #define __CONFIG1H 0x300001
+    #endif
+
+    // CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
+    #if !defined(__CONFIG1L)
+    #define __CONFIG1L 0x300000
+    #endif
+
 #endif
 
 /*  --------------------------------------------------------------------
     SystemReadFlashMemory() read in all relevant clock settings
+    08-09-2015 - RB - added PINGUINO1459 support
     ------------------------------------------------------------------*/
 
-static u16 System_readFlashMemory(u32 address)
+#if defined(__16F1459)
+
+//static
+u16 System_readFlashMemory(u16 address)
+{
+    // 1. Write the desired address to the PMADRH:PMADRL register pair.
+    //PMADRH = address >> 8;
+    //PMADRL = address;
+    PMADR = address;
+    // 2. Clear or set the CFGS bit of the PMCON1 register.
+    PMCON1bits.CFGS = (address & 0x8000) ? 1:0;
+    // 3. Then, set control bit RD of the PMCON1 register.
+    PMCON1bits.RD = 1;
+    // 4. The two instructions following a program memory read are required to be NOPs
+    __asm__("NOP");
+    __asm__("NOP");
+    
+    //return ((PMDATH << 8) + PMDATL);
+    return PMDAT;
+}
+
+#else
+
+//static
+u16 System_readFlashMemory(u32 address)
 {
     u8 h8,l8;
 
-    TBLPTRU=address>>16;
-    TBLPTRH=address>>8;
-    TBLPTRL=address;
-    __asm tblrd*+ __endasm;
-    l8=TABLAT;
-    __asm tblrd*+ __endasm;
-    h8=TABLAT;
-    return((h8<<8)+l8);
+    TBLPTRU = address >> 16;
+    TBLPTRH = address >> 8;
+    TBLPTRL = address;
+    __asm__("tblrd*+");
+    l8 = TABLAT;
+    __asm__("tblrd*+");
+    h8 = TABLAT;
+    
+    return ((h8 << 8) + l8);
 }
+
+#endif
 
 /*  --------------------------------------------------------------------
     Calculates the CPU frequency.
@@ -160,98 +228,105 @@ u32 System_getCpuFrequency()
 {
     u8 CPUDIV;
 
-    #if defined(__18f2455)  || defined(__18f4455)  || \
+    #if defined(__16F1459)  || \
+        defined(__18f2455)  || defined(__18f4455)  || \
         defined(__18f2550)  || defined(__18f4550)
 
     u8 fosc, CPUDIV_XTAL;
 
     #endif
 
-    switch (OSCCONbits.SCS)
+    // Clock is determined by FOSC<2:0> in Configuration Words.
+    // primary osc. (internal or external / CPUDIV)
+
+    if (OSCCONbits.SCS == 0)
     {
-        case 0: // primary osc. (internal or external / CPUDIV)
+        // PLL ?
 
-            #if defined(__18f25k50) || defined(__18f45k50)
-            
-            if (OSCCON2bits.PLLEN)
-            {
-                return 48000000L;
-            } 
+        #if   defined(__16F1459)
+
+        //return ( (OSCCONbits.SPLLEN) ? 48000000L : CRYSTAL);
+        if (OSCCONbits.SPLLEN)
+            if (OSCCONbits.SPLLMULT)    // 1=3xPLL, 0=4xPLL
+                return 48000000L;       // 3*16MHz = 48MHz
             else
-            {
-                return CRYSTAL;
-            }
-            
-            #endif
-            
-            // CPUDIV ?
-            
-            #if defined(__18f2455)  || defined(__18f4455)  || \
-                defined(__18f2550)  || defined(__18f4550)
-                
-            CPUDIV  = ( System_readFlashMemory(__CONFIG1L) & 0b00011000 ) >> 3;
-            CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
-            fosc  = System_readFlashMemory(__CONFIG1H) & 0b00001111;
+                return 64000000L;       // 4*16MHz = 64MHz (not sure it's possible)
+         else
+            return CRYSTAL;
 
-            #else // xxJ5x
+        #elif defined(__18f25k50) || defined(__18f45k50)
+        
+        return ( (OSCCON2bits.PLLEN) ? 48000000L : CRYSTAL);
+        
+        #endif
+        
+        // CPUDIV ?
+        
+        #if defined(__18f2455)  || defined(__18f4455)  || \
+            defined(__18f2550)  || defined(__18f4550)
+            
+        CPUDIV  = ( System_readFlashMemory(__CONFIG1L) & 0b00011000 ) >> 3;
+        CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
+        fosc  = System_readFlashMemory(__CONFIG1H) & 0b00001111;
+        
+        #elif defined(__16F1459)
 
-            CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
+        CPUDIV = ( System_readFlashMemory(__CONFIG2) & 0b00110000 ) >> 4;
+        CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
+        fosc  = System_readFlashMemory(__CONFIG1) & 0b00001111;
 
-            #endif
+        #else // xxJ5x
 
-            CPUDIV = cpudiv[CPUDIV];
-            
-            // PLL ?
-            
-            #if defined(__18f2455) || defined(__18f4455) || \
-                defined(__18f2550) || defined(__18f4550)
-                  
-            fosc >>=1;
-            if( (fosc==0) || (fosc==2) || (fosc==6) )
-            {
-                return CRYSTAL / CPUDIV_XTAL;
-            }
-            else
-            {
-                return 96000000UL / CPUDIV;
-            }
-            
-            #elif defined(__18f26j50) || defined(__18f46j50) || \
-                  defined(__18f26j53) || defined(__18f46j53) || \
-                  defined(__18f27j53) || defined(__18f47j53)
+        CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
 
-            if (OSCTUNEbits.PLLEN)
-            {
-                return 48000000UL / CPUDIV;
-            } 
-            else
-            {
-                return CRYSTAL / CPUDIV;
-            }
-            
-            #endif
-            
-        case 1: // secondary osc. (timer 1, most of the time 32768 Hz)
-            return 32768;
-            
-        case 2: // reserved or postscaled internal clock
-        case 3: // postscaled internal clock (IRCF)
-            return ircf[OSCCONbits.IRCF];
+        #endif
+
+        CPUDIV = cpudiv[CPUDIV];
+        
+        // PLL ?
+        
+        #if defined(__16F1459) || \
+            defined(__18f2455) || defined(__18f4455) || \
+            defined(__18f2550) || defined(__18f4550)
+              
+        fosc >>=1;
+        if( (fosc==0) || (fosc==2) || (fosc==6) )
+        {
+            return CRYSTAL / CPUDIV_XTAL;
+        }
+        else
+        {
+            return 96000000UL / CPUDIV;
+        }
+        
+        #elif defined(__18f26j50) || defined(__18f46j50) || \
+              defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53)
+
+        return ( (OSCTUNEbits.PLLEN) ? (48000000UL / CPUDIV) : (CRYSTAL / CPUDIV));
+        
+        #endif
     }
+
+    // secondary osc. (timer 1, most of the time 32768 Hz)
+    if (OSCCONbits.SCS == 1)
+        return 32768;
+
+    // postscaled internal clock (IRCF)
+    if (OSCCONbits.SCS >= 2)
+        return ircf[OSCCONbits.IRCF];
+    
+    return 0;
 }
 
 /*  --------------------------------------------------------------------
     Calculates the Peripheral frequency.
     On PIC18F, Peripheral Freq. = CPU. Freq. / 4
-    TODO : replace with #define ?
+    09-09-2015 - RB - function replaced by a macro
     ------------------------------------------------------------------*/
 
 #define SystemGetInstructionClock()		System_getPeripheralFrequency()	
-
-u32 System_getPeripheralFrequency() 
-{
-    return System_getCpuFrequency() >> 2;
-}
+#define System_getPeripheralFrequency()	(System_getCpuFrequency() >> 2)
 
 /*  --------------------------------------------------------------------
     Functions to change clock source and frequency
@@ -297,7 +372,8 @@ u32 System_getPeripheralFrequency()
     0 = 31 kHz device clock derived directly from INTRC internal oscillator
     ------------------------------------------------------------------*/
 
-#if defined(__18f14k22) || defined(__18f2455)  || \
+#if defined(__16F1459)  || \
+    defined(__18f14k22) || defined(__18f2455)  || \
     defined(__18f2550)  || defined(__18f4550)  || \
     defined(__18f25k50) || defined(__18f45k50) || \
     defined(__18f26j50) || defined(__18f46j50) || \
@@ -344,7 +420,8 @@ void System_setTimer1Osc()
     TMR1H = 0x80;
     TMR1L = 0x00;
 
-    #if defined(__18f26j50) || defined(__18f46j50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53) || \
         defined(__18f25k50) || defined(__18f45k50)
@@ -370,7 +447,8 @@ void System_setTimer1Osc()
     
     #endif
     
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53) || \
         defined(__18f25k50) || defined(__18f45k50)
         
@@ -473,7 +551,8 @@ void System_setIntOsc(u32 freq)
         {
             _cpu_clock_ = 31000;
             
-            #if defined(__18f25k50) || defined(__18f45k50)
+            #if defined(__16F1459)  || \
+                defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
@@ -499,7 +578,8 @@ void System_setIntOsc(u32 freq)
         {
             _cpu_clock_ = 31250;
             
-            #if defined(__18f25k50) || defined(__18f45k50)
+            #if defined(__16F1459)  || \
+                defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
@@ -542,7 +622,11 @@ void System_setIntOsc(u32 freq)
     /// 5- wait INTOSC frequency is stable (HFIOFS=1)
     /// -----------------------------------------------------------------
 
-    #if defined(__18f25k50) || defined(__18f45k50)
+    #if   defined(__16F1459)
+
+    while (!OSCSTATbits.HFIOFS); 
+
+    #elif defined(__18f25k50) || defined(__18f45k50)
 
     while (!OSCCONbits.HFIOFS); 
 
@@ -568,11 +652,20 @@ void System_setIntOsc(u32 freq)
 
 /*  --------------------------------------------------------------------
     Set the CPU frequency
+    --------------------------------------------------------------------
+    20-09-2015 - RB - If the system clock is changed during an active EUSART
+    receive operation, a receive error or data loss may result. To avoid this
+    problem, check the status of the RCIDL bit to make sure that the receive
+    operation is idle before changing the system clock.
     ------------------------------------------------------------------*/
 
 #if defined(SYSTEMSETCPUFREQUENCY) 
 void System_setCpuFrequency(u32 freq) 
 {
+    #if defined(__SERIAL__)
+    while(!BAUDCONbits.RCIDL);  // Wait the receiver is Idle
+    #endif
+    
     if (freq == 32768)
         System_setTimer1Osc();
     else if (freq == 48000000)
@@ -584,11 +677,20 @@ void System_setCpuFrequency(u32 freq)
 
 /*  --------------------------------------------------------------------
     Set the Peripheral frequency (Fosc/4)
+    --------------------------------------------------------------------
+    20-09-2015 - RB - If the system clock is changed during an active EUSART
+    receive operation, a receive error or data loss may result. To avoid this
+    problem, check the status of the RCIDL bit to make sure that the receive
+    operation is idle before changing the system clock.
     ------------------------------------------------------------------*/
 
 #if defined(SYSTEMSETPERIPHERALFREQUENCY)
 void System_setPeripheralFrequency(u32 freq)
 {
+    #if defined(__SERIAL__)
+    while(!BAUDCONbits.RCIDL);  // Wait the receiver is Idle
+    #endif
+
     if (freq > 12000000UL)
     {
         freq = 12000000UL;

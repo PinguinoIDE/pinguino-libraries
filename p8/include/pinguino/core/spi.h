@@ -38,12 +38,12 @@
 #elif defined(__18f26j50)|| defined(__18f46j50) || \
       defined(__18f27j53)|| defined(__18f47j53)
 
-    // SPI1 (!!! share the same pins as UART1 !!!)
-    #define SD_CS           PORTBbits.RB0       // SPI2 Chip Select
-    #define SSPIN           TRISBbits.TRISB0    // SPI2 Chip Select TRIS
-    #define SDIPIN          TRISBbits.TRISB3    // SPI2 SDO Master input/Slave output TRIS
-    #define SCKPIN          TRISBbits.TRISB2    // SPI2 SCK Clock TRIS
-    #define SDOPIN          TRISBbits.TRISB1    // SPI2 SDI Master output/Slave input TRIS
+    // SPI1 (Note: Spi SDO1 and Serial RX1 are the same)
+    #define SD_CS           PORTBbits.RB6       // SPI1 Chip Select
+    #define SSPIN           TRISBbits.TRISB6    // SPI1 Chip Select TRIS
+    #define SDIPIN          TRISBbits.TRISB5    // SPI1 SDO Master input/Slave output TRIS
+    #define SCKPIN          TRISBbits.TRISB4    // SPI1 SCK Clock TRIS
+    #define SDOPIN          TRISCbits.TRISC7    // SPI1 SDI Master output/Slave input TRIS
 
     // SPI2
     #define SD_CS2          PORTBbits.RB0       // SPI2 Chip Select
@@ -71,6 +71,7 @@
     ---------------------------------------------------------------------------*/
 
 #define SPI_MASTER          0b0000
+#define SPI_MASTER8         0b0000
 #define SPI_MASTER_FOSC_4   0b0000
 #define SPI_MASTER_FOSC_8   0b1010  // xxj5x only
 #define SPI_MASTER_FOSC_16  0b0001
@@ -115,6 +116,7 @@ typedef struct
 /// Prototypes
 
 void SPI_begin(u8 module);
+void SPI_close(u8 module);
 void SPI_init(u8 module, u8 sync_mode, u8 bus_mode, u8 smp_phase);
 void SPI_setMode(u8 module, u8 mode);
 void SPI_setBitOrder(u8 module, u8 bitorder);

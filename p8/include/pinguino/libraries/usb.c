@@ -10,7 +10,7 @@
 
 //#if defined(boot2)
 
-#include <pic18fregs.h>
+#include <compiler.h>
 #include <typedef.h>
 #include <usb.h>
 

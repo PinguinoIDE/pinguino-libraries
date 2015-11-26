@@ -39,7 +39,7 @@
 #ifndef __PWM__
 #define __PWM__
 
-#include <pic18fregs.h>     // sfr's
+#include <compiler.h>     // sfr's
 #include <typedef.h>        // u8, u16, u32, ...
 #include <pin.h>            // USERLED
 #include <digitalp.c>       // pinmode
@@ -121,8 +121,8 @@ u16 PWM_setFrequency(u32 freq)
         // Returns PR2+1 value
         return gPR2PLUS1;
     }
-    else
-        return 0;                           // error (mostly freq. is too low)
+
+    return 0;                           // error (mostly freq. is too low)
 }
 
 /*  --------------------------------------------------------------------
@@ -311,7 +311,7 @@ void PWM_setPercentDutyCycle(u8 pin, u8 percent)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETENHANCEDOUTPUT)
-#if defined(__18f4550)
+#if defined(__18f4550) || defined(__18f45k50)
 void PWM_setEnhancedOutput (u8 config, u8 mode)
 {
 
@@ -355,7 +355,7 @@ void PWM_setEnhancedOutput (u8 config, u8 mode)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETDEADBAND)
-#if defined(__18f4550)
+#if defined(__18f4550) || defined(__18f45k50)
 void PWM_setDeadBand (u8 cycles) 
 {
     if (cycles > 127) {
@@ -379,9 +379,9 @@ void PWM_setDeadBand (u8 cycles)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASAUTORESTART)
-#if defined(__18f4550)
+#if defined(__18f4550) || defined(__18f45k50)
 void PWM_setASautoRestart (u8 autorestart) 
-{	
+{
     if (autorestart) {
         ECCP1DEL = (ECCP1DEL | 0b10000000);
     } else {
@@ -402,9 +402,9 @@ void PWM_setASautoRestart (u8 autorestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASMANUALRESTART)
-#if defined(__18f4550)
+#if defined(__18f4550) || defined(__18f45k50)
 void PWM_setASmanualRestart (u8 manualrestart) 
-{	
+{
     if (((ECCP1DEL & 0b10000000) >> 7) == 0) {
         if (manualrestart) {
             ECCP1AS = (ECCP1AS | 0b00000000);	//bit 7 ECCPASE: ECCP Auto-Shutdown Event Status bit [0 = work; 1 = shutdown]	
@@ -431,8 +431,9 @@ void PWM_setASmanualRestart (u8 manualrestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETAUTOSHUTDOWN)
-#if defined(__18f4550)
-void PWM_setAutoShutdown (u8 autoshutdown) {
+#if defined(__18f4550) || defined(__18f45k50)
+void PWM_setAutoShutdown (u8 autoshutdown)
+{
     if (autoshutdown) {
         ECCP1AS = 0b01000000;		// AS Enabled
     } else {
