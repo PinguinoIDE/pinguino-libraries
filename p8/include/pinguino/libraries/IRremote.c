@@ -301,7 +301,7 @@ void IRsend_mark(u16 time)
     
     // while () {} needs much less time than for (;;) {}
     // for loop without NOPs : ~ 1,3 ms (889 iterations on 18f26j50)
-    // while loop without NOPs: ~ 712 µs (889 Iterations on 18f26j50)
+    // while loop without NOPs: ~ 712 Âµs (889 Iterations on 18f26j50)
     while (i) {
       _1us_
       i--;
@@ -364,9 +364,9 @@ void IRrecv_enableIRIn(u8 recvpin)
 
     // Timer3 is on 16 bits, prescaler 1, based on external crystal Frequency
     #if defined(__18f25k50) || defined(__18f45k50)
-    T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_1 | T3_RUN_FROM_OSC;
+    T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_1 | T3_SOURCE_FOSC;
     #else
-    T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_OSC_OFF | T3_PS_1_1 | T3_RUN_FROM_OSC;
+    T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_OSC_OFF | T3_PS_1_1 | T3_SOURCE_FOSC;
     #endif
 
     // nb cycles for 50us
