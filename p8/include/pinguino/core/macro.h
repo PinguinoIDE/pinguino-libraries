@@ -17,9 +17,14 @@
     #define clrwdt()				do { __asm__("clrwdt"); } while (0)
     #define reset()				    do { __asm__("reset");  } while (0)
     #define sleep()				    do { __asm__("sleep");  } while (0)
+    #if defined(__16F1459)
+    #define interrupts()			do { INTCONbits.GIE = 1; } while (0)
+    #define noInterrupts()		    do { INTCONbits.GIE = 0; } while (0)
+    #else
     #define interrupts()			do { INTCONbits.GIEH = 1; INTCONbits.GIEL = 1; } while (0)
     #define noInterrupts()		    do { INTCONbits.GIEH = 0; INTCONbits.GIEL = 0; } while (0)
-
+    #endif
+    
     /// C
 
     #define NoEndLoop		        while(1)

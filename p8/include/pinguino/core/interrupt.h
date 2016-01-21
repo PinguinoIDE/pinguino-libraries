@@ -258,20 +258,20 @@
         defined(__18f2550)  || defined(__18f4550)
 
         // bit 7 RD16: 16-Bit Read/Write Mode Enable bit
-        #define T3_16BIT			(1<<7)	// 16-bit mode
-        #define T3_8BIT				(0) 	// 8-bit mode
+        #define T3_16BIT                (1<<7)  // 16-bit mode
+        #define T3_8BIT                 (0)     // 8-bit mode
 
         // bit 6 T3RUN: timer3 System Clock Status bit
-        #define T3_SOURCE_FOSC		(1<<6)  // 1 = Device clock is derived from timer3 oscillator
-        #define T3_RUN_FROM_ANOTHER	(0)     // 0 = Device clock is derived from another source
+        #define T3_SOURCE_FOSC          (1<<6)  // 1 = Device clock is derived from timer3 oscillator
+        #define T3_RUN_FROM_ANOTHER     (0)     // 0 = Device clock is derived from another source
 
         // bit 3 T3OSCEN: timer3 Oscillator Enable bit
-        #define T3_OSC_OFF			(1<<3)  // Timer 1 oscilator is shut off
-        #define T3_OSC_ON			(0)     // Timer 1 oscilator enable on
+        #define T3_OSC_OFF              (1<<3)  // Timer 1 oscilator is shut off
+        #define T3_OSC_ON               (0)     // Timer 1 oscilator enable on
 
         // bit 1 TMR3CS: timer3 Clock Source Select bit
-        #define T3_SOURCE_EXT		(1<<1)  // 1 = External clock from RC0/T13CKI
-        #define T3_SOURCE_FOSCDIV4		(0)     // 0 = Internal clock source (FOSC/4)
+        #define T3_SOURCE_EXT           (1<<1)  // 1 = External clock from RC0/T13CKI
+        #define T3_SOURCE_FOSCDIV4      (0)     // 0 = Internal clock source (FOSC/4)
 
     #elif defined(__18f25k50) || defined(__18f45k50) || \
           defined(__18f26j50) || defined(__18f46j50) || \
@@ -279,37 +279,37 @@
           defined(__18f27j53) || defined(__18f47j53)
 
         // bit 7-6 TMR3CS<1:0>: timer3 Clock Source Select bits
-        #define T3_SOURCE_EXT       (1<<7)  // timer3 clock source is the T3OSC or T3CKI pin
-        #define T3_SOURCE_FOSC     (1<<6)  // timer3 clock source is the system clock (FOSC)(1)
-        #define T3_SOURCE_FOSCDIV4       (0)     // timer3 clock source is the instruction clock (FOSC/4)
+        #define T3_SOURCE_EXT           (1<<7)  // timer3 clock source is the T3OSC or T3CKI pin
+        #define T3_SOURCE_FOSC          (1<<6)  // timer3 clock source is the system clock (FOSC)(1)
+        #define T3_SOURCE_FOSCDIV4      (0)     // timer3 clock source is the instruction clock (FOSC/4)
 
         #if defined(__18f25k50) || defined(__18f45k50)
             // bit 3 SOSCEN: Secondary Oscillator Enable bit
-            #define T3_SOSC_ON			(1<<3)  // Timer 1 second oscilator is enabled
-            #define T3_SOSC_OFF			(0)     // Timer 1 second oscilator is disabled
+            #define T3_SOSC_ON          (1<<3)  // Timer 1 second oscilator is enabled
+            #define T3_SOSC_OFF         (0)     // Timer 1 second oscilator is disabled
         #else // x6j50
             // bit 3 T3OSCEN: timer3 Oscillator Enable bit
-            #define T3_OSC_OFF			(1<<3)  // Timer 1 oscilator is shut off
-            #define T3_OSC_ON			(0)     // Timer 1 oscilator enable on
+            #define T3_OSC_OFF          (1<<3)  // Timer 1 oscilator is shut off
+            #define T3_OSC_ON           (0)     // Timer 1 oscilator enable on
         #endif
         
         // bit 1 RD16: 16-Bit Read/Write Mode Enable bit
-        #define T3_16BIT			(1<<1)  // 16-bit mode
-        #define T3_8BIT				(0)     // 8-bit mode
+        #define T3_16BIT                (1<<1)  // 16-bit mode
+        #define T3_8BIT                 (0)     // 8-bit mode
 
     #endif
 
 	// bit 5-4 T3CKPS1:T3CKPS0: timer3 Input Clock Prescale Select bits
-	#define T3_PS_1_1			(0b00<<4)	// 1:1 prescale value
-	#define T3_PS_1_2			(0b01<<4)	// 1:2 prescale value
-	#define T3_PS_1_4			(0b10<<4)	// 1:4 prescale value
-	#define T3_PS_1_8			(0b11<<4)	// 1:8 prescale value
+	#define T3_PS_1_1               (0b00<<4)	// 1:1 prescale value
+	#define T3_PS_1_2               (0b01<<4)	// 1:2 prescale value
+	#define T3_PS_1_4               (0b10<<4)	// 1:4 prescale value
+	#define T3_PS_1_8               (0b11<<4)	// 1:8 prescale value
 	// bit 2 T3SYNC: timer3 External Clock Input Synchronization Select bit
-	#define T3_SYNC_EXT_ON		(1<<2)  // Synchronize external clock input
-	#define T3_SYNC_EXT_OFF		(0)     // Do not synchronize external clock input
+	#define T3_SYNC_EXT_ON              (1<<2)  // Synchronize external clock input
+	#define T3_SYNC_EXT_OFF             (0)     // Do not synchronize external clock input
 	// bit 0 TMR3ON: timer3 On bit
-	#define T3_ON				(1<<0)  // 1 = Enables timer3
-	#define T3_OFF				(0)     // 0 = Stops timer3
+	#define T3_ON                       (1<<0)  // 1 = Enables timer3
+	#define T3_OFF                      (0)     // 0 = Stops timer3
 
 	///
 	/// T4CON: TIMER4 CONTROL REGISTER

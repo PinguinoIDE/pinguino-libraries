@@ -11,7 +11,7 @@ How many Endpoints do we have, should be at least one for the configuration endp
 not used ATM
 TODO: use it 
 **/
-#define USB_MAX_ENDPOINTS 0
+#define USB_MAX_ENDPOINTS 4
 
 /** how many different configuration should be available. At least configuration 1 must exist.
 TODO: implement ;)
@@ -60,23 +60,32 @@ typedef struct
 } USB_Configuration_Descriptor;
 #endif
 
-extern __code USB_Device_Descriptor libdevice_descriptor;
-extern __code USB_Configuration_Descriptor libconfiguration_descriptor;
+// String Descriptor
+typedef struct
+{
+    u8  bLength;
+    u8  bDescriptorType;
+    u16 string[9];
+} USB_String_Descriptor;
+
+
+extern const USB_Device_Descriptor libdevice_descriptor;
+extern const USB_Configuration_Descriptor libconfiguration_descriptor;
 //extern __code unsigned char libstring_descriptor[40][3];
 extern const char * const libstring_descriptor[]; // rb 25-01-2013
 
 #ifdef USB_USE_CDC
     /* Definitions for CDC */
-    #define USB_CDC_COMM_INTERFACE  0   /* in which interface are the communication EPs */
-    #define USB_CDC_DATA_INTERFACE	1	/* in which interface are the data EPs */
-    #define USB_COMM_EP_NUM		2		/* Numm for Comm EP */
-    #define USB_COMM_EP_UEP		UEP2	/* corresponding UEP for Data EP */
-    #define CDC_DATA_EP_NUM	3			/* Num of Data EP */
-    #define CDC_DATA_EP_UEP	UEP3		/* corresponding UEP for Data EP */
-    #define USB_CDC_BAUD_RATE	115200
-    #define USB_CDC_STOP_BITS	0x00	/* 1 Stop Bit */
-    #define USB_CDC_PARITY		0x00	/* no parity */
-    #define USB_CDC_DATA_BITS	0x08
+    #define USB_CDC_COMM_INTERFACE  0       /* in which interface are the communication EPs */
+    #define USB_CDC_DATA_INTERFACE  1       /* in which interface are the data EPs */
+    #define USB_COMM_EP_NUM         2       /* Numm for Comm EP */
+    #define USB_COMM_EP_UEP         UEP2    /* corresponding UEP for Data EP */
+    #define CDC_DATA_EP_NUM         3       /* Num of Data EP */
+    #define CDC_DATA_EP_UEP         UEP3    /* corresponding UEP for Data EP */
+    #define USB_CDC_BAUD_RATE       115200
+    #define USB_CDC_STOP_BITS       0x00    /* 1 Stop Bit */
+    #define USB_CDC_PARITY          0x00    /* no parity */
+    #define USB_CDC_DATA_BITS       0x08
 #endif
 
 #ifdef USB_USE_BULK

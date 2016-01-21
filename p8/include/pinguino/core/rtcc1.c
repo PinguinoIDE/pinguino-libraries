@@ -131,6 +131,24 @@ void RTCC_SetTimeDate(u32 tm, u32 dt)
 	---------------------------------------------------------------------------*/
 
 #if defined(RTCCGETTIME) || defined(RTCCGETTIMEDATE)
+rtccTime* RTCC_GetTime()
+{
+    u8 dummy;
+    rtccTime* pTm = NULL;
+
+    RTCCFGbits.RTCPTR1 = 0;
+    RTCCFGbits.RTCPTR0 = 1;
+    RTCC_Wait();
+    pTm->hours = RTCVALL;     
+    RTCC_Wait();
+    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    RTCC_Wait();
+    pTm->seconds = RTCVALL;
+    RTCC_Wait();
+    pTm->minutes = RTCVALH;   
+    return (RTCC_ConvertTime(&pTm));
+}
+/*
 void RTCC_GetTime(rtccTime* pTm)
 {
     u8 dummy;
@@ -147,9 +165,32 @@ void RTCC_GetTime(rtccTime* pTm)
     pTm->minutes = RTCVALH;   
     RTCC_ConvertTime(pTm);
 }
+*/
 #endif
 
 #if defined(RTCCGETDATE) || defined(RTCCGETTIMEDATE)
+rtccDate* RTCC_GetDate()
+{
+    u8 dummy;
+    rtccDate* pDt = NULL;
+
+    RTCCFGbits.RTCPTR1 = 1;
+    RTCCFGbits.RTCPTR0 = 1;
+    RTCC_Wait();
+    pDt->year = RTCVALL;
+    RTCC_Wait();
+    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    RTCC_Wait();
+    pDt->dayofmonth = RTCVALL;
+    RTCC_Wait();
+    pDt->month = RTCVALH;
+    RTCC_Wait();
+    dummy = RTCVALL;
+    RTCC_Wait();
+    pDt->dayofweek = RTCVALH;
+    return (RTCC_ConvertDate(&pDt));
+}
+/*
 void RTCC_GetDate(rtccDate* pDt)
 {
     u8 dummy;
@@ -170,6 +211,7 @@ void RTCC_GetDate(rtccDate* pDt)
     pDt->dayofweek = RTCVALH;
     RTCC_ConvertDate(pDt);
 }
+*/
 #endif
 
 #ifdef RTCCGETTIMEDATE
@@ -178,8 +220,10 @@ void RTCC_GetTimeDate(rtccTime* pTm, rtccDate* pDt)
     rtccTime tm;
     rtccDate dt;
 
-    RTCC_GetDate(&dt);
-    RTCC_GetTime(&tm);
+    //RTCC_GetDate(&dt);
+    dt = RTCC_GetDate();
+    //RTCC_GetTime(&tm);
+    tm = RTCC_GetTime();
     pTm->l = tm.l;
     pDt->l = dt.l;
 }

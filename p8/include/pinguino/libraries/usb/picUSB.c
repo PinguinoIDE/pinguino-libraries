@@ -80,9 +80,12 @@ u8 hidRxLen;                          // # of bytes put into buffer
   **/
 
 //
+//  USB RAM / Buffer Descriptor Table
 //  RB 09/09/2012 : added some other PIC support
+//  RB 30/11/2015 : added PIC16F1459 support
 //
 
+/*
 #if   defined(__18f14k50) || defined(__18f14k50)  // Bank 2
     volatile BufferDescriptorTable __at (0x200) ep_bdt[32];
 #elif defined(__18f26j53) || defined(__18f46j53) || \
@@ -91,22 +94,38 @@ u8 hidRxLen;                          // # of bytes put into buffer
 #else                                             // Bank 4
     volatile BufferDescriptorTable __at (0x400) ep_bdt[32];
 #endif
+*/
 
-// Put endpoint 0 buffers into dual port RAM
-#ifdef __XC8
-volatile setupPacketStruct __section("usbram5") SetupPacket;
-volatile byte __section("usbram5") controlTransferBuffer[EP0_BUFFER_SIZE];
-#else
-#pragma udata usbram5 SetupPacket controlTransferBuffer
-volatile setupPacketStruct SetupPacket;
-volatile byte controlTransferBuffer[EP0_BUFFER_SIZE];
+// sizeof(BufferDescriptorTable) = 4 bytes
+// sizeof(setupPacketStruct) = EP0_BUFFER_SIZE
+// sizeof(controlTransferBuffer) = EP0_BUFFER_SIZE
+
+// Each endpoint has IN and OUT direction
+// if 2 endpoints, sizeof(ep_bdt) = 2*2*4 bytes = 16 ou 0x10
+// if 3 endpoints, sizeof(ep_bdt) = 2*3*4 bytes = 24 ou 0x18
+
+BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
+
+#ifdef __XC8__
+    #if defined(__16F1459)
+        u8 __section("usbram5") dummy; // to prevent a compilation error
+        setupPacketStruct SetupPacket @ 0x2018;
+        u8 controlTransferBuffer[EP0_BUFFER_SIZE] @ 0x2020; //0x2058;
+    #else
+        setupPacketStruct __section("usbram5") SetupPacket;
+        u8 __section("usbram5") controlTransferBuffer[EP0_BUFFER_SIZE];
+    #endif
+#else // SDCC
+    #pragma udata usbram5 SetupPacket controlTransferBuffer
+    setupPacketStruct SetupPacket;
+    u8 controlTransferBuffer[EP0_BUFFER_SIZE];
 #endif
 
-  //
-  // Start of code to process standard requests (USB chapter 9)
-  //
+//
+// Start of code to process standard requests (USB chapter 9)
+//
 
-  // Process GET_DESCRIPTOR
+// Process GET_DESCRIPTOR
 static void GetDescriptor(void)
 {
     #ifdef DEBUG_PRINT
@@ -120,12 +139,12 @@ static void GetDescriptor(void)
 
         if (descriptorType == DEVICE_DESCRIPTOR)
         {
-        #ifdef DEBUG_PRINT
-        printf("DEVICE_DESCRIPTOR (0x%ux)\r\n",(word)descriptorType);
-        #endif
-          requestHandled = 1;
-          outPtr = (u8 *)&libdevice_descriptor;
-          wCount = sizeof(USB_Device_Descriptor);
+            #ifdef DEBUG_PRINT
+            printf("DEVICE_DESCRIPTOR (0x%ux)\r\n",(word)descriptorType);
+            #endif
+            requestHandled = 1;
+            outPtr = (u8 *)&libdevice_descriptor;
+            wCount = sizeof(USB_Device_Descriptor);
         }
 
         else if (descriptorType == CONFIGURATION_DESCRIPTOR)
@@ -164,7 +183,8 @@ static void GetDescriptor(void)
 
             requestHandled = 1;
             //outPtr = (u8 *)&libstring_descriptor[descriptorIndex];
-            outPtr = libstring_descriptor[descriptorIndex];
+            //outPtr = libstring_descriptor[descriptorIndex];
+            outPtr = (u8 *)&libstring_descriptor+descriptorIndex;
             wCount = *outPtr;
         }
 
@@ -192,92 +212,107 @@ static void GetDescriptor(void)
 
 
   // Process GET_STATUS
-static void GetStatus(void) {
-  // Mask off the Recipient bits
-  u8 recipient = SetupPacket.bmRequestType & 0x1F;
-#ifdef DEBUG_PRINT
-  printf("GetStatus\r\n");
-#endif
-  controlTransferBuffer[0] = 0;
-  controlTransferBuffer[1] = 0;
+static void GetStatus(void)
+{
+    // Mask off the Recipient bits
+    u8 recipient = SetupPacket.bmRequestType & 0x1F;
+    
+    #ifdef DEBUG_PRINT
+    printf("GetStatus\r\n");
+    #endif
+    controlTransferBuffer[0] = 0;
+    controlTransferBuffer[1] = 0;
 
-  // See where the request goes
-  if (recipient == 0x00) {
-  // Device
-    requestHandled = 1;
-  // Set bits for self powered device and remote wakeup.
-    if (selfPowered)
-      controlTransferBuffer[0] |= 0x01;
-    if (remoteWakeup)
-      controlTransferBuffer[0] |= 0x02;
-  }
-  else if (recipient == 0x01) {
-  // Interface
-    requestHandled = 1;
-  }
-  else if (recipient == 0x02) {
-  // Endpoint
-    u8 endpointNum = SetupPacket.wIndex0 & 0x0F;
-    u8 endpointDir = SetupPacket.wIndex0 & 0x80;
-    requestHandled = 1;
-  // Endpoint descriptors are 8 bytes long, with each in and out taking 4 bytes
-  // within the endpoint. (See PIC datasheet.)
-    inPtr = (u8 *)&EP_OUT_BD(0) + (endpointNum * 8);
-    if (endpointDir)
-      inPtr += 4;
-    if(*inPtr & BDS_BSTALL)
-      controlTransferBuffer[0] = 0x01;
-  }
+    // See where the request goes
+    if (recipient == 0x00)
+    {
+        // Device
+        requestHandled = 1;
+        // Set bits for self powered device and remote wakeup.
+        if (selfPowered)
+            controlTransferBuffer[0] |= 0x01;
+        if (remoteWakeup)
+            controlTransferBuffer[0] |= 0x02;
+    }
 
-  if (requestHandled) {
-    outPtr = (u8 *)&controlTransferBuffer;
-    wCount = 2;
-  }
+    else if (recipient == 0x01)
+    {
+        // Interface
+        requestHandled = 1;
+    }
+
+    else if (recipient == 0x02)
+    {
+        // Endpoint
+        u8 endpointNum = SetupPacket.wIndex0 & 0x0F;
+        u8 endpointDir = SetupPacket.wIndex0 & 0x80;
+        requestHandled = 1;
+        // Endpoint descriptors are 8 bytes long, with each in and out taking 4 bytes
+        // within the endpoint. (See PIC datasheet.)
+        inPtr = (u8 *)&EP_OUT_BD(0) + (endpointNum * 8);
+        if (endpointDir)
+            inPtr += 4;
+        if(*inPtr & BDS_BSTALL)
+            controlTransferBuffer[0] = 0x01;
+    }
+
+    if (requestHandled)
+    {
+        outPtr = (u8 *)&controlTransferBuffer;
+        wCount = 2;
+    }
 }
 
 
   // Process SET_FEATURE and CLEAR_FEATURE
-static void SetFeature(void) {
-  u8 recipient = SetupPacket.bmRequestType & 0x1F;
-  u8 feature = SetupPacket.wValue0;
-#ifdef DEBUG_PRINT
-  // printf("SetFeature\r\n");
-#endif
+static void SetFeature(void)
+{
+    u8 recipient = SetupPacket.bmRequestType & 0x1F;
+    u8 feature = SetupPacket.wValue0;
+    #ifdef DEBUG_PRINT
+    // printf("SetFeature\r\n");
+    #endif
 
-  if (recipient == 0x00) {
-  // Device
-    if (feature == DEVICE_REMOTE_WAKEUP) {
-      requestHandled = 1;
-      if (SetupPacket.bRequest == SET_FEATURE)
-        remoteWakeup = 1;
-      else
-        remoteWakeup = 0;
+    if (recipient == 0x00)
+    {
+        // Device
+        if (feature == DEVICE_REMOTE_WAKEUP)
+        {
+            requestHandled = 1;
+            if (SetupPacket.bRequest == SET_FEATURE)
+                remoteWakeup = 1;
+            else
+                remoteWakeup = 0;
+        }
+        // TBD: Handle TEST_MODE
     }
-  // TBD: Handle TEST_MODE
-  }
-  else if (recipient == 0x02) {
-  // Endpoint
-    u8 endpointNum = SetupPacket.wIndex0 & 0x0F;
-    u8 endpointDir = SetupPacket.wIndex0 & 0x80;
-    if ((feature == ENDPOINT_HALT) && (endpointNum != 0)) {
-  // Halt endpoint (as long as it isn't endpoint 0)
-      requestHandled = 1;
-  // Endpoint descriptors are 8 bytes long, with each in and out taking 4 bytes
-  // within the endpoint. (See PIC datasheet.)
-      inPtr = (u8 *)&EP_OUT_BD(0) + (endpointNum * 8);
-      if (endpointDir)
-        inPtr += 4;
 
-      if(SetupPacket.bRequest == SET_FEATURE)
-        *inPtr = 0x84;
-      else {
-        if(endpointDir == 1)
-          *inPtr = 0x00;
-        else
-          *inPtr = 0x88;
-      }
+    else if (recipient == 0x02)
+    {
+        // Endpoint
+        u8 endpointNum = SetupPacket.wIndex0 & 0x0F;
+        u8 endpointDir = SetupPacket.wIndex0 & 0x80;
+        if ((feature == ENDPOINT_HALT) && (endpointNum != 0))
+        {
+            // Halt endpoint (as long as it isn't endpoint 0)
+            requestHandled = 1;
+            // Endpoint descriptors are 8 bytes long, with each in and out taking 4 bytes
+            // within the endpoint. (See PIC datasheet.)
+            inPtr = (u8 *)&EP_OUT_BD(0) + (endpointNum * 8);
+            if (endpointDir)
+                inPtr += 4;
+
+            if(SetupPacket.bRequest == SET_FEATURE)
+                *inPtr = 0x84;
+            else
+            {
+                if(endpointDir == 1)
+                    *inPtr = 0x00;
+                else
+                    *inPtr = 0x88;
+            }
+        }
     }
-  }
 }
 
 
@@ -436,124 +471,136 @@ void InDataStage(unsigned char ep) {
 }
 
 
-  /**
-   Data stage for a Control Transfer that reads data from the host
-  **/
-void OutDataStage(unsigned char ep) {
-  word i, bufferSize;
+/**
+Data stage for a Control Transfer that reads data from the host
+**/
 
-  bufferSize = ((0x03 & EP_OUT_BD(ep).Stat.uc) << 8) | EP_OUT_BD(ep).Cnt;
+void OutDataStage(unsigned char ep)
+{
+    word i, bufferSize;
 
-#ifdef DEBUG_PRINT
-  //    printf("OutDataStage: %d\r\n", bufferSize);
-#endif
+    bufferSize = ((0x03 & EP_OUT_BD(ep).Stat.uc) << 8) | EP_OUT_BD(ep).Cnt;
 
-  // Accumulate total number of bytes read
-  wCount = wCount + bufferSize;
+    #ifdef DEBUG_PRINT
+    //    printf("OutDataStage: %d\r\n", bufferSize);
+    #endif
 
-  outPtr = (u8*)&controlTransferBuffer;
-#if USE_MEMCPY
-  memcpy(inPtr, outPtr, bufferSize);
-#else
-  for (i=0;i<bufferSize;i++) {
-#ifdef DEBUG_PRINT
-  // printf("0x%x = 0x%x (0x%uhx) ", PTR16(inPtr), PTR16(outPtr), *outPtr);
-#endif
-    *inPtr++ = *outPtr++;
-  }
-#ifdef DEBUG_PRINT
-  // printf("\r\n");
-#endif
-#endif
+    // Accumulate total number of bytes read
+    wCount = wCount + bufferSize;
+
+    outPtr = (u8*)&controlTransferBuffer;
+
+    #if USE_MEMCPY
+        memcpy(inPtr, outPtr, bufferSize);
+        #else
+        for (i=0;i<bufferSize;i++)
+        {
+        #ifdef DEBUG_PRINT
+        // printf("0x%x = 0x%x (0x%uhx) ", PTR16(inPtr), PTR16(outPtr), *outPtr);
+        #endif
+        *inPtr++ = *outPtr++;
+        }
+        #ifdef DEBUG_PRINT
+        // printf("\r\n");
+        #endif
+    #endif
 }
 
+/**
+Process the Setup stage of a control transfer.  This code initializes the
+flags that let the firmware know what to do during subsequent stages of
+the transfer.
+TODO:
+Only Ep0 is handled here.
+**/
 
-  /**
-    Process the Setup stage of a control transfer.  This code initializes the
-    flags that let the firmware know what to do during subsequent stages of
-    the transfer.
-    TODO:
-    Only Ep0 is handled here.
-  **/
-void SetupStage(void) {
-  // Note: Microchip says to turn off the UOWN bit on the IN direction as
-  // soon as possible after detecting that a SETUP has been received.
-  EP_IN_BD(0).Stat.uc &= ~BDS_UOWN;
-  EP_OUT_BD(0).Stat.uc &= ~BDS_UOWN;
+void SetupStage(void)
+{
+    // Note: Microchip says to turn off the UOWN bit on the IN direction as
+    // soon as possible after detecting that a SETUP has been received.
+    EP_IN_BD(0).Stat.uc &= ~BDS_UOWN;
+    EP_OUT_BD(0).Stat.uc &= ~BDS_UOWN;
 
-  // Initialize the transfer process
-  ctrlTransferStage = SETUP_STAGE;
-  requestHandled = 0;                   // Default is that request hasn't been handled
-  HIDPostProcess = 0;                   // Assume standard request until know otherwise
-  wCount = 0;                           // No bytes transferred
+    // Initialize the transfer process
+    ctrlTransferStage = SETUP_STAGE;
+    requestHandled = 0;                   // Default is that request hasn't been handled
+    HIDPostProcess = 0;                   // Assume standard request until know otherwise
+    wCount = 0;                           // No bytes transferred
 
-  // See if this is a standard (as definded in USB chapter 9) request
-  ProcessStandardRequest();
+    // See if this is a standard (as definded in USB chapter 9) request
+    ProcessStandardRequest();
 
-  // only Process CDC or HID if recipient is an interface
-  // See if the HID class can do something with it.
-#ifdef USB_USE_HID
-  if ((SetupPacket.bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE)
-    ProcessHIDRequest();
-#endif 
-  
-#ifdef USB_USE_CDC
-  if ((SetupPacket.bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE)  
-    ProcessCDCRequest();
-#endif
-  // TBD: Add handlers for any other classes/interfaces in the device
-  if (!requestHandled) {
-  // If this service wasn't handled then stall endpoint 0
-    EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
-    EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
-    EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_BSTALL;
-    EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_BSTALL;
-  }
-  else if (SetupPacket.bmRequestType & 0x80) {
-  // Device-to-host
-    if(SetupPacket.wLength < wCount)
-      wCount = SetupPacket.wLength;
-    InDataStage(0);
-    ctrlTransferStage = DATA_IN_STAGE;
-  // Reset the out buffer descriptor for endpoint 0
-    EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
-    EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
-    EP_OUT_BD(0).Stat.uc = BDS_UOWN;
+    // only Process CDC or HID if recipient is an interface
+    // See if the HID class can do something with it.
+    #ifdef USB_USE_HID
+    if ((SetupPacket.bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE)
+        ProcessHIDRequest();
+    #endif 
 
-  // Set the in buffer descriptor on endpoint 0 to send data
-    EP_IN_BD(0).ADDR = PTR16(&controlTransferBuffer);
-  // Give to SIE, DATA1 packet, enable data toggle checks
-    EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
-  }
-  else {
-  // Host-to-device
-    ctrlTransferStage = DATA_OUT_STAGE;
+    #ifdef USB_USE_CDC
+    if ((SetupPacket.bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE)  
+        ProcessCDCRequest();
+    #endif
 
-  // Clear the input buffer descriptor
-    EP_IN_BD(0).Cnt = 0;
-    EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
+    // TBD: Add handlers for any other classes/interfaces in the device
+    if (!requestHandled)
+    {
+        // If this service wasn't handled then stall endpoint 0
+        EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
+        EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
+        EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_BSTALL;
+        EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_BSTALL;
+    }
 
-  // Set the out buffer descriptor on endpoint 0 to receive data
-    EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
-    EP_OUT_BD(0).ADDR = PTR16(&controlTransferBuffer);
-  // Give to SIE, DATA1 packet, enable data toggle checks
-    EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
-  }
+    else if (SetupPacket.bmRequestType & 0x80)
+    {
+        // Device-to-host
+        if(SetupPacket.wLength < wCount)
+            wCount = SetupPacket.wLength;
+        InDataStage(0);
+        ctrlTransferStage = DATA_IN_STAGE;
+        // Reset the out buffer descriptor for endpoint 0
+        EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
+        EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
+        EP_OUT_BD(0).Stat.uc = BDS_UOWN;
 
-  // Enable SIE token and packet processing
-  UCONbits.PKTDIS = 0;
+        // Set the in buffer descriptor on endpoint 0 to send data
+        EP_IN_BD(0).ADDR = PTR16(&controlTransferBuffer);
+        // Give to SIE, DATA1 packet, enable data toggle checks
+        EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
+    }
+
+    else
+    {
+        // Host-to-device
+        ctrlTransferStage = DATA_OUT_STAGE;
+
+        // Clear the input buffer descriptor
+        EP_IN_BD(0).Cnt = 0;
+        EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
+
+        // Set the out buffer descriptor on endpoint 0 to receive data
+        EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
+        EP_OUT_BD(0).ADDR = PTR16(&controlTransferBuffer);
+        // Give to SIE, DATA1 packet, enable data toggle checks
+        EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
+    }
+
+    // Enable SIE token and packet processing
+    UCONbits.PKTDIS = 0;
 }
 
 
   // Configures the buffer descriptor for endpoint 0 so that it is waiting for
   // the status stage of a control transfer.
-void WaitForSetupStage(void) {
-  ctrlTransferStage = SETUP_STAGE;
-  EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
-  EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
-  // Give to SIE, enable data toggle checks
-  EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
-  EP_IN_BD(0).Stat.uc = 0x00;           // Give control to CPU
+void WaitForSetupStage(void)
+{
+    ctrlTransferStage = SETUP_STAGE;
+    EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
+    EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
+    // Give to SIE, enable data toggle checks
+    EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
+    EP_IN_BD(0).Stat.uc = 0x00;           // Give control to CPU
 }
 
 
@@ -734,74 +781,71 @@ void Stall(void)
   // Suspend all processing until we detect activity on the USB bus
 void Suspend(void)
 {
-#ifdef ALLOW_SUSPEND
-#ifdef DEBUG_PRINT
-  printf("Suspend\r\n");
-#endif
-  UIEbits.ACTVIE = 1;
-  UIRbits.IDLEIF = 0;
-  UCONbits.SUSPND = 1;
+    #ifdef ALLOW_SUSPEND
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  PIR3bits.USBIF = 0;
-  #else
-  PIR2bits.USBIF = 0;
-  #endif
+        #ifdef DEBUG_PRINT
+        printf("Suspend\r\n");
+        #endif
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  INTCONbits.IOCIF = 0;
-  #else
-  INTCONbits.RBIF = 0;
-  #endif
+        UIEbits.ACTVIE = 1;
+        UIRbits.IDLEIF = 0;
+        UCONbits.SUSPND = 1;
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  PIE3bits.USBIE = 1;
-  #else
-  PIE2bits.USBIE = 1;
-  #endif
+        #if defined(__18f25k50) || defined(__18f45k50)
+        PIR3bits.USBIF = 0;
+        PIE3bits.USBIE = 1;
+        #else
+        PIR2bits.USBIF = 0;
+        PIE2bits.USBIE = 1;
+        #endif
+        
+        #if defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
+        INTCONbits.IOCIF = 0;
+        INTCONbits.IOCIE = 1;
+        #else
+        INTCONbits.RBIF = 0;
+        INTCONbits.RBIE = 1;
+        #endif
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  INTCONbits.IOCIE = 1;
-  #else
-  INTCONbits.RBIE = 1;
-  #endif
+        
+        // disable the USART
+        #ifdef DEBUG_PRINT
+            #if defined(__18f25k50) || defined(__18f45k50)
+            RCSTA1bits.CREN = 0;
+            TXSTA1bits.TXEN = 0;
+            #else
+            RCSTAbits.CREN = 0;
+            TXSTAbits.TXEN = 0;
+            #endif
+        #endif
 
-  // disable the USART
-#ifdef DEBUG_PRINT
-  #if defined(__18f25k50) || defined(__18f45k50)
-  RCSTA1bits.CREN = 0;
-  TXSTA1bits.TXEN = 0;
-  #else
-  RCSTAbits.CREN = 0;
-  TXSTAbits.TXEN = 0;
-  #endif
-#endif
+        __asm__("SLEEP");
 
-  Sleep();
+        // enable the USART
+        #ifdef DEBUG_PRINT
+            #if defined(__18f25k50) || defined(__18f45k50)
+            RCSTA1bits.CREN = 1;
+            TXSTA1bits.TXEN = 1;
+            #else
+            RCSTAbits.CREN = 1;
+            TXSTAbits.TXEN = 1;
+            #endif
+        #endif
 
-  // enable the USART
-#ifdef DEBUG_PRINT
-  #if defined(__18f25k50) || defined(__18f45k50)
-  RCSTA1bits.CREN = 1;
-  TXSTA1bits.TXEN = 1;
-  #else
-  RCSTAbits.CREN = 1;
-  TXSTAbits.TXEN = 1;
-  #endif
-#endif
+        #if defined(__18f25k50) || defined(__18f45k50)
+        PIE3bits.USBIE = 0;
+        #else
+        PIE2bits.USBIE = 0;
+        #endif
+        
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  PIE3bits.USBIE = 0;
-  #else
-  PIE2bits.USBIE = 0;
-  #endif
+        #if defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
+        INTCONbits.IOCIE = 0;
+        #else
+        INTCONbits.RBIE = 0;
+        #endif
 
-  #if defined(__18f25k50) || defined(__18f45k50)
-  INTCONbits.IOCIE = 0;
-  #else
-  INTCONbits.RBIE = 0;
-  #endif
-#endif
+    #endif
 }
 
 

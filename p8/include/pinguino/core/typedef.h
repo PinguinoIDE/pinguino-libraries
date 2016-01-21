@@ -19,27 +19,27 @@
     pinguino types
     --------------------------------------------------------------------------*/
 
-    typedef signed char			s8;
-    typedef signed int			s16;
-    typedef signed long			s32;
-    //typedef signed long long 	s64;        // SDCC doesn't support 64-bit type
+    typedef signed char         s8;
+    typedef signed int          s16;
+    typedef signed long         s32;
+    //typedef signed long long  s64;        // SDCC doesn't support 64-bit type
 
-    typedef unsigned char		u8;
-    typedef unsigned int		u16;
-    typedef unsigned long		u32;
+    typedef unsigned char       u8;
+    typedef unsigned int        u16;
+    typedef unsigned long       u32;
     //typedef unsigned long long 	u64;    // SDCC doesn't support 64-bit type
     
 /*	----------------------------------------------------------------------------
     avr-gcc types
     --------------------------------------------------------------------------*/
 
-    typedef unsigned char		byte;
-    typedef unsigned char		BOOL;       //bool is not compatible with c++
-    typedef unsigned char		boolean;	
+    typedef unsigned char       byte;
+    typedef unsigned char       BOOL;       //bool is not compatible with c++
+    typedef unsigned char       boolean;
 
-    typedef unsigned int		word;	
+    typedef unsigned int        word;
 
-    typedef unsigned long 		dword;
+    typedef unsigned long       dword;
 
 /*	----------------------------------------------------------------------------
     other types
@@ -49,4 +49,24 @@
     typedef unsigned int        WORD;
     typedef unsigned long       DWORD;
 
+/*	----------------------------------------------------------------------------
+    output types
+    --------------------------------------------------------------------------*/
+/*
+    typedef enum
+    {
+        SERIAL  = 1,
+        SERIAL1 = 1,
+        SERIAL2,
+        SERIAL3,
+        SERIAL4,
+        SERIAL5,
+        SERIAL6,
+        SPI,
+        I2C,
+        CDC,
+        LCD,
+        TFT
+    } Output;
+*/
 #endif

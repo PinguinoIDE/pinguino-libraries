@@ -35,7 +35,8 @@ TODO:
 #include "usb_cdc.h"
 #endif
 
-#define PTR16(x) ((u16)(((unsigned long)x) & 0xFFFF))
+//#define PTR16(x) ((u16)(((unsigned long)x) & 0xFFFF))
+#define PTR16(x) ((u16)x)
 
 #define LSB(x) (x & 0xFF)
 #define MSB(x) ((x & 0xFF00) >> 8)
@@ -43,33 +44,37 @@ TODO:
 /*
 definition for the initial ep0, most are defined here since they are used be the user in the usb_config.h file
 */
-#define EP0_BUFFER_SIZE         64
+#if defined (__16F1459)
+#define EP0_BUFFER_SIZE             8
+#else
+#define EP0_BUFFER_SIZE             64
+#endif
 
 /* USB direction */
-#define OUT                 0
-#define IN                  1
+#define OUT                         0
+#define IN                          1
 
 /* UEPn Initialization Parameters */
-#define EP_CTRL     0x06            // Cfg Control pipe for this ep
-#define EP_OUT      0x0C            // Cfg OUT only pipe for this ep
-#define EP_IN       0x0A            // Cfg IN only pipe for this ep
-#define EP_OUT_IN   0x0E            // Cfg both OUT & IN pipes for this ep
-#define HSHK_EN     0x10            // Enable handshake packet
-                                    // Handshake should be disable for isoch
+#define EP_CTRL                     0x06 // Cfg Control pipe for this ep
+#define EP_OUT                      0x0C // Cfg OUT only pipe for this ep
+#define EP_IN                       0x0A // Cfg IN only pipe for this ep
+#define EP_OUT_IN                   0x0E // Cfg both OUT & IN pipes for this ep
+#define HSHK_EN                     0x10 // Enable handshake packet
+                                         // Handshake should be disable for isoch
 //
 // Standard Request Codes USB 2.0 Spec Ref Table 9-4
 //
-#define GET_STATUS         0
-#define CLEAR_FEATURE      1
-#define SET_FEATURE        3
-#define SET_ADDRESS        5
-#define GET_DESCRIPTOR     6
-#define SET_DESCRIPTOR     7
-#define GET_CONFIGURATION  8
-#define SET_CONFIGURATION  9
-#define GET_INTERFACE     10
-#define SET_INTERFACE     11
-#define SYNCH_FRAME       12
+#define GET_STATUS                  0
+#define CLEAR_FEATURE               1
+#define SET_FEATURE                 3
+#define SET_ADDRESS                 5
+#define GET_DESCRIPTOR              6
+#define SET_DESCRIPTOR              7
+#define GET_CONFIGURATION           8
+#define SET_CONFIGURATION           9
+#define GET_INTERFACE               10
+#define SET_INTERFACE               11
+#define SYNCH_FRAME                 12
 
 // Descriptor Types
 #define DEVICE_DESCRIPTOR       	0x01
@@ -80,30 +85,30 @@ definition for the initial ep0, most are defined here since they are used be the
 #define DEVICE_QUALIFIER_DESCRIPTOR	0x06
 
 // Standard Feature Selectors
-#define DEVICE_REMOTE_WAKEUP    0x01
-#define ENDPOINT_HALT           0x00
+#define DEVICE_REMOTE_WAKEUP        0x01
+#define ENDPOINT_HALT               0x00
 
 // Buffer Descriptor bit masks (from PIC datasheet)
-#define BDS_COWN   0x00 // CPU Own Bit
-#define BDS_UOWN   0x80 // USB Own Bit
-#define BDS_DTS    0x40 // Data Toggle Synchronization Bit
-#define BDS_KEN    0x20 // BD Keep Enable Bit
-#define BDS_INCDIS 0x10 // Address Increment Disable Bit
-#define BDS_DTSEN  0x08 // Data Toggle Synchronization Enable Bit
-#define BDS_BSTALL 0x04 // Buffer Stall Enable Bit
-#define BDS_BC9    0x02 // u8 count bit 9
-#define BDS_BC8    0x01 // u8 count bit 8
+#define BDS_COWN                    0x00 // CPU Own Bit
+#define BDS_UOWN                    0x80 // USB Own Bit
+#define BDS_DTS                     0x40 // Data Toggle Synchronization Bit
+#define BDS_KEN                     0x20 // BD Keep Enable Bit
+#define BDS_INCDIS                  0x10 // Address Increment Disable Bit
+#define BDS_DTSEN                   0x08 // Data Toggle Synchronization Enable Bit
+#define BDS_BSTALL                  0x04 // Buffer Stall Enable Bit
+#define BDS_BC9                     0x02 // u8 count bit 9
+#define BDS_BC8                     0x01 // u8 count bit 8
 
-#define BDS_DAT0   0x00 //DATA0 packet expected next
-#define BDS_DAT1   0x40 //DATA1 packet expected next
+#define BDS_DAT0                    0x00 //DATA0 packet expected next
+#define BDS_DAT1                    0x40 //DATA1 packet expected next
 
 // Device states (Chap 9.1.1)
-#define DETACHED     0
-#define ATTACHED     1
-#define POWERED      2
-#define DEFAULT_STATUS      3
-#define ADDRESS      4
-#define CONFIGURED   5
+#define DETACHED                    0
+#define ATTACHED                    1
+#define POWERED                     2
+#define DEFAULT_STATUS              3
+#define ADDRESS                     4
+#define CONFIGURED                  5
 
 /** Buffer Descriptor Status Register **/
 typedef union
@@ -150,7 +155,8 @@ typedef union
     {
         unsigned :8;
         unsigned :8;
-        __data u16 *ADDR;      /*!< Buffer Address */
+        //u16 *ADDR;      /*!< Buffer Address */
+        u16 ADDR;      /*!< Buffer Address */
     };
 } BufferDescriptorTable;
 
@@ -164,24 +170,23 @@ s the device can have.
  **/
 typedef struct
 {
-    u8 bLength;              /*!< Size of the Descriptor in u8s (18 u8s = 0x12) */
-    u8 bDescriptorType;      /*!< Device Descriptor (0x01) */
-    u16  bcdUSB;               /*!< USB Specification Number which device complies to. */
-    u8 bDeviceClass;         /*!< Class Code (Assigned by USB Org). If equal to Zero, each inte
-rface specifies it’s own class code. If equal to 0xFF, the class code is vendor specified. Otherwise field
- is valid Class Code.*/
-    u8 bDeviceSubClass;      /*!< Subclass Code (Assigned by USB Org) */
-    u8 bDeviceProtocol;      /*!< Protocol Code (Assigned by USB Org) */
-    u8 bMaxPacketSize0;      /*!< Maximum Packet Size for Zero Endpoint. Valid Sizes are 8, 16,
- 32, 64 */
-    u16  idVendor;             /*!< Vendor ID (Assigned by USB Org). Microchip Vendor ID is 0x04D
-8 */
-    u16  idProduct;            /*!< Product ID (Assigned by Manufacturer) */
-    u16  bcdDevice;            /*!< Device Release Number */
-    u8 iManufacturer;        /*!< Index of Manufacturer String Descriptor */
-    u8 iProduct;             /*!< Index of Product String Descriptor */
-    u8 iSerialNumber;        /*!< Index of Serial Number String Descriptor */
-    u8 bNumConfigurations;   /*!< Number of Possible Configurations */
+    u8 bLength;              /* Size of the Descriptor in u8s (18 u8s = 0x12) */
+    u8 bDescriptorType;      /* Device Descriptor (0x01) */
+    u16  bcdUSB;             /* USB Specification Number which device complies to. */
+    u8 bDeviceClass;         /* Class Code (Assigned by USB Org).
+                                  If equal to Zero, each interface specifies it’s own class code.
+                                  If equal to 0xFF, the class code is vendor specified.
+                                  Otherwise field is valid Class Code.*/
+    u8 bDeviceSubClass;      /* Subclass Code (Assigned by USB Org) */
+    u8 bDeviceProtocol;      /* Protocol Code (Assigned by USB Org) */
+    u8 bMaxPacketSize0;      /* Maximum Packet Size for Zero Endpoint. Valid Sizes are 8, 16, 32, 64 */
+    u16  idVendor;           /* Vendor ID (Assigned by USB Org). Microchip Vendor ID is 0x04D8 */
+    u16  idProduct;          /* Product ID (Assigned by Manufacturer) */
+    u16  bcdDevice;          /* Device Release Number */
+    u8 iManufacturer;        /* Index of Manufacturer String Descriptor */
+    u8 iProduct;             /* Index of Product String Descriptor */
+    u8 iSerialNumber;        /* Index of Serial Number String Descriptor */
+    u8 bNumConfigurations;   /* Number of Possible Configurations */
 } USB_Device_Descriptor;
 
 
@@ -218,9 +223,12 @@ extern u8 remoteWakeup;
 extern u8 currentConfiguration;
 
 //
+//  USB RAM / Buffer Descriptor Table
 //  RB 09/09/2012 : added some other PIC support
+//  RB 30/11/2015 : added PIC16F1459 support
 //
 
+/*
 #if   defined(__18f14k50) || defined(__18f14k50)  // Bank 2
 extern volatile BufferDescriptorTable __at (0x200) ep_bdt[32];
 #elif defined(__18f26j53) || defined(__18f46j53) || \
@@ -229,6 +237,30 @@ extern volatile BufferDescriptorTable __at (0xD00) ep_bdt[32];
 #else                                             // Bank 4
 extern volatile BufferDescriptorTable __at (0x400) ep_bdt[32];
 #endif
+*/
+
+#if   defined(__16F1459)
+    // Datasheet 26.4 :
+    // The address of BDnSTAT is accessible in linear data space at
+    // 2000h + (4n – 1) with n being the buffer descriptor number.
+    #define BD_ADDR                 0x2000
+
+#elif defined(__18f14k50) || defined(__18f14k50)
+
+    #define BD_ADDR                 0x200
+
+#elif defined(__18f26j53) || defined(__18f46j53) || \
+      defined(__18f27j53) || defined(__18f47j53)
+
+    #define BD_ADDR                 0xD00
+
+#else
+
+    #define BD_ADDR                 0x400
+
+#endif
+
+#define BD_ADDR_TAG @##BD_ADDR
 
 /* Out buffer descriptor of endpoint ep */
 /* BEWARE : both work only without ping pong buffers */
@@ -246,18 +278,20 @@ TODO: use word instead of LSB/MSB u8s
 **/
 typedef union //_setupPacketStruct
 {
-  struct {
-    u8 bmRequestType; /*!< D7 Data Phase Transfer Direction<ul><li>0 = Host to Device</li><li>1 = Device to Host</li></ul>D6..5 Typ<ul><li>0 = Standard</li><li>1 = Class</li><li>2 = Vendor</li><li>3 = Reserved</li></ul>D4..0 Recipient<ul><li>0 = Device</li><li>1 = Interface</li><li>2 = Endpoint</li><li>3 = Other</li></ul> */
-    u8 bRequest;      // Specific request
-    u8 wValue0;       // LSB of wValue
-    u8 wValue1;       // MSB of wValue
-    u8 wIndex0;       // LSB of wIndex
-    u8 wIndex1;       // MSB of wIndex
-    word wLength;       // Number of u8s to transfer if there's a data stage
-  };
-  struct {
-    u8 extra[EP0_BUFFER_SIZE];     // Fill out to same size as Endpoint 0 max buffer
-  };
+      struct
+      {
+        u8 bmRequestType; /*!< D7 Data Phase Transfer Direction<ul><li>0 = Host to Device</li><li>1 = Device to Host</li></ul>D6..5 Typ<ul><li>0 = Standard</li><li>1 = Class</li><li>2 = Vendor</li><li>3 = Reserved</li></ul>D4..0 Recipient<ul><li>0 = Device</li><li>1 = Interface</li><li>2 = Endpoint</li><li>3 = Other</li></ul> */
+        u8 bRequest;      // Specific request
+        u8 wValue0;       // LSB of wValue
+        u8 wValue1;       // MSB of wValue
+        u8 wIndex0;       // LSB of wIndex
+        u8 wIndex1;       // MSB of wIndex
+        word wLength;       // Number of u8s to transfer if there's a data stage
+      };
+      struct
+      {
+        u8 extra[EP0_BUFFER_SIZE];     // Fill out to same size as Endpoint 0 max buffer
+      };
 } setupPacketStruct;
 
 
@@ -292,7 +326,7 @@ typedef struct
     u8 bInterval;            /*!< Interval for polling endpoint data transfers. Value in frame counts. Ignored for Bulk & Control Endpoints. Isochronous must equal 1 and field may range from 1 to 255 for interrupt endpoints. */
 } USB_Endpoint_Descriptor;
 
-extern volatile setupPacketStruct SetupPacket;
+//extern volatile setupPacketStruct SetupPacket;
 
 // inPtr/OutPtr are used to move data from user memory (RAM/ROM/EEPROM) buffers
 // from/to USB dual port buffers.

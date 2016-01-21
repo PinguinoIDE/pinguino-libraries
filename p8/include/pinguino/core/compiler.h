@@ -1,7 +1,7 @@
 /*	----------------------------------------------------------------------------
 	FILE:			compiler.h
 	PROJECT:		pinguino
-	PURPOSE:		compatibilty helper for SDC and XC8
+	PURPOSE:		compatibilty helper for SDCC and XC8
 	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
 	FIRST RELEASE:	26 Jun. 2015
 	LAST RELEASE:	26 Jun. 2015
@@ -22,7 +22,7 @@
 	--------------------------------------------------------------------------*/
 
 #ifndef __COMPILER_H
-    #define __COMPILER_H
+#define __COMPILER_H
 
     #ifdef __XC8__
 
@@ -81,15 +81,6 @@
 
     #else
 
-        /*
-        #if SDCC < 320
-            #error "*******************************************"
-            #error "*          Outdated SDCC version          *"
-            #error "* try to update to version 3.2.0 or newer *"
-            #error "*******************************************"
-        #endif
-        */
-        
         #include <pic18fregs.h>
 
     #endif

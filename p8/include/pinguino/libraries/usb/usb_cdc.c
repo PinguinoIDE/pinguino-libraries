@@ -10,13 +10,26 @@ All CDC functions should go here
 
 #ifdef USB_USE_CDC
 
-// Put USB I/O buffers into dual port RAM.
-#pragma udata usbram5 CDCRxBuffer CDCTxBuffer
+// Put USB CDC specific I/O buffers into dual port RAM.
+// sizeof(CDCRxBuffer) = CDC_BULK_OUT_SIZE = 64
+// sizeof(CDCTxBuffer) = CDC_BULK_IN_SIZE  = 64
 
-// CDC specific buffers
+#ifdef __XC8__
+    #if defined(__16F1459)
+        u8 __section("usbram5") dummy; // to prevent a compilation error
+        u8 CDCRxBuffer[CDC_BULK_OUT_SIZE] @ 0x2028; //0x2098;
+        u8 CDCTxBuffer[CDC_BULK_IN_SIZE]  @ 0x2030; //0x20D8;
+    #else
+        u8 __section("usbram5") CDCRxBuffer[CDC_BULK_OUT_SIZE];
+        u8 __section("usbram5") CDCTxBuffer[CDC_BULK_IN_SIZE];
+    #endif
+#else // SDCC
+    #pragma udata usbram5 CDCRxBuffer CDCTxBuffer
+    volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
+    volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
+#endif
+
 volatile u8 CDCControlBuffer[CDC_IN_EP_SIZE];
-volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
-volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
 
 USB_CDC_Line_Coding line_config;
 Zero_Packet_Length zlp;
@@ -65,7 +78,7 @@ void ProcessCDCRequest(void)
             #ifdef DEBUG_PRINT_CDC
             printf("set line\r\n");
             #endif
-            outPtr = (__data u8 *)&line_config;
+            outPtr = (u8 *)&line_config;
             wCount = sizeof(USB_CDC_Line_Coding) ;
             requestHandled = 1;				
             break;
@@ -75,7 +88,7 @@ void ProcessCDCRequest(void)
             #ifdef DEBUG_PRINT_CDC
             printf("get line\r\n");
             #endif
-            outPtr = (__data u8 *)&line_config;
+            outPtr = (u8 *)&line_config;
             wCount = sizeof(USB_CDC_Line_Coding) ;
             requestHandled = 1;
             break;
@@ -89,7 +102,7 @@ void ProcessCDCRequest(void)
             #endif
             if (SetupPacket.wValue0==3) CONTROL_LINE=1;
             else CONTROL_LINE=0;		
-            outPtr = (__data u8 *)&zlp;
+            outPtr = (u8 *)&zlp;
             wCount = sizeof(Zero_Packet_Length) ;
             requestHandled = 1;						
             break;								
@@ -150,7 +163,7 @@ u8 CDCgets(u8 *buffer)
     return i;
 }
 
-u8 CDCputs(u8 *buffer, u8 length)
+u8 CDCputs(const u8 *buffer, u8 length)
 {
     u8 i;
 

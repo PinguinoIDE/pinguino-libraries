@@ -9,27 +9,15 @@
 #include <typedef.h>
 
 /**
-* 8x8 monochrome bitmap fonts for rendering
-* Author: Daniel Hepper <daniel@hepper.net>
-*
-* License: Public Domain
-*
-* Based on:
-* // Summary: font8x8.h
-* // 8x8 monochrome bitmap fonts for rendering
-* //
-* // Author:
-* // Marcel Sondaar
-* // International Business Machines (public domain VGA fonts)
-* //
-* // License:
-* // Public Domain
+* Desc.:    8x8 monochrome bitmap fonts for rendering
+* Authors:  Daniel Hepper <daniel@hepper.net>
+*           Marcel Sondaar (IBM)
+* License:  Public Domain
 *
 * Fetched from: http://dimensionalrift.homelinux.net/combuster/mos3/?p=viewsource&file=/modules/gfx/font8_8.asm
 **/
 
-// Constant: font8x8_basic
-// Contains an 8x8 font map for unicode points U+0000 - U+007F (basic latin)
+// NB: const implies storage in the program memory, not in RAM
 
 const u8 font8x8[] = {
     8, 8,

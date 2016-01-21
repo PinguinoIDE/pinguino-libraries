@@ -1,4 +1,4 @@
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     FILE:			printf.c
     PROJECT:		pinguino - http://www.pinguino.cc/
     PURPOSE:		alternative printf and sprintf functions
@@ -6,9 +6,9 @@
                     mark harper <markfh@f2s.com>
     FIRST RELEASE:	10 Nov 2010
     LAST RELEASE:	16 Jan 2012
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     TODO : thousands separator
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -22,7 +22,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __PRINTF_C
 #define __PRINTF_C
@@ -35,9 +35,9 @@
 typedef void (*funcout) (u8);	// type of void foo(u8)
 static funcout pputchar;		// then void pputchar(u8)
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprintc = pinguino print char
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static void pprintc(u8 **str, u8 c)
 {
@@ -55,9 +55,9 @@ static void pprintc(u8 **str, u8 c)
 #define PAD_RIGHT	1
 #define PAD_ZERO	2
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprints = pinguino print string
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
 {
@@ -101,7 +101,7 @@ static int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
     return pc;
 }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprinti = pinguino print 32-bit signed or unsigned integer
     i:			32-bit number to convert into string
     base:		1 byte, 2 binary, 8 octal, 10 decimal, 16 hexadecimal
@@ -110,7 +110,7 @@ static int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
     pad:		PAD_RIGHT or PAD_ZERO
     letterbase:	'a' or 'A' (lower or upper case)
     return:		string's length
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static u8 pprinti(u8 **out, u32 i, u8 islong, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8 letterbase)
 {
@@ -171,9 +171,9 @@ static u8 pprinti(u8 **out, u32 i, u8 islong, u8 base, u8 sign, u8 width, u8 pad
     return pc + pprints(out, string, width, pad);
 }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprintfl = pinguino print float
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 precision)
 {
@@ -288,14 +288,14 @@ static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 pre
         while (m--)
         {
             *string++ = *--s;
-/*	--- TODO -------------------------------------------------------------------
+/*	--- TODO -----------------------------------------------------------
             if ( separator && (m % 3 == 0) )
             {
                 pprintc(out, ' ');
                 ++count;
                 --width;
             }
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
         }
     }
     
@@ -331,9 +331,9 @@ static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 pre
     return count + pprints(out, buffer, width, pad);
 }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprint = pinguino print
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static u8 pprint(u8 **out, const u8 *format, va_list args)
 {
@@ -478,9 +478,9 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
     return pc;
 }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     pprintf = pinguino print formatted
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 //int pprintf(funcout func, const char *format, ...)
 u8 pprintf(funcout func, const u8 *format, va_list args)
@@ -492,9 +492,9 @@ u8 pprintf(funcout func, const u8 *format, va_list args)
     return pprint(0, format, args);
 }
 
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     psprintf = pinguino print formatted data to string
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 // to work with CDC.printf
 u8 psprintf2(u8 *out, const u8 *format, va_list args)

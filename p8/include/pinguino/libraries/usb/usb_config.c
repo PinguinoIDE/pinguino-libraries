@@ -19,7 +19,7 @@ for a description of the structs)
 /* usb device descriptor */
 
 #ifdef USB_USE_CDC
-__code USB_Device_Descriptor libdevice_descriptor =
+const USB_Device_Descriptor libdevice_descriptor =
 {
     sizeof(USB_Device_Descriptor),      // Size of this descriptor in bytes
     DEVICE_DESCRIPTOR,                  // Device descriptor type
@@ -31,15 +31,15 @@ __code USB_Device_Descriptor libdevice_descriptor =
     0x04D8,                             // Vendor ID, microchip=0x04D8
     0xFEAB,                             // Product ID 0xFEAA Pinguino
     0x0000,                             // Device release number in BCD format
-    1,//0,                                  // Manufacturer string index
-    2,//1,                                  // Product string index
-    0,                                  // Device serial number string index
+    1,                                  // Manufacturer string index
+    2,                                  // Product string index
+    3,                                  // Device serial number string index
     1                                   // Number of possible configurations
 };
 #endif
 
 #ifdef USB_USE_BULK
-__code USB_Device_Descriptor libdevice_descriptor =
+const USB_Device_Descriptor libdevice_descriptor =
 {
     sizeof(USB_Device_Descriptor),      // Size of this descriptor in bytes
     DEVICE_DESCRIPTOR,                  // Device descriptor type
@@ -51,15 +51,16 @@ __code USB_Device_Descriptor libdevice_descriptor =
     0x04D8,                             // Vendor ID, microchip=0x04D8
     0xFEAA,                             // Product ID 0xFEAA Pinguino
     0x0000,                             // Device release number in BCD format
-    0,                                  // Manufacturer string index
-    1,                                  // Product string index
-    0,                                  // Device serial number string index
+    1,                                  // Manufacturer string index
+    2,                                  // Product string index
+    3,                                  // Device serial number string index
     1                                   // Number of possible configurations
 };
 #endif
 
 #ifdef USB_USE_CDC
-__code USB_Configuration_Descriptor libconfiguration_descriptor = {
+const USB_Configuration_Descriptor libconfiguration_descriptor =
+{
     // Configuration Descriptor Header
     {sizeof(USB_Configuration_Descriptor_Header),       // Size of this descriptor in bytes
     CONFIGURATION_DESCRIPTOR,                   // CONFIGURATION descriptor type
@@ -139,7 +140,8 @@ __code USB_Configuration_Descriptor libconfiguration_descriptor = {
 #endif
 
 #ifdef USB_USE_BULK
-__code USB_Configuration_Descriptor libconfiguration_descriptor = {
+const USB_Configuration_Descriptor libconfiguration_descriptor = 
+{
     // Configuration Descriptor Header
     {sizeof(USB_Configuration_Descriptor_Header),// Size of this descriptor in bytes
     CONFIGURATION_DESCRIPTOR,                   // CONFIGURATION descriptor type
@@ -176,6 +178,7 @@ __code USB_Configuration_Descriptor libconfiguration_descriptor = {
 #endif
 
 /* String descriptors for the USB device (rb 25-01-2013) */
+/*
 const char lang[] = {sizeof(lang),  STRING_DESCRIPTOR,
     0x09,0x04}; // english = 0x0409
 const char manu[] = {sizeof(manu),  STRING_DESCRIPTOR,
@@ -183,6 +186,43 @@ const char manu[] = {sizeof(manu),  STRING_DESCRIPTOR,
 const char prod[] = {sizeof(prod),  STRING_DESCRIPTOR,
     'P',0x00,'i',0x00,'n',0x00,'g',0x00,'u',0x00,'i',0x00,'n',0x00,'o',0x00};
 const char * const libstring_descriptor[] = { lang, manu, prod};
+*/
+
+// Language code string descriptor (english)
+const USB_String_Descriptor lang  =
+{
+    sizeof(lang),
+    STRING_DESCRIPTOR,
+    {0x0409}
+};
+
+// Manufacturer string descriptor
+const USB_String_Descriptor manu =
+{
+    sizeof(manu),
+    STRING_DESCRIPTOR,
+    {'S','e','a','I','c','e','L','a','b'}
+};
+
+// Product string descriptor
+const USB_String_Descriptor prod =
+{
+    sizeof(prod),
+    STRING_DESCRIPTOR,
+    {'P','i','n','g','u','i','n','o'}
+};
+
+// Serial Number string descriptor
+const USB_String_Descriptor seri =
+{
+    sizeof(seri),
+    STRING_DESCRIPTOR,
+    #ifdef USB_USE_BULK
+    {'U','S','B',' ','B','U','L','K'}
+    #else
+    {'U','S','B',' ','C','D','C'}
+    #endif
+};
 
 /*
 __code u8 libstring_descriptor[40][1] = {

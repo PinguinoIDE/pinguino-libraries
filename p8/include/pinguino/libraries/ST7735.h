@@ -28,6 +28,7 @@
 #ifndef __ST7735_H
 #define __ST7735_H
 
+#include <compiler.h>
 #include <typedef.h>
 
 #define __ST7735__
@@ -218,7 +219,8 @@
 void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
 
-void ST7735_init(u8, u8, u8, u8, u8);
+//void ST7735_init(u8, u8, u8, u8, u8);
+void ST7735_init(u8 module, ...);
 
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
@@ -232,6 +234,7 @@ void ST7735_unpackColor(color_t*);
 void ST7735_clearScreen(u8);
 void ST7735_clearWindow(u8, u8, u8, u8, u8);
 
+//TODO
 //void ST7735_scrollRight();
 //void ST7735_scrollLeft();
 //void ST7735_scrollUp();
@@ -249,14 +252,16 @@ void ST7735_setCursor(u8, u8, u8);
 
 void ST7735_drawPixel(u8, u8, u8);
 void ST7735_clearPixel(u8, u8, u8);
-void ST7735_drawBitmap(u8, u16, u16, u16, u16, u16*);
+void ST7735_drawBitmap(u8, u8, const u8*, u16, u16);
 void ST7735_drawCircle(u8, u16, u16, u16);
 void ST7735_fillCircle(u8, u16, u16, u16);
 void ST7735_drawLine(u8, u16, u16, u16, u16);
 void ST7735_drawVLine(u8, u16, u16, u16);
 void ST7735_drawHLine(u8, u16, u16, u16);
 
+void setWindow(u8, u8, u8, u8);
 void drawPixel(u16, u16);
+void setColor(u8, u8, u8);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
 
@@ -272,6 +277,8 @@ void drawHLine(u16, u16, u16);
 #define ST7735_displayOff(m)     ST7735_sendCommand(m, ST7735_DISPOFF)
 #define ST7735_low(x)            digitalwrite(x, LOW)
 #define ST7735_high(x)           digitalwrite(x, HIGH)
+#define ST7735_select(m)         SPI_select(m)
+#define ST7735_deselect(m)       SPI_deselect(m)
 
 /**	--------------------------------------------------------------------
     Globals
@@ -290,5 +297,8 @@ lcd_t ST7735[3];
 lcd_t ST7735[2];
 
 #endif
+
+// used in graphics
+//lcd_t* output;
 
 #endif /* __ST7735_H */

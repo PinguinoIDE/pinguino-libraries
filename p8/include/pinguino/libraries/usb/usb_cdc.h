@@ -40,10 +40,10 @@ This file contains the definitinos for the USB cdc examples
 
 /* Communication Interface Class SubClass Codes */
 
-#define ABSTRACT_CONTROL_MODEL      0x02
+#define ABSTRACT_CONTROL_MODEL          0x02
 
 /* Communication Interface Class Control Protocol Codes */
-#define V25TER                      0x01    // Common AT commands ("Hayes(TM)")
+#define V25TER                          0x01    // Common AT commands ("Hayes(TM)")
 
 /*
  * Class-Specific descriptors ... there are a couple dozen of them
@@ -213,14 +213,14 @@ Functions for CDC classes
 #ifdef USB_USE_CDC
 
 #define CDC_IN_EP_SIZE 16
-#define CDC_BULK_IN_SIZE 64 
-#define CDC_BULK_OUT_SIZE 64
 
+#define CDC_BULK_IN_SIZE    EP0_BUFFER_SIZE//64 
+#define CDC_BULK_OUT_SIZE   EP0_BUFFER_SIZE//64
 
 // CDC specific buffers
-extern volatile u8 CDCControlBuffer[CDC_IN_EP_SIZE];
-extern volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
-extern volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
+//extern volatile u8 CDCControlBuffer[CDC_IN_EP_SIZE];
+//extern volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
+//extern volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
 
 u8 CONTROL_LINE=0;
 

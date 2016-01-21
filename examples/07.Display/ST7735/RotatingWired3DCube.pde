@@ -22,17 +22,20 @@
         LED       VSS (backlight on)
         SCK       SCK
         SDA       SDO
-        A0 (DC)   can be connected to any digital pin
+        A0 (DC)   user defined
         RESET     VSS
-        CS        can be connected to any digital pin
+        CS        SS
         GND       GND
         VSS       VSS (+5V or +3.3V)
 **/
 
 // Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
-#define SPIMODULE SPI2
-#define NBPOINTS 8
+
+#define SPIMODULE    SPI2
+#define NBPOINTS     8
+#define SIZE         100.00
+#define DISTANCE     256.00
 
 typedef struct { float x, y, z, xy; } point3D;
 typedef struct { float x, y;        } point2D;
@@ -58,27 +61,27 @@ void Rotation(u16 Xa, u16 Ya, u16 Za)
 
     // Calcul de la matrice de rotation 3*3
 
-    matrice[0][0] = cosr(Za) * cosr(Ya);
-    matrice[1][0] = sinr(Za) * cosr(Ya);
-    matrice[2][0] = - sinr(Ya);
+    matrice[0][0] = cosr(Za) * cosr(Ya); 
+    matrice[1][0] = sinr(Za) * cosr(Ya); 
+    matrice[2][0] = - sinr(Ya); 
 
-    matrice[0][1] = cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa);
-    matrice[1][1] = sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za);
-    matrice[2][1] = sinr(Xa) * cosr(Ya);
+    matrice[0][1] = cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa); 
+    matrice[1][1] = sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za); 
+    matrice[2][1] = sinr(Xa) * cosr(Ya); 
 
-    matrice[0][2] = cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa);
-    matrice[1][2] = sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa);
-    matrice[2][2] = cosr(Xa) * cosr(Ya);
+    matrice[0][2] = cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa); 
+    matrice[1][2] = sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa); 
+    matrice[2][2] = cosr(Xa) * cosr(Ya); 
 
-    a[0] = - (matrice[0][0] * matrice[0][1]);
-    a[1] = - (matrice[1][0] * matrice[1][1]);
-    a[2] = - (matrice[2][0] * matrice[2][1]);
+    a[0] = - (matrice[0][0] * matrice[0][1]); 
+    a[1] = - (matrice[1][0] * matrice[1][1]); 
+    a[2] = - (matrice[2][0] * matrice[2][1]); 
 
     // Rotation des sommets de l'objet
 
     for (i = 0; i < NBPOINTS; i++)
     {
-        Point3D[i].x =	((matrice[0][1] + Sommet[i].x) * (matrice[0][0] + Sommet[i].y)
+        Point3D[i].x = ((matrice[0][1] + Sommet[i].x) * (matrice[0][0] + Sommet[i].y)
             + a[0] + Sommet[i].xy
             + matrice[0][2] * Sommet[i].z);
 
@@ -86,13 +89,13 @@ void Rotation(u16 Xa, u16 Ya, u16 Za)
             + a[1] + Sommet[i].xy
             + matrice[1][2] * Sommet[i].z);
 
-        Point3D[i].z =	((matrice[2][1] + Sommet[i].x) * (matrice[2][0] + Sommet[i].y)
+        Point3D[i].z = ((matrice[2][1] + Sommet[i].x) * (matrice[2][0] + Sommet[i].y)
             + a[2] + Sommet[i].xy
             + matrice[2][2] * Sommet[i].z);
     /*
-        Point3D[i].x =	matrice[0][0]*Sommet[i].x + matrice[1][0]*Sommet[i].y + matrice[2][0]*Sommet[i].z;
-        Point3D[i].y =	matrice[0][1]*Sommet[i].x + matrice[1][1]*Sommet[i].y + matrice[2][1]*Sommet[i].z;
-        Point3D[i].z =	matrice[0][2]*Sommet[i].x + matrice[1][2]*Sommet[i].y + matrice[2][2]*Sommet[i].z;
+        Point3D[i].x = matrice[0][0]*Sommet[i].x + matrice[1][0]*Sommet[i].y + matrice[2][0]*Sommet[i].z;
+        Point3D[i].y = matrice[0][1]*Sommet[i].x + matrice[1][1]*Sommet[i].y + matrice[2][1]*Sommet[i].z;
+        Point3D[i].z = matrice[0][2]*Sommet[i].x + matrice[1][2]*Sommet[i].y + matrice[2][2]*Sommet[i].z;
      */
     }
 }
@@ -107,8 +110,8 @@ void Projection(void)
 
     for (i = 0; i < NBPOINTS; i++)
     {
-        Point2D[i].x = ( Point3D[i].x * 256.0f ) / ( Point3D[i].z + Zoff ) + Xoff;
-        Point2D[i].y = ( Point3D[i].y * 256.0f ) / ( Point3D[i].z + Zoff ) + Yoff;
+        Point2D[i].x = ( Point3D[i].x * DISTANCE ) / ( Point3D[i].z + Zoff ) + Xoff;
+        Point2D[i].y = ( Point3D[i].y * DISTANCE ) / ( Point3D[i].z + Zoff ) + Yoff;
     }
 }
 
@@ -120,15 +123,15 @@ void initCube()
 {
     u8 i;
 
-    Sommet[0].x = -100.0f;  Sommet[0].y = -100.0f;  Sommet[0].z = -100.0f;
-    Sommet[1].x =  100.0f;  Sommet[1].y = -100.0f;  Sommet[1].z = -100.0f;
-    Sommet[2].x =  100.0f;  Sommet[2].y =  100.0f;  Sommet[2].z = -100.0f;
-    Sommet[3].x = -100.0f;  Sommet[3].y =  100.0f;  Sommet[3].z = -100.0f;
+    Sommet[0].x = -SIZE;  Sommet[0].y = -SIZE;  Sommet[0].z = -SIZE;
+    Sommet[1].x =  SIZE;  Sommet[1].y = -SIZE;  Sommet[1].z = -SIZE;
+    Sommet[2].x =  SIZE;  Sommet[2].y =  SIZE;  Sommet[2].z = -SIZE;
+    Sommet[3].x = -SIZE;  Sommet[3].y =  SIZE;  Sommet[3].z = -SIZE;
     
-    Sommet[4].x =  100.0f;  Sommet[4].y = -100.0f;  Sommet[4].z =  100.0f;
-    Sommet[5].x = -100.0f;  Sommet[5].y = -100.0f;  Sommet[5].z =  100.0f;
-    Sommet[6].x = -100.0f;  Sommet[6].y =  100.0f;  Sommet[6].z =  100.0f;
-    Sommet[7].x =  100.0f;  Sommet[7].y =  100.0f;  Sommet[7].z =  100.0f;
+    Sommet[4].x =  SIZE;  Sommet[4].y = -SIZE;  Sommet[4].z =  SIZE;
+    Sommet[5].x = -SIZE;  Sommet[5].y = -SIZE;  Sommet[5].z =  SIZE;
+    Sommet[6].x = -SIZE;  Sommet[6].y =  SIZE;  Sommet[6].z =  SIZE;
+    Sommet[7].x =  SIZE;  Sommet[7].y =  SIZE;  Sommet[7].z =  SIZE;
 
     for (i = 0; i < NBPOINTS; i++)
         Sommet[i].xy = - Sommet[i].x * Sommet[i].y;
@@ -140,8 +143,8 @@ void initCube()
 
 void ligne(u8 a, u8 b)
 {
-    ST7735.drawLine(SPIMODULE, Point2D[a].x, Point2D[a].y,
-                               Point2D[b].x, Point2D[b].y);
+    ST7735.drawLine(SPIMODULE, (u16)Point2D[a].x, (u16)Point2D[a].y, 
+                               (u16)Point2D[b].x, (u16)Point2D[b].y);
 }
 
 ///
@@ -171,16 +174,18 @@ void setup()
     //    Adjust the following according to your processor
     //System.setCpuFrequency(60000000);
     //System.setPeripheralFrequency(60000000);
-    ST7735.init(SPIMODULE, 6, 5, 0, 0);  	// CS, DC
+    
+    ST7735.init(SPIMODULE, 7);// DC
     ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLUE);
     ST7735.setColor(SPIMODULE, ST7735_WHITE);
+    //ST7735.setOrientation(SPIMODULE, 270);
     ST7735.clearScreen(SPIMODULE);
     
     // Position du cube
     Xoff = ST7735[SPIMODULE].screen.width  / 2;
-    Yoff = ST7735[SPIMODULE].screen.height / 2 + 9;
-    Zoff = 1800;
+    Yoff = ST7735[SPIMODULE].screen.height / 2;// + 9;
+    Zoff = 1000;
 
     // create 3D cube
     initCube();
@@ -203,6 +208,7 @@ void loop()
         
         // display
         ST7735.clearScreen(SPIMODULE);
+        //ST7735.clearWindow(SPIMODULE,0,12,ST7735[SPIMODULE].screen.width,ST7735[SPIMODULE].screen.height);
         ST7735.printf(SPIMODULE, "%u fps (max. %u)", fps, maxfps);
         drawCube();
 

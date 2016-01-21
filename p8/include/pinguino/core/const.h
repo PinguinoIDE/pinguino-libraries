@@ -1,12 +1,33 @@
-/*	----------------------------------------------------------------------------
-    ---------- const.h
-    ---------- rblanchot@gmail.com
-    --------------------------------------------------------------------------**/
+/*  ----------------------------------------------------------------------------
+    FILE:			const.h
+    PROJECT:		pinguino
+    PURPOSE:		Pinguino main constant definitions
+    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:	20 Jun. 2009
+    LAST RELEASE:	29 Nov. 2015
+    ----------------------------------------------------------------------------
+    CHANGELOG:
+    2015-11-29 - Régis Blanchot - Commented #define BYTE (conflict with typedef.h)
+    ----------------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    --------------------------------------------------------------------------*/
+    
 #ifndef __CONST_H
     #define __CONST_H
 
-    #define PINGUINO_MAJOR_VERSION 11
+    #define PINGUINO_MAJOR_VERSION 12
     #define PINGUINO_MINOR_VERSION 1
 
     // already defined in math.h
@@ -41,11 +62,15 @@
 
     #define HIGH			1
     #define LOW				0
-
+/*
+    #ifndef ON
     #define ON				1
+    #endif
+    #ifndef OFF
     #define OFF				0
-
-    #define BYTE			1
+    #endif
+*/
+    //#define BYTE			1           // conflict with typedef.h
     #define BIN				2
     #define OCT				8 
     #define DEC				10

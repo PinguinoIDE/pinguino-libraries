@@ -1665,16 +1665,78 @@ void OnChangePin2(callback func, u8 config)
 }
 #endif
 
+#ifdef INT3INT
+void OnChangePin3(callback func, u8 config)
+{
+    if (intUsed[INT_INT3] == INT_NOT_USED)
+    {
+        intUsed[INT_INT3] = INT_USED;
+        intFunction[INT_INT3] = func;
+        INTCON2bits.INTEDG3 = config;
+        INTCON2bits.RBPU = 0;						// PORTB pull-ups are enabled
+        TRISBbits.TRISB3 = INPUT;
+        INTCON3bits.INT3IP = INT_LOW_PRIORITY;
+        INTCON3bits.INT3IE = INT_ENABLE;
+        INTCON3bits.INT3IF = 0;
+    }
+    #ifdef DEBUG
+    else
+    {
+        debug("Error : interrupt INT2 is already used !");
+    }
+    #endif
+}
+#endif
+
 #ifdef RBINT
 /*
-PORTB<7:4> Interrupt-on-Change
-Only pins configured as inputs can
-cause this interrupt to occur. Any RB7:RB4 pin
-configured as an output is excluded from the interrupt-
-on-change comparison. The pins are compared with
-the old value latched on the last read of PORTB.
+    PORTB<7:4> Interrupt-on-Change
+    Only pins configured as inputs can cause this interrupt to occur.
+    Any RB7:RB4 pin configured as an output is excluded from the
+    interrupt-on-change comparison. The pins are compared with the old
+    value latched on the last read of PORTB.
+    * pin:          INTRBx (can be ORed)
+    * func:         function to call when interrupt occurs
+    * ex. usage:    OnChangePin4to7(myInterrupt, INTRB4|INTRB7);
+                    void myInterrupt()
+                    {
+                        if (INTRB & INTRB4)
+                            do some stuff here
+                        if (INTRB & INTRB7)
+                            do some stuff here
+                    }
 */
 
+#define INTRB4      (1<<4)   // 16
+#define INTRB5      (1<<5)   // 32
+#define INTRB6      (1<<6)   // 64
+#define INTRB7      (1<<7)   // 128
+#define INTRBALL    0xF0
+
+volatile u8 INTRB;
+
+void OnChangePin4to7(callback func, u8 pin)
+{
+    if (intUsed[INT_RB] == INT_NOT_USED)
+    {
+        intUsed[INT_RB] = INT_USED;
+        intFunction[INT_RB] = func;
+        pin &= 0xF0;    // to prevent lower pins to change
+        TRISB &= 0x0F;  // clears bit 7 to 4
+        TRISB |= pin;   // pin as an INPUT
+        INTCON2bits.RBIP = INT_LOW_PRIORITY;
+        INTCONbits.RBIE  = INT_ENABLE;
+        INTCONbits.RBIF  = 0;
+    }
+    #ifdef DEBUG
+    else
+    {
+        debug("Error : interrupt RB is already used !");
+    }
+    #endif
+}
+
+/*
 void OnChangePin4to7(callback func, u8 pin, u8 config)
 {
     if (intUsed[INT_RB] == INT_NOT_USED)
@@ -1694,6 +1756,8 @@ void OnChangePin4to7(callback func, u8 pin, u8 config)
     }
     #endif
 }
+*/
+
 #endif
 
 /*	----------------------------------------------------------------------------
@@ -1955,10 +2019,14 @@ void userlowinterrupt()
     #endif
     
     #ifdef RBINT
+    u8 LastPortB;
+    
     if (INTCONbits.RBIE && INTCONbits.RBIF)
     {
-        INTCONbits.RBIF = 0;
+        INTRB = (PORTB & 0xF0) ^ LastPortB;
+        LastPortB = (PORTB & 0xF0);
         intFunction[INT_RB]();
+        INTCONbits.RBIF = 0;
     }
     #endif
     

@@ -1,4 +1,4 @@
-const u8 pacman[2][8] = {
+    const u8 pacman[2][8] = {
 {
     0b00111100,
     0b01111110,
@@ -7,7 +7,7 @@ const u8 pacman[2][8] = {
     0b11100000,
     0b11111000,
     0b01111110,
-    0b00111100,
+    0b00111100
 },
 {
     0b00111100,
@@ -17,7 +17,7 @@ const u8 pacman[2][8] = {
     0b11111111,
     0b11111111,
     0b01111110,
-    0b00111100,
+    0b00111100
 }
 };
 
@@ -46,11 +46,11 @@ void setup()
     The MAX72XX is in power-saving mode on startup,
     we have to do a wakeup call
     */
-    LedControl.shutdown(0, false);
+    LedControl.powerOn();
     /* Set the brightness to a medium value */
-    LedControl.setIntensity(0, 8);
+    LedControl.setIntensity(8);
     /* and clear the display */
-    LedControl.clearDisplay(0);
+    LedControl.clearAll();
 }
 
 void loop()

@@ -192,17 +192,22 @@ void IO_remap(void)
         //bit 7 CLKRSEL: Pin Selection bit
         //1 = CLKR function is on RC3
         //0 = CLKR function is on RA4
-        APFCONbits.CLKRSEL = 1;                         // RC3
+        //APFCONbits.CLKRSEL = 1;                         // RC3
+
+        //bit 5 SSSEL: Pin Selection bit
+        //1 = SS function is on RA4
+        //0 = SS function is on RC2
+        //APFCONbits.SDOSEL = 0;                          // RC2
 
         //bit 5 SSSEL: Pin Selection bit
         //1 = SS function is on RA3
         //0 = SS function is on RC6
-        APFCONbits.SSSEL = 0;                           // RC6
+        //APFCONbits.SSSEL = 0;                           // RC6
 
         //bit 3 T1GSEL: Pin Selection bit
         //1 = T1G function is on RA3
         //0 = T1G function is on RA4
-        APFCONbits.T1GSEL = 1;                          // RA3
+        //APFCONbits.T1GSEL = 1;                          // RA3
 
     #elif defined(__18f26j50) || defined(__18f46j50)
 
@@ -231,9 +236,11 @@ void IO_remap(void)
          * prevent the module from receiving data on the SDI2 pin, as the
          * module uses the SCK2IN signal to latch the received data.
         **/
-        RPINR22 = 5;                    // 2014-20-03 fixed by AG (see above)
-        RPINR21 = 6;                    // RP6 (RB3) <- SDI2
+        
+        //RPINR23 = 3;                    // RP3 (RB0) <- SS2 (Slave mode)
+        RPINR22 = 5;                    // RP5 (RB2) <- SCK2 [2014-20-03 - AG - fixed (see above)]
         RPOR5 = 10;                     // RP5 (RB2) -> SCK2
+        RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR4 = 9;                      // RP4 (RB1) -> SDO2 (func. num. 9)
         //RPOR3 = 12;                     // RP3 (RB0) -> SS2 (SPI DMA Slave Select)
         //#endif
@@ -246,7 +253,7 @@ void IO_remap(void)
         RPOR12 = 18;                    // RP12 (RC1) <- CCP2
                 //P2B      - 19 - ECCP2 Enhanced PWM Output, Channel B
                 //P2C      - 20 - ECCP2 Enhanced PWM Output, Channel C
-                //P2D     - 21 - ECCP2 Enhanced PWM Output, Channel D
+                //P2D      - 21 - ECCP2 Enhanced PWM Output, Channel D
         // RPINR24 = ;                     // PWM Fault Input (FLT0)
         
         //#endif
@@ -275,11 +282,13 @@ void IO_remap(void)
          * prevent the module from receiving data on the SDI2 pin, as the
          * module uses the SCK2IN signal to latch the received data.
         **/
+        
+        //RPINR23 = 3;                    // RP3 (RB0) <- SS2 (Slave mode)
         RPINR22 = 5;                    // RP5 (RB2) <- SCK2 [2014-20-03 - AG - fixed (see above)]
         RPOR5 = 11;                     // RP5 (RB2) -> SCK2 (func. num. 11)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR4 = 10;                     // RP4 (RB1) -> SDO2 (func. num. 10)
-   
+
         EECON2 = 0x55;
         EECON2 = 0xAA;
         PPSCONbits.IOLOCK = 1;			// Turn on PPS Write Protect

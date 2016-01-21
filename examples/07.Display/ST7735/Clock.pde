@@ -27,7 +27,7 @@
         VSS       VSS (+5V or +3.3V)
 **/
 
-//#define SPISW
+#define SPITFT    SPI2
 
 /**
     Load one or more fonts and active them with ST7735.setFont()
@@ -40,8 +40,6 @@
 //#include <fonts/font16x8.h>         // wrong direction
 //#include <fonts/font16x16.h>        // ???
 
-s16 a=-90;
-u8 x, y;
 u8 xo, yo;
 u8 old=0;
 
@@ -57,23 +55,24 @@ void setup()
     pinMode(USERLED, OUTPUT);
     
     // if SPISW is defined
-    // ST7735_init(cs, dc, sda, sck);
+    // ST7735_init(SPISW, sda, sck, cs, dc);
 
-    ST7735.init(0, 2); // CS and DC
-    ST7735.setFont(font6x8);
-    ST7735.setBackgroundColor(ST7735_BLACK);
-    ST7735.setColor(ST7735_WHITE);
-    ST7735.clearScreen();
+    ST7735.init(SPITFT, 7); // DC
+    ST7735.setFont(SPITFT, font6x8);
+    ST7735.setBackgroundColor(SPITFT, ST7735_BLACK);
+    ST7735.clearScreen(SPITFT);
 
     // Init real time calendar
     RTCC.init(Tm, Dt, drift);
 
-    xo = ST7735.screen.width  / 2;
-    yo = ST7735.screen.height / 2;
+    xo = ST7735[SPITFT].screen.width  / 2;
+    yo = ST7735[SPITFT].screen.height / 2;
 }
 
 void loop()
 {
+    u8 x, y;
+    s16 angle;
     rtccTime cT;
     rtccDate cD;
 
@@ -87,25 +86,42 @@ void loop()
 
     if (cT.seconds != old)
     {
-        // actual spin position
-        x = xo + 64.0f * cosr(a - 90);
-        y = yo + 32.0f * sinr(a - 90);
-        ST7735.clearScreen();
-        // draw spin
-        ST7735.drawLine(xo, yo, x, y);
-        // display date
-        ST7735.setCursor(3, 3);
-        ST7735.printf("%3s %02d %3s. %04d\r\n", Day[cD.dayofweek], cD.dayofmonth, Month[cD.month], cD.year+2000);
-        // display time
-        ST7735.setCursor(6, 4);
-        ST7735.printf("%02d:%02d:%02d\r\n", cT.hours, cT.minutes, cT.seconds);
-
-        toggle(USERLED);
+        ST7735.clearScreen(SPITFT);
         
-        // update next spin position
-        a = (a + 6) % 360;
+        /** DATE **/
+        ST7735.setColor(SPITFT, ST7735_GREEN);
+        ST7735.setCursor(SPITFT, 3, 3);
+        ST7735.printf(SPITFT, "%3s %02d %3s. %04d\r\n", Day[cD.dayofweek], cD.dayofmonth, Month[cD.month], cD.year+2000);
+
+        /** TIME **/
+        ST7735.setColor(SPITFT, ST7735_YELLOW);
+        ST7735.setCursor(SPITFT, 6, 4);
+        ST7735.printf(SPITFT, "%02d:%02d:%02d\r\n", cT.hours, cT.minutes, cT.seconds);
+
+        /** SECONDS **/
+        ST7735.setColor(SPITFT, ST7735_WHITE);
+        angle = cT.seconds * 6 - 90;
+        x = xo + 64.0f * cosr(angle);
+        y = yo + 32.0f * sinr(angle);
+        ST7735.drawLine(SPITFT, xo, yo, x, y);
+
+        /** MINUTES **/
+        ST7735.setColor(SPITFT, ST7735_BLUE);
+        angle = cT.minutes * 6 - 90;
+        x = xo + 64.0f * cosr(angle);
+        y = yo + 32.0f * sinr(angle);
+        ST7735.drawLine(SPITFT, xo, yo, x, y);
+
+        /** HOURS **/
+        ST7735.setColor(SPITFT, ST7735_RED);
+        angle = cT.hours * 30 - 90;
+        x = xo + 64.0f * cosr(angle);
+        y = yo + 32.0f * sinr(angle);
+        ST7735.drawLine(SPITFT, xo, yo, x, y);
+        
+        toggle(USERLED);
+  
         // store last second value
         old = cT.seconds;
-    }
-    
+    } 
 }

@@ -38,7 +38,7 @@ void setup()
     seed = millis();
     randomSeed(seed);
 
-    ST7735.init(SPIMODULE, 6, 5, 0, 0); // CS and DC
+    ST7735.init(SPIMODULE, 7); // DC
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
     ST7735.clearScreen(SPIMODULE);
 }   
@@ -49,8 +49,8 @@ void loop()
     u16 y = random(0, 127);     // coordinate y E [0, 127]
     u16 r = random(0, 63);      // radius r E [0,63]
     //u16 c  = random(0, 0xFFFF); // color c E [0, 65535]
-    u16 c = millis() % 0xFFFF;
-    u8 f   = random(0, 100);    // form c E [0, 1]
+    u16 c = millis() % 0xFFFF;    // color
+    u8 f  = random(0, 100);    // form c E [0, 1]
     
     // display
     ST7735.setColor(SPIMODULE, c);

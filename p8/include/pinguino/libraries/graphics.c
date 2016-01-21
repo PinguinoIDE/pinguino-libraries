@@ -53,13 +53,18 @@
 #include <typedef.h>    // u8, u16, ..
 #include <macro.h>      // swap
 #include <mathlib.c>    // abs
+#ifdef ST7735DRAWBITMAP
+//#include <sd/diskio.h>
+#include <sd/diskio.c>
+#endif
+
 //#define _abs_(a) (((a)> 0) ? (a) : -(a))
 
 // Specific to each display
 extern void drawPixel(u16, u16);
 extern void drawVLine(u16, u16, u16);
 extern void drawHLine(u16, u16, u16);
-//extern void setColor(u16 c);
+extern void setColor(u8, u8, u8);
 
 /*	--------------------------------------------------------------------
     Prototypes
@@ -111,7 +116,7 @@ void fillCircle(u16 x, u16 y, u16 radius)
 
 void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 {
-    s16 steep, t;
+    s16 steep;
     s16 deltax, deltay, error;
     s16 x, y;
     s16 ystep;
@@ -276,6 +281,138 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
     }
 }
 
+/*  --------------------------------------------------------------------
+    Opens a Windows Bitmap (BMP) file
+    spi  : the spi module where the SD card is connected
+    filename : path + file's name (ex : img/logo.bmp)
+    x, y : the coordinates where to the picture
+    Increasing the pixel buffer size takes more RAM but makes loading a
+    little faster. 20 pixels seems a good balance.
+    ------------------------------------------------------------------*/
+
+#ifdef ST7735DRAWBITMAP
+
+#define BUFFPIXEL 20
+
+void drawBitmap(u8 spisd, const u8 * filename, u16 x, u16 y)
+{
+    FIL bmpFile;
+    int bmpWidth, bmpHeight;   // W+H in pixels
+    u8  bmpDepth;              // Bit depth (currently must be 24)
+    u32 bmpImageoffset;        // Start of image data in file
+    u32 rowSize;               // Not always = bmpWidth; may have padding
+    u8  sdbuffer[3*BUFFPIXEL]; // pixel buffer (R+G+B per pixel)
+    u8  buffidx = sizeof(sdbuffer); // Current position in sdbuffer
+    u8  goodBmp = false;       // Set to true on valid header parse
+    u8  flip    = true;        // BMP is stored bottom-to-top
+    int w, h, row, col;
+    u8  r, g, b;
+    u32 pos = 0;
+    u16 rc;
+
+    //if((x >= output.screen.width) || (y >= output.screen.height))
+    //    return;
+
+    // Open requested file
+    // -----------------------------------------------------------------
+    
+    if (f_open(spisd, &bmpFile, filename, FA_READ) != FR_OK)
+        return;
+
+    // Parse BMP header
+    // -----------------------------------------------------------------
+    
+    // Check BMP signature
+    if(f_read16(spisd, &bmpFile) == 0x4D42)
+    {
+        f_read32(spisd, &bmpFile); // File size:
+        f_read32(spisd, &bmpFile); // Read & ignore creator bytes
+        bmpImageoffset = f_read32(spisd, &bmpFile); // Start of image data
+        f_read32(spisd, &bmpFile); // Read DIB header
+        bmpWidth  = f_read32(spisd, &bmpFile);
+        bmpHeight = f_read32(spisd, &bmpFile);
+        
+        // planes must be '1'
+        if (f_read16(spisd, &bmpFile) == 1)
+        {
+            bmpDepth = f_read16(spisd, &bmpFile); // bits per pixel
+            // 0 = uncompressed
+            if ((bmpDepth == 24) && (f_read32(spisd, &bmpFile) == 0))
+            {
+                goodBmp = true; // Supported BMP format -- proceed!
+                // BMP rows are padded (if needed) to 4-byte boundary
+                rowSize = (bmpWidth * 3 + 3) & ~3;
+                // If bmpHeight is negative, image is in top-down order.
+                // This is not canon but has been observed in the wild.
+                if (bmpHeight < 0)
+                {
+                    bmpHeight = -bmpHeight;
+                    flip      = false;
+                }
+
+                // Crop area to be loaded
+                w = bmpWidth;
+                h = bmpHeight;
+
+                //if ((x+w-1) >= output.screen.width)
+                //    w = output.screen.width  - x;
+
+                //if ((y+h-1) >= output.screen.height)
+                //    h = output.screen.height - y;
+
+                // Set TFT address window to clipped image bounds
+                //setWindow(x, y, x+w-1, y+h-1);
+
+
+                // For each scanline...
+                for (row=0; row<h; row++)
+                {
+                    if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
+                        pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
+                    else     // Bitmap is stored top-to-bottom
+                        pos = bmpImageoffset + row * rowSize;
+
+                    // Seek to start of scan line to avoid cropping
+                    // and scanline padding. the seek only takes place
+                    // if the file position actually needs to change
+                    // (avoids a lot of cluster math in SD library).
+                    if(bmpFile.fptr != pos)
+                    {
+                        f_lseek(spisd, &bmpFile, pos);
+                        buffidx = sizeof(sdbuffer); // Force buffer reload
+                    }
+
+                    // For each pixel...
+                    for (col=0; col<w; col++)
+                    {
+                        // Time to read more pixel data?
+                        if (buffidx >= sizeof(sdbuffer))
+                        {
+                            f_read(spisd, &bmpFile, sdbuffer, sizeof(sdbuffer), &rc);
+                            buffidx = 0; // Set index to beginning
+                        }
+
+                        // Convert pixel from BMP to TFT format
+                        b = sdbuffer[buffidx++];
+                        g = sdbuffer[buffidx++];
+                        r = sdbuffer[buffidx++];
+
+                        // push to display
+                        setColor(r,g,b);
+                        drawPixel(col, row);
+                    } // end pixel
+                } // end scanline
+            } // end goodBmp
+        }
+    }
+
+    f_close(spisd, &bmpFile);
+    if(!goodBmp)
+        return; // BMP format not recognized
+}
+
+#endif
+
 /*
 void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
     char i,j,ch;
@@ -359,25 +496,6 @@ void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
 */
 
 /*
-void drawBitmap(u16 xo, u16 yo, u16 w, u16 h, const u16* bitmap)
-{
-    u16 i, j;
-
-    for (j=0; j<h; j++)
-    {
-        for (i=0; i<w; i++)
-        {
-            //setColor(bitmap[j * w + i + 2]);
-            drawPixel(xo+i, yo+j);
-            //ILI9325_write(WriteDatatoGRAM, bitmap[ ( j * w ) + i + 2]);
-            //ILI9325_write(GRAMHorizontalAddressSet, xo + i);
-            //ILI9325_write(GRAMVerticalAddressSet,   yo + j);
-        }
-    }
-}
-*/
-
-/*
 void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 rox, u16 roy)
 {
     unsigned u16 col;
@@ -405,83 +523,6 @@ void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 
 
                 drawPixel(newx, newy);
             }
-    }
-}
-
-unsigned u16 loadBitmap(u16 x, u16 y, u16 sx, u16 sy, char *filename)
-{
-    u16 res;
-    u16 cx, cy, cp;
-    unsigned u16 temp, result;
-    char r,g,b;
-    u16 i;
-
-    res=openFile(filename, FILEMODE_BINARY);
-    if (res==NO_ERROR)
-    {
-        fastWriteLow(LCD_CS);  
-        cx=0;
-        cy=0;
-        result=512;
-        if (orient==PORTRAIT)
-        {
-            setXY(x, y, x+sx-1, y+sy-1);
-        }
-        while (result==512)
-        {
-            result=readBinary();
-            switch(result)
-            {
-                case ERROR_WRONG_FILEMODE:
-                    return ERROR_WRONG_FILEMODE;
-                    break;
-                case ERROR_NO_FILE_OPEN:
-                    return ERROR_NO_FILE_OPEN;
-                    break;
-                default:
-                    if (orient==PORTRAIT)
-                    {
-                        for (i=0; i<result; i+=2)
-                            LCD_Write_DATA(buffer[i],buffer[i+1]);
-                    }
-                    else
-                    {
-                        cp=0;
-                        while (cp<result)
-                        {
-                            if (((result-cp)/2)<(sx-cx))
-                            {
-                                setXY(x+cx, y+cy, x+cx+((result-cp)/2)-1, y+cy);
-                                for (i=(result-cp)-2; i>=0; i-=2)
-                                    LCD_Write_DATA(buffer[cp+i],buffer[cp+i+1]);
-                                cx+=((result-cp)/2);
-                                cp=result;
-                            }
-                            else
-                            {
-                                setXY(x+cx, y+cy, x+sx-1, y+cy);
-                                for (i=sx-cx-1; i>=0; i--)
-                                    LCD_Write_DATA(buffer[cp+(i*2)],buffer[cp+(i*2)+1]);
-                                cp+=(sx-cx)*2;
-                                cx=0;
-                                cy++;
-                            }
-                        }
-                    }
-                    break;
-            }              
-        }
-        closeFile();
-        if (orient==PORTRAIT)
-            setXY(0,0,239,319);
-        else
-            setXY(0,0,319,239);
-        fastWriteHigh(LCD_CS);  
-        return 0;
-    }
-    else
-    {
-        return res;
     }
 }
 */

@@ -325,8 +325,8 @@ u32 System_getCpuFrequency()
     09-09-2015 - RB - function replaced by a macro
     ------------------------------------------------------------------*/
 
-#define SystemGetInstructionClock()		System_getPeripheralFrequency()	
-#define System_getPeripheralFrequency()	(System_getCpuFrequency() >> 2)
+#define System_getInstructionClock()    (System_getCpuFrequency() >> 2)
+#define System_getPeripheralFrequency() (System_getCpuFrequency() >> 2)
 
 /*  --------------------------------------------------------------------
     Functions to change clock source and frequency
