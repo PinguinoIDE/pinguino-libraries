@@ -131,6 +131,8 @@ void RTCC_SetTimeDate(u32 tm, u32 dt)
 	---------------------------------------------------------------------------*/
 
 #if defined(RTCCGETTIME) || defined(RTCCGETTIMEDATE)
+
+/*
 rtccTime* RTCC_GetTime()
 {
     u8 dummy;
@@ -145,10 +147,12 @@ rtccTime* RTCC_GetTime()
     RTCC_Wait();
     pTm->seconds = RTCVALL;
     RTCC_Wait();
-    pTm->minutes = RTCVALH;   
-    return (RTCC_ConvertTime(&pTm));
+    pTm->minutes = RTCVALH;
+    pTm = RTCC_ConvertTime(pTm);
+    return pTm;
 }
-/*
+*/
+
 void RTCC_GetTime(rtccTime* pTm)
 {
     u8 dummy;
@@ -165,10 +169,11 @@ void RTCC_GetTime(rtccTime* pTm)
     pTm->minutes = RTCVALH;   
     RTCC_ConvertTime(pTm);
 }
-*/
 #endif
 
 #if defined(RTCCGETDATE) || defined(RTCCGETTIMEDATE)
+
+/*
 rtccDate* RTCC_GetDate()
 {
     u8 dummy;
@@ -188,9 +193,11 @@ rtccDate* RTCC_GetDate()
     dummy = RTCVALL;
     RTCC_Wait();
     pDt->dayofweek = RTCVALH;
-    return (RTCC_ConvertDate(&pDt));
+    pDt = RTCC_ConvertDate(pDt);
+    return pDt;
 }
-/*
+*/
+
 void RTCC_GetDate(rtccDate* pDt)
 {
     u8 dummy;
@@ -211,7 +218,7 @@ void RTCC_GetDate(rtccDate* pDt)
     pDt->dayofweek = RTCVALH;
     RTCC_ConvertDate(pDt);
 }
-*/
+
 #endif
 
 #ifdef RTCCGETTIMEDATE
@@ -220,10 +227,10 @@ void RTCC_GetTimeDate(rtccTime* pTm, rtccDate* pDt)
     rtccTime tm;
     rtccDate dt;
 
-    //RTCC_GetDate(&dt);
-    dt = RTCC_GetDate();
-    //RTCC_GetTime(&tm);
-    tm = RTCC_GetTime();
+    RTCC_GetDate(&dt);
+    //dt = RTCC_GetDate();
+    RTCC_GetTime(&tm);
+    //tm = RTCC_GetTime();
     pTm->l = tm.l;
     pDt->l = dt.l;
 }

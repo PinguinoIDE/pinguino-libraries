@@ -1,14 +1,16 @@
-/*	--------------------------------------------------------------------
-FILE:			ST7735[module].c
+/*  --------------------------------------------------------------------
+FILE:			ST7735.c
 PROJECT:		pinguino
 PURPOSE:		Drive 1.8" 128x160 TFT display
 PROGRAMER:		regis blanchot <rblanchot@gmail.com>
 FIRST RELEASE:	11 Dec. 2014
-LAST RELEASE:	12 Dec. 2014
+LAST RELEASE:	22 Jan. 2016
 ------------------------------------------------------------------------
 http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
 ------------------------------------------------------------------------
-* Todo : scroll functions
+TODO :
+* scroll functions
+* in SPI_begin() 'u8' is promoted to 'int' when passed through '...'
 ------------------------------------------------------------------------
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -42,6 +44,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef __ST7735_C
 #define __ST7735_C
 
+#include <stdarg.h>
 #include <typedef.h>
 #include <macro.h>
 #include <spi.h>
@@ -52,7 +55,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 // Printf
 #ifdef ST7735PRINTF
-    #include <stdarg.h>
     #ifdef __PIC32MX__
         #include <printf.c>
     #else
@@ -61,7 +63,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #endif
 
 // Graphics Library
-#ifdef ST7735GRAPHICS
+#if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
+    #ifdef ST7735DRAWBITMAP
+    #define DRAWBITMAP
+    #endif
     #include <graphics.c>
 #endif
 
@@ -90,20 +95,27 @@ void ST7735_sendData(u8 module, u8 val)
         Orientation set to portrait by default
 ------------------------------------------------------------------*/
 
-void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
+//void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
+void ST7735_init(u8 module, ...)
 {
+    u8 sda, sck, cs;
+    va_list args;
+    
     ST7735_SPI = module;
     
-    ST7735[module].pin.dc = dc;
-    ST7735[module].pin.cs = cs;
-    output(ST7735[module].pin.dc);
-    output(ST7735[module].pin.cs);
+    va_start(args, module); // args points on the argument after module
+
+    ST7735[module].pin.dc = va_arg(args, u8); // get the first arg
+    pinmode(ST7735[module].pin.dc, OUTPUT);
     
     // init SPI communication
 
     if (module == SPISW)
     {
-        SPI_setPin(ST7735_SPI, sda, sck);
+        sda = va_arg(args, u8);         // get the next arg
+        sck = va_arg(args, u8);         // get the next arg
+        cs  = va_arg(args, u8);         // get the last arg
+        SPI_begin(ST7735_SPI, sda, sck, cs);
         SPI_setBitOrder(ST7735_SPI, SPI_MSBFIRST);
     }
     else
@@ -114,7 +126,8 @@ void ST7735_init(u8 module, u8 cs, u8 dc, u8 sda, u8 sck)
         SPI_setClockDivider(ST7735_SPI, SPI_PBCLOCK_DIV2);
         SPI_begin(ST7735_SPI);
     }
-    
+    va_end(args);           // cleans up the list
+        
     // default Screen Values
 
     ST7735[module].cursor.x      = 0;
@@ -838,11 +851,16 @@ void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
     REMARKS:
 ------------------------------------------------------------------*/
 
-#ifdef ST7735GRAPHICS
+#if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
 
 void drawPixel(u16 x, u16 y)
 {
     ST7735_drawPixel(ST7735_SPI, x, y);
+}
+
+void setColor(u8 r, u8 g, u8 b)
+{
+    ST7735_setColor(ST7735_SPI, ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
 }
 
 void drawHLine(u16 x, u16 y, u16 w)
@@ -885,15 +903,11 @@ void ST7735_fillCircle(u8 module, u16 x, u16 y, u16 radius)
     fillCircle(x, y, radius);
 }
 
-#endif // ST7735GRAPHICS
-
 void ST7735_fillRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
 {
     ST7735_SPI = module;
     fillRect(x1, y1, x2, y2);
 }
-
-#ifdef ST7735GRAPHICS
 
 void ST7735_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
 {
@@ -901,10 +915,11 @@ void ST7735_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
     fillRoundRect(x1, y1, x2, y2);
 }
 
-#if 0 // Still to do
-void ST7735_drawBitmap(u8 module, u16 x, u16 y, u16 w, u16 h, u16* bitmap)
+#ifdef ST7735DRAWBITMAP
+void ST7735_drawBitmap(u8 module1, u8 module2, const u8* filename, u16 x, u16 y)
 {
-    ST7735_SPI = module;
+    ST7735_SPI = module1;
+    drawBitmap(module2, filename, x, y);
 }
 #endif
 

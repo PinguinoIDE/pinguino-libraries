@@ -6,7 +6,6 @@ SPI.setMode SPI1_setMode#include <spi1.c>#define SPI1SETMODE
 SPI.setDataMode SPI1_setDataMode#include <spi1.c>#define SPI1SETDATAMODE
 SPI.setClock SPI1_setClock#include <spi1.c>#define SPI1SETCLOCK
 SPI.setClockDivider SPI1_setClockDivider#include <spi1.c>#define SPI1SETCLOCKDIVIDER
-SPI.setPin SPI1_setPin#include <spi1.c>#define SPI1SETPIN
 SPI.write SPI1_write#include <spi1.c>#define SPI1WRITE
 SPI.read SPI1_read#include <spi1.c>#define SPI1READ
 SPI.transfer SPI1_write#include <spi1.c>#define SPI1TRANSFER
@@ -19,7 +18,6 @@ SPI1.setMode SPI1_setMode#include <spi1.c>#define SPISETMODE
 SPI1.setDataMode SPI1_setDataMode#include <spi1.c>#define SPISETDATAMODE
 SPI1.setClock SPI1_setClock#include <spi1.c>#define SPISETCLOCK
 SPI1.setClockDivider SPI1_setClockDivider#include <spi1.c>#define SPISETCLOCKDIVIDER
-SPI1.setPin SPI1_setPin#include <spi1.c>#define SPISETPIN
 SPI1.write SPI1_write#include <spi1.c>#define SPIWRITE
 SPI1.read SPI1_read#include <spi1.c>#define SPIREAD
 SPI1.transfer SPI1_write#include <spi1.c>#define SPI1TRANSFER
@@ -32,7 +30,6 @@ SPI2.setMode SPI2_setMode#include <spi2.c>#define SPI2SETMODE
 SPI2.setDataMode SPI2_setDataMode#include <spi2.c>#define SPI2SETDATAMODE
 SPI2.setClock SPI2_setClock#include <spi2.c>#define SPI2SETCLOCK
 SPI2.setClockDivider SPI2_setClockDivider#include <spi2.c>#define SPI2SETCLOCKDIVIDER
-SPI2.setPin SPI2_setPin#include <spi2.c>#define SPI2SETPIN
 SPI2.write SPI2_write#include <spi2.c>#define SPI2WRITE
 SPI2.read SPI2_read#include <spi2.c>#define SPI2READ
 SPI2.transfer SPI2_write#include <spi2.c>#define SPI2TRANSFER

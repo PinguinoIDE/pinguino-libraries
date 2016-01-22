@@ -26,7 +26,7 @@ ST7735.getColor ST7735_getColor#include <ST7735.c>
 
 ST7735.drawPixel ST7735_drawPixel#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.clearPixel ST7735_clearPixel#include <ST7735.c>#define ST7735GRAPHICS
-ST7735.drawBitmap ST7735_drawBitmap#include <ST7735.c>#define ST7735GRAPHICS
+ST7735.drawBitmap ST7735_drawBitmap#include <ST7735.c>#define ST7735DRAWBITMAP
 ST7735.drawCircle ST7735_drawCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.fillCircle ST7735_fillCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.drawLine ST7735_drawLine#include <ST7735.c>#define ST7735GRAPHICS

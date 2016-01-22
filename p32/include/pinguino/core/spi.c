@@ -9,19 +9,20 @@
     LAST RELEASE:	15 Mar 2014
     ----------------------------------------------------------------------------
     CHANGELOG : 
-    24 May 2011 - jp.mandon  -  fixed a bug in SPI_write, RX int flag must be called even for write
-    20 Feb 2012 - r.blanchot -  added PIC32_PINGUINO_220 support
-    28 May 2012 - MFH        -  added PIC32_PINGUINO_MICRO support and fixed a bug
+    24 May. 2011 - jp.mandon  - fixed a bug in SPI_write, RX int flag must be called even for write
+    20 Feb. 2012 - r.blanchot - added PIC32_PINGUINO_220 support
+    28 May. 2012 - MFH        - added PIC32_PINGUINO_MICRO support and fixed a bug
                                 in SPI_clock() identified by dk (KiloOne)
-    01 Mar 2014 - fcapozzi   -  added SPI32_init function
-    15 Mar 2014 - rblanchot  -  fixed compatibility with 8-bit Pinguino SPI library 
-    22 Aug 2014 - rblanchot  -  fixed SPI2 bug 
-    13 Apr 2015 - rblanchot  -  added multi-module support (SPISW, SPI1, SPI2, SPI3 and SPI4) 
-    14 Apr 2015 - rblanchot  -  moved #define and prototypes in spi.h 
-    14 Apr 2015 - rblanchot  -  added SPI structure to store SPI features 
+    01 Mar. 2014 - fcapozzi   - added SPI32_init function
+    15 Mar. 2014 - rblanchot  - fixed compatibility with 8-bit Pinguino SPI library 
+    22 Aug. 2014 - rblanchot  - fixed SPI2 bug 
+    13 Apr. 2015 - rblanchot  - added multi-module support (SPISW, SPI1, SPI2, SPI3 and SPI4) 
+    14 Apr. 2015 - rblanchot  - moved #define and prototypes in spi.h 
+    14 Apr. 2015 - rblanchot  - added SPI structure to store SPI features 
+    01 Oct. 2015 - rblanchot  - added SPI SOFTWARE support
+    22 Jan. 2016 - rblanchot  - removed setPin(), extended begin() with vargs
      ----------------------------------------------------------------------------
     TODO :
-    * SPI SOFTWARE support
     * SLAVE MODE support
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
@@ -44,6 +45,7 @@
 
 #include <p32xxxx.h>
 #include <typedef.h>
+#include <stdarg.h>
 #include <spi.h>
 #include <system.c>
 #include <interrupt.c>
@@ -63,22 +65,7 @@ void SPI_init()
         SPI[i].divider  = SPI_PBCLOCK_DIV64;
         SPI[i].role     = SPI_MASTER;
         SPI[i].bitorder = SPI_MSBFIRST;
-        SPI[i].phase    = SPI_SMPEND;
-    }
-}
-
-/**
- *  This function set SPI software pins
- */
-
-void SPI_setPin(u8 module, u8 sda, u8 sck)
-{
-    if (module == SPISW)
-    {
-        SPI[module].sda = sda;
-        SPI[module].sck = sck;
-        output(SPI[module].sda);
-        output(SPI[module].sck);
+        SPI[i].phase    = SPI_STANDARD_SPEED_MODE;
     }
 }
 
@@ -88,7 +75,6 @@ void SPI_setPin(u8 module, u8 sda, u8 sck)
  *  as we could have more than one slave on the same SPI bus.
  */
 
-/*
 void SPI_select(u8 module)
 {
     switch(module)
@@ -108,7 +94,6 @@ void SPI_select(u8 module)
             break;
     }
 }
-*/
 
 /**
  *  This function deselect a SPI module
@@ -116,7 +101,6 @@ void SPI_select(u8 module)
  *  as we could have more than one slave on the same SPI bus.
  */
 
-/*
 void SPI_deselect(u8 module)
 {
     switch(module)
@@ -136,7 +120,7 @@ void SPI_deselect(u8 module)
             break;
     }
 }
-*/
+
 
 /**
  * This function sets the order of the bits shifted out of and into the SPI bus,
@@ -230,10 +214,15 @@ u32 SPI_setClock(u8 module, u32 Fspi)
 //#ifdef SPISETCLOCKDIVIDER
 void SPI_setClockDivider(u8 module, u32 divider)
 {
-    if (divider > 1024)
+    if (divider > SPI_PBCLOCK_DIV1024)
         SPI[module].divider = 511;
     else
         SPI[module].divider = divider / 2 - 1;
+
+    if (divider > SPI_PBCLOCK_DIV8)
+        SPI[module].phase = SPI_STANDARD_SPEED_MODE;
+    else
+        SPI[module].phase = SPI_HIGH_SPEED_MODE;
 }
 //#endif
 
@@ -328,8 +317,13 @@ void SPI_close(u8 module)
  *  9. Enable SPI operation by setting the ON bit (SPIxCON<15>).
  **/
 
-void SPI_begin(u8 module)
+void SPI_begin(u8 module, ...)
 {
+    u8 sda, sck, cs;
+    va_list args;
+    
+    va_start(args, module); // args points on the argument after module
+
     // Reset the module
     SPI_close(module);
     
@@ -337,6 +331,13 @@ void SPI_begin(u8 module)
     switch(module)
     {
         case SPISW:
+            // Sets SPI software pins
+            SPI[SPISW].sda = va_arg(args, u8); // get the first arg
+            SPI[SPISW].sck = va_arg(args, u8);
+            SPI[SPISW].cs  = va_arg(args, u8);
+            pinmode(SPI[SPISW].sda, OUTPUT);
+            pinmode(SPI[SPISW].sck, OUTPUT);
+            pinmode(SPI[SPISW].cs,  OUTPUT);
             break;
             
         #if !defined(__32MX440F256H__)
@@ -633,6 +634,7 @@ void SPI_begin(u8 module)
 
         #endif
     }
+    va_end(args);           // cleans up the list
 }
 
 /**

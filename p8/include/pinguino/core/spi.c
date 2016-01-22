@@ -10,6 +10,7 @@
     CHANGELOG
     01 Oct. 2015 - Régis Blanchot - added SPI2 support
     30 Nov. 2015 - Régis Blanchot - added PIC16F1459 support
+    22 Jan. 2016 - Régis Blanchot - removed setPin(), extended begin() with vargs
     ----------------------------------------------------------------------------
     TODO
     * 
@@ -39,6 +40,7 @@
 #include <compiler.h>
 #include <const.h>
 #include <spi.h>
+#include <stdarg.h>
 //#include <delayms.c>
 //#if defined(SPISETPIN)
 #include <digitalp.c>
@@ -109,25 +111,6 @@ void spi_init()
 }
 
 /**
- *  This function sets SPI software pins
- */
-
-//#ifdef SPISETPIN
-void SPI_setPin(u8 module, u8 sda, u8 sck, u8 cs)
-{
-    if (module == SPISW)
-    {
-        _spi[SPISW].sda = sda;
-        _spi[SPISW].sck = sck;
-        _spi[SPISW].cs  = cs;
-        pinmode(_spi[SPISW].sda, OUTPUT);
-        pinmode(_spi[SPISW].sck, OUTPUT);
-        pinmode(_spi[SPISW].cs,  OUTPUT);
-    }
-}
-//#endif
-
-/**
  *  This function selects a SPI module
  */
 
@@ -186,13 +169,27 @@ void SPI_deselect(u8 module)
 }
 
 //#ifdef SPIBEGIN
-void SPI_begin(u8 module)
+void SPI_begin(u8 module, ...)
 {
+    u8 sda, sck, cs;
+    va_list args;
+    
+    va_start(args, module); // args points on the argument after module
+
     //SPI_close(module);
     SPI_deselect(module);
     
     switch(module)
     {
+        case SPISW:
+            _spi[SPISW].sda = va_arg(args, u8); // get the first arg
+            _spi[SPISW].sck = va_arg(args, u8);
+            _spi[SPISW].cs  = va_arg(args, u8);
+            pinmode(_spi[SPISW].sda, OUTPUT);
+            pinmode(_spi[SPISW].sck, OUTPUT);
+            pinmode(_spi[SPISW].cs,  OUTPUT);
+            break;
+            
         case SPI1:
             SSPCON1bits.SSPEN = 0;          // first disables serial port and configures SPI pins as I/O pins
             SSPSTAT = 0x0;                  // power on state (SMP=0, CKE=0) 
@@ -365,6 +362,7 @@ void SPI_close(u8 module)
             
         #endif
     }
+    va_end(args);           // cleans up the list
 }
 
 /**

@@ -8,17 +8,18 @@
     ----------------------------------------------------------------------------
     CHANGELOG :
     Originally based on a file by (c) 2006 Pierre Gaufillet <pierre.gaufillet@magic.fr>
-    19 Sep 2008 - Jean-pierre Mandon - adapted to Pinguino  
-    21 Apr 2012 - Régis Blanchot - added bootloader v4.x support
-    20 Jun 2012 - Régis Blanchot - added io.c support (remapping)
-    05 Feb 2013 - Régis Blanchot - added interrupt init
-    11 Feb 2013 - Régis Blanchot - removed call to crt0iPinguino.c
-                                   added reset_isr() instead
-    28 Feb 2013 - Régis Blanchot - added stack pointer initialization
-    09 Jul 2015 - Régis Blanchot - replaced #include <pic18fregs.h> by #include <compiler.h>
-                                   to enable compatibility between SDCC and XC8
-    09 Sep 2015 - Régis Blanchot - added PIC16F support
-    06 Oct 2015 - Régis Blanchot - added watchdog support
+    19 Sep. 2008 - Jean-pierre Mandon - adapted to Pinguino  
+    21 Apr. 2012 - Régis Blanchot - added bootloader v4.x support
+    20 Jun. 2012 - Régis Blanchot - added io.c support (remapping)
+    05 Feb. 2013 - Régis Blanchot - added interrupt init
+    11 Feb. 2013 - Régis Blanchot - removed call to crt0iPinguino.c
+                                    added reset_isr() instead
+    28 Feb. 2013 - Régis Blanchot - added stack pointer initialization
+    09 Jul. 2015 - Régis Blanchot - replaced #include <pic18fregs.h> by #include <compiler.h>
+                                    to enable compatibility between SDCC and XC8
+    09 Sep. 2015 - Régis Blanchot - added PIC16F support
+    06 Oct. 2015 - Régis Blanchot - added watchdog support
+    12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -40,10 +41,10 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include <compiler.h>       // SDCC / XC8 compatibility
-//#include <typedef.h>
-//#include <const.h>
-//#include <macro.h>
-#include <pin.h>            // needs define.h to be included first
+#include <typedef.h>        // u8, u16, u32 and other types definition
+#include <const.h>          // Pinguino main constants
+#include <macro.h>          // Pinguino main macros
+#include <pin.h>            // Pins definition, needs define.h to be included first
 #include <io.c>             // needs define.h to be included first
 
 ////////////////////////////////////////////////////////////////////////
@@ -53,7 +54,7 @@
 #if defined(_PIC14E) && !defined(__XC8__)
     #error "********************************"
     #error "* PIC16F must use XC8 compiler *"
-    #error "* Press CTRL+MAJ+B to change   *"
+    #error "* Please change.               *"
     #error "********************************"
 #endif
 
@@ -74,19 +75,25 @@
     #if defined(__XC8__) || defined(_PIC14E)
         #error "********************************"
         #error "* Bootloader not compatible    *"
-        #error "* neither XC8 nor PIC16F       *"
-        #error "* Press CTRL+MAJ+B to change   *"
+        #error "* with neither XC8 nor PIC16F  *"
+        #error "* Please change.               *"
         #error "********************************"
     #endif
 
     #if !defined(__18f2455) && !defined(__18f4455) && \
         !defined(__18f2550) && !defined(__18f4550)
         #error "********************************"
-        #error "* Wrong Bootloader Version     *"
-        #error "* Press CTRL+MAJ+B to change   *"
+        #error "* Bootloader not compatible    *"
+        #error "* with your processor          *"
+        #error "* Please change.               *"
         #error "********************************"
     #endif
     
+    #warning "********************************"
+    #warning "* Bootloader out of date       *"
+    #warning "* Please update.               *"
+    #warning "********************************"
+
     // 2013-07-31 - A. Gentric - fix usb.c
     //#include <common_types.h>
     //#include <boot_iface.h>
@@ -261,7 +268,7 @@
     #endif
 
     #ifdef __USBCDC
-    CDC_init();
+    cdc_init();
     #endif    
 
     #ifdef __USBBULK
@@ -276,8 +283,8 @@
     analogwrite_init();
     #endif
 
-    #ifdef __MILLIS__           // Use Timer 0
-    millis_init();
+    #if defined(__MILLIS__) || defined(__DELAYMS__)
+    millis_init();              // Use Timer 0
     #endif
 
     #ifdef __SPI__
@@ -338,14 +345,14 @@
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
      defined(__IRREMOTE__)  || defined(__AUDIO__)   || defined(__STEPPER__) || \
-     defined(__CTMU__)      || defined(RTCCALARMINTENABLE)
+     defined(__DELAYMS__)   || defined(__CTMU__)    || defined(RTCCALARMINTENABLE)
      // || defined(__MICROSTEPPING__)
 
     #if defined(_PIC14E)
 
-        /*  --------------------------------------------------------------------
+        /*  ------------------------------------------------------------
             Interrupt Vector
-            ------------------------------------------------------------------*/
+            ----------------------------------------------------------*/
 
         void interrupt PIC16F_isr(void)
         {
@@ -366,7 +373,7 @@
             serial_interrupt();
             #endif
 
-            #ifdef __MILLIS__
+            #if defined(__MILLIS__) || defined(__DELAYMS__)
             millis_interrupt();
             #endif
 
@@ -422,9 +429,9 @@
 
     #else // PIC18F
 
-        /*  --------------------------------------------------------------------
+        /*  ------------------------------------------------------------
             High Interrupt Vector
-            ------------------------------------------------------------------*/
+            ----------------------------------------------------------*/
 
         #ifdef boot2
         #pragma code high_priority_isr 0x2020
@@ -463,7 +470,7 @@
             serial_interrupt();
             #endif
 
-            #ifdef __MILLIS__
+            #if defined(__MILLIS__) || defined(__DELAYMS__)
             millis_interrupt();
             #endif
 
@@ -519,9 +526,9 @@
 
         }
 
-        /*  --------------------------------------------------------------------
+        /*  ------------------------------------------------------------
             Low Interrupt Vector
-            ------------------------------------------------------------------*/
+            ----------------------------------------------------------*/
 
         #ifdef boot2
         #pragma code low_priority_isr 0x4000
@@ -568,9 +575,9 @@
     
 #endif /* all interrupt */
 
-/*  ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     Reset Interrupt Vector
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 /*
 #if defined (noboot) || defined(boot4)
 

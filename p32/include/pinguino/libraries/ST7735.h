@@ -216,7 +216,8 @@
 
 void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
-void ST7735_init(u8, u8, u8, u8, u8);
+//void ST7735_init(u8, u8, u8, u8, u8);
+void ST7735_init(u8 module, ...);
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
 void ST7735_setColor(u8, u16);
@@ -244,10 +245,12 @@ void ST7735_drawLine(u8, u16, u16, u16, u16);
 void ST7735_drawVLine(u8, u16, u16, u16);
 void ST7735_drawHLine(u8, u16, u16, u16);
 
+void setWindow(u8, u8, u8, u8);
 void drawPixel(u16, u16);
+void setColor(u8, u8, u8);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
-
+extern void drawBitmap(u8, const u8 *, u16, u16);
 color_t ST7735_getColor(u8, u8, u8);
 
 /**	--------------------------------------------------------------------

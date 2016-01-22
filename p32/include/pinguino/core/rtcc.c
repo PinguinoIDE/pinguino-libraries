@@ -90,8 +90,11 @@ typedef enum
 #define RTCC_ALARM_EVERY_YEAR 			0b1001 // except when configured for February 29th, once every 4 years
 
 // Prototypes
-rtccTime RTCC_ConvertTime(rtccTime *);
-rtccDate RTCC_ConvertDate(rtccDate *);
+
+void RTCC_ConvertTime(rtccTime *);
+void RTCC_ConvertDate(rtccDate *);
+//rtccTime RTCC_ConvertTime(rtccTime *);
+//rtccDate RTCC_ConvertDate(rtccDate *);
 void RTCC_SetWriteEnable(void);
 void RTCC_SetWriteDisable(void);
 int RTCC_GetWriteEnable(void);
@@ -102,9 +105,11 @@ rtccRes RTCC_GetSOSCstatus(void);
 void RTCC_SOSCenable(void);
 void RTCC_SOSCdisable(void);
 void RTCC_SetTime(unsigned long);
-rtccTime RTCC_GetTime(void);
+void RTCC_GetTime(rtccTime*);
+//rtccTime RTCC_GetTime(void);
 void RTCC_SetDate(unsigned long);
-rtccDate RTCC_GetDate(void);
+void RTCC_GetDate(rtccDate*);
+//rtccDate RTCC_GetDate(void);
 void RTCC_SetTimeDate(unsigned long , unsigned long);
 void RTCC_GetTimeDate(rtccTime*, rtccDate*);
 void RTCC_SetCalibration(int);
@@ -178,6 +183,7 @@ rtccRes RTCC_init(unsigned long, unsigned long, int);
     Conversion routines from bcd to decimal format
     ---------------------------------------------------------------------------*/
 
+/*
 rtccTime RTCC_ConvertTime(rtccTime *pTm)
 {
     rtccTime t0;
@@ -197,6 +203,22 @@ rtccDate RTCC_ConvertDate(rtccDate *pDt)
     d0.month  = bcd2bin(pDt->month);
     d0.year = bcd2bin(pDt->year);
     return d0;
+}
+*/
+
+void RTCC_ConvertTime(rtccTime *pTm)
+{
+    pTm->hours    = bcd2bin(pTm->hours);
+    pTm->minutes  = bcd2bin(pTm->minutes);
+    pTm->seconds  = bcd2bin(pTm->seconds);
+}
+
+void RTCC_ConvertDate(rtccDate *pDt)
+{
+    pDt->dayofweek  = bcd2bin(pDt->dayofweek);
+    pDt->dayofmonth = bcd2bin(pDt->dayofmonth);
+    pDt->month      = bcd2bin(pDt->month);
+    pDt->year       = bcd2bin(pDt->year);
 }
 
 /*	-----------------------------------------------------------------------------
@@ -365,6 +387,18 @@ void RTCC_SetTime(unsigned long tm)
 /*	-----------------------------------------------------------------------------
     ---------------------------------------------------------------------------*/
 
+void RTCC_GetTime(rtccTime* t0)
+{
+    rtccTime t1;
+    do
+    {
+        t0->l = RTCTIME;
+        t1.l = RTCTIME;
+    } while (t0->l != t1.l);
+    //return t0;
+}
+
+/*
 rtccTime RTCC_GetTime(void)
 {
     rtccTime t0, t1;
@@ -375,6 +409,7 @@ rtccTime RTCC_GetTime(void)
     } while (t0.l != t1.l);
     return t0;
 }
+*/
 
 /*	-----------------------------------------------------------------------------
     The write is successful only if Write Enable is set.
@@ -402,6 +437,18 @@ void RTCC_SetDate(unsigned long dt)
 /*	-----------------------------------------------------------------------------
     ---------------------------------------------------------------------------*/
 
+void RTCC_GetDate(rtccDate* d0)
+{
+    rtccDate d1;
+    do
+    {
+        d0->l = RTCDATE;
+        d1.l = RTCDATE;
+    } while (d0->l != d1.l);
+    //return d0;
+}
+
+/*
 rtccDate RTCC_GetDate(void)
 {
     rtccDate d0, d1;
@@ -412,6 +459,7 @@ rtccDate RTCC_GetDate(void)
     } while (d0.l != d1.l);
     return d0;
 }
+*/
 
 /*	-----------------------------------------------------------------------------
     The write is successful only if Write Enable is set.
@@ -468,7 +516,8 @@ void RTCC_SetCalibration(int cal)
     if (cal >  511)	cal =  511;
     if (RTCCON & 0x8000)					// if RTCC is ON
     {
-        t0 = RTCC_GetTime();
+        //t0 = RTCC_GetTime();
+        RTCC_GetTime(&t0);
         if ((t0.seconds & 0xFF) == 00)			// we're at second 00, wait auto-adjust to be performed
             while(!(RTCCON & 0x2));			// wait until second half...
     }

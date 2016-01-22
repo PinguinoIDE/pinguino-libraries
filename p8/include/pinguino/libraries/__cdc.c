@@ -22,7 +22,8 @@
 
 #define USB_USE_CDC
 
-#include <pic18fregs.h>
+#include <compiler.h>
+#include <macro.h>
 #include <usb/usb_cdc.h>
 #include <usb/usb_config.c>
 #include <usb/picUSB.c>
@@ -50,13 +51,12 @@ u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
  * called from main.c
  **********************************************************************/
 
-void CDC_init(void)
+void cdc_init(void)
 {
     u32 counter=1;
 
     // Disable global interrupts
-    INTCONbits.GIEH = 0;
-    INTCONbits.GIEL = 0;
+    noInterrupts();
 
     #ifdef boot2
     
@@ -94,7 +94,10 @@ void CDC_init(void)
     #endif
 
     // Enable Interrupt
-    #if defined(__18f25k50) || defined(__18f45k50)
+    #if defined(__16F1459)
+        PIR2bits.USBIF = 0;     // clear usb interrupt flag
+        PIE2bits.USBIE = 1;     // enable usb interrupt
+    #elif defined(__18f25k50) || defined(__18f45k50)
         PIR3bits.USBIF = 0;     // clear usb interrupt flag
         PIE3bits.USBIE = 1;     // enable usb interrupt
         IPR3bits.USBIP = 1;     // high priority interrupt
@@ -104,8 +107,7 @@ void CDC_init(void)
         IPR2bits.USBIP = 1;     // high priority interrupt
     #endif
     
-    INTCONbits.GIEH = 1;   // Enable global HP interrupts
-    INTCONbits.GIEL = 1;   // Enable global LP interrupts
+    interrupts();
 }
 
 /***********************************************************************
@@ -123,7 +125,7 @@ void CDC_init(void)
  **********************************************************************/
 
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
-void CDCprint(char *string)
+void CDCprint(const char *string)
 {
     CDCputs(string, strlen(string));
 }
@@ -137,7 +139,7 @@ void CDCprint(char *string)
  **********************************************************************/
 
 #if defined(CDCPRINTLN)
-void CDCprintln(char *string)
+void CDCprintln(const char *string)
 {
     CDCputs(string, strlen(string));
     Delayms(1);

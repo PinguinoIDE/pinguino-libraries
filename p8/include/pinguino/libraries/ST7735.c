@@ -66,6 +66,9 @@
 
 // Graphics Library
 #if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
+    #ifdef ST7735DRAWBITMAP
+    #define DRAWBITMAP
+    #endif
     #include <graphics.c>
 #endif
 
@@ -114,7 +117,7 @@ void ST7735_init(u8 module, ...)
         sda = va_arg(args, u8);         // get the next arg
         sck = va_arg(args, u8);         // get the next arg
         cs  = va_arg(args, u8);         // get the last arg
-        SPI_setPin(module, sda, sck, cs);
+        SPI_begin(module, sda, sck, cs);
         SPI_setBitOrder(module, SPI_MSBFIRST);
     }
     else
@@ -965,13 +968,14 @@ void ST7735_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
     fillRoundRect(x1, y1, x2, y2);
 }
 
+#ifdef ST7735DRAWBITMAP
 void ST7735_drawBitmap(u8 module1, u8 module2, const u8* filename, u16 x, u16 y)
 {
-    //(*output) = &ST7735[module1];
     ST7735_SPI = module1;
     drawBitmap(module2, filename, x, y);
 }
+#endif
 
-#endif // ST7735GRAPHICS
+#endif // ST7735GRAPHICS || ST7735DRAWBITMAP
 
 #endif // __ST7735_C

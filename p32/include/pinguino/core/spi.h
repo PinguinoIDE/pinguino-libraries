@@ -54,8 +54,13 @@
 #define SPI_LSBFIRST        0
 #define SPI_MSBFIRST        1
 
+// SPI Sample Phase
 #define SPI_SMPMID          0
 #define SPI_SMPEND          1
+#define SPI_SLEW_RATE_ENABLE    0
+#define SPI_SLEW_RATE_DISABLE   1
+#define SPI_STANDARD_SPEED_MODE 1
+#define SPI_HIGH_SPEED_MODE     0
 
 #define SPI_PBCLOCK_DIV2	2
 #define SPI_PBCLOCK_DIV4	4
@@ -83,11 +88,11 @@ typedef struct
     u8  phase;
     u8  sda;
     u8  sck;
+    u8  cs;
 } spi_t;
 
 // Prototypes
 void SPI_init();
-void SPI_setPin(u8 module, u8 sda, u8 sck);
 void SPI_select(u8 module);
 void SPI_deselect(u8 module);
 void SPI_setBitOrder(u8 module, u8 bitorder);
@@ -96,7 +101,7 @@ void SPI_setMode(u8 module, u8 mode);
 u32 SPI_setClock(u8 module, u32 Fspi);
 void SPI_setClockDivider(u8 module, u32 divider);
 void SPI_close(u8 module);
-void SPI_begin(u8 module);
+void SPI_begin(u8 module, ...);
 u8 SPI_write(u8 module, u8 data_out);
 u8 SPI_read(u8 module);
 

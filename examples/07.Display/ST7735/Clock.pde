@@ -50,7 +50,7 @@ void setup()
 {
     u32 Tm  = 0x00090000;   // 09hr, 00 min, 00 sec
     u32 Dt  = 0x14031406;   // Friday (day 6 of the week), 14 March 2014
-    u16 drift = 200;        // add 200 pulse every minute to adjust time
+    u16 drift = 0;        // add 200 pulse every minute to adjust time
 
     pinMode(USERLED, OUTPUT);
     
@@ -60,6 +60,7 @@ void setup()
     ST7735.init(SPITFT, 7); // DC
     ST7735.setFont(SPITFT, font6x8);
     ST7735.setBackgroundColor(SPITFT, ST7735_BLACK);
+    ST7735.setOrientation(SPITFT, 90);
     ST7735.clearScreen(SPITFT);
 
     // Init real time calendar
@@ -76,49 +77,49 @@ void loop()
     rtccTime cT;
     rtccDate cD;
 
-    // 8-bit syntax
-    //RTCC.getTime(&cT);
-    //RTCC.getDate(&cD);
+    // Get Time and Date
+    RTCC.getTime(&cT);
+    RTCC.getDate(&cD);
     
-    // 32-bit syntax
-    cT = RTCC.getTime();
-    cD = RTCC.getDate();
-
     if (cT.seconds != old)
     {
         ST7735.clearScreen(SPITFT);
         
         /** DATE **/
         ST7735.setColor(SPITFT, ST7735_GREEN);
-        ST7735.setCursor(SPITFT, 3, 3);
+        ST7735.setCursor(SPITFT, 3, 0);
         ST7735.printf(SPITFT, "%3s %02d %3s. %04d\r\n", Day[cD.dayofweek], cD.dayofmonth, Month[cD.month], cD.year+2000);
 
         /** TIME **/
         ST7735.setColor(SPITFT, ST7735_YELLOW);
-        ST7735.setCursor(SPITFT, 6, 4);
+        ST7735.setCursor(SPITFT, 6, 1);
         ST7735.printf(SPITFT, "%02d:%02d:%02d\r\n", cT.hours, cT.minutes, cT.seconds);
+
+        /* */
+        ST7735.setColor(SPITFT, ST7735_WHITE);
+        ST7735.drawCircle(SPITFT, xo, yo, 33);
+        
+        /** HOURS **/
+        ST7735.setColor(SPITFT, ST7735_RED);
+        angle = cT.hours * 30 - 90;
+        x = xo + 32.0f * cosr(angle);
+        y = yo + 32.0f * sinr(angle);
+        ST7735.drawLine(SPITFT, xo, yo, x, y);
+        
+        /** MINUTES **/
+        ST7735.setColor(SPITFT, ST7735_BLUE);
+        angle = cT.minutes * 6 - 90;
+        x = xo + 32.0f * cosr(angle);
+        y = yo + 32.0f * sinr(angle);
+        ST7735.drawLine(SPITFT, xo, yo, x, y);
 
         /** SECONDS **/
         ST7735.setColor(SPITFT, ST7735_WHITE);
         angle = cT.seconds * 6 - 90;
-        x = xo + 64.0f * cosr(angle);
+        x = xo + 32.0f * cosr(angle);
         y = yo + 32.0f * sinr(angle);
         ST7735.drawLine(SPITFT, xo, yo, x, y);
 
-        /** MINUTES **/
-        ST7735.setColor(SPITFT, ST7735_BLUE);
-        angle = cT.minutes * 6 - 90;
-        x = xo + 64.0f * cosr(angle);
-        y = yo + 32.0f * sinr(angle);
-        ST7735.drawLine(SPITFT, xo, yo, x, y);
-
-        /** HOURS **/
-        ST7735.setColor(SPITFT, ST7735_RED);
-        angle = cT.hours * 30 - 90;
-        x = xo + 64.0f * cosr(angle);
-        y = yo + 32.0f * sinr(angle);
-        ST7735.drawLine(SPITFT, xo, yo, x, y);
-        
         toggle(USERLED);
   
         // store last second value

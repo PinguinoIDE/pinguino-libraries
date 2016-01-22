@@ -264,6 +264,7 @@ void drawPixel(u16, u16);
 void setColor(u8, u8, u8);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
+extern void drawBitmap(u8, const u8 *, u16, u16);
 
 /**	--------------------------------------------------------------------
     Macros

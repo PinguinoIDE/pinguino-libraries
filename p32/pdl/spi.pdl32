@@ -1,7 +1,6 @@
 SPI.init SPI_init#include <spi.c>
 SPI.begin SPI_begin#include <spi.c>
 SPI.close SPI_close#include <spi.c>
-SPI.setPin SPI_setPin#include <spi.c>
 SPI.setMode SPI_setMode#include <spi.c>
 SPI.setBitOrder SPI_setBitOrder#include <spi.c>#define SPISETBITORDER
 SPI.setDataMode SPI_setDataMode#include <spi.c>

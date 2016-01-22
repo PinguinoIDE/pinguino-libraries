@@ -53,7 +53,8 @@
 #include <typedef.h>    // u8, u16, ..
 #include <macro.h>      // swap
 #include <mathlib.c>    // abs
-#ifdef ST7735DRAWBITMAP
+#ifdef DRAWBITMAP
+#include <sd/tff.h>
 //#include <sd/diskio.h>
 #include <sd/diskio.c>
 #endif
@@ -290,7 +291,7 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
     little faster. 20 pixels seems a good balance.
     ------------------------------------------------------------------*/
 
-#ifdef ST7735DRAWBITMAP
+#ifdef DRAWBITMAP
 
 #define BUFFPIXEL 20
 
@@ -411,7 +412,7 @@ void drawBitmap(u8 spisd, const u8 * filename, u16 x, u16 y)
         return; // BMP format not recognized
 }
 
-#endif
+#endif // DRAWBITMAP
 
 /*
 void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){

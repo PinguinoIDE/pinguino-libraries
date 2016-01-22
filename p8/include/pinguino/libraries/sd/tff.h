@@ -160,8 +160,9 @@ char isSystem(FILINFO *);
 
 /* User defined function to give a current time to fatfs module */
 
-extern dword get_fattime (void);	/* 31-25: Year(0-127 +1980), 24-21: Month(1-12), 20-16: Day(1-31) */
-                            /* 15-11: Hour(0-23), 10-5: Minute(0-59), 4-0: Second(0-29 *2) */
+extern dword get_fattime (void);
+/* 31-25: Year(0-127 +1980), 24-21: Month(1-12), 20-16: Day(1-31) */
+/* 15-11: Hour(0-23), 10-5: Minute(0-59), 4-0: Second(0-29 *2) */
 
 /* File access control and file status flags (FIL.flag) */
 
@@ -235,16 +236,16 @@ extern dword get_fattime (void);	/* 31-25: Year(0-127 +1980), 24-21: Month(1-12)
 
 #define MBR_Table			446
 
-#define	DIR_t_Name			0
-#define	DIR_t_Attr			11
-#define	DIR_t_NTres			12
-#define	DIR_t_CrtTime			14
-#define	DIR_t_CrtDate			16
-#define	DIR_t_FstClusHI		20
-#define	DIR_t_WrtTime			22
-#define	DIR_t_WrtDate			24
-#define	DIR_t_FstClusLO		26
-#define	DIR_t_FileSize		28
+#define	DIR_Name			0
+#define	DIR_Attr			11
+#define	DIR_NTres			12
+#define	DIR_CrtTime			14
+#define	DIR_CrtDate			16
+#define	DIR_FstClusHI		20
+#define	DIR_WrtTime			22
+#define	DIR_WrtDate			24
+#define	DIR_FstClusLO		26
+#define	DIR_FileSize		28
 
 /* Multi-byte word access macros  */
 

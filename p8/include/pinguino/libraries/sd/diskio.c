@@ -1047,24 +1047,24 @@ u32 get_fattime(void)
     #if defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f27j53) || defined(__18f47j53)
     
-    rtccTime pTm, cTm;
-    rtccDate pDt, cDt;
+    rtccTime Tm;
+    rtccDate Dt;
 
-    RTCC_GetTimeDate(&pTm, &pDt);       // get time and date from RTC
+    RTCC_GetTimeDate(&Tm, &Dt);         // get time and date from RTC
                                         // assumes RTC has been set and is running
                                         // OK - could be expanded to check that RTC
                                         // is running and that a valid value is
                                         // being returned by the RTC
-    cTm = RTCC_ConvertTime(&pTm);       // convert time from bcd to decimal format
-    cDt = RTCC_ConvertDate(&pDt);       // convert date from bcd to decimal format
+    RTCC_ConvertTime(&Tm);              // convert time from bcd to decimal format
+    RTCC_ConvertDate(&Dt);              // convert date from bcd to decimal format
 
     // Pack date and time into a u32 variable
-    tmr = cDt.year + 20;
-    tmr = (tmr << 4) | cDt.month;       // shifts left 4 bits and adds monthth
-    tmr = (tmr << 5) | cDt.dayofmonth;  // shifts left 5 bits and adds m.day
-    tmr = (tmr << 5) | cTm.hours;       // shifts left 5 bits and adds hour
-    tmr = (tmr << 6) | cTm.minutes;     // shift left 6 bits and adds minutes
-    tmr = (tmr << 5) | (cTm.seconds/2); // shifts left 5 bits and adds seconds/2
+    tmr = Dt.year + 20;
+    tmr = (tmr << 4) | Dt.month;       // shifts left 4 bits and adds monthth
+    tmr = (tmr << 5) | Dt.dayofmonth;  // shifts left 5 bits and adds m.day
+    tmr = (tmr << 5) | Tm.hours;       // shifts left 5 bits and adds hour
+    tmr = (tmr << 6) | Tm.minutes;     // shift left 6 bits and adds minutes
+    tmr = (tmr << 5) | (Tm.seconds/2); // shifts left 5 bits and adds seconds/2
 
     // For other boards use a fixed date and time of 01 Jan 2012 12:00:00
     #else

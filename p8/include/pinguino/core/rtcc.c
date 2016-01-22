@@ -59,6 +59,7 @@
 	Conversion routines from bcd to decimal format
 	---------------------------------------------------------------------------*/
 
+/*
 rtccTime* RTCC_ConvertTime(rtccTime *pTm)
 {
     rtccTime* t0 = NULL;
@@ -68,16 +69,16 @@ rtccTime* RTCC_ConvertTime(rtccTime *pTm)
     t0->seconds  = bcd2bin(pTm->seconds);
     return t0;
 }
+*/
 
-/*
 void RTCC_ConvertTime(rtccTime *pTm)
 {
 	pTm->hours    = bcd2bin(pTm->hours);
 	pTm->minutes  = bcd2bin(pTm->minutes);
 	pTm->seconds  = bcd2bin(pTm->seconds);
 }
-*/
 
+/*
 rtccDate* RTCC_ConvertDate(rtccDate *pDt)
 {
     rtccDate* d0 = NULL;
@@ -88,8 +89,8 @@ rtccDate* RTCC_ConvertDate(rtccDate *pDt)
     d0->year = bcd2bin(pDt->year);
     return d0;
 }
+*/
 
-/*
 void RTCC_ConvertDate(rtccDate *pDt)
 {
 	pDt->dayofweek  = bcd2bin(pDt->dayofweek);
@@ -97,7 +98,6 @@ void RTCC_ConvertDate(rtccDate *pDt)
 	pDt->month      = bcd2bin(pDt->month);
 	pDt->year       = bcd2bin(pDt->year);
 }
-*/
 
 /*	-----------------------------------------------------------------------------
 	Allow a writing into the clock registers

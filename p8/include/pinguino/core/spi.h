@@ -118,7 +118,7 @@
 #define SPI_RISING_EDGE         0x01  // negated
 
 // SPI Sample Phase
-#define SPI_SMPEND              1<<7
+//#define SPI_SMPEND              1<<7
 #define SPI_SLEW_RATE_ENABLE    0
 #define SPI_SLEW_RATE_DISABLE   1
 #define SPI_STANDARD_SPEED_MODE 1
@@ -146,9 +146,9 @@ typedef struct
 
 void SPI_select(u8 module);
 void SPI_deselect(u8 module);
-void SPI_begin(u8 module);
+void SPI_begin(u8 module, ...);
 void SPI_close(u8 module);
-void SPI_init(u8 module, u8 sync_mode, u8 bus_mode, u8 smp_phase);
+void SPI_init();
 void SPI_setMode(u8 module, u8 mode);
 void SPI_setBitOrder(u8 module, u8 bitorder);
 void SPI_setDataMode(u8 module, u8 mode);
