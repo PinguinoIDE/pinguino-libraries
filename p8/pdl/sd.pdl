@@ -1,13 +1,25 @@
 SD_FATFS FATFS#include <sd/diskio.c>
 SD_FILE FIL#include <sd/diskio.c>
-SD_DIR DIR#include <sd/diskio.c>
+SD_DIR DIR_t#include <sd/diskio.c>
 SD_FILEINFO FILINFO#include <sd/diskio.c>
 SD_ERROR FRESULT#include <sd/diskio.c>
+
+SD_READ FA_READ#include <sd/diskio.c>
+SD_OPEN_EXISTING FA_OPEN_EXISTING#include <sd/diskio.c>
+SD_WRITE FA_WRITE#include <sd/diskio.c>
+SD_CREATE_NEW FA_CREATE_NEW#include <sd/diskio.c>
+SD_CREATE_ALWAYS FA_CREATE_ALWAYS#include <sd/diskio.c>
+SD_OPEN_ALWAYS FA_OPEN_ALWAYS#include <sd/diskio.c>
+SD__WRITTEN FA__WRITTEN#include <sd/diskio.c>
+
+SD_OK FR_OK#include <sd/diskio.c>
 
 SD.begin      disk_mount#include <sd/diskio.c>
 SD.init       disk_mount#include <sd/diskio.c>
 SD.mount      disk_mount#include <sd/diskio.c>
 SD.unmount    disk_unmount#include <sd/diskio.c>
+SD.readSector disk_readsector#include <sd/diskio.c>
+SD.writeSector disk_writesector#include <sd/diskio.c>
 
 SD.open       f_open#include <sd/diskio.c>#define SDOPEN
 SD.read       f_read#include <sd/diskio.c>#define SDREAD
@@ -18,6 +30,7 @@ SD.close      f_close#include <sd/diskio.c>#define SDCLOSE
 SD.openDir    f_opendir#include <sd/diskio.c>#define SDOPENDIR
 SD.readDir    f_readdir#include <sd/diskio.c>#define SDREADDIR
 SD.mkdir      f_mkdir#include <sd/diskio.c>#define SDMKDIR
+
 
 SD.unlink     f_unlink#include <sd/diskio.c>#define SDUNLINK
 SD.status     f_stat#include <sd/diskio.c>#define SDSTATUS

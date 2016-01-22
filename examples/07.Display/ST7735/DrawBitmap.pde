@@ -65,7 +65,7 @@
 #include <fonts/font6x8.h>
 
 //#define SD_DEBUG
-#define ST7735PRINTF
+//#define ST7735PRINTF
 
 #define SPISD  SPI1
 // if your board has only 1 SPI module, use SPISW as 2nd one
@@ -73,7 +73,7 @@
 #define SPITFT SPI2
 
 SD_FATFS fat;   // File System object
-//SD_FILE  f;     // File object
+SD_FILE  f;     // File object
 SD_ERROR e;     // Return code
 
 void setup()
@@ -94,6 +94,15 @@ void setup()
         ST7735.printf(SPITFT, "Failed %s\r\n", SD.getError(e)); 
         while(1);
     }
+
+    e = SD.open(SPISD, &f, "img/parrot.bmp", SD_READ);
+
+    if (e != FR_OK)
+    {
+        ST7735.printf(SPITFT, "Failed %s\r\n", SD.getError(e)); 
+        while(1);
+    }
+    
     ST7735.drawBitmap(SPITFT, SPISD, "img/parrot.bmp", 0, 0);
 }   
 

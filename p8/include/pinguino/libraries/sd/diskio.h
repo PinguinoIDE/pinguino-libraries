@@ -183,6 +183,6 @@ const char * put_rc (FRESULT);
 
 // Global
 char FError; // error mail box
-static volatile DSTATUS Stat; /* Disk status */
+//DSTATUS Stat; /* Disk status */
 
 #endif // _DISKIO_H

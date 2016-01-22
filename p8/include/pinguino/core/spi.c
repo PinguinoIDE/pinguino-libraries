@@ -37,10 +37,10 @@
 #define __SPI__
 #endif
 
+#include <stdarg.h>
 #include <compiler.h>
 #include <const.h>
 #include <spi.h>
-#include <stdarg.h>
 //#include <delayms.c>
 //#if defined(SPISETPIN)
 #include <digitalp.c>
@@ -171,7 +171,7 @@ void SPI_deselect(u8 module)
 //#ifdef SPIBEGIN
 void SPI_begin(u8 module, ...)
 {
-    u8 sda, sck, cs;
+    //u8 sda, sck, cs;
     va_list args;
     
     va_start(args, module); // args points on the argument after module
@@ -315,7 +315,9 @@ void SPI_begin(u8 module, ...)
             break;
             
         #endif
-    }
+    } // end switch
+
+    va_end(args);           // cleans up the list
 }
 //#endif
 
@@ -362,7 +364,6 @@ void SPI_close(u8 module)
             
         #endif
     }
-    va_end(args);           // cleans up the list
 }
 
 /**

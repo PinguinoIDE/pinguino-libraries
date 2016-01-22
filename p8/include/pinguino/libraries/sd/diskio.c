@@ -73,7 +73,7 @@
 #endif
 
 //static volatile u16 Timer1, Timer2; /* 1000Hz decrement timer */
-static volatile DSTATUS Stat = STA_NOINIT; /* Disk status */
+DSTATUS Stat = STA_NOINIT; /* Disk status */
 u8 type=0;
 
 /*  --------------------------------------------------------------------
@@ -930,8 +930,8 @@ FRESULT disk_mount(u8 module, FATFS *fs, ...)
         sda = va_arg(args, u8);             // get the next arg
         sck = va_arg(args, u8);             // get the next arg
         cs  = va_arg(args, u8);             // get the last arg
-        SPI_setPin(module, sda, sck, cs);
         SPI_setBitOrder(module, SPI_MSBFIRST);
+        SPI_begin(module, sda, sck, cs);
     }
     else
     { 

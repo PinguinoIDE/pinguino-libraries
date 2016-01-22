@@ -59,6 +59,8 @@
 #include <sd/tff.h>         /* Tiny-FatFs declarations */
 #include <sd/diskio.h>      /* Include file for user provided disk functions */
 
+extern DSTATUS Stat; /* Disk status */
+
 static FATFS *FatFs;        /* Pointer to the file system objects (logical drive) */
 static word fsid;           /* File system mount ID */
 FRESULT res;
@@ -656,10 +658,10 @@ FRESULT auto_mount (	/* FR_OK(0): successful, !=0: any error occured */
 
     if (fs->fs_type) {						/* If the logical drive has been mounted */
         if (!(Stat & STA_NOINIT)) {			/* and physical drive is kept initialized (has not been changed), */
-#if !_FS_READONLY
+        #if !_FS_READONLY
             if (chk_wp && (stat & STA_PROTECT))	/* Check write protection if needed */
                 return FR_WRITE_PROTECTED;
-#endif
+        #endif
             return FR_OK;					/* The file system object is valid */
         }
     }
@@ -1410,6 +1412,7 @@ FRESULT f_getfree (
                 if (!move_window(spi, sect++)) return FR_RW_ERROR;
                 p = fs->win;
             }
+            /* R. Blanchot 22-01-2016 :
             if (!_FAT32 || fat == FS_FAT16) {
                 if (LD_WORD(p) == 0) n++;
                 p += 2; f += 1;
@@ -1417,6 +1420,17 @@ FRESULT f_getfree (
                 if (LD_DWORD(p) == 0) n++;
                 p += 4; f += 2;
             }
+            */
+            #if _FAT32
+            if (LD_DWORD(p) == 0) n++;
+            p += 4; f += 2;
+            #else
+            if (fat == FS_FAT16)
+            {
+                if (LD_WORD(p) == 0) n++;
+                p += 2; f += 1;
+            }
+            #endif
         } while (--clust);
     }
     fs->free_clust = n;
