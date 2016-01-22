@@ -72,7 +72,7 @@ typedef struct
 extern const USB_Device_Descriptor libdevice_descriptor;
 extern const USB_Configuration_Descriptor libconfiguration_descriptor;
 //extern __code unsigned char libstring_descriptor[40][3];
-extern const char * const libstring_descriptor[]; // rb 25-01-2013
+extern const u8 * const libstring_descriptor[]; // rb 25-01-2013
 
 #ifdef USB_USE_CDC
     /* Definitions for CDC */

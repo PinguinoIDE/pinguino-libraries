@@ -104,9 +104,9 @@ u8 hidRxLen;                          // # of bytes put into buffer
 // if 2 endpoints, sizeof(ep_bdt) = 2*2*4 bytes = 16 ou 0x10
 // if 3 endpoints, sizeof(ep_bdt) = 2*3*4 bytes = 24 ou 0x18
 
-BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
 
 #ifdef __XC8__
+    BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
     #if defined(__16F1459)
         u8 __section("usbram5") dummy; // to prevent a compilation error
         setupPacketStruct SetupPacket @ 0x2018;
@@ -116,6 +116,7 @@ BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
         u8 __section("usbram5") controlTransferBuffer[EP0_BUFFER_SIZE];
     #endif
 #else // SDCC
+    BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
     #pragma udata usbram5 SetupPacket controlTransferBuffer
     setupPacketStruct SetupPacket;
     u8 controlTransferBuffer[EP0_BUFFER_SIZE];

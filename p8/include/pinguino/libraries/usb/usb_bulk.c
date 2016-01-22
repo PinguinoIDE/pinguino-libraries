@@ -8,11 +8,16 @@
 
 #ifdef USB_USE_BULK
 
+#ifdef __XC8
+// CDC specific buffers
+volatile u8 BULKRxBuffer[BULK_BULK_OUT_SIZE] @ (0x500);
+volatile u8 BULKTxBuffer[BULK_BULK_IN_SIZE] @ (0x540);
+#else
 // Put USB I/O buffers into dual port RAM.
 #pragma udata usbram5 BULKRxBuffer BULKTxBuffer
 volatile byte BULKRxBuffer[BULK_BULK_OUT_SIZE];
 volatile byte BULKTxBuffer[BULK_BULK_IN_SIZE];
-
+#endif
 /**
 Initialize
 **/

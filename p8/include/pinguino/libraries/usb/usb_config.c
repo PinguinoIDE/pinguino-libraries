@@ -1,5 +1,5 @@
-#include "usb_config.h"
 #include <typedef.h>
+#include "usb_config.h"
 
 /**
 This togehter with the coresponding usbconfig.c file needs to be
@@ -231,3 +231,12 @@ __code u8 libstring_descriptor[40][1] = {
     {12, STRING_DESCRIPTOR, 'P',0x00,'o',0x00,'r',0x00,'n',0x00,'0',0x00}
 };
 */
+
+// Array of string descriptors
+const u8 *const libstring_descriptor[] =
+{
+    (const u8 *const)&lang,
+    (const u8 *const)&manu,
+    (const u8 *const)&prod,
+    (const u8 *const)&seri
+};

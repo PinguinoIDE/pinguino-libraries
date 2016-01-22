@@ -23,12 +23,12 @@
 #define USB_USE_CDC
 
 #include <compiler.h>
+#include <typedef.h>
 #include <macro.h>
 #include <usb/usb_cdc.h>
 #include <usb/usb_config.c>
 #include <usb/picUSB.c>
 #include <usb/usb_cdc.c>
-#include <typedef.h>
 
 //#ifdef boot2
     #include <delayms.c>
@@ -262,7 +262,8 @@ void CDCprintFloat(float number, u8 digits)
     while (digits-- > 0)
     {
         remainder *= 10.0;
-        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
+		// Integer part without use of math.h lib, I think better! (Fazzi)
+        toPrint = (unsigned int)remainder;
         CDCprintNumber(toPrint, 10);
         remainder -= toPrint; 
     }
@@ -352,73 +353,4 @@ void CDC_interrupt(void)
 }
 
 #endif /* __USBCDC */
-
-/*
-// CDC.print
-#define CDCprint(m,type)	{ CDCprint_##type(m);  }
-#define CDCprintln(m,type)	{ CDCprint_##type(m);  CDCprintf("\r\n"); }
-void CDCprint_FLOAT(float m){ CDCprintf("%f",m); }
-void CDCprint_DEC(u16 m)    { CDCprintf("%d",m); }
-void CDCprint_HEX(u16 m)    { CDCprintf("%x",m); }
-void CDCprint_BYTE(u16 m)   { CDCprintf("%d",m); }
-void CDCprint_OCT(u16 m)    { CDCprintf("%o",m); }
-void CDCprint_BIN(u16 m)    { CDCprintf("%b",m); }
-*/
-
-/* CDCprint() function can not correctly support CDCprint("some string") aka CDC.print("some string").
- * In case CDCprint("some string"), va_arg(args, u32) will return a unexpected invalid value. 
- * by avrin */
-
-/*
-#if defined(CDCPRINT)
-void CDCprint(const u8 *fmt, ...)
-{
-    u8 s;
-    va_list args;							// a list of arguments
-    va_start(args, fmt);					// initialize the list
-    s = (u8) va_arg(args, u32);				// get the first variable arg.
-
-    // last is a string (char *) or an integer
-    //switch (*args)
-    switch (s)
-    {
-        case FLOAT:
-            CDCprintf("%f", (u32)fmt);
-            break;
-        case DEC:
-            CDCprintf("%d", (u32)fmt);
-            break;
-        case HEX:
-            CDCprintf("%x", (u32)fmt);
-            break;
-        case BYTE:
-            //CDCprintf("%d", (u8)fmt);
-            CDCprintf("%d", (u32)fmt);
-            break;
-        case OCT:
-            CDCprintf("%o", (u32)fmt);
-            break;
-        case BIN:
-            CDCprintf("%b", (u32)fmt);
-            break;           
-        default:
-            CDCprintf(fmt);
-            break;
-    }
-    va_end(args);
-}
-#endif
-
-//CDC.println
-#if defined(CDCPRINTLN)
-void CDCprintln(const u8 *fmt, ...)
-{
-    va_list args;							// a list of arguments
-    va_start(args, fmt);					// initialize the list
-
-    CDCprintf(fmt, args);
-    CDCprintf("\n\r");
-}
-#endif
-*/
 
