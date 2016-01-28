@@ -1,36 +1,42 @@
-/*	----------------------------------------------------------------------------
-	FILE:			pin.h
-	PROJECT:		pinguino - http://www.pinguino.cc/
-	PURPOSE:		pins name definition
-	PROGRAMERS:		regis blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	10 Nov 2010
-	LAST RELEASE:	26 Jun 2014
-	----------------------------------------------------------------------------
-	CHANGELOG:
-                - rblanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
-	26 Jun 2014 - rblanchot - added Pinguino 45K50
-	09 Sep 2015 - rblanchot - added Pinguino 1459
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+/*  --------------------------------------------------------------------
+    FILE:			pin.h
+    PROJECT:		pinguino
+    PURPOSE:		pins name definition
+    PROGRAMERS:		Régis Blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
+    CHANGELOG:
+    10 Nov. 2010 - Régis Blanchot - first release
+                 - Régis Blanchot - fixed bug : RA4 name (ex.) in conflict with PORTAbits.RA4
+    26 Jun. 2014 - Régis Blanchot - added Pinguino 45K50
+    09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-	--------------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    ------------------------------------------------------------------*/
 
 #ifndef __PIN_H
 #define __PIN_H
 
 /**********************************************************************/
-#if defined(PINGUINO1459)
+#if defined(CURIOSITY1708)
+/**********************************************************************/
+
+    #define USERLED     0   // ???
+    
+/**********************************************************************/
+#elif defined(PINGUINO1459)
 /**********************************************************************/
 
     #define A5          0

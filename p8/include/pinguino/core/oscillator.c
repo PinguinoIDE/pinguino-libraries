@@ -3,8 +3,6 @@
     PROJECT:        pinguino
     PURPOSE:        pinguino system clock switching functions
     PROGRAMER:      regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:  5 Jan.  2011
-    LAST RELEASE:   8 Sept. 2015
     --------------------------------------------------------------------
     The Clock Switching mode is controlled by the SCS bits in the OSCCON
     register. These bits can be changed via software during run time to
@@ -16,13 +14,15 @@
     * Timer1 External 32.768 Khz clock crystal
     --------------------------------------------------------------------
     CHANGELOG:
-    21-11-2012      regis blanchot  added PINGUINO1220,1320,14k22 support
-    07-12-2012      regis blanchot  added PINGUINO25K50 and 45K50 support
+    05 Jan. 2011 - Régis Blanchot - first release
+    21 Nov. 2012 - Régis Blanchot - added PINGUINO1220,1320,14k22 support
+    07 Dec. 2012 - Régis Blanchot - added PINGUINO25K50 and 45K50 support
                                     added low power functions
-    06-01-2015      regis blanchot  fixed some bugs
-    08-09-2015      regis blanchot  added PINGUINO1459 support
-    20-09-2015      regis blanchot  added EUSART Receiver Idle Status check before
+    06 Jan. 2015 - Régis Blanchot - fixed some bugs
+    08 Sep. 2015 - Régis Blanchot - added PINGUINO1459 support
+    20 Sep. 2015 - Régis Blanchot - added EUSART Receiver Idle Status check before
                                     changing System Clock
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -48,8 +48,20 @@
 #include <macro.h>
 //#include <millis.c>
 
+// Crystal default value
+// Can be defined by user in his .pde file
+// for ex. #define CRYSTAL = 8000000L
 #ifndef CRYSTAL
-#define CRYSTAL 8000000L
+    #if   defined(__16F1459)  || defined(__16F1708)  || \
+          defined(__18f25k50) || defined(__18f45k50)
+        #define CRYSTAL INTOSC
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+        #define CRYSTAL 8000000L
+    #else
+        #define CRYSTAL 20000000L
+    #endif
 #endif
 
 #if defined(_MILLIS_C_)
@@ -61,7 +73,14 @@ volatile u32 _cpu_clock_;
 // The indices are valid values for PLLDIV
 //static const u8 plldiv[] = { 12, 10, 6, 5, 4, 3, 2, 1 };
 
-#if defined(__16F1459)
+#if defined(__16F1708)
+
+    // INTOSC Frequency
+    #define FINTOSC     8000000
+    // The indices are valid values for IRCF
+    static const u32 ircf[] = { 31000, 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
+
+#elif defined(__16F1459)
 
     // INTOSC Frequency
     #define FINTOSC     16000000
@@ -132,7 +151,7 @@ volatile u32 _cpu_clock_;
     2015-09-08 - RB - PIC16F
     ------------------------------------------------------------------*/
 
-#if defined(__16F1459)
+#if defined(_PIC14E) //__16F1459 || __16F1708
 
     // CONFIG1: CONFIGURATION REGISTER 1 (BYTE ADDRESS 8007h)    
     #if !defined(__CONFIG1)
@@ -163,7 +182,7 @@ volatile u32 _cpu_clock_;
     08-09-2015 - RB - added PINGUINO1459 support
     ------------------------------------------------------------------*/
 
-#if defined(__16F1459)
+#if defined(_PIC14E) //__16F1459 || __16F1708
 
 //static
 u16 System_readFlashMemory(u16 address)
@@ -243,7 +262,17 @@ u32 System_getCpuFrequency()
     {
         // PLL ?
 
-        #if   defined(__16F1459)
+/**------------------------------------------------------------------**/
+        #if defined(__16F1708)
+/**------------------------------------------------------------------**/
+        if (OSCCONbits.SPLLEN)
+            return ircf[OSCCONbits.IRCF]*4;
+        else
+            return ircf[OSCCONbits.IRCF];
+
+/**------------------------------------------------------------------**/
+        #elif defined(__16F1459)
+/**------------------------------------------------------------------**/
 
         //return ( (OSCCONbits.SPLLEN) ? 48000000L : CRYSTAL);
         if (OSCCONbits.SPLLEN)
@@ -254,7 +283,9 @@ u32 System_getCpuFrequency()
          else
             return CRYSTAL;
 
+/**------------------------------------------------------------------**/
         #elif defined(__18f25k50) || defined(__18f45k50)
+/**------------------------------------------------------------------**/
         
         return ( (OSCCON2bits.PLLEN) ? 48000000L : CRYSTAL);
         
@@ -275,13 +306,19 @@ u32 System_getCpuFrequency()
         CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
         fosc  = System_readFlashMemory(__CONFIG1) & 0b00001111;
 
+        #elif defined(__16F1708)
+        
+        // No CPU Div
+
         #else // xxJ5x
 
         CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
 
         #endif
 
+        #if !defined(__16F1708)
         CPUDIV = cpudiv[CPUDIV];
+        #endif
         
         // PLL ?
         
@@ -372,7 +409,7 @@ u32 System_getCpuFrequency()
     0 = 31 kHz device clock derived directly from INTRC internal oscillator
     ------------------------------------------------------------------*/
 
-#if defined(__16F1459)  || \
+#if defined(__16F1459)  || defined(__16F1708)  || \
     defined(__18f14k22) || defined(__18f2455)  || \
     defined(__18f2550)  || defined(__18f4550)  || \
     defined(__18f25k50) || defined(__18f45k50) || \
@@ -420,7 +457,7 @@ void System_setTimer1Osc()
     TMR1H = 0x80;
     TMR1L = 0x00;
 
-    #if defined(__16F1459)  || \
+    #if defined(__16F1459)  || defined(__16F1708)  || \
         defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53) || \
@@ -447,7 +484,7 @@ void System_setTimer1Osc()
     
     #endif
     
-    #if defined(__16F1459)  || \
+    #if defined(__16F1459)  || defined(__16F1708)  || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53) || \
         defined(__18f25k50) || defined(__18f45k50)
@@ -551,7 +588,7 @@ void System_setIntOsc(u32 freq)
         {
             _cpu_clock_ = 31000;
             
-            #if defined(__16F1459)  || \
+            #if defined(__16F1459)  || defined(__16F1708)  || \
                 defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
@@ -578,7 +615,7 @@ void System_setIntOsc(u32 freq)
         {
             _cpu_clock_ = 31250;
             
-            #if defined(__16F1459)  || \
+            #if defined(__16F1459)  || defined(__16F1708)  || \
                 defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
@@ -622,7 +659,7 @@ void System_setIntOsc(u32 freq)
     /// 5- wait INTOSC frequency is stable (HFIOFS=1)
     /// -----------------------------------------------------------------
 
-    #if   defined(__16F1459)
+    #if   defined(__16F1459) || defined(__16F1708)
 
     while (!OSCSTATbits.HFIOFS); 
 

@@ -7,13 +7,15 @@
     LAST RELEASE:	28 Feb 2013
     ----------------------------------------------------------------------------
     CHANGELOG:
-    23 Nov 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
-    07 Dec 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
-    05 Oct 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
+    23 Nov. 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
+    07 Dec. 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
+    05 Oct. 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
                                    with EECON2 = 0x55; EECON2 = 0xAA;]
-    28 Feb 2013 - Régis Blanchot - renamed functions
+    28 Feb. 2013 - Régis Blanchot - renamed functions
                                    added IO_init()
-    01 Oct 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
+    01 Oct. 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
+    09 Sep. 2015 - Régis Blanchot - added PIC16F1459 support
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -45,7 +47,7 @@ void IO_init(void)
     
     // Set everything low
 
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     //LATA  = 0x00;
     //LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
     //LATC  = 0x00;
@@ -85,7 +87,7 @@ void IO_init(void)
     TRISB = 0x00;
     #endif
     
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     TRISC = 0x00;
     #else
     TRISCbits.TRISC0 = 0x00;
@@ -123,7 +125,8 @@ void IO_digital(void)
         ADCON1 = 0x0F;				// AN0 to AN12 Digital I/O
         CMCON = 0x07;               // Comparators as Digital I/O
 
-    #elif defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
+    #elif defined(__16F1459)  || defined(__16F1708)  || \
+          defined(__18f25k50) || defined(__18f45k50)
 
         // Initialize all Analog pins as Digital I/O
         ANSELA = 0;
@@ -181,7 +184,7 @@ void IO_digital(void)
 // NB2 : pins must be explicitly reconfigured as digital I/O when used
 //       with a PPS
 
-#if defined(__16F1459)  || \
+#if defined(__16F1459)  || defined(__16F1708)  || \
     defined(__18f26j50) || defined(__18f46j50) || \
     defined(__18f27j53) || defined(__18f47j53)
     
@@ -208,6 +211,10 @@ void IO_remap(void)
         //1 = T1G function is on RA3
         //0 = T1G function is on RA4
         //APFCONbits.T1GSEL = 1;                          // RA3
+
+    #elif defined(__16F1708)
+
+        // TODO
 
     #elif defined(__18f26j50) || defined(__18f46j50)
 

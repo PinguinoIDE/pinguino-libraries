@@ -1,11 +1,11 @@
-/*  -------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     FILE:           main.c
     PROJECT:        pinguino
     PURPOSE:        application main function
     PROGRAMER:      Jean-pierre Mandon - Régis Blanchot <rblanchot@gmail.com>
     FIRST RELEASE:  19 Sep 2008
     LAST RELEASE:   06 Oct 2015
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     CHANGELOG :
     Originally based on a file by (c) 2006 Pierre Gaufillet <pierre.gaufillet@magic.fr>
     19 Sep. 2008 - Jean-pierre Mandon - adapted to Pinguino  
@@ -20,7 +20,8 @@
     09 Sep. 2015 - Régis Blanchot - added PIC16F support
     06 Oct. 2015 - Régis Blanchot - added watchdog support
     12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
-    ----------------------------------------------------------------------------
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -34,7 +35,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-    -------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 ////////////////////////////////////////////////////////////////////////
 #include "define.h"
@@ -59,9 +60,7 @@
 #endif
 
 #if defined (noboot)
-
     #define SPEED   1
-    #define CRYSTAL 20
     // runtime start code with variable initialisation
     //#include "crt0.c"
     //#include "crt0i.c"
@@ -111,6 +110,13 @@
 
 #elif defined(boot4)
 
+    #if defined(__16F1708)
+        #error "********************************"
+        #error "* No USB Module for this chip   *"
+        #error "* Please change for ICSP mode. *"
+        #error "********************************"
+    #endif
+    
     #if !defined(__XC8__)
         // runtime start code
         //#include "crt0.c"     // minimal  init.
@@ -141,7 +147,7 @@
     /// If we start from a Power-on reset, clear reset bits
     /// ----------------------------------------------------------------
 
-    #if defined(__16F1459)
+    #if defined(_PIC14E) //__16F1459
 
     if (PCONbits.nPOR == 0)
     {
@@ -178,7 +184,22 @@
     /// Perform a loop for some processors until their frequency is stable
     /// ----------------------------------------------------------------
 
-    #if defined(__16F1459)
+    #if defined(__16F1708)
+
+        // Whatever the configuration we start with INTOSC
+        OSCCON = 0b11111010;        // SPLLEN   : 1 = 4x PLL is enabled (see config.h)
+                                    // IRCF     : 1111 = HFINTOSC (16 MHz)
+                                    // bit 2    : unimplemented
+                                    // SCS      : 1x = use clock determined by IRCF
+
+        // Wait HFINTOSC frequency is stable (HFIOFS=1) 
+        while (!OSCSTATbits.HFIOFS);
+
+        // Wait until the PLLRDY bit is set in the OSCSTAT register
+        // before attempting to set the USBEN bit.
+        while (!OSCSTATbits.PLLR);
+
+    #elif defined(__16F1459)
 
         // Whatever the configuration we start with INTOSC
         OSCCON = 0b11111100;        // SPLLEN   : 1 = PLL is enabled (see config.h)
@@ -250,7 +271,7 @@
     IO_init();
     IO_digital();
     
-    #if defined(__16F1459)  || \
+    #if defined(__16F1459)  || defined(__16F1708)  || \
         defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
@@ -319,7 +340,7 @@
     #ifdef ON_EVENT         // defined if interrupt.c is used
 
     //IntInit();
-    #if defined(__16F1459)
+    #if defined(_PIC14E)    // __16F1459 || __16F1708
     INTCONbits.GIE  = 1;    // Enable global interrupts
     #else
     INTCONbits.GIEH = 1;    // Enable global HP interrupts

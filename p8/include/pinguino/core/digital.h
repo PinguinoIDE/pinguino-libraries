@@ -1,30 +1,30 @@
 /*	--------------------------------------------------------------------
-	FILE:			digital.h
-	PROJECT:		Pinguino 8
-	PURPOSE:		Digital IO management
-	PROGRAMER:		Régis Blanchot
-	FIRST RELEASE:	15 Mar. 2014
-	LAST RELEASE:	15 Mar. 2014
-	----------------------------------------------------------------------------
-	TODO : 
-	----------------------------------------------------------------------------
+    FILE:			digital.h
+    PROJECT:		Pinguino 8
+    PURPOSE:		Digital IO management
+    PROGRAMER:		Régis Blanchot
+    --------------------------------------------------------------------
     CHANGELOG :
-        regis blanchot 15 Mar. 2014 : first release
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    15 Mar. 2014 - Régis Blanchot - first release
+    09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    --------------------------------------------------------------------
+    TODO : 
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-	------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+    ------------------------------------------------------------------*/
 
 #ifndef __DIGITAL_H__
 #define __DIGITAL_H__
@@ -51,7 +51,19 @@
 #define _7	0x80    // 1<<7 
 
 /**********************************************************************/
-#if defined(PINGUINO1459)
+#if defined(CURIOSITY1708)
+/**********************************************************************/
+                                                    // Curiosity pin number
+const u8 mask[18]={
+                    _5,_4,_3,_5,_4,_3,_6,_7,_7,     // 0 - 9
+                    _0,_1,_2,_0,_1,_2,_4,_5,_6 };   // 10 - 18
+
+const u8 port[18]={
+                    pA, pA, pA, pC, pC, pC, pC, pC, pB,
+                    pA, pA, pA, pC, pC, pC, pB, pB, pB };
+
+/**********************************************************************/
+#elif defined(PINGUINO1459)
 /**********************************************************************/
                                                     // Pinguino pin number
 const u8 mask[14]={
@@ -231,19 +243,19 @@ const u8 port[21]={
 /**********************************************************************/
 
 const u8 mask[36] = {
-			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT A pins
-			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT B pins
-			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT C pins
-			_0, _1, _2, _3, _4, _5, _6, _7,	// PORT D pins
-			_0, _1, _2, _3			// PORT E pins
-			};
+            _0, _1, _2, _3, _4, _5, _6, _7,	// PORT A pins
+            _0, _1, _2, _3, _4, _5, _6, _7,	// PORT B pins
+            _0, _1, _2, _3, _4, _5, _6, _7,	// PORT C pins
+            _0, _1, _2, _3, _4, _5, _6, _7,	// PORT D pins
+            _0, _1, _2, _3			// PORT E pins
+            };
 const u8 port[36] = {
-			pA, pA, pA, pA, pA, pA, pA, pA,	// PORT A
-			pB, pB, pB, pB, pB, pB, pB, pB,	// PORT B
-			pC, pC, pC, pC, pC, pC, pC, pC,	// PORT C
-			pD, pD, pD, pD, pD, pD, pD, pD,	// PORT D
-			pE, pE, pE, pE			// PORT E
-			};
+            pA, pA, pA, pA, pA, pA, pA, pA,	// PORT A
+            pB, pB, pB, pB, pB, pB, pB, pB,	// PORT B
+            pC, pC, pC, pC, pC, pC, pC, pC,	// PORT C
+            pD, pD, pD, pD, pD, pD, pD, pD,	// PORT D
+            pE, pE, pE, pE			// PORT E
+            };
 
 /**********************************************************************/
 #else

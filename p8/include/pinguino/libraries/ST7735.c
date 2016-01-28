@@ -11,6 +11,8 @@
     CHANGELOG
     * 01 Oct. 2015  RB  fixed ST7735_setOrientation()
     * 03 Oct. 2015  RB  added new function ST7735_printCenter()
+    * 27 Jan. 2016  RB  replaced ST7735_WIDTH and ST7735_HEIGHT with
+                        ST7735[module].screen.width and ST7735[module].screen.height
     ------------------------------------------------------------------------
     TODO
     * scroll functions
@@ -177,7 +179,6 @@ void ST7735_init(u8 module, ...)
 
 ///	--------------------------------------------------------------------
 /// Set the display orientation to 0, 90, 180, or 270 degrees
-/// 90
 ///	--------------------------------------------------------------------
 
 void ST7735_setOrientation(u8 module, s16 degrees)
@@ -293,7 +294,7 @@ color_t *ST7735_getColor(u8 module, u8 x, u8 y)
     color_t *color = NULL;
     u8 ch, cl;
     
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return 0;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return 0;
 
     //ST7735_low(ST7735[module].pin.cs);       // Chip select
     ST7735_select(module);
@@ -481,6 +482,9 @@ void ST7735_printChar(u8 module, u8 c)
 {
     u8 h, w, b;
     u8 tx, ty;
+
+    if (c > 0x7F)
+        c = 0x20;
 
     while (ST7735[module].cursor.x >= ST7735[module].cursor.xmax)
     {
@@ -704,7 +708,7 @@ void ST7735_printf(u8 module, const u8 *fmt, ...)
 
 void ST7735_setCursor(u8 module, u8 x, u8 y)
 {
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
 
     ST7735[module].cursor.x = x;
     ST7735[module].cursor.y = y;
@@ -721,7 +725,7 @@ void ST7735_setCursor(u8 module, u8 x, u8 y)
 
 void ST7735_drawPixel(u8 module, u8 x, u8 y)
 {
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
 
     //ST7735_low(ST7735[module].pin.cs);           // Chip select
     ST7735_select(module);
@@ -757,7 +761,7 @@ void ST7735_drawPixel(u8 module, u8 x, u8 y)
 
 void ST7735_clearPixel(u8 module, u8 x, u8 y)
 {
-    if (x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
     
     //ST7735_low(ST7735[module].pin.cs);           // Chip select
     ST7735_select(module);
@@ -798,10 +802,10 @@ void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
     u8 ch = ST7735[module].color.c >> 8;
     u8 cl = ST7735[module].color.c & 0xFF;
 
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
 
-    if ((y+h-1) >= ST7735_HEIGHT)
-        h = ST7735_HEIGHT - y;
+    if ((y+h-1) >= ST7735[module].screen.height)
+        h = ST7735[module].screen.height - y;
         
     //ST7735_low(ST7735[module].pin.cs);             // Chip select
     ST7735_select(module);
@@ -843,10 +847,10 @@ void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
     u8 ch = ST7735[module].color.c >> 8;
     u8 cl = ST7735[module].color.c & 0xFF;
 
-    if ( x >= ST7735_WIDTH || y >= (ST7735_HEIGHT) ) return;
+    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
 
-    if ((x+w-1) >= ST7735_WIDTH)
-        w = ST7735_WIDTH - x;
+    if ((x+w-1) >= ST7735[module].screen.width)
+        w = ST7735[module].screen.width - x;
         
     //ST7735_low(ST7735[module].pin.cs);             // Chip select
     ST7735_select(module);

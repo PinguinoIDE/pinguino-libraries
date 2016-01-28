@@ -1,7 +1,6 @@
-SD_FATFS FATFS#include <sd/diskio.c>
-SD_FILE FIL#include <sd/diskio.c>
-SD_DIR DIR_t#include <sd/diskio.c>
-SD_FILEINFO FILINFO#include <sd/diskio.c>
+SD_FILE  FIL#include <sd/diskio.c>
+SD_DIR   DIR_t#include <sd/diskio.c>
+SD_INFO  FILINFO#include <sd/diskio.c>
 SD_ERROR FRESULT#include <sd/diskio.c>
 
 SD_READ FA_READ#include <sd/diskio.c>
@@ -20,6 +19,7 @@ SD.mount      disk_mount#include <sd/diskio.c>
 SD.unmount    disk_unmount#include <sd/diskio.c>
 SD.readSector disk_readsector#include <sd/diskio.c>
 SD.writeSector disk_writesector#include <sd/diskio.c>
+SD.getError   disk_geterror#include <sd/diskio.c>#define SDGETERROR
 
 SD.open       f_open#include <sd/diskio.c>#define SDOPEN
 SD.read       f_read#include <sd/diskio.c>#define SDREAD
@@ -55,8 +55,13 @@ SD.forward    f_forward#include <sd/diskio.c>#define SDFORWARD
     SD.readLine   fgets#include <sd/diskio.c>#define SDREADLINE
 
 SD.isDir      isDirectory#include <sd/diskio.c>#define SDISDIR
+SD.isFile     isFile#include <sd/diskio.c>#define SDISFILE
+SD.isNotEmpty isNotEmpty#include <sd/diskio.c>#define SDISNOTEMPTY
 SD.isReadOnly isReadOnly#include <sd/diskio.c>#define SDISRO
 SD.isHidden   isHidden#include <sd/diskio.c>#define SDISHIDDEN
 SD.isSystem   isSystem#include <sd/diskio.c>#define SDISSYS
 SD.isArchive  isArchive#include <sd/diskio.c>#define SDISARCH
-SD.getError   put_rc#include <sd/diskio.c>#define SDGETERROR
+
+SD.getName    getName#include <sd/diskio.c>#define SDGETNAME
+SD.getSize    getSize#include <sd/diskio.c>#define SDGETSIZE
+

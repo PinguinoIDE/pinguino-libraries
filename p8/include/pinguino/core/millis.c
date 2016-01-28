@@ -1,9 +1,35 @@
-// millis library for pinguino
-// Jean-Pierre MANDON 2009
+/*  --------------------------------------------------------------------
+    FILE:           millis.c
+    PROJECT:        pinguino
+    PURPOSE:        timeline
+    PROGRAMER:      Jean-pierre Mandon
+                    Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  19 Sep. 2008
+    LAST RELEASE:   27 Jan. 2016
+    --------------------------------------------------------------------
+    CHANGELOG :
 // added interrupt.c functions (regis blanchot 2011)
-// [14-05-12][jp.mandon changed long to u32 and Millis to millis / thanks mark harper]
-// [31-01-13][r.blanchot use of System_getPeripheralFrequency()]
+    14 May. 2012 - JP Mandon      - changed long to u32 and Millis to millis
+                                    thanks to Mark Harper]
+    31 Jan. 2013 - Régis Blanchot - use of System_getPeripheralFrequency()
+    09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
+    12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+    ------------------------------------------------------------------*/
 #ifndef _MILLIS_C_
 #define _MILLIS_C_
 
@@ -11,12 +37,12 @@
 #include <typedef.h>
 //#include <interrupt.h>
 //#include <interrupt.c>
-#if !defined(__16F1459)
+#if !defined(__16F1459) &&  !defined(__16F1708)
 #include <oscillator.c>         // System_getPeripheralFrequency()
 #endif
 
 volatile u32 _millis;
-#if defined(__16F1459)
+#if defined(__16F1459) || defined(__16F1708)
 volatile u8 _PR0_;
 #else
 volatile u16 _PR0_;
@@ -26,7 +52,7 @@ void updateMillisReloadValue(void )   /* Call from System_setIntOsc() */
 {
     /* Atomic operation */
     INTCONbits.TMR0IE = 0;      //INT_DISABLE;
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     //_PR0_ = (0xFFFF - System_getPeripheralFrequency() / 1000) >> 8;
     _PR0_ = 69;
     #else
@@ -49,14 +75,14 @@ void millis_init(void)
     // if TMR0 is loaded with 65536 - 12000
     // overload will occur after 12.000 cycles = 1ms
     
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     INTCONbits.GIE     = 0;     // Disable global interrupts
     #else
     INTCONbits.GIEH    = 0;     // Disable global HP interrupts
     INTCONbits.GIEL    = 0;     // Disable global LP interrupts
     #endif
     
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     OPTION_REG = 0b00000111;    // Clock source FOSC/4, prescaler 1:256
     //_PR0_ = (0xFFFF - System_getPeripheralFrequency() / 1000) >> 8;
     _PR0_ = 69;
@@ -68,13 +94,13 @@ void millis_init(void)
     TMR0L =  low8(_PR0_);
     #endif
     
-    #if !defined(__16F1459)
+    #if !defined(__16F1459) && !defined(__16F1708)
     INTCON2bits.TMR0IP = 1;     //INT_HIGH_PRIORITY;
     #endif
     INTCONbits.TMR0IF  = 0;
     INTCONbits.TMR0IE  = 1;     //INT_ENABLE;
 
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708)
     INTCONbits.GIE     = 1;     // Enable global interrupts
     #else
     T0CONbits.TMR0ON   = 1;
@@ -101,7 +127,7 @@ void millis_interrupt(void)
     if (INTCONbits.TMR0IF)
     {
         INTCONbits.TMR0IF = 0;
-        #if defined(__16F1459)
+        #if defined(__16F1459) || defined(__16F1708)
         TMR0 = _PR0_;
         #else
         TMR0H = high8(_PR0_);

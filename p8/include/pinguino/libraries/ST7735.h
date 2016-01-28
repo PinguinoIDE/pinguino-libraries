@@ -119,6 +119,7 @@
 
 #define	ST7735_BLACK        0x0000
 #define	ST7735_BLUE         0x001F
+#define	ST7735_LIGHTBLUE    0x0010
 #define	ST7735_RED          0xF800
 #define ST7735_GREEN        0x0400
 #define ST7735_LIME         0x07E0
