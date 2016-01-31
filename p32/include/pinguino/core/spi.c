@@ -79,17 +79,21 @@ void SPI_select(u8 module)
 {
     switch(module)
     {
+        case SPISW:
+            digitalwrite(SPI[SPISW].cs, LOW);
+            break;
+
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB7 is defined as SS1 pin
-            LATBCLR = 1 << 7; // device selection
+            LATBCLR = 1 << 7;
             #endif
             break;
 
         case SPI2:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB9 is defined as SS2 pin
-            LATBCLR = 1 << 9; // device selection
+            LATBCLR = 1 << 9;
             #endif
             break;
     }
@@ -105,6 +109,10 @@ void SPI_deselect(u8 module)
 {
     switch(module)
     {
+        case SPISW:
+            digitalwrite(SPI[SPISW].cs, HIGH);
+            break;
+
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB7 is defined as SS1 pin
@@ -214,15 +222,15 @@ u32 SPI_setClock(u8 module, u32 Fspi)
 //#ifdef SPISETCLOCKDIVIDER
 void SPI_setClockDivider(u8 module, u32 divider)
 {
-    if (divider > SPI_PBCLOCK_DIV1024)
-        SPI[module].divider = 511;
-    else
-        SPI[module].divider = divider / 2 - 1;
-
     if (divider > SPI_PBCLOCK_DIV8)
         SPI[module].phase = SPI_STANDARD_SPEED_MODE;
     else
         SPI[module].phase = SPI_HIGH_SPEED_MODE;
+
+    if (divider > SPI_PBCLOCK_DIV1024)
+        SPI[module].divider = 511;
+    else
+        SPI[module].divider = divider / 2 - 1;
 }
 //#endif
 
@@ -319,22 +327,22 @@ void SPI_close(u8 module)
 
 void SPI_begin(u8 module, ...)
 {
-    u8 sda, sck, cs;
     va_list args;
     
     va_start(args, module); // args points on the argument after module
 
     // Reset the module
-    SPI_close(module);
-    
+    //SPI_close(module);
+    SPI_deselect(module);
+        
     // Configure the module
     switch(module)
     {
         case SPISW:
             // Sets SPI software pins
-            SPI[SPISW].sda = va_arg(args, u8); // get the first arg
-            SPI[SPISW].sck = va_arg(args, u8);
-            SPI[SPISW].cs  = va_arg(args, u8);
+            SPI[SPISW].sda = (u8)va_arg(args, int); // get the first arg
+            SPI[SPISW].sck = (u8)va_arg(args, int);
+            SPI[SPISW].cs  = (u8)va_arg(args, int);
             pinmode(SPI[SPISW].sda, OUTPUT);
             pinmode(SPI[SPISW].sck, OUTPUT);
             pinmode(SPI[SPISW].cs,  OUTPUT);
@@ -343,12 +351,15 @@ void SPI_begin(u8 module, ...)
         #if !defined(__32MX440F256H__)
 
         case SPI1:
+        
+            SPI1CONCLR = 0x8000;                 // Disable SPI
+
             // IO's
             #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBCLR = 1<<14;                   // SCK1 is on RB14 ( D1 )
-            //TRISBCLR = 1<<7;                    // SS1  is on RB7  ( D5 )
-            TRISBSET = 1<<5;                    // SDI1 is on RB5  ( D6 )
             TRISACLR = 1<<4;                    // SDO1 is on RA4  ( D7 )
+            TRISBSET = 1<<5;                    // SDI1 is on RB5  ( D6 )
+            TRISBCLR = 1<<7;                    // SS1  is on RB7  ( D5 )
             #endif
             
             // 4.  Clear the ENHBUF bit (SPIxCON<16>) if using Standard Buffer mode.
@@ -429,6 +440,7 @@ void SPI_begin(u8 module, ...)
                     SPI1CONbits.MSTEN  = 1;     // Master
                     break;
                 case SPI_SLAVE:
+                    TRISBSET = 1<<14;           // SCK INPUT
                     SPI1CONbits.MSTEN  = 0;     // Slave
                     break;
             }
@@ -454,12 +466,15 @@ void SPI_begin(u8 module, ...)
         #endif
 
         case SPI2:
+
+            SPI2CONCLR = 0x8000;                 // Disable SPI
+
             // IO's
             #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             TRISBCLR = 1<<15;                   // SCK2 is on RB15 ( D0 )
-            TRISBSET = 1<<13;                   // SDI2 is on RB13 ( D2 )
-            //TRISBCLR = 1<<9;                    // SS2  is on RB9  ( D3 )
             TRISBCLR = 1<<8;                    // SDO2 is on RB8  ( D4 )
+            TRISBSET = 1<<13;                   // SDI2 is on RB13 ( D2 )
+            TRISBCLR = 1<<9;                    // SS2  is on RB9  ( D3 )
             #endif
             
             // 6. Write the Baud Rate register, SPIxBRG.
@@ -509,6 +524,7 @@ void SPI_begin(u8 module, ...)
                     SPI2CONbits.MSTEN  = 1; // Master
                     break;
                 case SPI_SLAVE:
+                    TRISBCLR = 1<<15;       // SCK INPUT
                     SPI2CONbits.MSTEN  = 0; // Slave
                     break;
             }
@@ -643,7 +659,7 @@ void SPI_begin(u8 module, ...)
  * to the SPIxBUF register.
  **/
  
-u8 SPI_write(u8 module, u8 data_out)
+u8 SPI_write(u8 module, u8 dataout)
 {
     u8 i;
     u8 bitMask;
@@ -662,25 +678,25 @@ u8 SPI_write(u8 module, u8 data_out)
                     bitMask = 1 << i;
 
                 // Send bit
-                digitalwrite(SPI[module].sda, (data_out & bitMask) ? 1 : 0);
+                digitalwrite(SPI[module].sda, (dataout & bitMask) ? 1 : 0);
 
                 // pulse
                 high(SPI[module].sck);
                 low(SPI[module].sck);
             }
-            return data_out;
+            return dataout;
 
         #if !defined(__32MX440F256H__)
 
         case SPI1:
-            SPI1BUF = data_out;             // write to buffer for TX
+            SPI1BUF = dataout;             // write to buffer for TX
             while (!SPI1STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI1BUF;
 
         #endif
 
         case SPI2:
-            SPI2BUF = data_out;             // write to buffer for TX
+            SPI2BUF = dataout;             // write to buffer for TX
             while (!SPI2STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI2BUF;
 
@@ -688,12 +704,12 @@ u8 SPI_write(u8 module, u8 data_out)
             defined(__32MX795F512H__)
 
         case SPI3:
-            SPI3BUF = data_out;             // write to buffer for TX
+            SPI3BUF = dataout;             // write to buffer for TX
             while (!SPI3STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI3BUF;
 
         case SPI4:
-            SPI4BUF = data_out;             // write to buffer for TX
+            SPI4BUF = dataout;             // write to buffer for TX
             while (!SPI4STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI4BUF;
 

@@ -9,6 +9,7 @@
     19-01-2013  rblanchot  support of all clock frequency
     14-04-2014  rblanchot  added printNumber and printFloat function
     24-11-2015  rblanchot  added PIC16F1459 support
+    28-01-2016  agentric   fixed getstring
     --------------------------------------------------------------------
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -546,8 +547,8 @@ u8 Serial_getkey()
 #if defined(SERIALGETSTRING)
 u8 * Serial_getstring()
 {
-    static u8 buffer[80]; // Need static attribute, because a function can not return local array without
-                          // static attribute.
+    // static attribute to return local array
+    static u8 buffer[80];
     u8 c;
     u8 i = 0;
 
@@ -555,8 +556,19 @@ u8 * Serial_getstring()
     do {
         c = Serial_getkey();
         Serial_putchar(c);
-        buffer[i++] = c;
+        // 28-01-2016 - agentric - added if (c != '\r')
+        if (c != '\r')
+            buffer[i++] = c;
     } while (c != '\r');
+    
+    /*
+    while (c != '\r')
+    {
+        c = Serial_getkey();
+        Serial_putchar(c);
+        buffer[i++] = c;
+    } ;
+     */
     buffer[i] = '\0';
     return (buffer);
 }

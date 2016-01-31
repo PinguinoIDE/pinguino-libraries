@@ -27,11 +27,15 @@
 
 #include <fonts/font6x8.h>
 
-//#define SD_DEBUG
-//#define ST7735PRINTF
+#define SD_DEBUG
+#define ST7735PRINTF
 
 #define SPISD  SPI1
 #define SPITFT SPI2
+
+    SD_FILE  f;      // Directory object
+    SD_ERROR rc;     // Return code
+    SD_INFO  content;// File information object
 
 void setup()
 {
@@ -45,10 +49,6 @@ void setup()
 
 void loop()
 {
-    SD_FILE  f;      // Directory object
-    SD_ERROR rc;     // Return code
-    SD_INFO  content;// File information object
-    
     u8 Buff[65];     // File read buffer
     u16 nbr;         // Number of bytes returned
     u8 sizebuffer = sizeof(Buff) - 1;

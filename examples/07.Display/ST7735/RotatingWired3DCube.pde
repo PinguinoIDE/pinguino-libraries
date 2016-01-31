@@ -34,11 +34,11 @@
 
 #define SPIMODULE    SPI2
 #define NBPOINTS     8
-#define SIZE         100.00
-#define DISTANCE     256.00
+#define SIZE         100
+#define DISTANCE     256
 
-typedef struct { float x, y, z, xy; } point3D;
-typedef struct { float x, y;        } point2D;
+typedef struct { int x, y, z, xy; } point3D;
+typedef struct { int x, y;        } point2D;
 
 point3D Sommet[NBPOINTS];   // les sommets du cube
 point3D Point3D[NBPOINTS];  // les sommets apres rotation
@@ -171,15 +171,16 @@ void setup()
     // 4/ Set Fspi to 30MHz :
     //    Fspi max = Fpb max / 2 with Fpb max = Fosc max
     //    Fspi max for ST7735 is 30 MHz so Fpb max = 60 MHz
-    //    Adjust the following according to your processor
-    //System.setCpuFrequency(60000000);
-    //System.setPeripheralFrequency(60000000);
+    
+    // Adjust the following according to your processor
+    System.setCpuFrequency(60000000);
+    System.setPeripheralFrequency(60000000);
     
     ST7735.init(SPIMODULE, 7);// DC
     ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLUE);
     ST7735.setColor(SPIMODULE, ST7735_WHITE);
-    //ST7735.setOrientation(SPIMODULE, 270);
+    ST7735.setOrientation(SPIMODULE, 90);
     ST7735.clearScreen(SPIMODULE);
     
     // Position du cube
@@ -197,7 +198,7 @@ void setup()
 
 void loop()
 {
-    u16 frame=0;
+    u16 frame=0;                   // so frame will be reset every loop
     u32 timeEnd = millis() + 1000; // 1000 ms = 1 sec
     
     while (millis() < timeEnd)
@@ -206,10 +207,8 @@ void loop()
         Rotation(xa, ya, za);
         Projection();
         
-        // display
-        ST7735.clearScreen(SPIMODULE);
-        //ST7735.clearWindow(SPIMODULE,0,12,ST7735[SPIMODULE].screen.width,ST7735[SPIMODULE].screen.height);
-        ST7735.printf(SPIMODULE, "%u fps (max. %u)", fps, maxfps);
+        // clear screen and draw the cube
+        ST7735.clearWindow(SPIMODULE,0,12,ST7735[SPIMODULE].screen.width,ST7735[SPIMODULE].screen.height);
         drawCube();
 
         // update angles
@@ -217,10 +216,29 @@ void loop()
         ya = (ya + 3) % 360;
         za = (za + 1) % 360;
         
-        // one frame done !
+        // one more frame done !
         frame++;
     }
     
+    // frame per second
     fps = frame;
-    if (fps > maxfps) maxfps = fps;
+    if (fps > maxfps)
+    {
+        maxfps = fps;
+        ST7735.printf(SPIMODULE, "%ufps (max.%u)", fps, maxfps);
+        /*
+        ST7735.printNumber(SPIMODULE, fps, DEC);
+        ST7735.print(SPIMODULE, "fps@");
+        ST7735.printNumber(SPIMODULE, System.getPeripheralFrequency()/(2000000*(SPI2BRG+1)), DEC);
+        ST7735.print(SPIMODULE, "MHz (max.");
+        ST7735.printNumber(SPIMODULE, maxfps, DEC);
+        ST7735.print(SPIMODULE, ")");
+        */
+    }
+    // Benchmark
+    // 47J53   :  4 fps
+    // 32MX2x0 : 15 fps (40MHz/20MHz/MIPS16)
+    // 32MX2x0 : 11 fps (40MHz/20MHz/MIPS32)
+    // 32MX2x0 :  8 fps (60MHz/30MHz/MIPS16)
+    // 32MX2x0 :  8 fps (60MHz/30MHz/MIPS32)
 }

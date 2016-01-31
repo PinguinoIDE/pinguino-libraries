@@ -27,11 +27,11 @@
 
 #include <fonts/font6x8.h>
 
-#define SD_DEBUG
-#define ST7735PRINTNUMBER
-#define ST7735PRINTCHAR
-#define ST7735PRINTF
-#define ST7735PRINT
+//#define SD_DEBUG
+//#define ST7735PRINTNUMBER
+//#define ST7735PRINTCHAR
+//#define ST7735PRINTF
+//#define ST7735PRINT
 
 #define SPISD  SPI1
 #define SPITFT SPI2
@@ -46,7 +46,7 @@ void setup()
     ST7735.init(SPITFT, 7); // DC
     ST7735.setFont(SPITFT, font6x8);
     ST7735.setBackgroundColor(SPITFT, ST7735_BLACK);
-    ST7735.setColor(SPITFT, ST7735_WHITE);
+    ST7735.setColor(SPITFT, ST7735_YELLOW);
     ST7735.setOrientation(SPITFT, 90);
     ST7735.clearScreen(SPITFT);
     SD.mount(SPISD);

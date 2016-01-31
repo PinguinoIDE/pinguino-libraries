@@ -33,13 +33,14 @@
 #define __ST7735__
 
 /**	--------------------------------------------------------------------
-    Display size (default orientation is landscape)
+    Display size (default orientation is portrait)
     ------------------------------------------------------------------*/
 
-#define ST7735_WIDTH        160
-#define ST7735_HEIGHT       128
+#define ST7735_WIDTH        128
+#define ST7735_HEIGHT       160
 #define ST7735_SIZE         (ST7735_WIDTH * ST7735_HEIGHT)
 #define ST7735_TABSIZE      4
+
 /**	--------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
@@ -117,6 +118,7 @@
 
 #define	ST7735_BLACK        0x0000
 #define	ST7735_BLUE         0x001F
+#define	ST7735_LIGHTBLUE    0x0010
 #define	ST7735_RED          0xF800
 #define ST7735_GREEN        0x0400
 #define ST7735_LIME         0x07E0
@@ -216,29 +218,41 @@
 
 void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
+
 //void ST7735_init(u8, u8, u8, u8, u8);
 void ST7735_init(u8 module, ...);
+
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
+
 void ST7735_setColor(u8, u16);
 void ST7735_setBackgroundColor(u8, u16);
+color_t *ST7735_getColor(u8, u8, u8);
+color_t *ST7735_packColor(u8, u8, u8);
+void ST7735_unpackColor(color_t*);
+
 void ST7735_clearScreen(u8);
 void ST7735_clearWindow(u8, u8, u8, u8, u8);
+
+//TODO
 //void ST7735_scrollRight();
 //void ST7735_scrollLeft();
 //void ST7735_scrollUp();
 //void ST7735_scrollDown();
+
 void ST7735_setFont(u8, const u8*);
 void ST7735_printChar(u8, u8);
-void ST7735_print(u8, u8*);
-void ST7735_println(u8, u8*);
+void ST7735_print(u8, const u8*);
+void ST7735_println(u8, const u8*);
+void ST7735_printCenter(u8, const u8*);
 void ST7735_printNumber(u8, long, u8);
 void ST7735_printFloat(u8, float, u8);
 void ST7735_printf(u8, const u8*, ...);
 void ST7735_setCursor(u8, u8, u8);
+
 void ST7735_drawPixel(u8, u8, u8);
 void ST7735_clearPixel(u8, u8, u8);
-void ST7735_drawBitmap(u8, u16, u16, u16, u16, u16*);
+void ST7735_drawBitmap(u8, u8, const u8*, u16, u16);
 void ST7735_drawCircle(u8, u16, u16, u16);
 void ST7735_fillCircle(u8, u16, u16, u16);
 void ST7735_drawLine(u8, u16, u16, u16, u16);
@@ -251,7 +265,6 @@ void setColor(u8, u8, u8);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
 extern void drawBitmap(u8, const u8 *, u16, u16);
-color_t ST7735_getColor(u8, u8, u8);
 
 /**	--------------------------------------------------------------------
     Macros
@@ -265,6 +278,8 @@ color_t ST7735_getColor(u8, u8, u8);
 #define ST7735_displayOff(m)     ST7735_sendCommand(m, ST7735_DISPOFF)
 #define ST7735_low(x)            low(x)
 #define ST7735_high(x)           high(x)
+#define ST7735_select(m)         SPI_select(m)
+#define ST7735_deselect(m)       SPI_deselect(m)
 
 /**	--------------------------------------------------------------------
     Globals

@@ -35,7 +35,7 @@
 #define _FS_FAT32	0	/* 0:Supports FAT12/16 only, 1:Enable FAT32 supprt */
 
 
-#define	_CODE_PAGE	1
+//#define	_CODE_PAGE	1
 /* Defines which code page is used for path name. Supported code pages are:
 /  932, 936, 949, 950, 437, 720, 737, 775, 850, 852, 855, 857, 858, 862, 866,
 /  874, 1250, 1251, 1252, 1253, 1254, 1255, 1257, 1258 and 1 (ASCII only).
@@ -98,7 +98,7 @@ typedef struct _DIR_ {
 	CLUST	sclust;		/* Table start cluster (0:Static table) */
 	CLUST	clust;		/* Current cluster */
 	u32	sect;		/* Current sector */
-} DIR;
+} DIR_t;
 
 
 
@@ -137,8 +137,8 @@ FRESULT pf_open (const char*);					/* Open a file */
 FRESULT pf_read (void*, u16, u16*);			/* Read data from the open file */
 FRESULT pf_write (const void*, u16, u16*);	/* Write data to the open file */
 FRESULT pf_lseek (u32);						/* Move file pointer of the open file */
-FRESULT pf_opendir (DIR*, const char*);			/* Open a directory */
-FRESULT pf_readdir (DIR*, FILINFO*);			/* Read a directory item from the open directory */
+FRESULT pf_opendir (DIR_t*, const char*);			/* Open a directory */
+FRESULT pf_readdir (DIR_t*, FILINFO*);			/* Read a directory item from the open directory */
 
 /*--------------------------------------------------------------*/
 /* Flags and offset address                                     */

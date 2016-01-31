@@ -171,11 +171,11 @@ void SPI_deselect(u8 module)
 //#ifdef SPIBEGIN
 void SPI_begin(u8 module, ...)
 {
-    //u8 sda, sck, cs;
     va_list args;
     
     va_start(args, module); // args points on the argument after module
 
+    // Reset the module
     //SPI_close(module);
     SPI_deselect(module);
     
@@ -429,7 +429,7 @@ void SPI_setClockDivider(u8 module, u8 divider)
 //#endif
 
 //#ifdef SPIWRITE
-u8 SPI_write(u8 module, u8 datax)
+u8 SPI_write(u8 module, u8 dataout)
 {
     u8 clear, i, bitMask;
 
@@ -442,17 +442,17 @@ u8 SPI_write(u8 module, u8 datax)
                     bitMask = (0x80 >> i);
                 else
                     bitMask = (0x01 << i);
-                digitalwrite(_spi[SPISW].sda, (datax & bitMask) ? HIGH : LOW);
+                digitalwrite(_spi[SPISW].sda, (dataout & bitMask) ? HIGH : LOW);
                 digitalwrite(_spi[SPISW].sck, HIGH);
                 digitalwrite(_spi[SPISW].sck, LOW);
             }
-            return 0;
+            return dataout;
         
         case SPI1:
             clear = SSP1BUF;                // clears buffer
             SSP1IF = 0;                     // enables SPI1 interrupt
             SSPCON1bits.WCOL = 0;           // must be cleared in software
-            SSP1BUF = datax;                // send data
+            SSP1BUF = dataout;                // send data
 
             if (SSPCON1bits.WCOL)           // still transmitting the previous data 
                 return -1;                  // abort transmission
@@ -468,7 +468,7 @@ u8 SPI_write(u8 module, u8 datax)
             clear = SSP2BUF;                // clears buffer
             PIR3bits.SSP2IF = 0;            // enables SPI2 interrupt
             SSP2CON1bits.WCOL = 0;
-            SSP2BUF = datax;                // send data
+            SSP2BUF = dataout;                // send data
 
             if (SSP2CON1bits.WCOL)          // still transmitting the previous data 
                 return -1;                  // abort transmission

@@ -49,8 +49,9 @@
     ------------------------------------------------------------------*/
 
 // http://devmaster.net/posts/9648/fast-and-accurate-sine-cosine
-float sine(int i)
+static inline float sine(int i)
 {
+
     float x =  0.01745329 * (float)i;   // degree to rad
     float B =  1.27323954;              // 4/pi;
     float C = -0.40528473;              //-4/(pi*pi);

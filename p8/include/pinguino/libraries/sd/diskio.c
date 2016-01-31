@@ -44,7 +44,10 @@
 #include <oscillator.c>
 
 #ifdef SD_DEBUG
+    #define ST7735PRINTNUMBER
+    #define ST7735PRINTCHAR
     #define ST7735PRINTF
+    #define ST7735PRINT
     #include <ST7735.c>
     /*
     void debugf(const u8 *fmt, ...)
@@ -73,8 +76,59 @@
 #endif
 
 //static volatile u16 Timer1, Timer2; /* 1000Hz decrement timer */
-DSTATUS Stat = STA_NOINIT; /* Disk status */
-u8 type=0;
+
+//FATFS _FATFS_;                  // File system object
+//struct FATFS *FatFs;                   // Pointer on File system object
+volatile u8 Stat = STA_NOINIT;  // Disk status
+u8 type=0;                      // SD Card type
+
+/*  --------------------------------------------------------------------
+    initializes a MEDIA structure for file access
+    will mount only the first partition on the disk/card
+    ------------------------------------------------------------------*/
+
+FRESULT disk_mount(u8 module, ...)
+{
+    u8 sda, sck, cs;
+    va_list args;
+
+    va_start(args, module); // args points on the argument after module
+
+    #if defined(SD_DEBUG) && defined(__SERIAL__)
+    Serial_begin(9600);
+    #endif
+    
+    // Init the SPI module
+    // -----------------------------------------------------------------
+    
+    if (module == SPISW)
+    {
+        sda = va_arg(args, u8);             // get the next arg
+        sck = va_arg(args, u8);             // get the next arg
+        cs  = va_arg(args, u8);             // get the last arg
+        SPI_setBitOrder(module, SPI_MSBFIRST);
+        SPI_begin(module, sda, sck, cs);
+    }
+    else
+    { 
+        //minimum baud rate possible = FPB/64
+        SPI_setMode(module, SPI_MASTER_FOSC_64);
+        SPI_setDataMode(module, SPI_MODE1);
+        SPI_begin(module);
+    }
+
+    va_end(args);
+
+    // File system objects memory allocation
+    // -----------------------------------------------------------------
+
+    // Clean-up the file system object
+    //memset((void *)fs, 0, sizeof(FATFS));
+
+    // Create File system object
+    //&FatFs = { 0 };
+    auto_mount(module, NULL, 0);
+}
 
 /*  --------------------------------------------------------------------
     Repeatedly reads the SD card until we get a valid response
@@ -83,12 +137,16 @@ u8 type=0;
     
 u8 disk_getresponse(u8 spi)
 {
-    u8 res;
-    u8 timeout = NCR_TIMEOUT;
+    u8 i, res;
+    u16 timeout = 1000; //NCR_TIMEOUT;
     
     do
+    {
+        for(i=0; i<100; i++);
         res = SPI_read(spi);
-    while ((res & 0x80) && --timeout);
+    }
+    //while ((res & 0x80) && --timeout);
+    while ((res == 0xFF) && --timeout);
 
     return res;
 }
@@ -101,7 +159,7 @@ u8 disk_getresponse(u8 spi)
 static u8 disk_ready(u8 spi)
 {
     u8  res;
-    u16 timeout = 500; //NCR_TIMEOUT;
+    u32 timeout = 1000; //IDLE_TIMEOUT;
 
     do
         res = SPI_read(spi);
@@ -155,7 +213,7 @@ static void disk_deselect(u8 spi)
 u8 disk_sendcmd(u8 spi, u8 cmd, u32 arg)
 {
     u8  crc, R1;
-    //u32 timeout;
+    //u32 timeout = WRITE_TIMEOUT;
 
     // Select card
     disk_deselect(spi);
@@ -199,7 +257,6 @@ u8 disk_sendcmd(u8 spi, u8 cmd, u32 arg)
     /*
     if (cmd == STOP_TRANSMISSION)       // CMD12
     {
-        timeout = WRITE_TIMEOUT;
         do
             R1 = SPI_read(spi);
         while ((R1 == 0x00) && (--timeout));
@@ -240,10 +297,10 @@ u8 disk_sendcmd(u8 spi, u8 cmd, u32 arg)
 u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
 {
     u8  R1, c;
-    u32 timeout = IDLE_TIMEOUT;
+    u32 timeout = 25000; //CMD_TIMEOUT;
     
-    do
-    {
+    doloop:
+    //{
         c = cmd;
         
         // if ACMD<n> send CMD55 first
@@ -264,11 +321,16 @@ u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
 
         // send CMD<n>
         R1 = disk_sendcmd(spi, c, arg);
-    }
+    //}
     // When CMD1 or ACMD41 are accepted, the SD card will leave the IDLE_STATE.
     // We repeat sending the ACMD41 until the SD card reports it has left the IDLE_STATE
     // i.e. 0x00 is returned
-    while ((cmd == CMD1 || cmd == ACMD41) && R1 != 0x00 && --timeout);
+    if ((cmd == CMD1 || cmd == ACMD41) && R1 != 0x00 && --timeout)
+        goto doloop;
+    else if ((cmd == CMD0 || cmd == CMD8) && R1 != 0x01 && --timeout)
+        goto doloop;
+    else if ((cmd != CMD0 && cmd != CMD1 && cmd != CMD8 && cmd != CMD41) && R1 != 0x00 && --timeout)
+        goto doloop;
 
     #ifdef SD_DEBUG
     //ST7735_printf(SPI2, "CMD%d=%d\r\n", c, R1);
@@ -284,11 +346,11 @@ u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
     returns disk status : STA_NODISK, STA_NOINIT or OK (0) 
     ------------------------------------------------------------------*/
 
-DSTATUS disk_initialize(u8 spi, u8 drv)
+u8 disk_initialize(u8 spi, u8 drv)
 {
-    u8 timeout = CMD_TIMEOUT;
-    u8 n, ocr[4];
+    u8 R1, n, ocr[4];
     u8 fpb, fsd, div;
+    u32 timeout;
 
     if (drv) return STA_NOINIT;         // Supports only single drive
     if (Stat & STA_NODISK) return Stat; // No card in the socket
@@ -297,7 +359,8 @@ DSTATUS disk_initialize(u8 spi, u8 drv)
     // -----------------------------------------------------------------
 
     SPI_deselect(spi);
-    for (n = 80; n; n--)
+    timeout = NCR_TIMEOUT;
+    while (n--)
         SPI_write(spi, 0xFF);
 
     // Send in the "software reset" command (CMD0)
@@ -326,20 +389,20 @@ DSTATUS disk_initialize(u8 spi, u8 drv)
         {
             type = CT_SD1;
             #ifdef SD_DEBUG
-            //debugf("Found SD type 1\r\n");
+            ST7735_printf(SPI2, "Found SD type 1\r\n");
             #endif
         }
         else if (disk_sendcommand(spi, SEND_OP_COND, 0) == CMD_OK) // CMD1
         {
             type = CT_MMC;
             #ifdef SD_DEBUG
-            //debugf("Found MMC\r\n");
+            ST7735_printf(SPI2, "Found MMC\r\n");
             #endif
         }
         else
         {
             #ifdef SD_DEBUG
-            //debugf("Unknown Interface\r\n");
+            ST7735_printf(SPI2, "Unknown Interface\r\n");
             #endif
             return STA_NOINIT;
         }
@@ -365,7 +428,7 @@ DSTATUS disk_initialize(u8 spi, u8 drv)
         {
             // Repeat sending ACMD41 + HCS bit until the card responds
             // with an ok value of 0x00
-            if (disk_sendcommand(spi, SD_SEND_OP_COND, (u32)1<<30) != 0x00)
+            if (disk_sendcommand(spi, SD_SEND_OP_COND, (u32)1<<30) != CMD_OK)
                 return STA_NOINIT;
             
             // Send CMD58 and Check CCS bit in the OCR
@@ -379,12 +442,10 @@ DSTATUS disk_initialize(u8 spi, u8 drv)
                 #ifdef SD_DEBUG
                 //ST7735_printf(SPI2, "OCR[0]=0x%X\n\r",ocr[0]);
                 //ST7735_printf(SPI2, "R7=0x%02X%02X%02X%02X\r\n", ocr[3], ocr[2], ocr[1], ocr[0]);
-                /*
                 if (type == CT_SD2)
                     ST7735_printf(SPI2, "Found SD type 2\r\n");
                 else
                     ST7735_printf(SPI2, "Found SDHC\r\n");
-                */
                 #endif
             }
         }
@@ -482,55 +543,44 @@ DSTATUS disk_initialize(u8 spi, u8 drv)
     u8 drv : Physical drive number (0)
     ------------------------------------------------------------------*/
 
-DSTATUS disk_status(u8 drv)
+#if 0
+u8 disk_status(u8 drv)
 {
     if (drv)
         return STA_NOINIT; /* Supports only single drive */
     return Stat;
 }
+#endif
 
 /*--------------------------------------------------------------------*/
 /* Receive a data packet from MMC                                     */
 /* Returns : 1:OK, 0:Failed                                           */
 /* u8 *buff : Data buffer to store received data                      */
-/* u16 btr : Byte count (must be multiple of 4)                       */
+/* u16 count: bytes count                                             */
 /*--------------------------------------------------------------------*/
 
-static u8 disk_readblock(u8 spi, u8 *buff, u16 btr)
+static u8 disk_readblock(u8 spi, u8 *buff, u16 count)
 {
-    u8 token;
-    u8 timeout = 200;
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "Reading Bloc\r\n");
+    #endif
     
-    do
-        token = SPI_read(spi);
-    while ((token == 0xFF) && --timeout);
-
-    // Wait for disk ready
-    // If not valid data token, return with error */
-
-    //if (disk_getresponse(spi) != 0xFE)
-    if (token != 0xFE)
-    {
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "NO VALID DATA TOKEN RETURNED\r\n");
-        #endif
+    if (disk_getresponse(spi) != 0xFE)
         return 0;
-    }
-    
-    /* Receive the data block into buffer */
+        
+    // Receive the data block into buffer
     do
     {
         *(buff++) = SPI_read(spi);
         *(buff++) = SPI_read(spi);
         *(buff++) = SPI_read(spi);
         *(buff++) = SPI_read(spi);
-    } while (btr -= 4);
+    } while (count -= 4);
 
-    /* Send Dummy CRC */
+    // Send Dummy CRC
     SPI_write(spi, 0xFF);
     SPI_write(spi, 0xFF);
 
-    /* Return with success */
     return 1;
 }
 
@@ -590,6 +640,9 @@ static int disk_writeblock(u8 spi, const u8 *buff, u8 token)
 
 DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
 {
+    //u8 i, token;
+    //u32 timeout = 1000; //IDLE_TIMEOUT;
+
     if (drv || !count)
         return RES_PARERR;
 
@@ -604,33 +657,20 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     /* Single block read */
     if (count == 1)
     {
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "Single block read\r\n");
-        #endif
-        // check if command was accepted
-        if (disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK)
-        {
-            #ifdef SD_DEBUG
-            ST7735_printf(SPI2, "Readind sector %d\r\n", sector);
-            #endif
-            if (disk_readblock(spi, buff, 512))
+        //SPI_read(spi);SPI_read(spi);SPI_select(spi);SPI_read(spi);SPI_read(spi);
+
+        // Check if command was accepted and valid token received
+        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK)
+            && disk_readblock(spi, buff, 512))
                 count = 0;
-        }
     }
     
     /* Multiple block read */
     else
     {
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "Multiple block read\r\n");
-        #endif
-
         // check if command was accepted
         if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)
         {
-            #ifdef SD_DEBUG
-            //ST7735_printf(SPI2, "Readind sector %d\r\n", sector);
-            #endif
             do {
                 if (!disk_readblock(spi, buff, 512))
                     break;
@@ -641,7 +681,8 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     }
     
     //SPI_deselect(spi);
-
+    //disk_deselect(spi);
+    
     #ifdef SD_DEBUG
     //ST7735_printf(SPI2, "count=%d\r\n", count);
     #endif
@@ -789,7 +830,7 @@ DRESULT disk_ioctl(u8 spi, u8 drv, u8 ctrl, void *buff)
 
         /* Get number of sectors on the disk (u16) */
         case GET_SECTOR_COUNT:
-            if ((disk_sendcommand(spi,SEND_CSD, 0) == CMD_OK)
+            if ((disk_sendcommand(spi, SEND_CSD, 0) == CMD_OK)
                 && disk_readblock(spi, csd, 16))
             {
                 /* SDv2? */
@@ -907,70 +948,64 @@ DRESULT disk_ioctl(u8 spi, u8 drv, u8 ctrl, void *buff)
 }
 
 /*  --------------------------------------------------------------------
-    initializes a MEDIA structure for file access
-    will mount only the first partition on the disk/card
+    Free SPI module
+    RB 26-01-2016 : no longer necessary
     ------------------------------------------------------------------*/
 
-FRESULT disk_mount(u8 module, FATFS *fs, ...)
+#if 0
+FRESULT disk_unmount(u8 module)
 {
-    u8 sda, sck, cs;
-    va_list args;
-
-    va_start(args, module); // args points on the argument after module
-
-    #if defined(SD_DEBUG) && defined(__SERIAL__)
-    Serial_begin(9600);
-    #endif
-    
-    // Init the SPI module
-    // -----------------------------------------------------------------
-    
-    if (module == SPISW)
-    {
-        sda = va_arg(args, u8);             // get the next arg
-        sck = va_arg(args, u8);             // get the next arg
-        cs  = va_arg(args, u8);             // get the last arg
-        SPI_setBitOrder(module, SPI_MSBFIRST);
-        SPI_begin(module, sda, sck, cs);
-    }
-    else
-    { 
-        //minimum baud rate possible = FPB/64
-        SPI_setMode(module, SPI_MASTER_FOSC_64);
-        SPI_setDataMode(module, SPI_MODE1);
-        SPI_begin(module);
-    }
-
-    // Memory allocation
-    // -----------------------------------------------------------------
-
-    return f_mount(0, fs);
-}
-
-/*  --------------------------------------------------------------------
-    free MEDIA structure and SPI module
-    ------------------------------------------------------------------*/
-
-void disk_unmount(u8 module)
-{
-    f_mount(0, NULL);
+    //FRESULT res = f_mount(0, NULL);
+    //fs->fs_type = 0;
     SPI_deselect(module);
     SPI_close(module);
+    return RES_OK;
 }
+#endif
 
 /*  --------------------------------------------------------------------
-    display error
+    display FRESULT error
+        FR_OK = 0,			// 0
+        FR_NOT_READY,		// 1
+        FR_NO_FILE,			// 2
+        FR_NO_PATH,			// 3
+        FR_INVALID_NAME,	// 4
+        FR_INVALID_DRIVE,	// 5
+        FR_DENIED,			// 6
+        FR_EXIST,			// 7
+        FR_RW_ERROR,		// 8
+        FR_WRITE_PROTECTED,	// 9
+        FR_NOT_ENABLED,		// 10
+        FR_NO_FILESYSTEM,	// 11
+        FR_INVALID_OBJECT,	// 12
+        FR_MKFS_ABORTED		// 13 (not used)
     ------------------------------------------------------------------*/
 
-const char * put_rc(FRESULT rc)
+const char * disk_geterror(FRESULT rc)
 {
     FRESULT i;
+    /*
     const char *str =
         "OK\0" "DISK_ERR\0" "INT_ERR\0" "NOT_READY\0" "NO_FILE\0" "NO_PATH\0"
         "INVALID_NAME\0" "DENIED\0" "EXIST\0" "INVALID_OBJECT\0" "WRITE_PROTECTED\0"
         "INVALID_DRIVE\0" "NOT_ENABLED\0" "NO_FILE_SYSTEM\0" "MKFS_ABORTED\0" "TIMEOUT\0"
         "LOCKED\0" "NOT_ENOUGH_CORE\0" "TOO_MANY_OPEN_FILES\0";
-
+    */
+    const char *str =
+        "OK\0"
+        "NOT_READY\0"
+        "NO_FILE\0"
+        "NO_PATH\0"
+        "INVALID_NAME\0"
+        "INVALID_DRIVE\0"
+        "DENIED\0"
+        "EXIST\0"
+        "RW_ERROR\0"
+        "WRITE_PROTECTED\0"
+        "NOT_ENABLED\0"
+        "NO_FILESYSTEM\0"
+        "INVALID_OBJECT\0";
+    
     for (i = 0; i != rc && *str; i++)
         while (*str++);
 

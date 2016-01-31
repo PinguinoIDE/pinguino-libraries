@@ -1,10 +1,10 @@
 /*	--------------------------------------------------------------------
-    FILE:			ST7735[module].c
+    FILE:			ST7735.c
     PROJECT:		pinguino
     PURPOSE:		Drive 1.8" 128x160 TFT display
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	11 Dec. 2014
-    LAST RELEASE:	01 Oct. 2015
+    LAST RELEASE:	29 Jan. 2016
     ------------------------------------------------------------------------
     http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
     ------------------------------------------------------------------------
@@ -30,20 +30,20 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-----------------------------------------------------------------------*/
+	------------------------------------------------------------------*/
 
 /**	--------------------------------------------------------------------
     Pin Assignment
 
             ST7735             PIC32MX     32MX250
-    1       LED                 A1
-    2       ST7735_SCKPIN       SCK
-    3       ST7735_SDAPIN       SDO
-    4       A0                  DC
-    5       RESET               VSS         VSS
-    6       CS                  SS          SS
-    7       GND                 GND         GND
-    8       VCC                 VCC         VCC
+    1       LED                A1
+    2       SCK			       SCK
+    3       SDA			       SDO
+    4       A0                 DC
+    5       RESET              VSS         VSS
+    6       CS                 SS          SS
+    7       GND                GND         GND
+    8       VCC                VCC         VCC
     ------------------------------------------------------------------*/
 
 #ifndef __ST7735_C
@@ -62,7 +62,6 @@
 
 // Printf
 #ifdef ST7735PRINTF
-    //#include <stdarg.h>
     #include <stdio.c>
 #endif
 
@@ -119,16 +118,16 @@ void ST7735_init(u8 module, ...)
         sda = va_arg(args, u8);         // get the next arg
         sck = va_arg(args, u8);         // get the next arg
         cs  = va_arg(args, u8);         // get the last arg
-        SPI_begin(module, sda, sck, cs);
         SPI_setBitOrder(module, SPI_MSBFIRST);
+        SPI_begin(module, sda, sck, cs);
     }
     else
     {
-        SPI_setMode(module, SPI_MASTER);
-        SPI_setDataMode(module, SPI_MODE1);
+        SPI_setMode(ST7735_SPI, SPI_MASTER);
+        SPI_setDataMode(ST7735_SPI, SPI_MODE1);
         //maximum baud rate possible = FPB = FOSC/4
-        SPI_setClockDivider(module, SPI_CLOCK_DIV4);
-        SPI_begin(module);
+        SPI_setClockDivider(ST7735_SPI, SPI_CLOCK_DIV4);
+        SPI_begin(ST7735_SPI);
     }
     va_end(args);           // cleans up the list
     
@@ -437,7 +436,7 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     SPI_write(module,y1);
     
     ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMWR);    // Write to RAM
+    SPI_write(module,ST7735_RAMWR);                // Write to RAM
         
     ST7735_high(ST7735[module].pin.dc);            // DATA = 1
     for (x = x0; x < x1; x++)
@@ -795,7 +794,7 @@ void ST7735_clearPixel(u8 module, u8 x, u8 y)
     ST7735_deselect(module);
 }
 
-#ifdef ST7735GRAPHICS
+#if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
 
 void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
 {

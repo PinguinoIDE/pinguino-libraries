@@ -8,9 +8,12 @@
 #include <compiler.h>
 #include <typedef.h>
 #include <sd/ffconf.h>
+#if _FS_TINY
+#include <sd/tff.h>             // Tiny Fat Filesystem
+#else
+#include <sd/pff.h>             // Petit Fat Filesystem
+#endif
 
-// Status of Disk Functions 
-typedef u8	DSTATUS;
 
 // Results of Disk Functions 
 typedef enum
@@ -23,35 +26,37 @@ typedef enum
 } DRESULT;
 
 // Prototypes for disk control functions 
-FRESULT disk_mount(u8, FATFS*, ...);
-void disk_unmount(u8);
+//FRESULT disk_mount(u8, FATFS*, ...);
+FRESULT disk_mount(u8, ...);
+//FRESULT disk_unmount(u8);
+//u8 disk_ready(u8);
 u8 disk_getresponse(u8);
-DSTATUS disk_initialize(u8, u8);
-DRESULT disk_ioctl(u8, u8, u8, void*);
-DRESULT disk_readsector(u8, u8, u8*, u32, u8);
-void    disk_timerproc (u8);
-DWORD   get_fattime(void);
-const char * put_rc (FRESULT);
 u8 disk_sendcmd(u8, u8, u32);
 u8 disk_sendcommand(u8, u8, u32);
-DSTATUS disk_status(u8);
+u8 disk_initialize(u8, u8);
+DRESULT disk_ioctl(u8, u8, u8, void*);
+DRESULT disk_readsector(u8, u8, u8*, u32, u8);
+//void disk_readblock(u8 , u8 *);
+void disk_timerproc (u8);
+const char * disk_geterror (FRESULT);
+DWORD   get_fattime(void);
+//u8 disk_status(u8);
 #if	_FS_READONLY == 0
 DRESULT disk_writesector(u8, u8, const u8*, u32, u8);
 #endif
-const char * put_rc (FRESULT);
 
 // Timeout
-#define NCR_TIMEOUT             (u8)20      // There can be 0-8 no command return values
+#define NCR_TIMEOUT             20          // There can be 0-8 no command return values
                                             // until the return is received
-#define WRITE_TIMEOUT           (u32)0xA0000// should be at least 250ms
-#define IDLE_TIMEOUT            (u32)0x7000 // should be at least 1000ms
-#define CMD_TIMEOUT             (u8)0xFF
+#define WRITE_TIMEOUT           0xA0000     // should be at least 250ms
+#define IDLE_TIMEOUT            0x1000      // should be at least 1000ms
+#define CMD_TIMEOUT             0xFF
 
 // Command return
 #define CMD_OK                  0x00
 #define CMD_RECEIVED            0x01
 
-// Disk Status Bits (DSTATUS)
+// Disk Status Bits
 #define STA_NOINIT              0x01        // Drive not initialized 
 #define STA_NODISK              0x02        // No medium in the drive 
 #define STA_PROTECT             0x04        // Write protected 
@@ -136,6 +141,7 @@ const char * put_rc (FRESULT);
 #define CRC_ON_OFF              59
 
 // FILEIO ERROR CODES
+/*
 #define FE_IDE_ERROR        1   // IDE command execution error
 #define FE_NOT_PRESENT      2   // CARD not present
 #define FE_PARTITION_TYPE   3   // WRONG partition type
@@ -155,6 +161,7 @@ const char * put_rc (FRESULT);
 #define FE_MALLOC_FAILED   17   // Could not allocate memory
 #define FE_INVALID_MODE    18   // Mode was not r.w.
 #define FE_FIND_ERROR      19   // Failure during FILE search
+*/
 
 // file attributes
 #define ATT_RO      1           // attribute read only
@@ -182,7 +189,7 @@ const char * put_rc (FRESULT);
 #define ReadOddW( a, f) (*(a+f) + ( *(a+f+1) << 8))
 
 // Global
-char FError; // error mail box
+//char FError; // error mail box
 //DSTATUS Stat; /* Disk status */
 
 #endif // _DISKIO_H

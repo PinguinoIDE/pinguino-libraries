@@ -1,16 +1,35 @@
 /*	----------------------------------------------------------------------------
-    FILE:			graphic.c
+    FILE:			graphics.c
     PROJECT:		pinguino
     PURPOSE:		graphic routines for all TFT or OLED displays
     PROGRAMER:		Henning Karlsen http://www.henningkarlsen.com
                     Marcus Fazzi
                     Regis Blanchot
-    FIRST RELEASE:	10 Jul. 2010
-    LAST RELEASE:	03 Apr. 2012
     ----------------------------------------------------------------------------
     CHANGELOG : 
-    ----------------------------------------------------------------------------
 
+    Jul  10 2010  - initial release
+    Aug  11 2010  - Fixed a small bug with the color green.
+                    Thanks to Thomas finding and fixing the bug.
+    Aug  13 2010  - Added the possibility to use the display in
+                    Landscape mode. Also added a larger font by
+                    request.
+    Sep  30 2010  - Added Arduino Mega compatibility.
+                    Fixed a bug with CENTER and RIGHT in LANDSCAPE mode.
+                    Fixed a bug in printNumI and printNumF when the 
+                    number to be printed was 0.
+    Oct  14 2010  - Added drawBitmap() with its associated tool
+    Nov  24 2010  - Added Arduino Mega2560 compatibility
+                    Added support for rotating text and bitmaps
+    Jan  18 2011  - Fixed an error in the requirements
+    Jan  30 2011  - Added loadBitmap()
+                    Optimized drawBitmap() when not using rotation
+    Mar  04 2011  - Port to Pinguino 32X, By Marcus Fazzi
+    Mar  08 2011  - Fixed a bug in printNumF when the number to be printed
+                    was (-)0.something
+    Fev  29 2012  - Added support to OLIMEX Boards.
+                    There is a problem with D2 pin (PIC32 pin52 ?). using A6.
+	Jan  29 2016  - Added DrawBitmap
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -27,11 +46,18 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
     --------------------------------------------------------------------------*/
 
-#ifndef __GRAPHIC_C
-#define __GRAPHIC_C
+#ifndef __GRAPHICS_C
+#define __GRAPHICS_C
 
 #include <typedef.h>    // u8, u16, ..
 #ifdef DRAWBITMAP
+#define SDOPEN
+#define SDLSEEK
+#define SDCLOSE
+#define SDMOUNT
+#define SDREAD
+#define SDREAD16
+#define SDREAD32
 #include <sd/tff.h>
 //#include <sd/diskio.h>
 #include <sd/diskio.c>
@@ -39,11 +65,19 @@
 
 #define _abs_(a) (((a)> 0) ? (a) : -(a))
 
+/*	--------------------------------------------------------------------
+    Prototypes
+    ------------------------------------------------------------------*/
+
 // Specific to each display
 extern void drawPixel(u16, u16);
 extern void drawVLine(u16, u16, u16);
 extern void drawHLine(u16, u16, u16);
 extern void setColor(u8, u8, u8);
+
+/*	--------------------------------------------------------------------
+    Fonctions
+    ------------------------------------------------------------------*/
 
 void drawCircle(u16 x, u16 y, u16 radius)
 {
@@ -91,9 +125,9 @@ void fillCircle(u16 x, u16 y, u16 radius)
 
 void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 {
-    s16 steep, t;
+    s16 steep;
     s16 deltax, deltay, error;
-    s16 x, y;
+    s16 x, y, t;
     s16 ystep;
     
     // simple clipping is done in the drawPixel routine
@@ -213,7 +247,8 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         y1=y2;
         y2=tmp;
     }
-/*
+
+    /*
     if (orient==PORTRAIT)
     {
         for (i=0; i<((y2-y1)/2)+1; i++)
@@ -223,7 +258,7 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         }
     }
     else
-*/
+    */
     {
         for (i=0; i<((x2-x1)/2)+1; i++)
         {
@@ -403,6 +438,88 @@ void drawBitmap(u8 spisd, const u8 * filename, u16 x, u16 y)
 }
 
 #endif // DRAWBITMAP
+
+/*
+void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
+    char i,j,ch;
+    unsigned u16 temp;
+    u16 newx,newy;
+    //double radian;
+    //radian=deg*0.0175;  
+
+    fastWriteLow(LCD_CS);   
+    if (fsize==FONT_SMALL)
+    {
+        temp=((c-32)*12); 
+        for(j=0;j<12;j++) 
+        {
+            ch=(SmallFont[temp]); 
+            for(i=0;i<8;i++)
+            {   
+                newx=x+(((i+(pos*8))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*8))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(7-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+        }
+    }
+#ifndef _NO_BIG_FONT_
+    else{
+        temp=((c-32)*32); 
+        for(j=0;j<16;j++) 
+        {
+            ch=(BigFont[temp]); 
+            for(i=0;i<8;i++)
+            {   
+                newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(7-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+            ch=(BigFont[temp]); 
+            for(i=8;i<16;i++)
+            {   
+                newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(15-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+        }
+    }
+#endif
+    fastWriteHigh(LCD_CS);
+}
+*/
 
 /*
 void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 rox, u16 roy)

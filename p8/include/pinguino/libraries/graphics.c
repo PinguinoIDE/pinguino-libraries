@@ -1,12 +1,10 @@
 /*	----------------------------------------------------------------------------
     FILE:			graphics.c
     PROJECT:		pinguino
-    PURPOSE:		graphic routines
+    PURPOSE:		graphic routines for all TFT or OLED displays
     PROGRAMER:		Henning Karlsen http://www.henningkarlsen.com
                     Marcus Fazzi
                     Regis Blanchot
-    FIRST RELEASE:	10 Jul. 2010
-    LAST RELEASE:	03 Apr. 2012
     ----------------------------------------------------------------------------
     CHANGELOG : 
 
@@ -31,6 +29,7 @@
                     was (-)0.something
     Fev  29 2012  - Added support to OLIMEX Boards.
                     There is a problem with D2 pin (PIC32 pin52 ?). using A6.
+	Jan  29 2016  - Added DrawBitmap
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -68,6 +67,10 @@
 
 //#define _abs_(a) (((a)> 0) ? (a) : -(a))
 
+/*	--------------------------------------------------------------------
+    Prototypes
+    ------------------------------------------------------------------*/
+
 // Specific to each display
 extern void drawPixel(u16, u16);
 extern void drawVLine(u16, u16, u16);
@@ -75,7 +78,7 @@ extern void drawHLine(u16, u16, u16);
 extern void setColor(u8, u8, u8);
 
 /*	--------------------------------------------------------------------
-    Prototypes
+    Fonctions
     ------------------------------------------------------------------*/
 
 void drawCircle(u16 x, u16 y, u16 radius)
@@ -129,7 +132,7 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     s16 x, y;
     s16 ystep;
     
-    // simple clipping
+    // simple clipping is done in the drawPixel routine
     /*
     if (( x0 < 0) || (x0 > HRES)) return;
     if (( x1 < 0) || (x1 > HRES)) return;
@@ -139,13 +142,13 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     
     steep = abs(y1 - y0) > abs(x1 - x0);
 
-    if (steep) 
+    if (steep)
     {
         swap(x0, y0);
         swap(x1, y1);
     }
 
-    if (x0 > x1) 
+    if (x0 > x1)
     {
         swap(x0, x1);
         swap(y0, y1);
@@ -244,14 +247,29 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         y1=y2;
         y2=tmp;
     }
-    for (i=0; i<((x2-x1)/2)+1; i++)
+
+    /*
+    if (orient==PORTRAIT)
     {
-        drawVLine(x1+i, y1, y2-y1);
-        drawVLine(x2-i, y1, y2-y1);
+        for (i=0; i<((y2-y1)/2)+1; i++)
+        {
+            drawHLine(x1, y1+i, x2-x1);
+            drawHLine(x1, y2-i, x2-x1);
+        }
+    }
+    else
+    */
+    {
+        for (i=0; i<((x2-x1)/2)+1; i++)
+        {
+            drawVLine(x1+i, y1, y2-y1);
+            drawVLine(x2-i, y1, y2-y1);
+        }
     }
 }
 
-void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2){
+void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
+{
     u16 tmp, i;
 
     if (x1>x2)
