@@ -1,6 +1,7 @@
 /*****************************************
     Go to Deep Sleep for 1 second
     Toggle built-in led at wake-up
+    Only for Pinguino with RTCC module
 *****************************************/
 
 void setup()

@@ -22,12 +22,12 @@ void setup()
     // 1:256 (bootloader version > 4.8)
     // Watchdog timer will overload after 32768*4ms = 135sec = 2.25min
     // or 256*4ms = 1024 ms = 1 sec. 
-    System.watchdog();
+    Watchdog.enable();
 }
 
 void loop()
 {
-    System.clearWatchdog(); // clear watchdog timer
+    Watchdog.clear(); // clear watchdog timer
     // Enter Sleep Mode
     System.sleep();         // wait for watchdog timer overload
     // Back to Run Mode
