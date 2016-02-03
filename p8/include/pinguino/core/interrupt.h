@@ -3,11 +3,11 @@
 	PROJECT:		pinguino
 	PURPOSE:		interrupt routines
 	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	08-06-2012
-	LAST RELEASE:	09-11-2013
 	----------------------------------------------------------------------------
 	CHANGELOG :
-    * 09-11-2013    régis blanchot  added PIC18FxxJ53 support
+	08 Jun. 2012 - Régis Blanchot - first release
+    09 Nov. 2013 - Régis Blanchot - added PIC18FxxJ53 support
+    03 Feb. 2016 - Régis Blanchot - added partial PIC16F1459 support
 	----------------------------------------------------------------------------
 	TODO :
 	----------------------------------------------------------------------------
@@ -129,6 +129,32 @@
 	/// T0CON: TIMER0 CONTROL REGISTER
 	///
 
+    #ifdef __16F1459
+
+	// bit 7
+	#define T0_ON				(1<<7)  // 1 = Enables Timer0
+	#define T0_OFF				(0)     // 0 = Stops Timer0
+	// bit 5   TMR0CS: Timer0 Clock Source Select bit
+	#define	T0_SOURCE_EXT		(1<<5)  // 1 = Transition on T0CKI pin
+	#define	T0_SOURCE_INT		(0)     // 0 = Internal instruction cycle clock (CLKO)
+	// bit 4   TMR0SE: Timer0 Source Edge Select bit
+	#define	T0_H2L				(1<<4)  // 1 = Increment on high-to-low transition on T0CKI pin
+	#define	T0_L2H				(0)     // 0 = Increment on low-to-high transition on T0CKI pin
+	// bit 3   PSA: Timer0 Prescaler Assignment bit
+	#define	T0_PS_OFF			(1<<3)  // 1 = TImer0 prescaler is NOT assigned. Timer0 clock input bypasses prescaler.
+	#define	T0_PS_ON			(0)     // 0 = Timer0 prescaler is assigned. Timer0 clock input comes from prescaler output.
+	// bit 2-0 T0PS2:T0PS0: Timer0 Prescaler Select bits
+	#define	T0_PS_1_256			0b111 // 1:256 Prescale value
+	#define	T0_PS_1_128			0b110 // 1:128 Prescale value
+	#define	T0_PS_1_64			0b101 // 1:64 Prescale value
+	#define	T0_PS_1_32			0b100 // 1:32 Prescale value
+	#define	T0_PS_1_16			0b011 // 1:16 Prescale value
+	#define	T0_PS_1_8			0b010 // 1:8 Prescale value
+	#define	T0_PS_1_4			0b001 // 1:4 Prescale value
+	#define	T0_PS_1_2			0b000 // 1:2 Prescale value
+
+    #else
+    
 	// bit 7
 	#define T0_ON				(1<<7)  // 1 = Enables Timer0
 	#define T0_OFF				(0)     // 0 = Stops Timer0
@@ -153,7 +179,9 @@
 	#define	T0_PS_1_8			0b010 // 1:8 Prescale value
 	#define	T0_PS_1_4			0b001 // 1:4 Prescale value
 	#define	T0_PS_1_2			0b000 // 1:2 Prescale value
-
+    
+    #endif
+    
 	///
 	/// T1CON: TIMER1 CONTROL REGISTER
 	///

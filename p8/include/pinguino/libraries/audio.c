@@ -100,11 +100,12 @@
         gPeriodPlus1 = System_getPeripheralFrequency() / samplerate;
 
         // stops interrupt
-        INTCONbits.GIEH = 0;         // disable global HP interrupts
-        INTCONbits.GIEL = 0;         // disable global LP interrupts
+        noInterrupts();
 
         // configures Timer2 interrut
+        #ifndef __16F1459
         IPR1bits.TMR2IP = 1;         // interrupt has high priority
+        #endif
         PIR1bits.TMR2IF = 0;         // reset interrupt flag
 
         // Timer2 prescaler calculation
@@ -135,12 +136,15 @@
 
         TMR2  = 0;
         PR2   = gPeriodPlus1 - 1;
+        #ifdef __XC8__
+        T2CON = prescaler | _T2CON_TMR2ON_MASK;
+        #else
         T2CON = prescaler | _TMR2ON;
-
+        #endif
+        
         // (re-)starts interrupt
-        INTCONbits.GIEL = 1;         // enable global LP interrupts
-        INTCONbits.GIEH = 1;         // enable global HP interrupts
-    }
+        interrupts();
+}
 
 /*  --------------------------------------------------------------------
     staccato
@@ -173,21 +177,26 @@
     {
         switch (pin)
         {
-            #if defined(__18f26j53) || defined(__18f46j53) || \
-                defined(__18f27j53) || defined(__18f47j53)
+            #if defined(__16F1459)
+            
+            case PWM1 : pCCPxCON = &PWM1CON;  pCCPRxL = &PWM1DCL;  break;
+            case PWM2 : pCCPxCON = &PWM2CON;  pCCPRxL = &PWM2DCL;  break;
 
-            case CCP4 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
-            case CCP5 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
-            case CCP6 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
-            case CCP7 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
-            case CCP8 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
-            case CCP9 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
-            case CCP10: pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+
+            case PWM1 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
+            case PWM2 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
+            case PWM3 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
+            case PWM4 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
+            case PWM5 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
+            case PWM6 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
+            case PWM7 : pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
 
             #else
 
-            case CCP1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
-            case CCP2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
+            case PWM1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
+            case PWM2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
 
             #endif
         }
@@ -221,21 +230,27 @@
     {
         switch (pin)
         {
-            #if defined(__18f26j53) || defined(__18f46j53) || \
-                defined(__18f27j53) || defined(__18f47j53)
+            #if defined(__16F1459)
+            
+            case PWM1 : pCCPxCON = &PWM1CON;  pCCPRxL = &PWM1DCL;  break;
+            case PWM2 : pCCPxCON = &PWM2CON;  pCCPRxL = &PWM2DCL;  break;
 
-            case CCP4 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
-            case CCP5 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
-            case CCP6 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
-            case CCP7 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
-            case CCP8 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
-            case CCP9 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
-            case CCP10: pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+
+
+            case PWM1 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
+            case PWM2 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
+            case PWM3 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
+            case PWM4 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
+            case PWM5 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
+            case PWM6 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
+            case PWM7 : pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
 
             #else
 
-            case CCP1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
-            case CCP2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
+            case PWM1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
+            case PWM2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
 
             #endif
         }
@@ -270,21 +285,26 @@
 
         switch (pin)            // PWM mode disable
         {
-            #if defined(__18f26j53) || defined(__18f46j53) || \
-                defined(__18f27j53) || defined(__18f47j53)
+            #if defined(__16F1459)
+            
+            case PWM1 : PWM1CON = 0; break;
+            case PWM2 : PWM2CON = 0; break;
 
-            case CCP4 : CCP4CON  = 0; break;
-            case CCP5 : CCP5CON  = 0; break;
-            case CCP6 : CCP6CON  = 0; break;
-            case CCP7 : CCP7CON  = 0; break;
-            case CCP8 : CCP8CON  = 0; break;
-            case CCP9 : CCP9CON  = 0; break;
-            case CCP10: CCP10CON = 0; break;
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+
+            case PWM1 : CCP4CON  = 0; break;
+            case PWM2 : CCP5CON  = 0; break;
+            case PWM3 : CCP6CON  = 0; break;
+            case PWM4 : CCP7CON  = 0; break;
+            case PWM5 : CCP8CON  = 0; break;
+            case PWM6 : CCP9CON  = 0; break;
+            case PWM7 : CCP10CON = 0; break;
 
             #else
 
-            case CCP1 : CCP1CON  = 0; break;
-            case CCP2 : CCP2CON  = 0; break;
+            case PWM1 : CCP1CON  = 0; break;
+            case PWM2 : CCP2CON  = 0; break;
 
             #endif
         }
@@ -324,7 +344,11 @@ void pwm_interrupt()
         // Load the duty cycle register according to the sine table
         //PWM_setDutyCycle(gPin, duty);
         *pCCPRxL   = (duty >> 2) & 0xFF;          // 8 MSB
+        #if defined(__16F1459)
+        *pCCPxCON |= ((u8)duty & 0x03) << 6;      // 2 LSB in <7:6>
+        #else
         *pCCPxCON |= ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
+        #endif
     }
 }
 

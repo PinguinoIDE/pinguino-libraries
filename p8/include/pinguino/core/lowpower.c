@@ -146,6 +146,16 @@ void System_deepSleep()
 */
     // Time-critical section must be in ASM  
 
+    #ifdef __XC8__
+    #asm
+    enterdeepsleep:
+        movlb   0x0F                ; banked
+        bsf     DSCONH, 7, 1       ; deep sleep mode
+        nop
+        sleep
+        goto    enterdeepsleep      ; should never be reached unless deep sleep fails
+    #endasm
+    #else
     __asm
     enterdeepsleep:
         movlb   0x0F                ; banked
@@ -154,7 +164,8 @@ void System_deepSleep()
         sleep
         goto    enterdeepsleep      ; should never be reached unless deep sleep fails
     __endasm;
-
+    #endif
+    
     /// Device is now in deep sleep mode.           ///
     /// It will Wake-up when RTCC alarm occurs.     ///
     /// Wake-up trigger a Power-on Reset,           ///

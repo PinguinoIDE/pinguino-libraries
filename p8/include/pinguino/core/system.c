@@ -41,16 +41,23 @@
 /*  ----------------------------------------------------------------------------
     Unlock some register
     --------------------------------------------------------------------------*/
-#define SystemUnlock() do { EECON2 = 0x55; EECON2 = 0xAA;} while (0)
-        
+
+#if defined(__16F1459)
+    #define SystemUnlock() do { PMCON2 = 0x55; PMCON2 = 0xAA; } while (0)
+#else
+    #define SystemUnlock() do { EECON2 = 0x55; EECON2 = 0xAA; } while (0)
+#endif
+
 /*  ----------------------------------------------------------------------------
     Disable All Peripheral Interrupt
     --------------------------------------------------------------------------*/
+
 #define SystemDisablePeripheralInterrupt() do { PIE1 = 0; PIE2 = 0;} while (0)
 
 /*  ----------------------------------------------------------------------------
     Software Reset
     --------------------------------------------------------------------------*/
+
 #define SystemReset() reset()
 
 #endif /* __SYSTEM_C */

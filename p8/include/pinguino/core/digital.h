@@ -148,7 +148,7 @@ const u8 port[30]={
                     pA};
 
 **********************************************************************/
-#elif defined(PINGUINO4550) || defined(PINGUINO45K50)
+#elif defined(PINGUINO4455) || defined(PINGUINO4550) || defined(PINGUINO45K50)
 /**********************************************************************/
                                                     // Pinguino pin number
 const u8 mask[36]={

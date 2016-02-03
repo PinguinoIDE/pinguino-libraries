@@ -45,7 +45,7 @@
 /                   Fixed cached sector is not flushed when create and close
 /                   without write.
 /
-/ Apr 01,'08 R0.06  Added f_forward(), fputc(), fputs(), fprintf() and fgets().
+/ Apr 01,'08 R0.06  Added f_forward(), f_putc(), f_puts(), f_printf() and f_gets().
 /                   Improved performance of f_lseek() on moving to the same
 /                   or following cluster.
 /---------------------------------------------------------------------*/
@@ -61,7 +61,7 @@
 // Printf
 #ifdef SDPRINTF
     #include <stdarg.h>
-    #include <stdio.c>
+    #include <printf.c>     // #include <stdio.c>
 #endif
 
 FATFS FAT;                  // File system object
@@ -658,7 +658,7 @@ FRESULT reserve_direntry (	/* FR_OK: successful, FR_DENIED: no free entry, FR_RW
     * 2:Not a boot record or error
     ------------------------------------------------------------------*/
 
-#include <ctype.c>
+//#include <ctype.c>
 
 static u8 check_fs(u8 spi, dword sect)
 {
@@ -2117,7 +2117,7 @@ ff_error:	/* Abort this function due to an unrecoverable error */
 /*-----------------------------------------------------------------------*/
 
 #ifdef SDREADLINE
-char* fgets (
+char* f_gets (
     u8 spi,
     FIL* fil,       /* Pointer to the file object */
     char* buff,     /* Pointer to the string buffer to read */
@@ -2149,7 +2149,7 @@ char* fgets (
 /*-----------------------------------------------------------------------*/
 /* Put a character to the file                                           */
 /*-----------------------------------------------------------------------*/
-int fputc (
+int f_putc (
     u8 spi,
     int chr,	/* A character to be output */
     FIL* fil	/* Ponter to the file object */
@@ -2160,7 +2160,7 @@ int fputc (
 
 
 #if _USE_STRFUNC >= 2
-    if (chr == '\n') fputc(spi, '\r', fil);	/* LF -> CRLF conversion */
+    if (chr == '\n') f_putc(spi, '\r', fil);	/* LF -> CRLF conversion */
 #endif
     /* Special value may be used to switch the destination to any other device */
     /*	put_console(chr);	*/
@@ -2179,7 +2179,7 @@ int fputc (
 /*-----------------------------------------------------------------------*/
 /* Put a string to the file                                              */
 /*-----------------------------------------------------------------------*/
-int fputs (
+int f_puts (
     u8 spi,
     const char* str,	/* Pointer to the string to be output */
     FIL* fil			/* Pointer to the file object */
@@ -2189,7 +2189,7 @@ int fputs (
 
 
     for (n = 0; *str; str++, n++) {
-        if (fputc(spi, *str, fil) == EOF) return EOF;
+        if (f_putc(spi, *str, fil) == EOF) return EOF;
     }
     return n;
 }
@@ -2203,7 +2203,7 @@ int fputs (
 /*-----------------------------------------------------------------------*/
 
 #ifdef SDPRINTF
-void fprintf(u8 module, FIL* fil, const u8 *fmt, ...)
+void f_printf(u8 module, FIL* fil, const u8 *fmt, ...)
 {
     static u8 buffer[25];
     u8 *c=(char*)&buffer;
@@ -2214,11 +2214,11 @@ void fprintf(u8 module, FIL* fil, const u8 *fmt, ...)
     va_end(args);
 
     while (*c)
-        fputc(spi, *c++, fil);
+        f_putc(spi, *c++, fil);
 }
 
 #if 0
-int fprintf (
+int f_printf (
     u8 spi,
     FIL* fil,			/* Pointer to the file object */
     const char* str,	/* Pointer to the format string */
@@ -2238,7 +2238,7 @@ int fprintf (
         c = *str++;
         if (c == 0) break;			/* End of string */
         if (c != '%') {				/* Non escape cahracter */
-            cc = fputc(spi, c, fil);
+            cc = f_putc(spi, c, fil);
             if (cc != EOF) cc = 1;
             continue;
         }
@@ -2255,11 +2255,11 @@ int fprintf (
             f |= 2; c = *str++;
         }
         if (c == 's') {				/* Type is string */
-            cc = fputs(spi, va_arg(arp, char*), fil);
+            cc = f_puts(spi, va_arg(arp, char*), fil);
             continue;
         }
         if (c == 'c') {				/* Type is character */
-            cc = fputc(spi, va_arg(arp, char), fil);
+            cc = f_putc(spi, va_arg(arp, char), fil);
             if (cc != EOF) cc = 1;
             continue;
         }
@@ -2290,7 +2290,7 @@ int fprintf (
         if (i && (f & 4)) s[--i] = '-';
         w = sizeof(s) - 1 - w;
         while (i && i > w) s[--i] = (f & 1) ? '0' : ' ';
-        cc = fputs(spi, &s[i], fil);
+        cc = f_puts(spi, &s[i], fil);
     }
 
     va_end(arp);

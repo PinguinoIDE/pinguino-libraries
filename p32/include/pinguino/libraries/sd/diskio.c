@@ -1,193 +1,609 @@
-/*------------------------------------------------------------------------/
- /  MMCv3/SDv1/SDv2 (in SPI mode) control module
- /-------------------------------------------------------------------------/
- /
- /  Copyright (C) 2010, ChaN, all right reserved.
- /
- / * This software is a free software and there is NO WARRANTY.
- / * No restriction on use. You can use, modify and redistribute it for
- /   personal, non-profit or commercial products UNDER YOUR RESPONSIBILITY.
- / * Redistributions of source code must retain the above copyright notice.
- /
- /-------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    FILE:           diskio.c
+    PROJECT:        Pinguino
+    PURPOSE:        SD Card file system functions
+    AUTHORS:        Regis Blanchot <rblanchot@gmail.com>
+                    André Gentric <>
+                    Alfred Broda <alfredbroda@gmail.com>
+                    Mark Harper <markfh@f2s.com>
+    FIRST RELEASE:  23 Dec. 2011
+    LAST RELEASE:   20 Jan. 2016
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-// 07 May 2012 Changes made to allow SD card library to support
-//					PIC32 Pinguino Micro and potentially other cards that
-//					do not support the use of the RTCC library.
-// 25 May 2012 Added includes for delay.c and digitalw.c
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    MA  02111-1307  USA
+    ------------------------------------------------------------------*/
+
+#ifndef _DISKIO_C
+#define _DISKIO_C
+
+#include <p32xxxx.h>            //#include <compiler.h>
 #include <typedef.h>
-#include <sd/ff.h>
-#include <sd/fileio.h>
-#include <sd/diskio.h>
-#include <delay.c>
-#include <digitalw.c>
-#include <system.c>
-#include <spi.h>        // in order to use default SPI port
-#include <spi.c>        // in order to use default SPI port
-//#include <millis.c>
+#include <spi.h>                // Pinguino SPI lib.
+#include <spi.c>
+#include <sd/ffconf.h>          // SD lib. config. file
 
-// For boards known to support the RTCC library ***Added 07 May 2012
-// to allow SD Library to support PIC32 Pinguino Micro, which
-// which does not have a RTCC crystal and associated components,
-// and would not operate if #include <rtcc.c> is included.
-// See also changes to get_fattime() below.
-
-#if defined (PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
-    #include <rtcc.c>
+#if _FS_TINY
+#include <sd/tff.c>             // Tiny Fat Filesystem
+#else
+#include <sd/pff.c>             // Petit Fat Filesystem
 #endif
 
-/* Definitions for MMC/SDC command */
-#define CMD0   (0)			/* GO_IDLE_STATE */
-#define CMD1   (1)			/* SEND_OP_COND */
-#define ACMD41 (41|0x80)	/* SEND_OP_COND (SDC) */
-#define CMD8   (8)			/* SEND_IF_COND */
-#define CMD9   (9)			/* SEND_CSD */
-#define CMD10  (10)			/* SEND_CID */
-#define CMD12  (12)			/* STOP_TRANSMISSION */
-#define ACMD13 (13|0x80)	/* SD_STATUS (SDC) */
-#define CMD16  (16)			/* SET_BLOCKLEN */
-#define CMD17  (17)			/* READ_SINGLE_BLOCK */
-#define CMD18  (18)			/* READ_MULTIPLE_BLOCK */
-#define CMD23  (23)			/* SET_BLOCK_COUNT */
-#define ACMD23 (23|0x80)	/* SET_WR_BLK_ERASE_COUNT (SDC) */
-#define CMD24  (24)			/* WRITE_BLOCK */
-#define CMD25  (25)			/* WRITE_MULTIPLE_BLOCK */
-#define CMD41  (41)			/* SEND_OP_COND (ACMD) */
-#define CMD55  (55)			/* APP_CMD */
-#define CMD58  (58)			/* READ_OCR */
+#include <sd/diskio.h>
+#include <system.c>             // #include <oscillator.c>
 
-/* Port Controls  (Platform dependent) */
-//#define SOCKPORT	PORTB		/* Socket contact port */
-//#define SOCKWP	(1<<10)		/* Write protect switch (RB10) */
-//#define SOCKINS	(1<<11)		/* Card detect switch (RB11) */
-
-//#define	FCLK_SLOW()			/* Set slow clock (100k-400k) */
-//#define	FCLK_FAST()			/* Set fast clock (depends on the CSD) */
-
-
-/*--------------------------------------------------------------------------
-
- Module Private Functions
-
- ---------------------------------------------------------------------------*/
-
-static volatile DSTATUS Stat = STA_NOINIT; /* Disk status */
-
-static volatile UINT Timer1, Timer2; /* 1000Hz decrement timer */
-
-static UINT CardType;
-
-/*-----------------------------------------------------------------------*/
-/* Exchange a byte between PIC and MMC via SPI  (Platform dependent)     */
-/*-----------------------------------------------------------------------*/
-
-//#define xchg_spi(module, dat)   SPI_write(module, dat)
-//#define CS_H(module)            high(SD[module].cs)
-//#define CS_L(module)          enableSD(module)
-
-void rcvr_spi_m(u8 module, PF_BYTE *p)
-{
-    *(p) = (PF_BYTE) (SPI_read(module));
-}
-
-/*-----------------------------------------------------------------------*/
-/* Wait for card ready                                                   */
-/*-----------------------------------------------------------------------*/
-
-static int wait_ready(u8 module)
-{
-    UINT tmr;
-
-    /* Wait for ready in timeout of 500ms */
-    for (tmr = 5000; tmr; tmr--)
+#ifdef SD_DEBUG
+    #define ST7735PRINTNUMBER
+    #define ST7735PRINTCHAR
+    #define ST7735PRINTF
+    #define ST7735PRINT
+    #include <ST7735.c>
+    /*
+    void debugf(const u8 *fmt, ...)
     {
-        if (SPI_read(module) == 0xFF)
-            return 1;
-        Delayus(100);
+        va_list args;
+        va_start(args, format);
+        ST7735_printf(SPI2, fmt, args);
+        va_end(args);
+    }
+    */
+    //#include <__cdc.c>
+    //#include <serial.c>
+#endif
+
+//#include <delayms.c>
+//#include <delayus.c>
+//#include <digitalw.c>
+//#include <millis.c>
+
+// For boards known to support the RTCC library
+#if defined (PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
+    #define RTCCGETTIMEDATE
+    #include <rtcc.c>
+    #include <rtcc1.c>
+#endif
+
+//static volatile u16 Timer1, Timer2; /* 1000Hz decrement timer */
+
+//FATFS _FATFS_;                  // File system object
+//struct FATFS *FatFs;                   // Pointer on File system object
+volatile u8 Stat = STA_NOINIT;  // Disk status
+u8 type=0;                      // SD Card type
+
+/*  --------------------------------------------------------------------
+    initializes a MEDIA structure for file access
+    will mount only the first partition on the disk/card
+    ------------------------------------------------------------------*/
+
+FRESULT disk_mount(u8 module, ...)
+{
+    u8 sda, sck, cs;
+    va_list args;
+
+    va_start(args, module); // args points on the argument after module
+
+    #if defined(SD_DEBUG) && defined(__SERIAL__)
+    Serial_begin(9600);
+    #endif
+    
+    // Init the SPI module
+    // -----------------------------------------------------------------
+    
+    if (module == SPISW)
+    {
+        sda = (u8)va_arg(args, int);             // get the next arg
+        sck = (u8)va_arg(args, int);             // get the next arg
+        cs  = (u8)va_arg(args, int);             // get the last arg
+        SPI_setBitOrder(module, SPI_MSBFIRST);
+        SPI_begin(module, sda, sck, cs);
+    }
+    else
+    { 
+        SPI_setMode(module, SPI_MASTER8);
+        //minimum baud rate possible = FPB/1024
+        SPI_setClockDivider(module, SPI_PBCLOCK_DIV1024);
+        SPI_setDataMode(module, SPI_MODE1);
+        SPI_begin(module);
     }
 
+    va_end(args);
+
+    // File system objects memory allocation
+    // -----------------------------------------------------------------
+
+    // Clean-up the file system object
+    //memset((void *)fs, 0, sizeof(FATFS));
+
+    // Create File system object
+    //&FatFs = { 0 };
+    auto_mount(module, NULL, 0);
+}
+
+/*  --------------------------------------------------------------------
+    Repeatedly reads the SD card until we get a valid response
+    * u8 spi: SPI module (SPISW, SPI1, SPI2, ...)
+    ------------------------------------------------------------------*/
+    
+u8 disk_getresponse(u8 spi)
+{
+    u8 i, res;
+    u16 timeout = 1000; //NCR_TIMEOUT;
+    
+    do
+    {
+        for(i=0; i<100; i++);
+        res = SPI_read(spi);
+    }
+    //while ((res & 0x80) && --timeout);
+    while ((res == 0xFF) && --timeout);
+
+    return res;
+}
+
+/*  --------------------------------------------------------------------
+    Wait for card ready
+    returns : 0xFF=OK, Other=Timeout
+    ------------------------------------------------------------------*/
+
+static u8 disk_ready(u8 spi)
+{
+    u8  res;
+    u32 timeout = 1000; //IDLE_TIMEOUT;
+
+    do
+        res = SPI_read(spi);
+    while (res != 0xFF && --timeout);
+
+    return (res == 0xFF) ? 1 : 0;
+}
+
+/*  --------------------------------------------------------------------
+    Select the card and wait until it's ready
+    Returns 1 if OK, 0 if Timeout
+    ------------------------------------------------------------------*/
+
+static u8 disk_select(u8 spi)
+{
+    //SPI_deselect(spi);
+    SPI_select(spi);
+    SPI_write(spi, 0xFF);        // Dummy clock (force DO enabled)
+
+    // OK
+    if (disk_ready(spi))
+        return 1;
+
+    // Timeout
+    SPI_deselect(spi);
     return 0;
 }
 
-/*-----------------------------------------------------------------------*/
-/* Select the card and wait ready                                        */
-/*-----------------------------------------------------------------------*/
-
-static int select(u8 module) /* 1:Successful, 0:Timeout */
+static void disk_deselect(u8 spi)
 {
-    enableSD(module);
-    SPI_write(module, 0xFF); /* Dummy clock (force DO enabled) */
-
-    if (wait_ready(module))
-        return 1; /* OK */
-        
-    disableSD(module);
-    return 0; /* Timeout */
+    SPI_deselect(spi);
+    SPI_write(spi, 0xFF);        // Dummy clock (force DO enabled)
 }
 
-/*-----------------------------------------------------------------------*/
-/* Receive a data packet from MMC                                        */
-/* Returns : 1:OK, 0:Failed                                              */
-/* PF_BYTE *buff : Data buffer to store received data                    */
-/* UINT btr : Byte count (must be multiple of 4)                         */
-/*-----------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Send a command packet
+    * u8 spi:   SPI module (SPISW, SPI1, SPI2, ...)
+    * u8 cmd:   Command byte
+    * u32 arg:  Argument
+    * Return :  R1 byte
+    bit 0 = Idle state
+    bit 1 = Erase Reset
+    bit 2 = Illegal command
+    bit 3 = Communication CRC error
+    bit 4 = Erase sequence error
+    bit 5 = Address error
+    bit 6 = Parameter error
+    bit 7 = Always 0
+    ------------------------------------------------------------------*/
 
-static int rcvr_datablock(u8 module, PF_BYTE *buff, UINT btr)
+u8 disk_sendcmd(u8 spi, u8 cmd, u32 arg)
 {
-    PF_BYTE d;
-    UINT tmr;
+    u8  crc, R1;
+    //u32 timeout = WRITE_TIMEOUT;
 
-    /* Wait for data packet in timeout of 100ms */
-    for (tmr = 1000; tmr; tmr--)
+    // Select card
+    disk_deselect(spi);
+    if (!disk_select(spi))
+        return 0xFF;
+    
+    // Send command (bit 6 set)
+    SPI_write(spi, cmd | 0x40);
+
+    // Send argument
+    SPI_write(spi, (u8)(arg >> 24));    // Argument[31..24]
+    SPI_write(spi, (u8)(arg >> 16));    // Argument[23..16]
+    SPI_write(spi, (u8)(arg >>  8));    // Argument[15..8]
+    SPI_write(spi, (u8)(arg      ));    // Argument[7..0]
+
+    // Send CRC
+    // The only commands that must have a valid CRC are GO_IDLE_STATE and SEND_IF_COND.
+    // For all other commands the CRC is optional.
+    // The SD card can be programmed to skip CRC checking allowing
+    // simple microcontrollers to skip the CRC generation.
+    // This library does not generate or check the CRC values.
+    
+    crc = 0x01;                         // Dummy CRC + Stop
+    if (cmd == GO_IDLE_STATE)
+        crc = 0x95;                     // Valid CRC for CMD0(0)
+    if (cmd == SEND_IF_COND)
+        crc = 0x87;                     // Valid CRC for CMD8(0x1AA)
+    /*
+    if (cmd == STOP_TRANSMISSION)
+        crc = 0xC3;
+    */
+    SPI_write(spi, crc);
+
+    // Receive command response (Skip a stuff byte when stop reading)
+    if (cmd == STOP_TRANSMISSION)       // CMD12
+        SPI_read(spi);
+
+    // Wait for a valid response
+    R1 = disk_getresponse(spi);
+
+    /*
+    if (cmd == STOP_TRANSMISSION)       // CMD12
     {
-        d = SPI_read(module);
+        do
+            R1 = SPI_read(spi);
+        while ((R1 == 0x00) && (--timeout));
+        R1 = 0x00;
+    }
+    
+    SPI_write(spi, 0xFF);
+    if ((cmd != CMD9)&&(cmd != CMD10)&&(cmd != CMD17)&&(cmd != CMD18)&&(cmd != CMD24)&&(cmd != CMD25))
+        SPI_deselect(spi);
+    */
+    
+    return R1;
+}
+
+/*  --------------------------------------------------------------------
+    Send a command packet
+    * u8 spi:   SPI module (SPISW, SPI1, SPI2, ...)
+    * u8 cmd:   Command byte
+    * u32 arg:  Argument
+    The CS signal must be driven high to low prior to send a command
+    frame and held it low during the transaction (command, response and
+    data transfer if exist)
+    returns R1 byte :
+    00 - command accepted
+    01 - command received
+    FF - timeout
+    other codes:
+    bit 0 = Idle state
+    bit 1 = Erase Reset
+    bit 2 = Illegal command
+    bit 3 = Communication CRC error
+    bit 4 = Erase sequence error
+    bit 5 = Address error
+    bit 6 = Parameter error
+    bit 7 = Always 0
+    ------------------------------------------------------------------*/
+    
+u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
+{
+    u8  R1, c;
+    u32 timeout = 25000; //CMD_TIMEOUT;
+    
+    doloop:
+    //{
+        c = cmd;
+        
+        // if ACMD<n> send CMD55 first
+        if (c & 0x80)
+        {
+            R1 = disk_sendcmd(spi, APP_CMD, 0);
+            // return if CMD55 is not accepted
+            if (R1 > 0x01)
+            {
+                #ifdef SD_DEBUG
+                //ST7735_printf(SPI2, "ERROR CMD%d=%d\r\n", c, R1);
+                #endif
+                return R1;
+            }
+            // clearing bit 7 turns ACMD<n> to CMD<n>
+            c &= 0x7F;
+        }
+
+        // send CMD<n>
+        R1 = disk_sendcmd(spi, c, arg);
+    //}
+    // When CMD1 or ACMD41 are accepted, the SD card will leave the IDLE_STATE.
+    // We repeat sending the ACMD41 until the SD card reports it has left the IDLE_STATE
+    // i.e. 0x00 is returned
+    if ((cmd == CMD1 || cmd == ACMD41) && R1 != 0x00 && --timeout)
+        goto doloop;
+    else if ((cmd == CMD0 || cmd == CMD8) && R1 != 0x01 && --timeout)
+        goto doloop;
+    else if ((cmd != CMD0 && cmd != CMD1 && cmd != CMD8 && cmd != CMD41) && R1 != 0x00 && --timeout)
+        goto doloop;
+
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "CMD%d=%d\r\n", c, R1);
+    #endif
+
+    return R1;
+}
+
+/*  --------------------------------------------------------------------
+    Initialize Disk Drive
+    * u8 spi:   SPI module (SPISW, SPI1, SPI2, ...)
+    * u8 drv : Physical drive number (0)
+    returns disk status : STA_NODISK, STA_NOINIT or OK (0) 
+    ------------------------------------------------------------------*/
+
+u8 disk_initialize(u8 spi, u8 drv)
+{
+    u8 R1, n, ocr[4];
+    u8 fpb, fsd, div;
+    u32 timeout;
+
+    if (drv) return STA_NOINIT;         // Supports only single drive
+    if (Stat & STA_NODISK) return Stat; // No card in the socket
+
+    // Send 74 or more clock cycles to start up
+    // -----------------------------------------------------------------
+
+    SPI_deselect(spi);
+    timeout = NCR_TIMEOUT;
+    while (n--)
+        SPI_write(spi, 0xFF);
+
+    // Send in the "software reset" command (CMD0)
+    // -----------------------------------------------------------------
+    // The card enters SPI mode and responds R1 with IN_IDLE_STATE bit (0x01).
+    // In idle state, the card accepts only CMD0, CMD1, ACMD41,CMD58 and CMD59
+
+    if (disk_sendcommand(spi, GO_IDLE_STATE, 0) != 0x01)
+    {
         #ifdef SD_DEBUG
-        debugf("return 0x%X\r\n",d);
+        //ST7735_printf(SPI2, "Card not ready\r\n");
         #endif
-        if (d != 0xFF)
-            break;
-        Delayus(100);
+        return STA_NODISK;
     }
 
-    /* If not valid data token, return with error */
-    if (d != 0xFE)
+    // Send a CMD8 with voltage pattern (only valid with SDv2)
+    // -----------------------------------------------------------------
+    // CMD8 has been rejected, try ACMD41 or CMD1
+    // ACMD41 instead of CMD1 is recommended for SDC,
+    // so we try ACMD41 first and retry with CMD1 if rejected
+    // -----------------------------------------------------------------
+
+    if (disk_sendcommand(spi, SEND_IF_COND, 0x1AA) != 0x01) // CMD8
+    {
+        if (disk_sendcommand(spi, SD_SEND_OP_COND, 0) == CMD_OK) // ACMD41
+        {
+            type = CT_SD1;
+            #ifdef SD_DEBUG
+            ST7735_printf(SPI2, "Found SD type 1\r\n");
+            #endif
+        }
+        else if (disk_sendcommand(spi, SEND_OP_COND, 0) == CMD_OK) // CMD1
+        {
+            type = CT_MMC;
+            #ifdef SD_DEBUG
+            ST7735_printf(SPI2, "Found MMC\r\n");
+            #endif
+        }
+        else
+        {
+            #ifdef SD_DEBUG
+            ST7735_printf(SPI2, "Unknown Interface\r\n");
+            #endif
+            return STA_NOINIT;
+        }
+    }
+    
+    // CMD8 has been accepted
+    // -----------------------------------------------------------------
+
+    else
+    {
+   
+        // Get trailing return value of R7 response
+        for (n = 0; n < 4; n++)
+            ocr[n] = SPI_read(spi);
+
+        #ifdef SD_DEBUG
+        //ST7735_printf(SPI2, "CMD8=0x%X%X\r\n", ocr[2], ocr[3]);
+        //ST7735_printf(SPI2, "R7=0x%02X%02X%02X%02X\r\n", ocr[3], ocr[2], ocr[1], ocr[0]);
+        #endif
+        
+        // Check if the voltage pattern has been return
+        if (ocr[2] == 0x01 && ocr[3] == 0xAA)
+        {
+            // Repeat sending ACMD41 + HCS bit until the card responds
+            // with an ok value of 0x00
+            if (disk_sendcommand(spi, SD_SEND_OP_COND, (u32)1<<30) != CMD_OK)
+                return STA_NOINIT;
+            
+            // Send CMD58 and Check CCS bit in the OCR
+            if (disk_sendcommand(spi, READ_OCR, 0) == CMD_OK) // CMD58
+            {
+                for (n = 0; n < 4; n++)
+                    ocr[n] = SPI_read(spi);
+
+                type = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; // SDHC or SDv2
+
+                #ifdef SD_DEBUG
+                //ST7735_printf(SPI2, "OCR[0]=0x%X\n\r",ocr[0]);
+                //ST7735_printf(SPI2, "R7=0x%02X%02X%02X%02X\r\n", ocr[3], ocr[2], ocr[1], ocr[0]);
+                if (type == CT_SD2)
+                    ST7735_printf(SPI2, "Found SD type 2\r\n");
+                else
+                    ST7735_printf(SPI2, "Found SDHC\r\n");
+                #endif
+            }
+        }
+    }
+
+    // Turn off the CRC requirement // CMD59
+    // -----------------------------------------------------------------
+
+    if (disk_sendcommand(spi, CRC_ON_OFF, 0) != CMD_OK)
+        return STA_NOINIT;
+
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "Turn off the CRC\r\n");
+    #endif
+
+    // CMD16 sets R/W block length
+    // For SDHC the block length is always fixed to 512 bytes
+    // but for other types (MMC, SD v1 and SD v2 standard capacity),
+    // we need to tell the card what block length to use.
+    // Block length is set to 512 bytes to allow the software to be used
+    // with all types of SD/MMC cards.
+    // -----------------------------------------------------------------
+
+    if (type != CT_SD2 | CT_BLOCK)
+        if (disk_sendcommand(spi, SET_BLOCK_LEN, 512) != CMD_OK)
+            return STA_NOINIT;
+
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "Set block length to 512\r\n");
+    #endif
+
+    // Set SD status
+    // -----------------------------------------------------------------
+
+    if (type)
+        // Clear STA_NOINIT flag
+        Stat &= ~STA_NOINIT;
+    else
+        // Set STA_NOINIT flag
+        Stat |= STA_NOINIT;
+
+    // Ramp the SPI clock up to full speed
+    // -----------------------------------------------------------------
+
+    if (type && (spi != SPISW))
+    {
+        // 6. increase speed to the max. baud rate possible
+        SPI_close(spi);
+        SPI_setMode(spi, SPI_MASTER8);
+        SPI_setDataMode(spi, SPI_MODE1); // SPI_MODE3
+
+        #ifdef SD_DEBUG
+        //ST7735_printf(SPI2, "SpeedClass=%dMB/s\r\n", type);
+        #endif
+
+        // fpb = FOSC/4 = Max. SPI speed
+        fpb = System_getPeripheralFrequency() / 1000000;
+        // fsd = SD Class Speed
+        // ex. Class 4 : 4 MB/s = 32 Mb/s
+        // SPI send 1 bit per clock tick
+        // so Class 4 should support up to 32MHz SPI
+        fsd = type * 8;
+
+        // if fsd < fpb then fspi = fsd
+        if (fsd < fpb)
+        {
+            for (n=1; n<=10; n++)
+            {
+                div = 1 << n;
+                if ( (fpb/div) < fsd )
+                    break;
+            }
+            SPI_setClockDivider(spi, div);
+            #ifdef SD_DEBUG
+            //ST7735_printf(SPI2, "SPI @ %dMHz\r\n", fpb/div);
+            #endif
+        }
+        
+        // otherwise fsd >= fpb so wwe set Fspi = max
+        else
+        {
+            SPI_setMode(spi, SPI_PBCLOCK_DIV2);
+            #ifdef SD_DEBUG
+            //ST7735_printf(SPI2, "SPI @ %dMHz\r\n", fpb);
+            #endif
+        }
+        
+        SPI_begin(spi);
+    }
+
+    return Stat;
+}
+
+/*  --------------------------------------------------------------------
+    Get Disk Status
+    u8 drv : Physical drive number (0)
+    ------------------------------------------------------------------*/
+
+#if 0
+u8 disk_status(u8 drv)
+{
+    if (drv)
+        return STA_NOINIT; /* Supports only single drive */
+    return Stat;
+}
+#endif
+
+/*--------------------------------------------------------------------*/
+/* Receive a data packet from MMC                                     */
+/* Returns : 1:OK, 0:Failed                                           */
+/* u8 *buff : Data buffer to store received data                      */
+/* u16 count: bytes count                                             */
+/*--------------------------------------------------------------------*/
+
+static u8 disk_readblock(u8 spi, u8 *buff, u16 count)
+{
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "Reading Bloc\r\n");
+    #endif
+    
+    if (disk_getresponse(spi) != 0xFE)
         return 0;
+        
+    // Receive the data block into buffer
+    do
+    {
+        *(buff++) = SPI_read(spi);
+        *(buff++) = SPI_read(spi);
+        *(buff++) = SPI_read(spi);
+        *(buff++) = SPI_read(spi);
+    } while (count -= 4);
 
-    /* Receive the data block into buffer */
-    do {
-        rcvr_spi_m(module, buff++);
-        rcvr_spi_m(module, buff++);
-        rcvr_spi_m(module, buff++);
-        rcvr_spi_m(module, buff++);
-    } while (btr -= 4);
+    // Send Dummy CRC
+    SPI_write(spi, 0xFF);
+    SPI_write(spi, 0xFF);
 
-    /* Send Dummy CRC */
-    SPI_write(module, 0xFF);
-    SPI_write(module, 0xFF);
-
-    /* Return with success */
     return 1;
 }
 
-/*-----------------------------------------------------------------------*/
-/* Send a data packet to MMC                                             */
-/* Returns : 1:OK, 0:Failed                                              */
-/* PF_BYTE *buff : 512 byte data block to be transmitted                 */
-/* PF_BYTE token : Data token                                            */
-/*-----------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Send a data packet to MMC
+    * u8 spi:   SPI module (SPISW, SPI1, SPI2, ...)
+    * u8 *buff : 512 byte data block to be transmitted
+    * u8 token : Data token
+    Returns : 1:OK, 0:Failed
+    ------------------------------------------------------------------*/
 
-#if _READONLY == 0
-static int xmit_datablock(u8 module, const PF_BYTE *buff, PF_BYTE token)
+#if _FS_READONLY == 0
+static int disk_writeblock(u8 spi, const u8 *buff, u8 token)
 {
-    PF_BYTE resp;
-    UINT bc = 512;
+    u8 res;
+    u16 bc = 512;
 
-    if (!wait_ready(module))
+    if (!disk_ready(spi))
         return 0;
 
     /* Xmit a token */
-    SPI_write(module, token);
+    SPI_write(spi, token);
 
     /* Not StopTran token */
     if (token != 0xFD)
@@ -195,344 +611,96 @@ static int xmit_datablock(u8 module, const PF_BYTE *buff, PF_BYTE token)
 
         /* Xmit the 512 byte data block to the MMC */
         do {
-            SPI_write(module, *buff++);
-            SPI_write(module, *buff++);
+            SPI_write(spi, *buff++);
+            SPI_write(spi, *buff++);
         } while (bc -= 2);
         
         /* Send dummy CRC */
-        SPI_write(module, 0xFF);
-        SPI_write(module, 0xFF);
+        SPI_write(spi, 0xFF);
+        SPI_write(spi, 0xFF);
 
         /* Receive a data response */
-        resp = SPI_read(module);
+        res = SPI_read(spi);
 
         /* If not accepted, return with error */
-        if ((resp & 0x1F) != 0x05)
+        if ((res & 0x1F) != 0x05)
             return 0;
     }
 
     return 1;
 }
-#endif	/* _READONLY */
+#endif	/* _FS_READONLY */
 
-/*-----------------------------------------------------------------------*/
-/* Send a command packet to MMC                                          */
-/* PF_BYTE cmd : Command byte                                            */
-/* DWORD arg : Argument                                                  */
-/*-----------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Read Sector(s)
+    u8 drv : Physical drive nmuber (0) 
+    u8 *buff : Pointer to the data buffer to store read data 
+    u32 sector : Start sector number (LBA)
+    u8 count : Sector count (1..255)
+    ------------------------------------------------------------------*/
 
-static PF_BYTE send_cmd(u8 module, PF_BYTE cmd, DWORD arg)
+DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
 {
-    PF_BYTE n, crc, res;
+    //u8 i, token;
+    //u32 timeout = 1000; //IDLE_TIMEOUT;
 
-    #ifdef SD_DEBUG
-    debugf("Send command %d\r\n",cmd);
-    #endif
-
-    /* ACMD<n> is the command sequense of CMD55-CMD<n> */
-    if (cmd & 0x80)
-    {
-        cmd &= 0x7F;
-        res = send_cmd(module, CMD55, 0);
-        if (res > 1)
-            return res;
-    }
-
-    /* Select the card and wait for ready */
-    disableSD(module);
-    if (!select(module))
-        return 0xFF;
-    
-    /* Send command */
-    SPI_write(module, 0x40 | cmd);           /* Start + Command index */
-
-    /* Send argument */
-    SPI_write(module, (PF_BYTE)(arg >> 24)); /* Argument[31..24]      */
-    SPI_write(module, (PF_BYTE)(arg >> 16)); /* Argument[23..16]      */
-    SPI_write(module, (PF_BYTE)(arg >> 8));  /* Argument[15..8]       */
-    SPI_write(module, (PF_BYTE)arg);         /* Argument[7..0]        */
-
-    /* Send CRC */
-    crc = 0x01;     /* Dummy CRC + Stop */
-
-    if (cmd == CMD0)
-        crc = 0x95; /* Valid CRC for CMD0(0) */
-    
-    if (cmd == CMD8)
-        crc = 0x87; /* Valid CRC for CMD8(0x1AA) */
-
-    SPI_write(module, crc);
-
-    /* Receive command response */
-    if (cmd == CMD12)
-        SPI_write(module, 0xFF); /* Skip a stuff byte when stop reading */
-
-    /* Wait for a valid response in timeout of 10 attempts */
-    /* return response :
-        FF - timeout
-        00 - command accepted
-        01 - command received, card in idle state after RESET
-
-        other codes:
-        bit 0 = Idle state
-        bit 1 = Erase Reset
-        bit 2 = Illegal command
-        bit 3 = Communication CRC error
-        bit 4 = Erase sequence error
-        bit 5 = Address error
-        bit 6 = Parameter error
-        bit 7 = Always 0
-    */
-    n = 10;
-    do
-    {
-        res = SPI_read(module);
-        #ifdef SD_DEBUG
-        debugf("return 0x%X\r\n",res);
-        #endif
-    }
-    while ((res & 0x80) && --n);
-
-
-    return res; /* Return with the response value */
-}
-
-/*--------------------------------------------------------------------------
-
- Public Functions
-
- ---------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------*/
-/* Initialize Disk Drive                                                 */
-/* PF_BYTE drv : Physical drive number (0)                               */
-/*-----------------------------------------------------------------------*/
-
-DSTATUS disk_initialize(u8 module, PF_BYTE drv)
-{
-    PF_BYTE n, ty, cmd, buf[4];
-    UINT tmr;
-    DSTATUS s = 0;
-
-    if (drv)
-        return STA_NOINIT; /* Supports only single drive */
-        
-    if (Stat & STA_NODISK)
-        return Stat; /* No card in the socket */
-
-    disableSD(module); /* Force socket power on */
-
-    //FCLK_SLOW();
-    for (n = 80; n; n--)
-        SPI_write(module, 0xFF); /* 80 dummy clocks */
-
-    high(SD[module].cs);
-    
-    for (n = 80; n; n--)
-        SPI_write(module, 0xFF); /* 80 dummy clocks */
-
-    ty = 0;
-
-    /* Enter Idle state */
- 
-    if (send_cmd(module, CMD0, 0) == 1)
-    {
-        //serial1printf("Idle state\r\n");
-        /* SDv2? */
-        if (send_cmd(module, CMD8, 0x1AA) == 1)
-        {
-            for (n = 0; n < 4; n++)
-            {
-                buf[n] = SPI_write(module, 0xFF); /* Get trailing return value of R7 resp */
-                //serial1printf("return 0x%X\r\n", buf[n]);
-            }
-            
-            /* The card can work at vdd range of 2.7-3.6V */
-            if (buf[2] == 0x01 && buf[3] == 0xAA)
-            {
-                /* Wait for leaving idle state (ACMD41 with HCS bit) */
-                for (tmr = 1000; tmr; tmr--)
-                {
-                    if (send_cmd(module, ACMD41, 1UL << 30) == 0)
-                        break;
-                    Delayus(1000);
-                }
-
-                /* Check CCS bit in the OCR */
-                if (tmr && send_cmd(module, CMD58, 0) == 0)
-                {
-                    for (n = 0; n < 4; n++)
-                    {
-                        buf[n] = SPI_write(module, 0xFF);
-                        //serial1printf("return 0x%X\r\n", buf[0]);
-                    }
-                    ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; /* SDv2 */
-                }
-            }
-        }
-        
-        /* SDv1 or MMCv3 */
-        else
-        {
-            //serial1printf("SDv1 or MMCv3\r\n");
-            if (send_cmd(module, ACMD41, 0) <= 1)
-            {
-                ty = CT_SD1;
-                cmd = ACMD41; /* SDv1 */
-            }
-            
-            else
-            {
-                ty = CT_MMC;
-                cmd = CMD1; /* MMCv3 */
-            }
-            
-            /* Wait for leaving idle state */
-            for (tmr = 1000; tmr; tmr--)
-            {
-                if (send_cmd(module, ACMD41, 0) == 0)
-                    break;
-                Delayus(1000);
-            }
-
-            /* Set R/W block length to 512 */
-            if (!tmr || send_cmd(module, CMD16, 512) != 0)
-                ty = 0;
-        }
-    }
-
-    CardType = ty;
-    #ifdef SD_DEBUG
-    debugf("CardType=%d\r\n",CardType);
-    #endif
-    
-    /* Initialization succeded */
-    if (ty)
-    {
-        s &= ~STA_NOINIT;
-        
-        // 6. increase speed to the max. baud rate possible = FPB/2
-        SPI_close(module);
-        SPI_setMode(module, SPI_MASTER8);   // Master mode (0x20)
-        SPI_setDataMode(module, SPI_MODE3); // CKE=1 (0x100), CKP=0
-
-        u8 fpb, fsd, fspimax, i;
-        u16 div;
-        
-        // SPI send 1 bit per clock tick
-        fsd = CardType * 8; // Class 4 = 4 MB/s = 32 Mb/s
-        fpb = GetPeripheralClock()/1000000;
-        fspimax = fpb/2;
-
-        if (fsd < fspimax)
-        {
-            for (i=1; i<=10; i++)
-            {
-                div = 1<<i;
-                if ( (fpb/div) < fsd )
-                    break;
-            }
-            SPI_setClockDivider(module, div);
-        }
-        else // Fspi can be set to the max
-        {
-            SPI_setClockDivider(module, SPI_PBCLOCK_DIV2);
-        }
-        
-        SPI_begin(module);
-    }
-    
-    /* Initialization failed */
-    else
-    {
-        s |= STA_NOINIT;
-    }
-
-    Stat = s;
-
-    disableSD(module);
-
-    return Stat;
-}
-
-/*-----------------------------------------------------------------------*/
-/* Get Disk Status                                                       */
-/* PF_BYTE drv : Physical drive number (0)                               */
-/*-----------------------------------------------------------------------*/
-
-DSTATUS disk_status(PF_BYTE drv)
-{
-    if (drv)
-        return STA_NOINIT; /* Supports only single drive */
-    return Stat;
-}
-
-/*-----------------------------------------------------------------------*/
-/* Read Sector(s)                                                        */
-/* PF_BYTE drv : Physical drive nmuber (0)                               */
-/* PF_BYTE *buff : Pointer to the data buffer to store read data         */
-/* DWORD sector : Start sector number (LBA)                              */
-/* PF_BYTE count : Sector count (1..255)                                 */
-/*-----------------------------------------------------------------------*/
-
-DRESULT disk_read(u8 module, PF_BYTE drv, PF_BYTE *buff, DWORD sector, PF_BYTE count)
-{
     if (drv || !count)
         return RES_PARERR;
 
     if (Stat & STA_NOINIT)
         return RES_NOTRDY;
 
-    if (!(CardType & CT_BLOCK))
-        sector *= 512; /* Convert to byte address if needed */
+    // Convert to byte address if  needed
+    if (!(type & CT_BLOCK))
+        sector *= 512;
+        //sector <= 9;
 
     /* Single block read */
     if (count == 1)
     {
-        #ifdef SD_DEBUG
-        debugf("Single block read\r\n");
-        #endif
-        
-        if ((send_cmd(module, CMD17, sector) == 0) && rcvr_datablock(module, buff, 512))
-        {
-            count = 0;
-        }
+        //SPI_read(spi);SPI_read(spi);SPI_select(spi);SPI_read(spi);SPI_read(spi);
+
+        // Check if command was accepted and valid token received
+        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK)
+            && disk_readblock(spi, buff, 512))
+                count = 0;
     }
     
     /* Multiple block read */
     else
     {
-        #ifdef SD_DEBUG
-        debugf("Multiple block read\r\n");
-        #endif
-
-        /* READ_MULTIPLE_BLOCK */
-        if (send_cmd(module, CMD18, sector) == 0)
+        // check if command was accepted
+        if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)
         {
             do {
-                if (!rcvr_datablock(module, buff, 512))
+                if (!disk_readblock(spi, buff, 512))
                     break;
                 buff += 512;
             } while (--count);
-            send_cmd(module, CMD12, 0); /* STOP_TRANSMISSION */
+            disk_sendcommand(spi, STOP_TRANSMISSION, 0);
         }
     }
+    
+    //SPI_deselect(spi);
+    //disk_deselect(spi);
+    
+    #ifdef SD_DEBUG
+    //ST7735_printf(SPI2, "count=%d\r\n", count);
+    #endif
 
-    disableSD(module);
-
-    return count ? RES_ERROR : RES_OK;
+    return (count ? RES_ERROR : RES_OK);
 }
 
-/*-----------------------------------------------------------------------*/
-/* Write Sector(s)                                                       */
-/* PF_BYTE drv : Physical drive nmuber (0)                               */
-/* PF_BYTE *buff : Pointer to the data buffer to store read data         */
-/* DWORD sector : Start sector number (LBA)                              */
-/* PF_BYTE count : Sector count (1..255)                                 */
-/*-----------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Write Sector(s)
+    u8 drv : Physical drive nmuber (0)
+    u8 *buff : Pointer to the data buffer to store read data
+    u32 sector : Start sector number (LBA)
+    u8 count : Sector count (1..255)
+    ------------------------------------------------------------------*/
 
-#if _READONLY == 0
-DRESULT disk_write(u8 module, PF_BYTE drv, const PF_BYTE *buff, DWORD sector, PF_BYTE count)
+#if _FS_READONLY == 0
+DRESULT disk_writesector(u8 spi, u8 drv, const u8 *buff, u32 sector, u8 count)
 {
     if (drv || !count)
         return RES_PARERR;
@@ -543,58 +711,107 @@ DRESULT disk_write(u8 module, PF_BYTE drv, const PF_BYTE *buff, DWORD sector, PF
     if (Stat & STA_PROTECT)
         return RES_WRPRT;
 
-    if (!(CardType & CT_BLOCK))
-        sector *= 512; /* Convert to byte address if needed */
+    // Convert to byte address if needed
+    if (!(type & CT_BLOCK))
+        sector *= 512;
 
-    /* Single block write */
+    // Single block write
     if (count == 1)
     {
-        if ((send_cmd(module, CMD24, sector) == 0) /* WRITE_BLOCK */
-        && xmit_datablock(module, buff, 0xFE))
-            count = 0;
+        if (disk_sendcommand(spi, WRITE_SINGLE_BLOCK, sector) == CMD_OK)
+           if (disk_writeblock(spi, buff, 0xFE))
+                count = 0;
     }
     
     /* Multiple block write */
     else
     {
-        if (CardType & CT_SDC)
-            send_cmd(module, ACMD23, count);
+        if (type & CT_SDC)
+            disk_sendcommand(spi, SET_WR_BLK_ERASE_COUNT, count);
 
         /* WRITE_MULTIPLE_BLOCK */
-        if (send_cmd(module, CMD25, sector) == 0)
+        if (disk_sendcommand(spi, WRITE_MULTIPLE_BLOCKS, sector) == CMD_OK)
         {
             do {
-                if (!xmit_datablock(module, buff, 0xFC))
+                if (disk_writeblock(spi, buff, 0xFC) != CMD_OK)
                     break;
                 buff += 512;
             } while (--count);
 
-            if (!xmit_datablock(module, 0, 0xFD)) /* STOP_TRAN token */
+            if (disk_writeblock(spi, 0, 0xFD) != CMD_OK) /* STOP_TRAN token */
                 count = 1;
         }
     }
     
-    disableSD(module);
+    SPI_deselect(spi);
 
     return count ? RES_ERROR : RES_OK;
 }
 #endif /* _READONLY */
 
-/*-----------------------------------------------------------------------*/
-/* Miscellaneous Functions                                               */
-/* PF_BYTE drv : Physical drive number (0)                               */
-/* PF_BYTE ctrl : Control code                                           */
-/* void *buff : Buffer to send/receive data block                        */
-/*-----------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Display Sector(s)
+    u8 drv : Physical drive nmuber (0)
+    u8 *buff : Pointer to the data buffer to store read data
+    u32 sector : Start sector number (LBA)
+    u8 count : Sector count (1..255)
+    Input:           Pointer to a 512 byte buffer
+    Output:          Humen readable data
+    Overview:        Data is outputed in groups of 16 bytes per row
+    ------------------------------------------------------------------*/
 
-DRESULT disk_ioctl(u8 module, PF_BYTE drv, PF_BYTE ctrl, void *buff)
+#if _USE_STRFUNC
+/*
+const char * disk_displaysector(const char * datx)
+{
+    u16 k, px;
+    const char *str;
+
+    for(k = 0; k < 512; k++)
+    {
+        Serial_printf("%2X ",datx[k]);
+
+        if( ((k + 1) % 16) == 0)
+        {
+            Serial_printf("  ");
+
+            for(px = (k - 15); px <= k; px++)
+            {
+                if( ((datx[px] > 33) && (datx[px] < 126)) || (datx[px] == 0x20) )
+                {
+                    Serial_printf("%c ",datx[px]);
+                }
+                else
+                {
+                    Serial_printf(".");
+                }
+            }
+
+            Serial_printf("\n\r");
+        }
+    }
+
+    return str;
+}
+*/
+#endif
+
+/*  --------------------------------------------------------------------
+    Miscellaneous Functions
+    u8 drv : Physical drive number (0)
+    u8 ctrl : Control code
+    void *buff : Buffer to send/receive data block
+    ------------------------------------------------------------------*/
+
+DRESULT disk_ioctl(u8 spi, u8 drv, u8 ctrl, void *buff)
 {
     DRESULT res;
-    PF_BYTE n, csd[16], *ptr = buff;
-    DWORD csize;
+    u8 n, csd[16], *ptr = buff;
+    u32 csize;
 
     if (drv)
         return RES_PARERR;
+        
     if (Stat & STA_NOINIT)
         return RES_NOTRDY;
 
@@ -605,59 +822,58 @@ DRESULT disk_ioctl(u8 module, PF_BYTE drv, PF_BYTE ctrl, void *buff)
 
         /* Flush dirty buffer if present */
         case CTRL_SYNC:
-            if (select(module))
+            if (disk_select(spi))
             {
-                disableSD(module);
+                SPI_deselect(spi);
                 res = RES_OK;
             }
             break;
 
-        /* Get number of sectors on the disk (WORD) */
+        /* Get number of sectors on the disk (u16) */
         case GET_SECTOR_COUNT:
-            if ((send_cmd(module, CMD9, 0) == 0) && rcvr_datablock(module, csd, 16))
+            if ((disk_sendcommand(spi, SEND_CSD, 0) == CMD_OK)
+                && disk_readblock(spi, csd, 16))
             {
                 /* SDv2? */
                 if ((csd[0] >> 6) == 1)
                 {
-                    csize = csd[9] + ((WORD) csd[8] << 8) + 1;
-                    *(DWORD*) buff = (DWORD) csize << 10;
+                    csize = csd[9] + ((u16) csd[8] << 8) + 1;
+                    *(u32*) buff = (u32) csize << 10;
                 }
                 
                 /* SDv1 or MMCv2 */
                 else
                 {
-                    n = (csd[5] & 15) + ((csd[10] & 128) >> 7)
-                            + ((csd[9] & 3) << 1) + 2;
-                    csize = (csd[8] >> 6) + ((WORD) csd[7] << 2) + ((WORD) (csd[6]
-                            & 3) << 10) + 1;
-                    *(DWORD*) buff = (DWORD) csize << (n - 9);
+                    n = (csd[5] & 15) + ((csd[10] & 128) >> 7) + ((csd[9] & 3) << 1) + 2;
+                    csize = (csd[8] >> 6) + ((u16) csd[7] << 2) + ((u16) (csd[6] & 3) << 10) + 1;
+                    *(u32*) buff = (u32) csize << (n - 9);
                 }
                 res = RES_OK;
             }
             break;
 
-        /* Get sectors on the disk (WORD) */
+        /* Get sectors on the disk (u16) */
         case GET_SECTOR_SIZE:
-            *(WORD*) buff = 512;
+            *(u16*) buff = 512;
             res = RES_OK;
             break;
 
-        /* Get erase block size in unit of sectors (DWORD) */
+        /* Get erase block size in unit of sectors (u32) */
         case GET_BLOCK_SIZE:
             /* SDv2? */
-            if (CardType & CT_SD2)
+            if (type & CT_SD2)
             {
                 /* Read SD status */
-                if (send_cmd(module, ACMD13, 0) == 0)
+                if (disk_sendcommand(spi, SD_STATUS, 0) == CMD_OK)
                 {
-                    SPI_write(module, 0xFF);
+                    SPI_write(spi, 0xFF);
                     /* Read partial block */
-                    if (rcvr_datablock(module, csd, 16))
+                    if (disk_readblock(spi, csd, 16))
                     {
                         for (n = 64 - 16; n; n--)
-                            SPI_write(module, 0xFF); /* Purge trailing data */
+                            SPI_write(spi, 0xFF); /* Purge trailing data */
 
-                        *(DWORD*) buff = 16UL << (csd[10] >> 4);
+                        *(u32*) buff = 16UL << (csd[10] >> 4);
                         res = RES_OK;
                     }
                 }
@@ -667,21 +883,15 @@ DRESULT disk_ioctl(u8 module, PF_BYTE drv, PF_BYTE ctrl, void *buff)
             else
             {
                 /* Read CSD */
-                if ((send_cmd(module, CMD9, 0) == 0) && rcvr_datablock(module, csd, 16))
+                if ((disk_sendcommand(spi, SEND_CSD, 0) == CMD_OK)
+                    && disk_readblock(spi, csd, 16))
                 {
                     /* SDv1 */
-                    if (CardType & CT_SD1)
-                    {
-                        *(DWORD*) buff = (((csd[10] & 63) << 1) + ((WORD) (csd[11]
-                                & 128) >> 7) + 1) << ((csd[13] >> 6) - 1);
-                    }
+                    if (type & CT_SD1)
+                        *(u32*) buff = (((csd[10] & 63) << 1) + ((u16) (csd[11] & 128) >> 7) + 1) << ((csd[13] >> 6) - 1);
                     /* MMCv3 */
                     else
-                    {
-                        *(DWORD*) buff = ((WORD) ((csd[10] & 124) >> 2) + 1)
-                                * (((csd[11] & 3) << 3) + ((csd[11] & 224) >> 5)
-                                        + 1);
-                    }
+                        *(u32*) buff = ((u16) ((csd[10] & 124) >> 2) + 1) * (((csd[11] & 3) << 3) + ((csd[11] & 224) >> 5) + 1);
                     res = RES_OK;
                 }
             }
@@ -689,40 +899,42 @@ DRESULT disk_ioctl(u8 module, PF_BYTE drv, PF_BYTE ctrl, void *buff)
 
         /* Get card type flags (1 byte) */
         case MMC_GET_TYPE:
-            *ptr = CardType;
+            *ptr = type;
             res = RES_OK;
             break;
 
         /* Receive CSD as a data block (16 bytes) */
         case MMC_GET_CSD:
-            if ((send_cmd(module, CMD9, 0) == 0) /* READ_CSD */
-            && rcvr_datablock(module, buff, 16))
+            /* READ_CSD */
+            if ((disk_sendcommand(spi, SEND_CSD, 0) == CMD_OK)
+                && disk_readblock(spi, buff, 16))
                 res = RES_OK;
             break;
 
         /* Receive CID as a data block (16 bytes) */
         case MMC_GET_CID:
-            if ((send_cmd(module, CMD10, 0) == 0) /* READ_CID */
-            && rcvr_datablock(module, buff, 16))
+            /* READ_CID */
+            if ((disk_sendcommand(spi, SEND_CID, 0) == CMD_OK)
+                && disk_readblock(spi, buff, 16))
                 res = RES_OK;
             break;
 
         /* Receive OCR as an R3 resp (4 bytes) */
         case MMC_GET_OCR:
-            if (send_cmd(module, CMD58, 0) == 0)
-            { /* READ_OCR */
+            if (disk_sendcommand(spi, READ_OCR, 0) == CMD_OK)
+            {
                 for (n = 0; n < 4; n++)
-                    *((PF_BYTE*) buff + n) = SPI_write(module, 0xFF);
+                    *((u8*) buff + n) = SPI_write(spi, 0xFF);
                 res = RES_OK;
             }
             break;
 
         /* Receive SD status as a data block (64 bytes) */
         case MMC_GET_SDSTAT:
-            if (send_cmd(module, ACMD13, 0) == 0)
-            { /* SD_STATUS */
-                SPI_write(module, 0xFF);
-                if (rcvr_datablock(module, buff, 64))
+            if (disk_sendcommand(spi, SD_STATUS, 0) == CMD_OK)
+            {
+                SPI_write(spi, 0xFF);
+                if (disk_readblock(spi, buff, 64))
                     res = RES_OK;
             }
             break;
@@ -731,22 +943,88 @@ DRESULT disk_ioctl(u8 module, PF_BYTE drv, PF_BYTE ctrl, void *buff)
             res = RES_PARERR;
     }
 
-    disableSD(module);
+    SPI_deselect(spi);
 
     return res;
 }
 
-/*-----------------------------------------------------------------------*/
-/* Device Timer Interrupt Procedure  (Platform dependent)                */
-/*-----------------------------------------------------------------------*/
-/* This function must be called in period of 1ms                         */
+/*  --------------------------------------------------------------------
+    Free SPI module
+    RB 26-01-2016 : no longer necessary
+    ------------------------------------------------------------------*/
 
-void disk_timerproc(u8 module)
+#if 0
+FRESULT disk_unmount(u8 module)
 {
-    static WORD pv;
-    WORD p;
-    PF_BYTE s;
-    UINT n;
+    //FRESULT res = f_mount(0, NULL);
+    //fs->fs_type = 0;
+    SPI_deselect(module);
+    SPI_close(module);
+    return RES_OK;
+}
+#endif
+
+/*  --------------------------------------------------------------------
+    display FRESULT error
+        FR_OK = 0,			// 0
+        FR_NOT_READY,		// 1
+        FR_NO_FILE,			// 2
+        FR_NO_PATH,			// 3
+        FR_INVALID_NAME,	// 4
+        FR_INVALID_DRIVE,	// 5
+        FR_DENIED,			// 6
+        FR_EXIST,			// 7
+        FR_RW_ERROR,		// 8
+        FR_WRITE_PROTECTED,	// 9
+        FR_NOT_ENABLED,		// 10
+        FR_NO_FILESYSTEM,	// 11
+        FR_INVALID_OBJECT,	// 12
+        FR_MKFS_ABORTED		// 13 (not used)
+    ------------------------------------------------------------------*/
+
+const char * disk_geterror(FRESULT rc)
+{
+    FRESULT i;
+    /*
+    const char *str =
+        "OK\0" "DISK_ERR\0" "INT_ERR\0" "NOT_READY\0" "NO_FILE\0" "NO_PATH\0"
+        "INVALID_NAME\0" "DENIED\0" "EXIST\0" "INVALID_OBJECT\0" "WRITE_PROTECTED\0"
+        "INVALID_DRIVE\0" "NOT_ENABLED\0" "NO_FILE_SYSTEM\0" "MKFS_ABORTED\0" "TIMEOUT\0"
+        "LOCKED\0" "NOT_ENOUGH_CORE\0" "TOO_MANY_OPEN_FILES\0";
+    */
+    const char *str =
+        "OK\0"
+        "NOT_READY\0"
+        "NO_FILE\0"
+        "NO_PATH\0"
+        "INVALID_NAME\0"
+        "INVALID_DRIVE\0"
+        "DENIED\0"
+        "EXIST\0"
+        "RW_ERROR\0"
+        "WRITE_PROTECTED\0"
+        "NOT_ENABLED\0"
+        "NO_FILESYSTEM\0"
+        "INVALID_OBJECT\0";
+    
+    for (i = 0; i != rc && *str; i++)
+        while (*str++);
+
+    return str;
+}
+
+/*  --------------------------------------------------------------------
+    Device Timer Interrupt Procedure  (Platform dependent)
+    This function must be called in period of 1ms
+    ------------------------------------------------------------------*/
+
+#if 0
+void disk_timerproc(u8 spi)
+{
+    static u16 pv;
+    u16 p;
+    u8 s;
+    u16 n;
 
     n = Timer1; /* 1000Hz decrement timer */
     if (n)
@@ -757,20 +1035,20 @@ void disk_timerproc(u8 module)
         Timer2 = --n;
 
     p = pv;
-    pv = getCD(module) & getWP(module); /* Sample socket switch */
+    pv = getCD(spi) & getWP(spi); /* Sample socket switch */
 
     /* Have contacts stabled? */
     if (p == pv)
     {
         s = Stat;
 
-        if (p & getWP(module)) /* WP is H (write protected) */
+        if (p & getWP(spi)) /* WP is H (write protected) */
             s |= STA_PROTECT;
         else
             /* WP is L (write enabled) */
             s &= ~STA_PROTECT;
 
-        if (p & getCD(module)) /* INS = H (Socket empty) */
+        if (p & getCD(spi)) /* INS = H (Socket empty) */
             s |= (STA_NODISK | STA_NOINIT);
         else
             /* INS = L (Card inserted) */
@@ -779,69 +1057,63 @@ void disk_timerproc(u8 module)
         Stat = s;
     }
 }
+#endif
 
-/*---------------------------------------------------------*/
-/* User Provided RTC Function for FatFs module             */
-/*---------------------------------------------------------*/
-/* This is a real time clock service to be called from     */
-/* FatFs module. Any valid time must be returned even if   */
-/* the system does not support an RTC.                     */
-/* This function is not required in read-only cfg.         */
-
-/*	The current time is returned packed into a DWORD
+/*  --------------------------------------------------------------------
+    User Provided RTC Function for FatFs spi
+    This is a real time clock service to be called from FatFs spi.
+    Any valid time must be returned even if the system does not support
+    an RTC.
+    This function is not required in read-only cfg.
+    The current time is returned packed into a u32
     (32 bit) value. The bit fields are as follows:
         bits 31:25	Year from 1980 (0..127)
         bits 24:21	Month (1..12)
         bits 20:16	Day in month (1..31)
         bits 15:11	Hour (0..23)
         bits 10:05	Minute (0..59)
-        bits 04:00	Second / 2 (0..29)						*/
+        bits 04:00	Second / 2 (0..29)
+    ------------------------------------------------------------------*/
 
-DWORD get_fattime(void)
+u32 get_fattime(void)
 {
-    DWORD tmr = 0;
-
-    // Pre-processor commands added so only use RTCC if the board is known
-    // to support the RTCC ** Added 07 May 2012
+    u32 tmr = 0;
 
     // For boards known to support the RTCC library
     #if defined (PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
+        
+    rtccTime Tm;
+    rtccDate Dt;
 
-    rtccTime pTm, cTm;
-    rtccDate pDt, cDt;
+    RTCC_GetTimeDate(&Tm, &Dt);         // get time and date from RTC
+                                        // assumes RTC has been set and is running
+                                        // OK - could be expanded to check that RTC
+                                        // is running and that a valid value is
+                                        // being returned by the RTC
+    RTCC_ConvertTime(&Tm);              // convert time from bcd to decimal format
+    RTCC_ConvertDate(&Dt);              // convert date from bcd to decimal format
 
-    RTCC_GetTimeDate(&pTm, &pDt);	// get time and date from RTC
-                                            // assumes RTC has been set and is running
-                                            // OK - could be expanded to check that RTC
-                                            // is running and that a valid value is
-                                            // being returned by the RTC
-    cTm = RTCC_ConvertTime(&pTm);	// convert time from bcd to decimal format
-    cDt = RTCC_ConvertDate(&pDt);	// convert date from bcd to decimal format
+    // Pack date and time into a u32 variable
+    tmr = Dt.year + 20;
+    tmr = (tmr << 4) | Dt.month;       // shifts left 4 bits and adds monthth
+    tmr = (tmr << 5) | Dt.dayofmonth;  // shifts left 5 bits and adds m.day
+    tmr = (tmr << 5) | Tm.hours;       // shifts left 5 bits and adds hour
+    tmr = (tmr << 6) | Tm.minutes;     // shift left 6 bits and adds minutes
+    tmr = (tmr << 5) | (Tm.seconds/2); // shifts left 5 bits and adds seconds/2
 
-    /* Pack date and time into a DWORD variable */
-    //	tmr = (((DWORD) pDt.year - 80)) | ((DWORD) pDt.mon) | ((DWORD) pDt.mday)
-    //			| (WORD) (pTm.hour) | (WORD) (pTm.min) | (WORD) (pTm.sec);
-    tmr = cDt.year + 20;
-   
-    // Correction according to a newer rtcc library, with diff struct members.
-  
-    tmr = (tmr << 4) | cDt.month;		// shifts left 4 bits and adds monthth
-    tmr = (tmr << 5) | cDt.dayofmonth;		// shifts left 5 bits and adds m.day
-    tmr = (tmr << 5) | cTm.hours;		// shifts left 5 bits and adds hour
-    tmr = (tmr << 6) | cTm.minutes;		// shift left 6 bits and adds minutes
-    tmr = (tmr << 5) | (cTm.seconds/2);	// shifts left 5 bits and adds seconds/2
-
-    //	For other boards use a fixed date and time of 01 Jan 2012 12:00:00
+    // For other boards use a fixed date and time of 01 Jan 2012 12:00:00
     #else
 
-     tmr = 12 + 20;
-     tmr = (tmr << 4) | 1;       // shifts left 4 bits and adds month
-     tmr = (tmr << 5) | 1;    	// shifts left 5 bits and adds m.day
-     tmr = (tmr << 5) | 12;    	// shifts left 5 bits and adds hour
-     tmr = (tmr << 6) | 0;       // shift left 6 bits and adds minutes
-     tmr = (tmr << 5) | (0/2);   // shifts left 5 bits and adds seconds/2
+    tmr = 12 + 20;
+    tmr = (tmr << 4) | 1;               // shifts left 4 bits and adds month
+    tmr = (tmr << 5) | 1;               // shifts left 5 bits and adds m.day
+    tmr = (tmr << 5) | 12;              // shifts left 5 bits and adds hour
+    tmr = (tmr << 6) | 0;               // shift left 6 bits and adds minutes
+    tmr = (tmr << 5) | (0/2);           // shifts left 5 bits and adds seconds/2
 
     #endif
 
     return tmr;
 }
+
+#endif // _DISKIO_C

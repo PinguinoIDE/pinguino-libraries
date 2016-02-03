@@ -47,18 +47,27 @@ void PWM_close(unsigned char pin)
 {
     switch (pin)
     {
-        #if defined(__18f26j53) || defined(__18f46j53) || \
-            defined(__18f27j53) || defined(__18f47j53)
-            case CCP4:  CCP4CON  = 0; break;
-            case CCP5:  CCP5CON  = 0; break;
-            case CCP6:  CCP6CON  = 0; break;
-            case CCP7:  CCP7CON  = 0; break;
-            case CCP8:  CCP8CON  = 0; break;
-            case CCP9:  CCP9CON  = 0; break;
-            case CCP10: CCP10CON = 0; break;
+        #if defined(__16F1459)
+        
+            case PWM1:  PWM1CON = 0; break;
+            case PWM2:  PWM2CON = 0; break;
+            
+        #elif defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53)
+              
+            case PWM1:  CCP4CON  = 0; break;
+            case PWM2:  CCP5CON  = 0; break;
+            case PWM3:  CCP6CON  = 0; break;
+            case PWM4:  CCP7CON  = 0; break;
+            case PWM5:  CCP8CON  = 0; break;
+            case PWM6:  CCP9CON  = 0; break;
+            case PWM7: CCP10CON = 0; break;
+            
         #else
-            case CCP1:  CCP1CON  = 0; break;
-            case CCP2:  CCP2CON  = 0; break;
+        
+            case PWM1:  CCP1CON  = 0; break;
+            case PWM2:  CCP2CON  = 0; break;
+            
         #endif
     }
 }

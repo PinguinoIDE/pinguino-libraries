@@ -1,3 +1,4 @@
+KeypadState KeypadState#include <keypad.c>
 Keypad.init Keypad_init#include <keypad.c>
 Keypad.getKey Keypad_getKey#include <keypad.c>
 Keypad.getState Keypad_getState#include <keypad.c>

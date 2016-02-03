@@ -7,24 +7,21 @@
 /
 /----------------------------------------------------------------------------*/
 #ifndef _FFCONF
-#define _FFCONF 6502	/* Revision ID */
-
+#define _FFCONF 20160119	/* Revision ID */
 
 /*---------------------------------------------------------------------------/
 / Functions and Buffer Configurations
 /----------------------------------------------------------------------------*/
 
-#define	_FS_TINY		0	/* 0:Normal or 1:Tiny */
+#define	_FS_TINY		1	/* 0:Normal=ff or pff or 1:Tiny=tff */
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
 /  object instead of the sector buffer in the individual file object for file
 /  data transfer. This reduces memory consumption 512 bytes each file object. */
-
 
 #define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename,
 /  f_truncate and useless f_getfree. */
-
 
 #define _FS_MINIMIZE	0	/* 0 to 3 */
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
@@ -35,10 +32,8 @@
 /   2: f_opendir and f_readdir are removed in addition to 1.
 /   3: f_lseek is removed in addition to 2. */
 
-
-#define	_USE_STRFUNC	0	/* 0:Disable or 1-2:Enable */
+#define	_USE_STRFUNC	1	/* 0:Disable or 1-2:Enable */
 /* To enable string functions, set _USE_STRFUNC to 1 or 2. */
-
 
 #define	_USE_MKFS		0	/* 0:Disable or 1:Enable */
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
@@ -47,11 +42,32 @@
 #define	_USE_FORWARD	0	/* 0:Disable or 1:Enable */
 /* To enable f_forward function, set _USE_FORWARD to 1 and set _FS_TINY to 1. */
 
-
 #define	_USE_FASTSEEK	1	/* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 
+#define _USE_IOCTL      1
 
+#define _MCU_ENDIAN		1
+/* The _MCU_ENDIAN defines which access method is used to the FAT structure.
+/  1: Enable word access.
+/  2: Disable word access and use byte-by-byte access instead.
+/  When the architectural byte order of the MCU is big-endian and/or address
+/  miss-aligned access results incorrect behavior, the _MCU_ENDIAN must be set to 2.
+/  If it is not the case, it can also be set to 1 for good code efficiency. */
+
+#define _FAT32	0
+/* To enable FAT32 support in addition of FAT12/16, set _FAT32 to 1. */
+
+#define _USE_FSINFO	0
+/* To enable FSInfo support on FAT32 volume, set _USE_FSINFO to 1. */
+
+#define	_USE_SJIS	1
+/* When _USE_SJIS is set to 1, Shift-JIS code transparency is enabled, otherwise
+/  only US-ASCII(7bit) code can be accepted as file/directory name. */
+
+#define	_USE_NTFLAG	1
+/* When _USE_NTFLAG is set to 1, upper/lower case of the file name is preserved.
+/  Note that the files are always accessed in case insensitive. */
 
 /*---------------------------------------------------------------------------/
 / Locale and Namespace Configurations
@@ -148,7 +164,6 @@
 /  should be added to the disk_ioctl functio. */
 
 
-
 /*---------------------------------------------------------------------------/
 / System Configurations
 /----------------------------------------------------------------------------*/
@@ -170,21 +185,12 @@
 /* A header file that defines sync object types on the O/S, such as
 /  windows.h, ucos_ii.h and semphr.h, must be included prior to ff.h. */
 
-#define _FS_REENTRANT	0		/* 0:Disable or 1:Enable */
 #define _FS_TIMEOUT		1000	/* Timeout period in unit of time ticks */
 #define	_SYNC_t			HANDLE	/* O/S dependent type of sync object. e.g. HANDLE, OS_EVENT*, ID and etc.. */
 
-/* The _FS_REENTRANT option switches the reentrancy (thread safe) of the FatFs module.
-/
-/   0: Disable reentrancy. _SYNC_t and _FS_TIMEOUT have no effect.
-/   1: Enable reentrancy. Also user provided synchronization handlers,
-/      ff_req_grant, ff_rel_grant, ff_del_syncobj and ff_cre_syncobj
-/      function must be added to the project. */
-
-
-#define	_FS_SHARE	0	/* 0:Disable or >=1:Enable */
+#define	_FS_SHARE	    0	/* 0:Disable or >=1:Enable */
 /* To enable file sharing feature, set _FS_SHARE to 1 or greater. The value
    defines how many files can be opened simultaneously. */
 
 
-#endif /* _FFCONFIG */
+#endif /* _FFCONF */

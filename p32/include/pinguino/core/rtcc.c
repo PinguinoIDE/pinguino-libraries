@@ -389,12 +389,22 @@ void RTCC_SetTime(unsigned long tm)
 
 void RTCC_GetTime(rtccTime* t0)
 {
+    u32 t1, t2;
+    do
+    {
+        t1 = RTCTIME;
+        t2 = RTCTIME;
+    } while (t1 != t2);
+    t0->l = RTCTIME;
+    
+    /*
     rtccTime t1;
     do
     {
         t0->l = RTCTIME;
         t1.l = RTCTIME;
     } while (t0->l != t1.l);
+    */
     //return t0;
 }
 
@@ -439,12 +449,22 @@ void RTCC_SetDate(unsigned long dt)
 
 void RTCC_GetDate(rtccDate* d0)
 {
+    u32 d1, d2;
+    do
+    {
+        d1 = RTCDATE;
+        d2 = RTCDATE;
+    } while (d1 != d2);
+    d0->l = RTCDATE;
+    
+    /*
     rtccDate d1;
     do
     {
         d0->l = RTCDATE;
         d1.l = RTCDATE;
     } while (d0->l != d1.l);
+    */
     //return d0;
 }
 

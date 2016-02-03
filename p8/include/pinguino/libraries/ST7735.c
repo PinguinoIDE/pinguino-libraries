@@ -37,8 +37,8 @@
 
             ST7735             PIC32MX     32MX250
     1       LED                A1
-    2       SCK			       SCK
-    3       SDA			       SDO
+    2       SCK                SCK
+    3       SDA                SDO
     4       A0                 DC
     5       RESET              VSS         VSS
     6       CS                 SS          SS
@@ -541,7 +541,8 @@ void ST7735_printChar(u8 module, u8 c)
 ------------------------------------------------------------------*/
 
 #if defined(ST7735PRINT)       || defined(ST7735PRINTLN)    || \
-    defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT)
+    defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT) || \
+    defined(ST7735PRINTCENTER)
 void ST7735_print(u8 module, const u8 *string)
 {
     while (*string != 0)

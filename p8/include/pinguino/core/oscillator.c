@@ -46,23 +46,8 @@
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+#include <flash.c>
 //#include <millis.c>
-
-// Crystal default value
-// Can be defined by user in his .pde file
-// for ex. #define CRYSTAL = 8000000L
-#ifndef CRYSTAL
-    #if   defined(__16F1459)  || defined(__16F1708)  || \
-          defined(__18f25k50) || defined(__18f45k50)
-        #define CRYSTAL INTOSC
-    #elif defined(__18f26j50) || defined(__18f46j50) || \
-          defined(__18f26j53) || defined(__18f46j53) || \
-          defined(__18f27j53) || defined(__18f47j53)
-        #define CRYSTAL 8000000L
-    #else
-        #define CRYSTAL 20000000L
-    #endif
-#endif
 
 #if defined(_MILLIS_C_)
 extern volatile u32 _reload_val;
@@ -77,18 +62,19 @@ volatile u32 _cpu_clock_;
 
     // INTOSC Frequency
     #define FINTOSC     8000000
+    // The indices are valid values for CPDIV
+    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
     // The indices are valid values for IRCF
-    static const u32 ircf[] = { 31000, 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
+    static const u32 ircf[] = { 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
 #elif defined(__16F1459)
 
     // INTOSC Frequency
     #define FINTOSC     16000000
     // The indices are valid values for CPDIV
-    static const u8 cpudiv[] = { 6, 3, 2, 1 };	/* TODO */
-    static const u8 cpudiv_xtal[] = { 1, 1, 1, 1 };
+    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
     // The indices are valid values for IRCF
-    static const u32 ircf[] = { 31000, 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
+    static const u32 ircf[] = { 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
 #elif   defined(__18f14k22) || \
         defined(__18f25k50) || defined(__18f45k50)
@@ -96,8 +82,7 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     16000000
     // The indices are valid values for CPDIV
-    static const u8 cpudiv[] = { 6, 3, 2, 1 };	/* TODO */
-    static const u8 cpudiv_xtal[] = { 1, 1, 1, 1 };
+    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
@@ -107,8 +92,8 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     8000000
     // The indices are valid values for CPDIV
-    static const u8 cpudiv[] = { 2, 3, 4, 6 };
-    static const u8 cpudiv_xtal[] = { 1, 2, 3, 4 };
+    static const u8 _cpudiv[] = { 6, 4, 3, 2 };
+    static const u8 _cpudiv_nopll[] = { 1, 2, 3, 4 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000 };
 
@@ -118,7 +103,7 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     8000000
     // The indices are valid values for CPDIV
-    static const u8 cpudiv[] = { 6, 3, 2, 1 }; // rblanchot 2014-03-27 - fixed 
+    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000 };
 
@@ -126,6 +111,22 @@ volatile u32 _cpu_clock_;
 
     #error "*** Processor not supported ***"
     
+#endif
+
+// Crystal default value
+// Can be defined by user in his .pde file
+// for ex. #define CRYSTAL = 8000000L
+#ifndef CRYSTAL
+    #if   defined(__16F1459)  || defined(__16F1708)  || \
+          defined(__18f25k50) || defined(__18f45k50)
+        #define CRYSTAL FINTOSC
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+        #define CRYSTAL 8000000L
+    #else
+        #define CRYSTAL 20000000L
+    #endif
 #endif
 
 // Different frequencies available
@@ -165,73 +166,218 @@ volatile u32 _cpu_clock_;
 
 #else
 
-    // CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
-    #if !defined(__CONFIG1H)
-    #define __CONFIG1H 0x300001
-    #endif
-
     // CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
     #if !defined(__CONFIG1L)
     #define __CONFIG1L 0x300000
     #endif
 
+    // CONFIG1H: CONFIGURATION REGISTER 1 HIGH (BYTE ADDRESS 300001h)    
+    #if !defined(__CONFIG1H)
+    #define __CONFIG1H 0x300001
+    #endif
+
+    // CONFIG2L: CONFIGURATION REGISTER 2 LOW (BYTE ADDRESS 300002h)    
+    #if !defined(__CONFIG2L)
+    #define __CONFIG2L 0x300002
+    #endif
+
 #endif
 
 /*  --------------------------------------------------------------------
-    SystemReadFlashMemory() read in all relevant clock settings
-    08-09-2015 - RB - added PINGUINO1459 support
+    Return Primary Oscillator Source 
+    It can be internal or external w/o PLL and divider
+
+    // 1459 and 1708
+    // 111 = ECH: External clock, High-Power mode: on CLKIN pin
+    // 110 = ECM: External clock, Medium-Power mode: on CLKIN pin
+    // 101 = ECL: External clock, Low-Power mode: on CLKIN pin
+    // 100 = INTOSC oscillator: I/O function on OSC1 pin
+    // 011 = EXTRC oscillator: RC function connected to CLKIN pin
+    // 010 = HS oscillator: High-speed crystal/resonator on OSC1 and OSC2 pins
+    // 001 = XT oscillator: Crystal/resonator on OSC1 and OSC2 pins
+    // 000 = LP oscillator: Low-power crystal on OSC1 and OSC2 pins
+
+    // x5k50
+    // 1101 = EC oscillator (low power, <4 MHz)
+    // 1100 = EC oscillator, CLKO function on OSC2 (low power, <4 MHz)
+    // 1011 = EC oscillator (medium power, 4 MHz - 16 MHz)
+    // 1010 = EC oscillator, CLKO function on OSC2 (medium power, 4 MHz - 16 MHz)
+    // 1001 = Internal oscillator block, CLKO function on OSC2
+    // 1000 = Internal oscillator block
+    // 0111 = External RC oscillator
+    // 0110 = External RC oscillator, CLKO function on OSC2
+    // 0101 = EC oscillator (high power, 16 MHz - 48 MHz)
+    // 0100 = EC oscillator, CLKO function on OSC2 (high power, 16 MHz - 48 MHz)
+    // 0011= HS oscillator (medium power, 4 MHz - 16 MHz)
+    // 0010= HS oscillator (high power, 16 MHz - 25 MHz)
+    // 0001= XT oscillator
+    // 0000= LP oscillator
+
+    // x550 and x455
+7    // 111x = HS oscillator, PLL enabled (HSPLL)
+6    // 110x = HS oscillator (HS)
+5    // 1011 = Internal oscillator, HS oscillator used by USB (INTHS)
+5    // 1010 = Internal oscillator, XT used by USB (INTXT)
+4    // 1001 = Internal oscillator, CLKO function on RA6, EC used by USB (INTCKO)
+4    // 1000 = Internal oscillator, port function on RA6, EC used by USB (INTIO)
+3    // 0111 = EC oscillator, PLL enabled, CLKO function on RA6 (ECPLL)
+3    // 0110 = EC oscillator, PLL enabled, port function on RA6 (ECPIO)
+2    // 0101 = EC oscillator, CLKO function on RA6 (EC)
+2    // 0100 = EC oscillator, port function on RA6 (ECIO)
+1    // 001x = XT oscillator, PLL enabled (XTPLL)
+0    // 000x = XT oscillator (XT)
+
+    // xxJ5x
+    // 111 = ECPLL oscillator with PLL software controlled, CLKO on RA6
+    // 110 = EC oscillator with CLKO on RA6
+    // 101 = HSPLL oscillator with PLL software controlled
+    // 100 = HS oscillator
+    // 011 = INTOSCPLLO, internal oscillator with PLL software controlled, CLKO on RA6, port function on RA7
+    // 010 = INTOSCPLL, internal oscillator with PLL software controlled, port function on RA6 and RA7
+    // 001 = INTOSCO internal oscillator block (INTRC/INTOSC) with CLKO on RA6, port function on RA7
+    // 000 = INTOSC internal oscillator block (INTRC/INTOSC), port function on RA6 and RA7
+
     ------------------------------------------------------------------*/
 
-#if defined(_PIC14E) //__16F1459 || __16F1708
-
-//static
-u16 System_readFlashMemory(u16 address)
+u8 System_getSource()
 {
-    // 1. Write the desired address to the PMADRH:PMADRL register pair.
-    //PMADRH = address >> 8;
-    //PMADRL = address;
-    PMADR = address;
-    // 2. Clear or set the CFGS bit of the PMCON1 register.
-    PMCON1bits.CFGS = (address & 0x8000) ? 1:0;
-    // 3. Then, set control bit RD of the PMCON1 register.
-    PMCON1bits.RD = 1;
-    // 4. The two instructions following a program memory read are required to be NOPs
-    __asm__("NOP");
-    __asm__("NOP");
-    
-    //return ((PMDATH << 8) + PMDATL);
-    return PMDAT;
+    #if defined(__16F1459) || defined(__16F1708)
+
+    return Flash_read(__CONFIG1) & 0b00000111;
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)  || \
+          defined(__18f25k50) || defined(__18f45k50)
+
+    return Flash_read(__CONFIG1H) & 0b00001111;
+
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    return Flash_read(__CONFIG2L) & 0b00000111;
+
+    #else
+
+        #error "This library doesn't support your processor."
+        #error "Please contact a developper."
+
+    #endif
 }
 
-#else
+/*  --------------------------------------------------------------------
+    Return PLL value, 0 = no PLL 
+    ------------------------------------------------------------------*/
 
-//static
-u16 System_readFlashMemory(u32 address)
+u8 System_getPLL()
 {
-    u8 h8,l8;
+    #if defined(__16F1708)
 
-    TBLPTRU = address >> 16;
-    TBLPTRH = address >> 8;
-    TBLPTRL = address;
-    __asm__("tblrd*+");
-    l8 = TABLAT;
-    __asm__("tblrd*+");
-    h8 = TABLAT;
+    return 4*OSCCONbits.SPLLEN;
+
+    #elif defined(__16F1459)
+
+    return OSCCONbits.SPLLMULT ? 3*OSCCONbits.SPLLEN : 4*OSCCONbits.SPLLEN;
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)
+
+    return 1; // Need to know the source to know if PLL is enabled
     
-    return ((h8 << 8) + l8);
+    #elif defined(__18f25k50) || defined(__18f45k50)
+
+    return OSCTUNEbits.SPLLMULT ? 3*OSCCON2bits.PLLEN : 4*OSCCON2bits.PLLEN;
+
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    return OSCTUNEbits.PLLEN;
+
+    #else
+
+        #error "This library doesn't support your processor."
+        #error "Please contact a developper."
+
+    #endif
 }
 
-#endif
+/*  --------------------------------------------------------------------
+    Return PLL value, 0 = no PLL 
+    ------------------------------------------------------------------*/
+
+u8 System_getPLLDIV()
+{
+    #if defined(__16F1708)  || defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50)
+
+    return 1; // No PLLDIV
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)
+
+    return 8 - (Flash_read(__CONFIG1L) & 0b00000111 );
+
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    return 8 -((Flash_read(__CONFIG1L) & 0b00001110 ) >> 1);
+
+    #else
+
+        #error "This library doesn't support your processor."
+        #error "Please contact a developper."
+
+    #endif
+}
+
+/*  --------------------------------------------------------------------
+    Return CPU divider 
+    ------------------------------------------------------------------*/
+
+static u8 System_getCPUDIV(u8 pll)
+{
+    #if defined(__16F1708)
+
+    return 1; // No CPU Div
+
+    #elif defined(__16F1459)
+
+    return _cpudiv[(Flash_read(__CONFIG2) & 0b00110000 ) >> 4];
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)
+
+    if (pll)
+        return _cpudiv[(Flash_read(__CONFIG1L) & 0b00011000 ) >> 3];
+    else
+        return _cpudiv_nopll[(Flash_read(__CONFIG1L) & 0b00011000 ) >> 3];
+    
+    #elif defined(__18f25k50) || defined(__18f45k50) || \
+          defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    return _cpudiv[Flash_read(__CONFIG1H) & 0b00000011];
+
+    #else
+
+        #error "This library doesn't support your processor."
+        #error "Please contact a developper."
+
+    #endif
+}
 
 /*  --------------------------------------------------------------------
     Calculates the CPU frequency.
 
     - if PLL is enabled
-        * CPU Freq. = 48MHz / CPUDIV
+        * CPU Freq. = 48MHz / divider
         * Incoming Freq. = 4 * PLLDIV (unused) (x3 or x4 on 25k50)
     - if PLL is disabled
         * if OSCCONbits.SCS == 0, Incoming Freq. = External Oscillator
-                CPU Freq. = Incoming Freq. / CPUDIV
+                CPU Freq. = Incoming Freq. / divider
                 Inc. Freq. is unknown, must be defined by user (for ex. #define CRYSTAL = 8000000L)
         * if OSCCONbits.SCS == 1, Incoming Freq. = Timer1
                 CPU Freq. = Incoming Freq.
@@ -245,115 +391,85 @@ u16 System_readFlashMemory(u32 address)
 
 u32 System_getCpuFrequency() 
 {
-    u8 CPUDIV;
+    u8 source, pll, plldiv, cpudiv;
 
-    #if defined(__16F1459)  || \
-        defined(__18f2455)  || defined(__18f4455)  || \
-        defined(__18f2550)  || defined(__18f4550)
-
-    u8 fosc, CPUDIV_XTAL;
-
-    #endif
-
-    // Clock is determined by FOSC<2:0> in Configuration Words.
-    // primary osc. (internal or external / CPUDIV)
-
-    if (OSCCONbits.SCS == 0)
+    switch (OSCCONbits.SCS)
     {
-        // PLL ?
+        case 0:
+            // Clock is primary osc. determined by FOSC<2:0> or FOSC<3:0>
 
-/**------------------------------------------------------------------**/
-        #if defined(__16F1708)
-/**------------------------------------------------------------------**/
-        if (OSCCONbits.SPLLEN)
-            return ircf[OSCCONbits.IRCF]*4;
-        else
-            return ircf[OSCCONbits.IRCF];
+            pll = System_getPLL();
+            plldiv = System_getPLLDIV();
+            cpudiv = System_getCPUDIV(pll);
 
-/**------------------------------------------------------------------**/
-        #elif defined(__16F1459)
-/**------------------------------------------------------------------**/
-
-        //return ( (OSCCONbits.SPLLEN) ? 48000000L : CRYSTAL);
-        if (OSCCONbits.SPLLEN)
-            if (OSCCONbits.SPLLMULT)    // 1=3xPLL, 0=4xPLL
-                return 48000000L;       // 3*16MHz = 48MHz
-            else
-                return 64000000L;       // 4*16MHz = 64MHz (not sure it's possible)
-         else
-            return CRYSTAL;
-
-/**------------------------------------------------------------------**/
-        #elif defined(__18f25k50) || defined(__18f45k50)
-/**------------------------------------------------------------------**/
-        
-        return ( (OSCCON2bits.PLLEN) ? 48000000L : CRYSTAL);
-        
-        #endif
-        
-        // CPUDIV ?
-        
-        #if defined(__18f2455)  || defined(__18f4455)  || \
-            defined(__18f2550)  || defined(__18f4550)
-            
-        CPUDIV  = ( System_readFlashMemory(__CONFIG1L) & 0b00011000 ) >> 3;
-        CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
-        fosc  = System_readFlashMemory(__CONFIG1H) & 0b00001111;
-        
-        #elif defined(__16F1459)
-
-        CPUDIV = ( System_readFlashMemory(__CONFIG2) & 0b00110000 ) >> 4;
-        CPUDIV_XTAL = cpudiv_xtal[CPUDIV];
-        fosc  = System_readFlashMemory(__CONFIG1) & 0b00001111;
-
-        #elif defined(__16F1708)
-        
-        // No CPU Div
-
-        #else // xxJ5x
-
-        CPUDIV  = System_readFlashMemory(__CONFIG1H) & 0b00000011;
-
-        #endif
-
-        #if !defined(__16F1708)
-        CPUDIV = cpudiv[CPUDIV];
-        #endif
-        
-        // PLL ?
-        
-        #if defined(__16F1459) || \
-            defined(__18f2455) || defined(__18f4455) || \
-            defined(__18f2550) || defined(__18f4550)
+            #if defined(__18f2455) || defined(__18f4455) || \
+                defined(__18f2550) || defined(__18f4550)
               
-        fosc >>=1;
-        if( (fosc==0) || (fosc==2) || (fosc==6) )
-        {
-            return CRYSTAL / CPUDIV_XTAL;
-        }
-        else
-        {
-            return 96000000UL / CPUDIV;
-        }
-        
-        #elif defined(__18f26j50) || defined(__18f46j50) || \
-              defined(__18f26j53) || defined(__18f46j53) || \
-              defined(__18f27j53) || defined(__18f47j53)
+            source = System_getSource() >> 1;
+            if( (source==1) || (source==3) || (source==7) )
+            {
+                _cpu_clock_ = 96000000UL / cpudiv; // pll is enabled
+            }
+            else
+            {
+                _cpu_clock_ = CRYSTAL / cpudiv;
+            }
+            
+            #elif defined(__16F1459)  || defined(__16F1708)  || \
+                  defined(__18f25k50) || defined(__18f45k50) || \
+                  defined(__18f26j50) || defined(__18f46j50) || \
+                  defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
 
-        return ( (OSCTUNEbits.PLLEN) ? (48000000UL / CPUDIV) : (CRYSTAL / CPUDIV));
-        
-        #endif
+            if (pll)
+                _cpu_clock_ = 48000000UL / cpudiv; // pll is enabled
+            else
+                _cpu_clock_ = CRYSTAL / cpudiv;
+            
+            #else
+
+                #error "This library doesn't support your processor."
+                #error "Please contact a developper."
+
+            #endif
+            break;
+
+        case 1:
+            // Clock is secondary osc. = Timer 1 oscillator (32768 Hz)
+            _cpu_clock_ = 32768;
+            break;
+
+        case 2:
+        case 3:
+        default:
+            // Clock is a postscaled internal clock (IRCF)
+            // When an output frequency of 31 kHz is selected (IRCF = 0),
+            // users may choose which internal oscillator acts as the
+            // source. This is done with the Internal Oscillator
+            // Low-Frequency Source Select bit : OSCTUNEbits.INTSRC
+            // 1 = 31.25 kHz device clock derived from 8 MHz INTOSC source (divide-by-256 enabled)
+            // 0 = 31 kHz device clock derived directly from INTRC internal oscillator
+
+            if (OSCCONbits.IRCF)
+            {
+                _cpu_clock_ = ircf[OSCCONbits.IRCF];
+            }
+            #if !defined(_PIC14E)
+            else
+            {
+                #if defined(__18f25k50) || defined(__18f45k50)
+                if (OSCCON2bits.INTSRC)
+                #else
+                if (OSCTUNEbits.INTSRC)
+                #endif
+                    _cpu_clock_ = 31250;
+                else
+                    _cpu_clock_ = 31000;
+            }
+            #endif
+            break;
     }
-
-    // secondary osc. (timer 1, most of the time 32768 Hz)
-    if (OSCCONbits.SCS == 1)
-        return 32768;
-
-    // postscaled internal clock (IRCF)
-    if (OSCCONbits.SCS >= 2)
-        return ircf[OSCCONbits.IRCF];
-    
-    return 0;
+    return _cpu_clock_;
 }
 
 /*  --------------------------------------------------------------------
@@ -410,7 +526,8 @@ u32 System_getCpuFrequency()
     ------------------------------------------------------------------*/
 
 #if defined(__16F1459)  || defined(__16F1708)  || \
-    defined(__18f14k22) || defined(__18f2455)  || \
+    defined(__18f14k22) || \
+    defined(__18f2455)  || defined(__18f4455)  || \
     defined(__18f2550)  || defined(__18f4550)  || \
     defined(__18f25k50) || defined(__18f45k50) || \
     defined(__18f26j50) || defined(__18f46j50) || \
@@ -510,7 +627,7 @@ void System_setTimer1Osc()
 #if defined(SYSTEMSETINTOSC) || defined(SYSTEMSETCPUFREQUENCY) || defined(SYSTEMSETPERIPHERALFREQUENCY)
 void System_setIntOsc(u32 freq)
 {
-    u8 _save_gie;
+    u8 status = INTCONbits.GIE;
     u8 sel=0;
     u8 i;
     
@@ -526,8 +643,8 @@ void System_setIntOsc(u32 freq)
     /// 1- Save status and Disable Interrupt  
     /// -----------------------------------------------------------------
 
-    _save_gie = INTCONbits.GIE;
-    INTCONbits.GIE = 0;
+    if (status)
+        INTCONbits.GIE = 0;
 
     /// -----------------------------------------------------------------
     /// 2- if freq > FINTOSC
@@ -594,7 +711,7 @@ void System_setIntOsc(u32 freq)
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
 
-            #elif defined(__18f2455) || defined(__18f4550) || \
+            #elif defined(__18f2455) || defined(__18f4455) || \
                   defined(__18f2550) || defined(__18f4550)
 
             OSCTUNEbits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
@@ -621,7 +738,7 @@ void System_setIntOsc(u32 freq)
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
 
-            #elif defined(__18f2455) || defined(__18f4550) || \
+            #elif defined(__18f2455) || defined(__18f4455) || \
                   defined(__18f2550) || defined(__18f4550)
 
             OSCTUNEbits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
@@ -683,7 +800,8 @@ void System_setIntOsc(u32 freq)
     /// 6- Get back to Interrupt status
     /// -----------------------------------------------------------------
 
-    INTCONbits.GIE = _save_gie;
+    if (status)
+        INTCONbits.GIE = 1;
 }
 #endif /* defined(SYSTEMSETINTOSC) || defined(SYSTEMSETPERIPHERALFREQUENCY) */
 

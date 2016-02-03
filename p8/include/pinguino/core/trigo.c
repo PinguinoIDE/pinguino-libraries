@@ -45,6 +45,8 @@
     270 <= x < 360     y = -sine[ 360 - x ];
     ------------------------------------------------------------------*/
 
+#define _abs(x)     ((x)>0?(x):-(x));
+
 // http://devmaster.net/posts/9648/fast-and-accurate-sine-cosine
 #if defined(SINR) || defined(COSR)
 float sine(int i)
@@ -52,9 +54,11 @@ float sine(int i)
     float x =  0.01745329 * (float)i;   // degree to rad
     float B =  1.27323954;              // 4/pi;
     float C = -0.40528473;              //-4/(pi*pi);
-    float y = B * x + C * x * x;
+    float y = B * x + C * x * _abs(x);
+    #ifdef TRIGO_EXTRA_PRECISION
     float P = 0.225;
-    y = P * (y * y - y) + y;
+    y = P * (y * _abs(y) - y) + y;
+    #endif
     return y;
 }
 #endif
@@ -65,7 +69,7 @@ float sine(int i)
     return: sine value in float
     ------------------------------------------------------------------*/
 
-#ifdef SINR
+#if defined(SINR) || defined(COSR)
 float sinr(int alpha)
 {
     u8 sign = 0; // positive

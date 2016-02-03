@@ -38,6 +38,8 @@
 //#include <const.h>
 //#include <math.h>
 
+#define _abs(x)     ((x)>0?(x):-(x));
+
 /*  --------------------------------------------------------------------
     First 90 values (1/4's of the circle) of precomputed sinus table * 256
     To obtain the other 3/4's of the circle, we use the symmetry of sine wave.
@@ -53,11 +55,13 @@ static inline float sine(int i)
 {
 
     float x =  0.01745329 * (float)i;   // degree to rad
-    float B =  1.27323954;              // 4/pi;
-    float C = -0.40528473;              //-4/(pi*pi);
-    float y =  B * x + C * x * x;
+    const float B =  1.27323954;        // 4/pi;
+    const float C = -0.40528473;        //-4/(pi*pi);
+    float y =  B * x + C * x * _abs(x);
+    #ifdef TRIGO_EXTRA_PRECISION
     float P =  0.225;
-    y = P * (y * y - y) + y;
+    y = P * (y * abs(y) - y) + y;
+    #endif
     return y;
 }
 

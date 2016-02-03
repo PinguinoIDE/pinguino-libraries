@@ -77,13 +77,13 @@ void IR_reception()
 	switch (phase)
 	{
 		case LEFT:
-			Serial.printf("Obstacle on the left\n");
+			Serial.println("Obstacle on the left");
 			break;
 		case RIGHT:
-			Serial.printf("Obstacle on the right\n");
+			Serial.println("Obstacle on the right");
 			break;
 		default:
-			Serial.printf("Get Signal from another IR source\n");
+			Serial.println("Get Signal from another IR source");
 			break;
 	}
 }
@@ -91,9 +91,9 @@ void IR_reception()
 void setup()
 {
 	Serial.begin(9600);
-	Serial.printf("************************\n");
-	Serial.printf("* IR Obstacle Detector *\n");
-	Serial.printf("************************\n");
+	Serial.println("************************");
+	Serial.println("* IR Obstacle Detector *");
+	Serial.println("************************");
 
 	PWM.setFrequency(38000);								// Use Timer2 to make a 38 KHz carrier frequency
 	OnTimer0(IR_transmission, INT_MICROSEC, 500);	// Use Timer0 to send burst every 500 us

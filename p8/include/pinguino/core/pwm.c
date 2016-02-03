@@ -1,26 +1,27 @@
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     FILE:			pwm.c
     PROJECT:		pinguino
-    PURPOSE:		new hardware PWM control functions
+    PURPOSE:		hardware PWM control functions
     PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	10 oct. 2010
-    LAST RELEASE:	27 apr. 2013
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     freely adapted from JAL PWM Control Library.
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     Changelog :
-    * 12 Feb. 2013  Régis Blanchot - replaced duty cycle calculation
-    * 27 Apr. 2013  Régis Blanchot - moved pin definition to pin.h
-                                     renamed function (also in pwm.pdl)
-                                     CCPR1L = duty; -> CCPR1L = duty & 0xFF;
-    * 26 Jun. 2013  Régis Blanchot - fixed PWM_setDutyCycle()
-    *  7 Jan. 2015  André Gentric  - fixed CCPxCON
-    * 28 Jan. 2015  Luca (brikker) - added enhanced CCP1 function
-    * 15 Feb. 2015  Régis Blanchot - modified PWM_setFrequency to return
-                                     the value of PR2
-    * 16 Feb. 2015  Régis Blanchot - added PWM resolution calculation
-
-    ----------------------------------------------------------------------------
+    10 Oct. 2010 - Régis Blanchot - first release
+    12 Feb. 2013 - Régis Blanchot - replaced duty cycle calculation
+    27 Apr. 2013 - Régis Blanchot - moved pin definition to pin.h
+                                    renamed function (also in pwm.pdl)
+                                    CCPR1L = duty; -> CCPR1L = duty & 0xFF;
+    26 Jun. 2013 - Régis Blanchot - fixed PWM_setDutyCycle()
+    07 Jan. 2015 - André Gentric  - fixed CCPxCON
+    28 Jan. 2015 - Luca (brikker) - added enhanced CCP1 function
+    15 Feb. 2015 - Régis Blanchot - modified PWM_setFrequency to return
+                                    the value of PR2
+    16 Feb. 2015 - Régis Blanchot - added PWM resolution calculation
+    03 Feb. 2016 - Regis blanchot - added 16F1459 support
+    03 Feb. 2016 - Regis blanchot - renamed CCPx pin to PWMx
+                                    was source of conflict with PIC1xFxxxx.h file
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -34,14 +35,14 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __PWM__
 #define __PWM__
 
-#include <compiler.h>     // sfr's
+#include <compiler.h>       // sfr's
 #include <typedef.h>        // u8, u16, u32, ...
-#include <pin.h>            // USERLED
+#include <pin.h>            // USERLED, CCPx, PWMx, ...
 #include <digitalp.c>       // pinmode
 #include <oscillator.c>     // System_getPeripheralFrequency
 //#include <interrupt.c>    // to save memory space
@@ -198,51 +199,73 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
     // 3- Set the PWM duty cycle by writing to the CCPRxL register and
     // CCPxCON<5:4> bits.
 
-    msb = (duty >> 2) & 0xFF;          // 8 MSB
-    lsb = ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
-
+    msb = (duty >> 2) & 0xFF;           // 8 MSB
+    #if defined(__16F1459)
+    // PWM Duty Cycle = (PWMxDCH:PWMxDCL<7:6>)
+    lsb = ((u8)duty & 0x03) << 6;       // 2 LSB in <7:6>
+    #else
+    // PWM Duty Cycle = (PWMxDCH:PWMxDCL<5:4>)
+    lsb = ((u8)duty & 0x03) << 4;       // 2 LSB in <5:4>
+    #endif
+    
     switch (pin)
     {
-        #if defined(__18f26j53) || defined(__18f46j53) || \
-            defined(__18f27j53) || defined(__18f47j53)
+        #if defined(__16F1459)
 
-        case CCP4:
+        // PWM Duty Cycle = (PWMxDCH:PWMxDCL<7:6>)
+        
+        case PWM1:
+            PWM1CON  = PWMMODE;
+            PWM1DCH  = msb;
+            PWM1DCL |= lsb;
+            break;
+
+        case PWM2:
+            PWM2CON  = PWMMODE;
+            PWM2DCL  = msb;
+            PWM2DCH |= lsb;
+            break;
+
+        #elif defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53)
+
+        case PWM1:
             CCP4CON  = PWMMODE;
             CCPR4L   = msb;
             CCP4CON |= lsb;
             break;
 
-        case CCP5:
+        case PWM2:
             CCP5CON  = PWMMODE;
             CCPR5L   = msb;
             CCP5CON |= lsb;
             break;
 
-        case CCP6:
+        case PWM3:
             CCP6CON  = PWMMODE;
             CCPR6L   = msb;
             CCP6CON |= lsb;
             break;
 
-        case CCP7:
+        case PWM4:
             CCP7CON  = PWMMODE;
             CCPR7L   = msb;
             CCP7CON |= lsb;
             break;
 
-        case CCP8:
+        case PWM5:
             CCP8CON  = PWMMODE;
             CCPR8L   = msb;
             CCP8CON |= lsb;
             break;
 
-        case CCP9:
+        case PWM6:
             CCP9CON  = PWMMODE;
             CCPR9L   = msb;
             CCP9CON |= lsb;
             break;
 
-        case CCP10:
+        case PWM7:
             CCP10CON  = PWMMODE;
             CCPR10L   = msb;
             CCP10CON |= lsb;
@@ -250,13 +273,13 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
 
         #else
 
-        case CCP1:
+        case PWM1:
             CCP1CON  = PWMMODE;
             CCPR1L   = msb;
             CCP1CON |= lsb;
             break;
 
-        case CCP2:
+        case PWM2:
             CCP2CON  = PWMMODE;
             CCPR2L   = msb;
             CCP2CON |= lsb;
@@ -268,6 +291,7 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
             #ifdef DEBUG
                 // "Invalid CCPx Pin"
             #endif
+            break;
     }
 
     // 4- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
@@ -341,7 +365,8 @@ void PWM_setEnhancedOutput (u8 config, u8 mode)
     }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -365,7 +390,8 @@ void PWM_setDeadBand (u8 cycles)
     ECCP1DEL = (ECCP1DEL & 0b10000000) | cycles;
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your processor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -389,7 +415,8 @@ void PWM_setASautoRestart (u8 autorestart)
     }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -412,7 +439,8 @@ void PWM_setASmanualRestart (u8 manualrestart)
     }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -434,14 +462,14 @@ void PWM_setASmanualRestart (u8 manualrestart)
 #if defined(__18f4550) || defined(__18f45k50)
 void PWM_setAutoShutdown (u8 autoshutdown)
 {
-    if (autoshutdown) {
+    if (autoshutdown)
         ECCP1AS = 0b01000000;		// AS Enabled
-    } else {
+    else
         ECCP1AS = 0b00000000;		// AS Disabled
-    }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 

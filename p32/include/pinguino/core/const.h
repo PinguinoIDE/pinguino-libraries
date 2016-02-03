@@ -147,5 +147,7 @@
     #ifndef FLOAT
         #define FLOAT       32
     #endif
+    
+    #define MHZ             1000000UL
 
 #endif /* __CONST_H */

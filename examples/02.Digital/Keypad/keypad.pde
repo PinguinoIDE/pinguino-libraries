@@ -40,7 +40,7 @@ u8 colp[3] = {3, 4, 1}; //connect to the column pinouts of the keypad
 void setup ()
 {
     Keypad.init(*keypadmap,rowp,colp,rows,cols);
-    //Serial.begin(9600);
+    Serial.begin(9600);
     
     // costumizar o debounce.
     Keypad.setDebounceTime(50);
@@ -53,12 +53,7 @@ void loop ()
 
     if (key != NO_KEY )
     {
-        // Serial.println(key);
-        // CDC.write(state + 48);
-        // CDC.write(' ');
-        CDC.write(key);
-        CDC.write('\r');
-        CDC.write('\n');
+        Serial.printChar(key);
     }
     delay(100);  
 }

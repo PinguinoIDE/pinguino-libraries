@@ -2,12 +2,12 @@
     Melody
     Plays a melody on a piezo or 8-ohm speaker
     connected on a PWM pin :
-    CCP1 or CCP2 for almost all 8-bit boards except for xxj53 boards
-    xxj53 boards : CCP4, 5, 6, 7, 8, 9 or 10
+    PWM1 or PWM2 for almost all 8-bit boards except for xxj53 boards
+    xxj53 boards : PWM1 to PWM7
     PWM0 to PWM4 for almost all 32-bit boards
 */
 
-#define LINEOUT PWM0 //PWM2 //CCP1
+#define LINEOUT PWM1
 
 // Melody structure
 typedef struct
