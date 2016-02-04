@@ -1,11 +1,20 @@
-/*-----------------------------------------------------------------------------------------------
-   servo.c  LIBRARY FOR CONTROLLING UP OT ALL PINGUINO PINS AS SERVOS FOR ALL Pinguino 8bit PICs
-   ==============================================================================================
-
-    Version      : 4.2
-    Author       : Jesús Carmona Esteban
-    Last change  : 15/11/2013
-
+/*----------------------------------------------------------------------
+    FILE        : servo.c
+    Version     : 4.2
+    Descr.      : Servo control on all Pinguino pins
+    Project     : Pinguino
+    Author      : Jesús Carmona Esteban
+    --------------------------------------------------------------------
+    CHANGELOG:
+    15/11/2013 - Several bugs removed. Improved ServoAttach function.
+    12/11/2013 - Error on ServospulseUp function corrected. Code cleaned and compacted. Expanded to all 8 bit PICs available. 
+    20/10/2013 - Fixed interrupt handling for working TMR1 with new x.4 enviroment.
+    01/10/2013 - Tested and calibrated with oscilloscope for 18F4550, 18F2550 and EQUO_UNO for X.3 IDE.
+    28/09/2013 - Corrections on maths at servowrite funtion. 
+    02/09/2012 - Changes on ServoMinPulse and ServoMaxPulse functions to assemble Arduino ones in order to expand from 500us to 2500us pulses.
+    05/04/2012 - Expansion to versions 4550/PICUNO_EQUO using #defines in user program.
+    04 Feb. 2016 - Régis Blanchot - Added all 8-bit (included 16F) support
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -19,18 +28,8 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
---------------------------------------------------------------------------------------*/
+----------------------------------------------------------------------*/
 
-// Changes:
-// -------------------------------------------------------------------------------------
-// 15/11/2013 - Several bugs removed. Improved ServoAttach function.
-// 12/11/2013 - Error on ServospulseUp function corrected. Code cleaned and compacted. Expanded to all 8 bit PICs available. 
-// 20/10/2013 - Fixed interrupt handling for working TMR1 with new x.4 enviroment.
-// 01/10/2013 - Tested and calibrated with oscilloscope for 18F4550, 18F2550 and EQUO_UNO for X.3 IDE.
-// 28/09/2013 - Corrections on maths at servowrite funtion. 
-// 02/09/2012 - Changes on ServoMinPulse and ServoMaxPulse functions to assemble Arduino ones in order to expand from 500us to 2500us pulses.
-// 05/04/2012 - Expansion to versions 4550/PICUNO_EQUO using #defines in user program.
-// -------------------------------------------------------------------------------------
 
 // NOTES:
 // - Fosc 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this library.
@@ -54,8 +53,8 @@
 // User can change 0 degrees up to 500 us pulse as absolute minumum, 
 // and 180 degrees up to 2500 usec pulse as absolute maximum using the following functions:
 // 
-// - ServoMinimumPulse(unsigned char servo, int min_microseconds)
-// - ServoMaximumPulse(unsigned char servo, int max_microseconds)
+// - ServoMinimumPulse(u8 servo, int min_microseconds)
+// - ServoMaximumPulse(u8 servo, int max_microseconds)
 //
 // -------------------------------------------------------------------------------------------------------
 
@@ -65,7 +64,9 @@
 
 //Includes for functions used internally in this lib.
 //#include <stdlib.h>
-#include <digital.h>  //includes ports and mask definitions.
+#include <typedef.h>  // u8, u16, u32, ...
+#include <digital.h>  // Ports and mask definitions.
+#include <macro.h>    // noInterrupts() and interrups()
 
 // Max and Min values that correspond to 2000 usec and 1000 usec. 
 #define DefaultSERVOMAX 192
@@ -76,17 +77,21 @@
 #define MIDUS ((MINUS+MAXUS)/2)
 
 //library internal variables:
-volatile unsigned char phase=0;
-volatile unsigned char needreordering=0;
+volatile u8 phase=0;
+volatile u8 needreordering=0;
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Variable definition that depends on PIC type:
 //-----------------------------------------------------------------------------------------------------------------------------
-#if defined(PINGUINO1220) || defined(PINGUINO1320)
+#if defined(PINGUINO1459)
+#define TotalPICpins   14
+#define TotalPICports   3
+
+#elif defined(PINGUINO1220) || defined(PINGUINO1320)
 #define TotalPICpins   19
 #define TotalPICports   2
 
-#elif defined(__18f14k22)
+#elif defined(__16F1459) || defined(__18f14k22)
 #define TotalPICpins   19
 #define TotalPICports   3
 
@@ -94,15 +99,15 @@ volatile unsigned char needreordering=0;
 #define TotalPICpins   19
 #define TotalPICports   3
 
-#elif defined(PINGUINO26J50)
+#elif defined(PINGUINO26J50) || defined(PINGUINO27J53)
 #define TotalPICpins   18
 #define TotalPICports   3
 
-#elif defined(PINGUINO47J53)
+#elif defined(PINGUINO46J50) || defined(PINGUINO47J53)
 #define TotalPICpins   32
 #define TotalPICports   5
 
-#elif defined(PINGUINO4550) || defined(PINGUINO45K50)
+#elif defined(PINGUINO4455) || defined(PINGUINO4550) || defined(PINGUINO45K50)
 #define TotalPICpins   30
 #define TotalPICports   5
 
@@ -122,7 +127,7 @@ volatile unsigned char needreordering=0;
 // 2 ports:
 // #if defined (PINGUINO1220) || defined(PINGUINO1320)
 // 3 ports:
-// #elif defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(PINGUINO4550) || defined(PICUNO_EQUO) || defined(FREEJALDUINO) 
+// #elif defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(PINGUINO4550) || defined(PICUNO_EQUO) || defined(FREEJALDUINO) 
 // 4 ports:
 // #elif defined(PICUNO_EQUO)
 // 5 ports:
@@ -133,25 +138,25 @@ volatile unsigned char needreordering=0;
 //-----------------------------------------------------------------------------------------------------------------------------
 // Variables and Matrix definitions for Any PIC
 //-----------------------------------------------------------------------------------------------------------------------------
-unsigned char timingindex;
-unsigned char timedivision=0;
-unsigned char loopvar;
-unsigned char mascaratotal[TotalPICports];
+u8 timingindex;
+u8 timedivision=0;
+u8 loopvar;
+u8 mascaratotal[TotalPICports];
 
-unsigned char timevalue[TotalPICpins];              // This keeps values ordered for all pins.
-unsigned char timings[TotalPICpins][TotalPICports]; // This keeps ports and pins activated for a specific timevalue (both matrix share index to make access easy).
-unsigned char activatedservos[TotalPICports];       // This keeps masks for every port with the activated pins to be servos.
+u8 timevalue[TotalPICpins];              // This keeps values ordered for all pins.
+u8 timings[TotalPICpins][TotalPICports]; // This keeps ports and pins activated for a specific timevalue (both matrix share index to make access easy).
+u8 activatedservos[TotalPICports];       // This keeps masks for every port with the activated pins to be servos.
 
-unsigned char servovalues[TotalPICpins]; // Entry table for values sets for every pin-servo.
+u8 servovalues[TotalPICpins]; // Entry table for values sets for every pin-servo.
 
-unsigned char maxminpos[2][TotalPICpins]; // This table keeps minimum(0 degrees) and maximum(180 degrees) values(in ticks) that the servo can reach.
+u8 maxminpos[2][TotalPICpins]; // This table keeps minimum(0 degrees) and maximum(180 degrees) values(in ticks) that the servo can reach.
 
 //-----------------------------------------------------------------------------------------------------------------------------
 //  Functions for SERVO library
 //-----------------------------------------------------------------------------------------------------------------------------
 void servos_init()
 {
-    unsigned char a;
+    u8 a;
 
     // Filling up the servovalues table to 255. 
     for(a=0;a<TotalPICpins;a++)
@@ -165,26 +170,25 @@ void servos_init()
     for(a=0;a<TotalPICports;a++)
         activatedservos[a]=0x00;  // Setting all pins as deactivated as servo.
 
-    INTCONbits.GIEH    = 0; // Disable global HP interrupts
-    INTCONbits.GIEL    = 0; // Disable global LP interrupts
+    noInterrupts();
       
     T1CON=0x01; 			//timer 1 prescaler 1 source is internal oscillator
     TMR1H=0xFF; 			// First value on timer to start up...
     TMR1L=0x00; 			// ...now the first interrupt will be generated by timer after 9 ms.
+    #ifndef __16F1459
     IPR1bits.TMR1IP = 1; 	// INT_HIGH_PRIORITY
+    #endif
     PIR1bits.TMR1IF = 0; 	// Setting flag to 0
     PIE1bits.TMR1IE = 1; 	// INT_ENABLE
     T1CONbits.TMR1ON   = 1; // Starting TMR1
     
-    INTCONbits.GIEH    = 1; // Enable global HP interrupts
-    INTCONbits.GIEL    = 1; // Enable global LP interrupts
-
+    interrupts();
 }
 
 
 static void ServosPulseDown()
 {
-    volatile timingindex = 0;
+    volatile u8 timingindex = 0;
 
     for(timedivision=0;timedivision < 251;timedivision++)
     {
@@ -192,7 +196,7 @@ static void ServosPulseDown()
         {
             PORTA = PORTA ^ timings[timingindex][pA];
             PORTB = PORTB ^ timings[timingindex][pB];
-            #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+            #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
             PORTC = PORTC ^ timings[timingindex][pC];
             #endif
             #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -204,10 +208,12 @@ static void ServosPulseDown()
             timingindex++;
         }
         
-        // NEW: Every round on this "for" loop must last 8 microseconds. So the following asm code is to adjust to that exact time.
-        __asm
-            movlw 7
-            movwf _loopvar
+        // NEW: Every round on this "for" loop must last 8 microseconds.
+        // So the following asm code is to adjust to that exact time.
+        #ifdef __XC8__
+            #asm
+            MOVLW 7
+            MOVWF _loopvar
         bucle:
             NOP
             NOP
@@ -216,9 +222,29 @@ static void ServosPulseDown()
             NOP
             NOP
             NOP
-            decfsz _loopvar,1
-            goto bucle
-        __endasm;
+            #ifdef __16F1459
+            DECFSZ _loopvar
+            #else
+            DECFSZ _loopvar,B
+            #endif
+            GOTO bucle
+            #endasm
+        #else
+            __asm
+            MOVLW 7
+            MOVWF _loopvar
+        bucle:
+            NOP
+            NOP
+            NOP
+            NOP
+            NOP
+            NOP
+            NOP
+            DECFSZ _loopvar,1
+            GOTO bucle
+            __endasm;
+        #endif
     }
 }
 
@@ -227,7 +253,7 @@ static void ServosPulseUp()
 {
     PORTA = PORTA | activatedservos[pA];
     PORTB = PORTB | activatedservos[pB];
-    #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+    #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
     PORTC = PORTC | activatedservos[pC];
     #endif
     #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -244,7 +270,7 @@ static void ServosPulseUp()
 // position of the table the servos that matches that timing.
 static void SortServoTimings()
 {
-    volatile unsigned char s,t,totalservos,numservos;
+    volatile u8 s,t,totalservos,numservos;
 
     // table initialization:
     for(t=0;t<TotalPICpins;t++)
@@ -252,7 +278,7 @@ static void SortServoTimings()
         timevalue[t]=255; 
         timings[t][pA]=0x00;
         timings[t][pB]=0x00;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         timings[t][pC]=0x00;
         #endif
         #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -286,7 +312,7 @@ static void SortServoTimings()
                                         timevalue[t]=servovalues[s];
                                         timings[t][pA]=mask[s];
                                         timings[t][pB]=0x00;
-                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                                         timings[t][pC]=0x00;
                                         #endif
                                         #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -311,7 +337,7 @@ static void SortServoTimings()
                                         timevalue[t]=servovalues[s];
                                         timings[t][pA]=0x00;
                                         timings[t][pB]=mask[s];
-                                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                                         timings[t][pC]=0x00;
                                         #endif
                                         #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -328,7 +354,7 @@ static void SortServoTimings()
                                     }
                                     break;
 
-                        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
                         case pC:
                                     if (mask[s] & mascaratotal[pC] & activatedservos[pC]){
                                         break;
@@ -400,7 +426,7 @@ static void SortServoTimings()
         }
         mascaratotal[pA] |= timings[t][pA];
         mascaratotal[pB] |= timings[t][pB];
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50)  || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50)  || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         mascaratotal[pC] |= timings[t][pC];
         #endif
         #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
@@ -417,7 +443,7 @@ static void SortServoTimings()
     needreordering=0;  // This indicates that servo timings are sorted.
 }
 
-void ServoAttach(unsigned char pin)
+void ServoAttach(u8 pin)
 {
     if(pin>=TotalPICpins) return;
 
@@ -431,7 +457,7 @@ void ServoAttach(unsigned char pin)
                 activatedservos[pB] = activatedservos[pB] | mask[pin];  // list pin as servo driver.
                 TRISB = TRISB & (~mask[pin]); 					// set as output pin
                 break;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         case pC: 
                 activatedservos[pC] = activatedservos[pC] | mask[pin];  // list pin as servo driver.
                 TRISC = TRISC & (~mask[pin]); 					// set as output pin
@@ -452,7 +478,7 @@ void ServoAttach(unsigned char pin)
     }
 }
 
-void ServoDetach(unsigned char pin)
+void ServoDetach(u8 pin)
 {
     if(pin>=TotalPICpins) return;
 
@@ -462,7 +488,7 @@ void ServoDetach(unsigned char pin)
                 break;
         case pB: activatedservos[pB] = activatedservos[pB] ^ mask[pin];
                 break;
-        #if defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
+        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
         case pC: activatedservos[pC] = activatedservos[pC] ^ mask[pin];
                 break;
         #endif
@@ -477,11 +503,11 @@ void ServoDetach(unsigned char pin)
     }
 }
 
-void ServoWrite(unsigned char servo,unsigned char degrees)
+void ServoWrite(u8 servo,u8 degrees)
 {
-    unsigned char range;
-    unsigned char ticksperdegree;
-    unsigned char value;
+    u8 range;
+    u8 ticksperdegree;
+    u8 value;
 
     // Check if number of servo is valid
     if(servo>=TotalPICpins)
@@ -501,7 +527,7 @@ void ServoWrite(unsigned char servo,unsigned char degrees)
     needreordering=1;  // This indicates servo timings must be reordered.
 }
 
-unsigned char ServoRead(unsigned char servo)
+u8 ServoRead(u8 servo)
 {
     if(servo>=TotalPICpins)        // test if numservo is valid
         return 0;
@@ -509,7 +535,7 @@ unsigned char ServoRead(unsigned char servo)
     return servovalues[servo];
 }
 
-void ServoMinimumPulse(unsigned char servo,int min_microseconds)
+void ServoMinimumPulse(u8 servo,int min_microseconds)
 {
     // Check if number of servo is valid:
     if(servo>=TotalPICpins)
@@ -523,7 +549,7 @@ void ServoMinimumPulse(unsigned char servo,int min_microseconds)
     maxminpos[0][servo]=(min_microseconds - MINUS)>>3;   // 0 < final_min < 125
 }
 
-void ServoMaximumPulse(unsigned char servo,int max_microseconds)
+void ServoMaximumPulse(u8 servo,int max_microseconds)
 {
     // Check if number of servo is valid:
     if(servo>=TotalPICpins)

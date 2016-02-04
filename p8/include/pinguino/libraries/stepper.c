@@ -214,7 +214,8 @@ static void Stepper_stepMotor(u16);
 void Stepper_init(u16 number_of_steps, u8 motor_pin_A, u8 motor_pin_B, u8 motor_pin_C, u8 motor_pin_D)
 {
     #if defined(__DEBUG__)
-        #if defined(__18f26j50) || defined(__18f46j50) || \
+        #if defined(__16F1459 ) || \
+            defined(__18f26j50) || defined(__18f46j50) || \
             defined(__18f26j53) || defined(__18f46j53) || \
             defined(__18f27j53) || defined(__18f47j53)
         TRISCbits.TRISC2 = OUTPUT;
@@ -414,30 +415,48 @@ void Stepper_setSpeed(u16 revolutionPerMinute)
     }
     
     // stops interrupt
-    INTCONbits.GIEH = 0;    // disable global HP interrupts
-    INTCONbits.GIEL = 0;    // disable global LP interrupts
+    noInterrupts();
 
     // config. interrut
-    #if defined(__18f26j50) || defined(__18f46j50) || \
-        defined(__18f25k50) || defined(__18f45k50)
-    T3GCONbits.TMR3GE = 0;  // disable timer gate
+    #if defined(__16F1459)
+
+        PIR1bits.TMR1IF = 0;    // reset interrupt flag
+
+        TMR1H = _TMRH_;         // load timer registers
+        TMR1L = _TMRL_;
+
+        T1CON = 0;
+        T1CONbits.TMR1CS = 0;   // clock source is Fosc/4
+        T1CONbits.T1CKPS = prescaler;// << 4; // bit 5-4 TxCKPS = prescaler
+
+        // starts interrupt
+        T1CONbits.TMR1ON = 1;   // Timer3 ON;
+        PIE1bits.TMR1IE = 1;    // enable interrupt 
+
+    #else
+    
+        #if defined(__18f26j50) || defined(__18f46j50) || \
+            defined(__18f25k50) || defined(__18f45k50)
+        T3GCONbits.TMR3GE = 0;  // disable timer gate
+        #endif
+        IPR2bits.TMR3IP = 1;    // interrupt has high priority
+        PIR2bits.TMR3IF = 0;    // reset interrupt flag
+
+        TMR3H = _TMRH_;         // load timer registers
+        TMR3L = _TMRL_;
+
+        T3CON = 0;
+        T3CONbits.TMR3CS = 0;   // clock source is Fosc/4
+        T3CONbits.T3CKPS = prescaler;// << 4; // bit 5-4 TxCKPS = prescaler
+        T3CONbits.RD16 = 0;     // enables register r/w in two 8-bit operation
+
+        // starts interrupt
+        T3CONbits.TMR3ON = 1;   // Timer3 ON;
+        PIE2bits.TMR3IE = 1;    // enable interrupt 
+
     #endif
-    IPR2bits.TMR3IP = 1;    // interrupt has high priority
-    PIR2bits.TMR3IF = 0;    // reset interrupt flag
-
-    TMR3H = _TMRH_;         // load timer registers
-    TMR3L = _TMRL_;
-
-    T3CON = 0;
-    T3CONbits.TMR3CS = 0;   // clock source is Fosc/4
-    T3CONbits.T3CKPS = prescaler;// << 4; // bit 5-4 TxCKPS = prescaler
-    T3CONbits.RD16 = 0;     // enables register r/w in two 8-bit operation
-
-    // starts interrupt
-    T3CONbits.TMR3ON = 1;   // Timer3 ON;
-    PIE2bits.TMR3IE = 1;    // enable interrupt 
-    INTCONbits.GIEL = 1;    // enable global LP interrupts
-    INTCONbits.GIEH = 1;    // enable global HP interrupts
+    
+    interrupts();
 }
 
 /**--------------------------------------------------------------------
@@ -596,19 +615,28 @@ static void Stepper_stepMotor(u16 thisStep)
 void stepper_interrupt()
 {
     // check if the timer has overflowed
+    #if defined(__16F1459)
+    if (PIR1bits.TMR1IF)
+    {
+        PIR1bits.TMR1IF = 0;
+        // load the timer again for the next interrupt
+        TMR1H = _TMRH_;
+        TMR1L = _TMRL_;
+    #else
     if (PIR2bits.TMR3IF)
     {
         PIR2bits.TMR3IF = 0;
         // load the timer again for the next interrupt
         TMR3H = _TMRH_;
         TMR3L = _TMRL_;
-
+    #endif
         #ifdef __DEBUG__
         flag=flag+1;
         if (flag==100)
         {
             flag=0;
-            #if defined(__18f26j50) || defined(__18f46j50) || \
+            #if defined(__16F1459)  || \
+                defined(__18f26j50) || defined(__18f46j50) || \
                 defined(__18f26j53) || defined(__18f46j53) || \
                 defined(__18f27j53) || defined(__18f47j53)
             LATCbits.LATC2 ^= 1;

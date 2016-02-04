@@ -1,15 +1,15 @@
 /* 
-	Stepper Motor Control - one revolution
+    Stepper Motor Control - Microsteps
 
-	This program drives a unipolar or bipolar stepper motor. 
-	The motor can be connected to any digital pins of the Pinguino.
- 
-  However, if microsteps are used and greater or equal to 4,
-  the motor must connected to PWM pins.
+    This program drives a unipolar or bipolar stepper motor. 
+    The motor must be connected to PWM pins.
+    
+    Because microsteps need 4 PWM channels, this program will work
+    *** only with PIC18F47J53 ***.
 
-	The motor should revolve one revolution in one direction, then
-	one revolution in the other direction with different microsteps
-  resolution.  
+    The motor should revolve one revolution in one direction, then
+    one revolution in the other direction with different microsteps
+    resolution.  
 
   2011-2014	Régis Blanchot
 */
@@ -24,8 +24,8 @@ const u16 revolutionPerMinute = 1;
 void setup()
 {
     pinMode(USERLED, OUTPUT);    
-
-    Stepper.init(stepsPerRevolution, 4, 5, 6, 7);   // CCP4 to CCP7            
+    Serial.begin(9600);
+    Stepper.init(stepsPerRevolution, PWM1, PWM2, PWM3, PWM4);   // CCP4 to CCP7            
 }
 
 void loop()
@@ -36,19 +36,22 @@ void loop()
     for (i=0; i<6; i++)
     {
         ms = microstepsPerStep[i];
-        CDC.printf("microsteps = %d\r\n", ms);
+        //CDC.printf("microsteps = %d\r\n", ms);
+        Serial.printf("microsteps = %d\r\n", ms);
         Stepper.setMicrostep(ms);
         Stepper.setSpeed(revolutionPerMinute);
 
         rev = stepsPerRevolution * ms;
         
-        CDC.printf("\tclockwise rotation\r\n");
+        //CDC.printf("\tclockwise rotation\r\n");
+        Serial.printf("\tclockwise rotation\r\n");
         for (s=0; s<rev; s++)
             Stepper.step(1);
         delay(1000);
         toggle(USERLED);
         
-        CDC.printf("\tcounter-clockwise rotation\r\n");
+        //CDC.printf("\tcounter-clockwise rotation\r\n");
+        Serial.printf("\tcounter-clockwise rotation\r\n");
         for (s=0; s<rev; s++)
             Stepper.step(-1);
         delay(1000);

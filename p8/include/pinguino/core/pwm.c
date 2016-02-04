@@ -21,6 +21,8 @@
     03 Feb. 2016 - Regis blanchot - added 16F1459 support
     03 Feb. 2016 - Regis blanchot - renamed CCPx pin to PWMx
                                     was source of conflict with PIC1xFxxxx.h file
+    04 Feb. 2016 - Régis Blanchot - added enhanced CCP1 function support
+                                    to all 44-pin chips
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -335,7 +337,8 @@ void PWM_setPercentDutyCycle(u8 pin, u8 percent)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETENHANCEDOUTPUT)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setEnhancedOutput (u8 config, u8 mode)
 {
 
@@ -380,12 +383,12 @@ void PWM_setEnhancedOutput (u8 config, u8 mode)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETDEADBAND)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setDeadBand (u8 cycles) 
 {
-    if (cycles > 127) {
+    if (cycles > 127)
         cycles = 127;
-    }
     cycles |= 0b10000000;
     ECCP1DEL = (ECCP1DEL & 0b10000000) | cycles;
 }
@@ -405,14 +408,14 @@ void PWM_setDeadBand (u8 cycles)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASAUTORESTART)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setASautoRestart (u8 autorestart) 
 {
-    if (autorestart) {
+    if (autorestart)
         ECCP1DEL = (ECCP1DEL | 0b10000000);
-    } else {
+    else
         ECCP1DEL = (ECCP1DEL & 0b01111111);
-    }
 }
 #else
 #error "Enhanced PWM modes not available"
@@ -429,13 +432,14 @@ void PWM_setASautoRestart (u8 autorestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASMANUALRESTART)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setASmanualRestart (u8 manualrestart) 
 {
-    if (((ECCP1DEL & 0b10000000) >> 7) == 0) {
-        if (manualrestart) {
+    if (((ECCP1DEL & 0b10000000) >> 7) == 0)
+    {
+        if (manualrestart)
             ECCP1AS = (ECCP1AS | 0b00000000);	//bit 7 ECCPASE: ECCP Auto-Shutdown Event Status bit [0 = work; 1 = shutdown]	
-        }
     }
 }
 #else
@@ -459,7 +463,8 @@ void PWM_setASmanualRestart (u8 manualrestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETAUTOSHUTDOWN)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setAutoShutdown (u8 autoshutdown)
 {
     if (autoshutdown)

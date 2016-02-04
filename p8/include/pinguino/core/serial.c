@@ -308,77 +308,12 @@ u8 Serial_read()
 #if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 
-void Serial_print(char *s)
+void Serial_print(const char *s)
 {
-    /*
-    u8 i;
-    for (i=0; string[i]; i++)
-        Serial_putchar(string[i]);
-    */
     while (*s++)
         Serial_putchar(*s);
 }
 #endif /* SERIALPRINTSTRING */
-
-/* Avrin : 
- * Serial_print() function can not correctly support
- * Serial_print("some string") aka Serial.print("some string").
- * In case Serial_print("some string"), va_arg(args, u32) will return
- * an unexpected invalid value. 
- */
-
-#if 0
-#if defined(SERIALPRINTSTRING) || defined(SERIALPRINTLN)
-#define Serial_print(m,type)    { Serial_print_##type(m);  }
-#define Serial_println(m,type)    { Serial_print_##type(m);  Serial_printf("\r\n"); }
-void Serial_print_FLOAT(float m){ Serial_printf("%f",m); }
-void Serial_print_DEC(u16 m)    { Serial_printf("%d",m); }
-void Serial_print_HEX(u16 m)    { Serial_printf("%x",m); }
-void Serial_print_BYTE(u16 m)   { Serial_printf("%d",m); }
-void Serial_print_OCT(u16 m)    { Serial_printf("%o",m); }
-void Serial_print_BIN(u16 m)    { Serial_printf("%b",m); }
-#endif
-#endif
-
-#if 0
-//void Serial_print(char *fmt,...)
-void Serial_print(const char *fmt,...)
-{
-    //u8 *s;
-    u8 s;
-    va_list args;                            // a list of arguments
-    va_start(args, fmt);                    // initialize the list
-    //s = va_start(args, fmt);
-    s = (u8) va_arg(args, u32);                // get the first variable arg.
-
-    //switch (*s)
-    switch (s)
-    {
-        case FLOAT:
-            Serial_printf("%f", (u32)fmt);
-            break;
-        case DEC:
-            Serial_printf("%d",fmt);
-            break;
-        case HEX:
-            Serial_printf("%x",fmt);
-            break;
-        case BYTE:
-            Serial_printf("%d",fmt);
-            break;
-        case OCT:
-            Serial_printf("%o",fmt);
-            break;
-        case BIN:
-            Serial_printf("%b",fmt);
-            break;
-        default:
-            Serial_printf(fmt);
-            break;
-    }
-    va_end(args);
-}
-#endif
 
 /***********************************************************************
  * USB SERIAL print routine (SERIAL.println)
@@ -388,10 +323,11 @@ void Serial_print(const char *fmt,...)
  **********************************************************************/
 
 #if defined(SERIALPRINTLN)
-void Serial_println(char *string)
+void Serial_println(const char *string)
 {
+    const char * ln = "\n\r";
     Serial_print(string);
-    Serial_print("\n\r");
+    Serial_print(ln);
 }
 #endif /* SERIALPRINTLN */
 
