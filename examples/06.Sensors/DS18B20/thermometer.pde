@@ -20,6 +20,7 @@ u8 i,f;
 
 void setup()
 {
+    Serial.begin(9600);
     // find all sensors on the bus and get their Rom Code
     //DS18B20.find(ONEWIREBUS);
 }
@@ -36,6 +37,6 @@ void loop()
         f = t.fraction;
     }
 
-    CDC.printf("%d.%d C \r\n", i, f);
+    Serial.printf("%d.%d C \r\n", i, f);
     delay(1000);
 }

@@ -1,12 +1,12 @@
 /*	----------------------------------------------------------------------------
     FILE:			i2c.c
     PROJECT:		pinguino
-    PURPOSE:		Include all functions to handle I2C communication for Master and Slave
+    PURPOSE:		I2C communication for Master and Slave
     PROGRAMER:		Régis Blanchot
-    FIRST RELEASE:	03 Apr. 2010
-    LAST RELEASE:	26 Sep. 2014
     ----------------------------------------------------------------------------
-    26 Sep. 2014    regis blanchot - fixed x5k50 and xxj53 support 
+    03 Apr. 2010 - Régis blanchot - first release
+    26 Sep. 2014 - Régis blanchot - fixed x5k50 and xxj53 support
+    04 Feb. 2016 - Régis blanchot - added 16F1459 support
     ----------------------------------------------------------------------------
     TODO
     * Slave 10-bit address
@@ -148,9 +148,14 @@ void I2C_init(u8 mode, u16 sora)
     u8 conf;
     
     // In Slave mode, the SCL and SDA pins must be configured as inputs
-    #if defined(__18f26j50) || defined(__18f46j50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__16F1459)
+    
+    TRISCbits.TRISC1 = INPUT;            // SDA = INPUT
+    TRISCbits.TRISC0 = INPUT;            // SCL = INPUT
+    
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
 
     TRISBbits.TRISB5 = INPUT;			// SDA = INPUT
     TRISBbits.TRISB4 = INPUT;			// SCL = INPUT
@@ -174,7 +179,8 @@ void I2C_init(u8 mode, u16 sora)
             else
                 conf = 0b00101110;	// 00101110Slave mode,  7-bit address with Start and Stop bit interrupts enabled
 
-            #if defined(__18f25k50) || defined(__18f45k50) || \
+            #if defined(__16F1459)  || \
+                defined(__18f25k50) || defined(__18f45k50) || \
                 defined(__18f26j53) || defined(__18f46j53) || \
                 defined(__18f27j53) || defined(__18f47j53)
             SSP1CON1 = conf;
@@ -187,7 +193,8 @@ void I2C_init(u8 mode, u16 sora)
 
         case I2C_MASTER_MODE:
         default:// I2C_MASTER_MODE
-            #if defined(__18f25k50) || defined(__18f45k50) || \
+            #if defined(__16F1459)  || \
+                defined(__18f25k50) || defined(__18f45k50) || \
                 defined(__18f26j53) || defined(__18f46j53) || \
                 defined(__18f27j53) || defined(__18f47j53)
             SSP1CON1= 0b00101000;		// Master Mode, clock = FOSC/(4 * (SSPADD + 1))
@@ -199,7 +206,8 @@ void I2C_init(u8 mode, u16 sora)
             {
                 case I2C_1MHZ:
                     // SMP = 1 = Slew rate control disabled for Standard Speed mode (100 kHz and 1 MHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
+                    #if defined(__16F1459)  || \
+                        defined(__18f25k50) || defined(__18f45k50) || \
                         defined(__18f26j53) || defined(__18f46j53) || \
                         defined(__18f27j53) || defined(__18f47j53)
                     SSP1STATbits.SMP = 1;   // Slew Mode Off
@@ -213,7 +221,8 @@ void I2C_init(u8 mode, u16 sora)
                     
                 case I2C_400KHZ:
                     // SMP = 0 = Slew rate control enabled for High-Speed mode (400 kHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
+                    #if defined(__16F1459)  || \
+                        defined(__18f25k50) || defined(__18f45k50) || \
                         defined(__18f26j53) || defined(__18f46j53) || \
                         defined(__18f27j53) || defined(__18f47j53)
                     SSP1STATbits.SMP = 0;    // Slew Mode On
@@ -228,7 +237,8 @@ void I2C_init(u8 mode, u16 sora)
                 case I2C_100KHZ:
                 default:
                     // SMP = 1 = Slew rate control disabled for Standard Speed mode (100 kHz and 1 MHz)
-                    #if defined(__18f25k50) || defined(__18f45k50) || \
+                    #if defined(__16F1459)  || \
+                        defined(__18f25k50) || defined(__18f45k50) || \
                         defined(__18f26j53) || defined(__18f46j53) || \
                         defined(__18f27j53) || defined(__18f47j53)
                     SSP1STATbits.SMP = 1;    // Slew Mode Off
@@ -242,15 +252,17 @@ void I2C_init(u8 mode, u16 sora)
             }
             break;
     }
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2= 0;
     #else
     SSPCON2= 0;
     #endif
-
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+   
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     PIR1bits.SSP1IF = 0; // MSSP Interrupt Flag
     PIR2bits.BCL1IF = 0; // Bus Collision Interrupt Flag
@@ -291,7 +303,8 @@ void I2C_init(u8 mode, u16 sora)
 u8 I2C_write(u8 value)
 {
     I2C_idle();                     // Wait the MSSP module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1BUF = value;                 // Write byte to SSPBUF (BF is set to 1)
@@ -309,7 +322,8 @@ u8 I2C_write(u8 value)
 */
 //    while (SSPSTATbits.BF);         // Wait until buffer is empty (BF set to 0)
     // ACKSTAT can be returned now because it was loaded before BF was cleared
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     return (!SSP1CON2bits.ACKSTAT);  // 1 if Ack, 0 if NAck
@@ -338,7 +352,8 @@ u8 I2C_read()
 {
     I2C_idle();                 // Wait the MSSP module is inactive
 
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2bits.RCEN = 1;       // Initiate reception of byte
@@ -347,7 +362,8 @@ u8 I2C_read()
     #endif
     
 
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     PIR1bits.SSP1IF = 0;         // Clear SSP interrupt flag
     while (!PIR1bits.SSP1IF);    // Wait the interrupt flag is set
@@ -360,7 +376,8 @@ u8 I2C_read()
     PIR1bits.SSPIF=0;           // ROlf clear SSPIF
     #endif
 
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     return SSP1BUF;
@@ -387,7 +404,8 @@ u8 I2C_read()
 
 void I2C_wait()
 {
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
     PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
@@ -414,12 +432,20 @@ void I2C_wait()
 
 void I2C_idle()
 {
-    #if defined(__18f25k50) || defined(__18f45k50) || \
-        defined(__18f26j53) || defined(__18f46j53) || \
-        defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__16F1459)
+    
+    while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_nW));
+
+    #elif defined(__18f25k50) || defined(__18f45k50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
     while (((SSP1CON2 & 0x1F) > 0) | (SSP1STATbits.R_NOT_W));
+
     #else
+
     while (((SSPCON2 & 0x1F) > 0) | (SSPSTATbits.R_W));
+
     #endif
 }
 
@@ -457,7 +483,8 @@ u8 I2C_waitAck()
 void I2C_start()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
@@ -483,7 +510,8 @@ void I2C_start()
 void I2C_stop()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
@@ -507,7 +535,8 @@ void I2C_stop()
 void I2C_restart()
 {
     I2C_idle();                     // Wait module is inactive
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     //PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
@@ -533,7 +562,8 @@ void I2C_sendAck()
 {
     I2C_idle();                     // Wait module is inactive
 
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2bits.ACKDT = 0;          // We want an Ack
@@ -541,14 +571,16 @@ void I2C_sendAck()
     SSPCON2bits.ACKDT = 0;          // We want an Ack
     #endif
     
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
     #else
     PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
     #endif
     
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2bits.ACKEN = 1;          // Send it now
@@ -556,7 +588,8 @@ void I2C_sendAck()
     SSPCON2bits.ACKEN = 1;          // Send it now
     #endif
 
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
     #else
@@ -575,7 +608,8 @@ void I2C_sendNack()
 {
     I2C_idle();                     // Wait module is inactive
 
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2bits.ACKDT = 1;          // We want a no Ack
@@ -583,14 +617,16 @@ void I2C_sendNack()
     SSPCON2bits.ACKDT = 1;          // We want a no Ack
     #endif
     
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     PIR1bits.SSP1IF = 0;             // Clear SSP interrupt flag
     #else
     PIR1bits.SSPIF = 0;             // Clear SSP interrupt flag
     #endif
     
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     SSP1CON2bits.ACKEN = 1;          // Send it now
@@ -598,7 +634,8 @@ void I2C_sendNack()
     SSPCON2bits.ACKEN = 1;          // Send it now
     #endif
 
-    #if defined(__18f26j53) || defined(__18f46j53) || \
+    #if defined(__16F1459)  || \
+        defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
     while (!PIR1bits.SSP1IF);        // Wait the interrupt flag is set
     #else

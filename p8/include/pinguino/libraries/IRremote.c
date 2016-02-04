@@ -39,7 +39,7 @@
 //#define _1us_ { nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); }
 #define _1us_ { nop(); nop(); nop(); nop(); }
 
-volatile u16 _t3_reload_val;   // Timer3 reload value
+volatile u16 _tmr_reload_val;   // Timer3 reload value
 volatile irparams_t irparams;
 volatile u8 irdata;
 //u8 d1; // used by delay50us assembly routine
@@ -357,33 +357,41 @@ void IRrecv_enableIRIn(u8 recvpin)
     irparams.recvpin = recvpin;
     irparams.blinkflag = 0;
 
-    // Configure Timer3 to overload every 50us
+    // Configure Timer3 or Timer1 to overload every 50us
+    
+    noInterrupts();
 
-    INTCONbits.GIEH    = 0;   // Disable global HP interrupts
-    INTCONbits.GIEL    = 0;   // Disable global LP interrupts
-
-    // Timer3 is on 16 bits, prescaler 1, based on external crystal Frequency
-    #if defined(__18f25k50) || defined(__18f45k50)
+    // Timer1 or 3 are on 16 bits, prescaler 1, based on external crystal Frequency
+    #if defined(__16F1459)
+    T1CON=0x01; // timer 1 prescaler 1 source is internal oscillator
+    #elif defined(__18f25k50) || defined(__18f45k50)
     T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_SOSC_OFF | T3_PS_1_1 | T3_SOURCE_FOSC;
     #else
     T3CON = T3_OFF | T3_16BIT | T3_SYNC_EXT_OFF | T3_OSC_OFF | T3_PS_1_1 | T3_SOURCE_FOSC;
     #endif
 
     // nb cycles for 50us
-    _t3_reload_val = ( System_getPeripheralFrequency() / 1000 / 1000 ); // 1us = 12 cycles @ 48MHz
-    _t3_reload_val *= 50; // 50us = 50 * 12 cy @ 48MHz
-    _t3_reload_val = 0xFFFF - _t3_reload_val;
+    _tmr_reload_val = ( System_getPeripheralFrequency() / 1000 / 1000 ); // 1us = 12 cycles @ 48MHz
+    _tmr_reload_val *= 50; // 50us = 50 * 12 cy @ 48MHz
+    _tmr_reload_val = 0xFFFF - _tmr_reload_val;
 
-    // load Timer3
-    TMR3H = high8(_t3_reload_val);
-    TMR3L =  low8(_t3_reload_val);
-
+    // load Timer
+    #if defined(__16F1459)
+    TMR1H = high8(_tmr_reload_val);
+    TMR1L =  low8(_tmr_reload_val);
+    PIR1bits.TMR1IF  = 0;                   // Clear the Timer3 interrupt flag
+    PIE1bits.TMR1IE  = INT_ENABLE;          // Enable Peripheral interrupts
+    T1CONbits.TMR1ON = 1;                   // Start Timer3
+    #else
+    TMR3H = high8(_tmr_reload_val);
+    TMR3L =  low8(_tmr_reload_val);
     IPR2bits.TMR3IP  = INT_HIGH_PRIORITY;   // Timer3 interrupt has a High-priority
     PIR2bits.TMR3IF  = 0;                   // Clear the Timer3 interrupt flag
     PIE2bits.TMR3IE  = INT_ENABLE;          // Enable Peripheral interrupts
     T3CONbits.TMR3ON = 1;                   // Start Timer3
-    INTCONbits.GIEH  = 1;                   // Enable global HP interrupts
-    INTCONbits.GIEL  = 1;                   // Enable global LP interrupts
+    #endif
+
+    interrupts();
 
     // initialize state machine variables
     irparams.rcvstate = STATE_IDLE;
@@ -398,9 +406,9 @@ void IRrecv_enableIRIn(u8 recvpin)
 // enable/disable blinking of USERLED on IR processing
 void IRrecv_blink13(u8 blinkflag)
 {
-  irparams.blinkflag = blinkflag;
-  if (blinkflag)
-    pinmode(USERLED, OUTPUT);
+    irparams.blinkflag = blinkflag;
+    if (blinkflag)
+        pinmode(USERLED, OUTPUT);
 }
 #endif
 
@@ -415,7 +423,11 @@ void IRrecv_blink13(u8 blinkflag)
 #if defined(__IRREMOTE__)
 void irremote_interrupt() // called from main.c
 {
+    #if defined(__16F1459)
+    if (PIR1bits.TMR1IF) // Timer1 interrupt ?
+    #else
     if (PIR2bits.TMR3IF) // Timer3 interrupt ?
+    #endif
     {
         irdata = digitalread(irparams.recvpin);
 
@@ -498,12 +510,19 @@ void irremote_interrupt() // called from main.c
                 digitalwrite(USERLED, 0);  // turn USERLED off
         }
 
+        #if defined(__16F1459)
+        // Timer1 reset
+        TMR1H = high8(_tmr_reload_val);
+        TMR1L =  low8(_tmr_reload_val);
+        // Timer3 flag reset
+        PIR1bits.TMR1IF = 0;
+        #else
         // Timer3 reset
-        TMR3H = high8(_t3_reload_val);
-        TMR3L =  low8(_t3_reload_val);
-        
+        TMR3H = high8(_tmr_reload_val);
+        TMR3L =  low8(_tmr_reload_val);
         // Timer3 flag reset
         PIR2bits.TMR3IF = 0;
+        #endif
     }
 }
 #endif
@@ -994,31 +1013,30 @@ u32 IRrecv_decodePanasonic(decode_results *results)
     u16 offset = 1;
     u16 i;
 	
-    if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_MARK)) {
+    if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_MARK))
         return ERR;
-    }
     offset++;
-    if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_SPACE)) {
+    if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_SPACE))
         return ERR;
-    }
     offset++;
     
     // decode address
-    for (i = 0; i < PANASONIC_BITS; i++) {
-        if (!MATCH_MARK(results->rawbuf[offset++], PANASONIC_BIT_MARK)) {
+    for (i = 0; i < PANASONIC_BITS; i++)
+    {
+        if (!MATCH_MARK(results->rawbuf[offset++], PANASONIC_BIT_MARK))
             return ERR;
-        }
-        if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ONE_SPACE)) {
+        if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ONE_SPACE))
             data = (data << 1) | 1;
-        } else if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ZERO_SPACE)) {
+        else if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ZERO_SPACE))
             data <<= 1;
-        } else {
+        else
             return ERR;
-        }
         offset++;
     }
-    results->value = (u32)data;
-    results->panasonicAddress = (u16)(data >> 32);
+    results->value = data;
+    // data >> 32 ??? data is a 32-bit number
+    //results->panasonicAddress = (u16)(data >> 32);
+    results->panasonicAddress = (u16)data;
     results->decode_type = PANASONIC;
     results->bits = PANASONIC_BITS;
     return DECODED;

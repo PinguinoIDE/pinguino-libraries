@@ -13,15 +13,15 @@
 void setup()
 {
     pinMode(USERLED, OUTPUT);
-    digitalWrite(USERLED, ON);    
+    digitalWrite(USERLED, 1);    
     IRremote.enabeIROut(SEND_PIN);     // Defined the Output pin
 }
 
 void loop()
 {
-    digitalWrite(USERLED, ON);    
+    digitalWrite(USERLED, 1);    
     delay(100);
     IRremote.sendRC6(RC6_POWER_OFF, 14);
-    digitalWrite(USERLED, OFF);    
+    digitalWrite(USERLED, 0);    
     delay(900);
 }

@@ -13,6 +13,7 @@ decode_results results; // Results returned from the decoder
 
 void setup()
 {
+    Serial.begin(9600);
     IRremote.enableIRIn(IRSENSOR);  // Start the receiver
     IRremote.blink(true);           // Built-in led will blink at reception
 }
@@ -24,15 +25,15 @@ void loop()
         if (results.decode_type>10)
             results.decode_type = 0;
         
-        CDC.print("Decoded ");
-        CDC.printNumber(results.value, DEC);
-        CDC.print(" (type ");
-        CDC.print(brand[results.decode_type]);
-        CDC.print(")\r\n");
+        Serial.print("Decoded ");
+        Serial.printNumber(results.value, DEC);
+        Serial.print(" (type ");
+        Serial.print(brand[results.decode_type]);
+        Serial.print(")\r\n");
 
         /// or
         
-        //CDC.printf("Decoded %ld (type %s)\r\n", results.value, brand[results.decode_type]);
+        //Serial.printf("Decoded %ld (type %s)\r\n", results.value, brand[results.decode_type]);
 
         IRremote.resume(); // Ready to receive the next value
     }

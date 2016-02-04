@@ -294,7 +294,7 @@ static void lcdi2c_send8(u8 octet, u8 mode)
 #if defined(LCDI2CBACKLIGHT)
 void lcdi2c_backlight()
 {
-	gBacklight = ON;	// 0 = ON since PCF8574 is logical inverted
+	gBacklight = 0; 	// 0 = ON since PCF8574 is logical inverted
 	LCD_BL = gBacklight;
 	I2C_start();
     I2C_write((PCF8574_address << 1) | I2C_WRITE);
@@ -310,7 +310,7 @@ void lcdi2c_backlight()
 #if defined (LCDI2CNOBACKLIGHT)
 void lcdi2c_noBacklight()
 {
-	gBacklight = OFF;	// 1 = OFF since PCF8574 is logical inverted
+	gBacklight = 1;	// 1 = OFF since PCF8574 is logical inverted
 	LCD_BL = gBacklight;
 	I2C_start();
     I2C_write((PCF8574_address << 1) | I2C_WRITE);

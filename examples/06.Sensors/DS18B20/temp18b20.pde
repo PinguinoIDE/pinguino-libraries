@@ -18,15 +18,11 @@
 	Maybe you will have to add your user name to the dialup group
 	----------------------------------------------------------------------*/
 
-Output COM = SERIAL;
-//Output COM = CDC;
 #define ONEWIREBUS	14    // DQ line						
 
 void setup()
 {
-    #if (COM==SERIAL)
     Serial.begin(9600);
-    #endif
 }
 
 void loop()
@@ -35,15 +31,6 @@ void loop()
 	
 	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
 	{
-              #if (COM==CDC)
-	    if (t.sign)
-              CDC.printChar('-');
-	    //CDC.printf("%d.%dC \r", t.integer, t.fraction);
-	    CDC.printNumber(t.integer, DEC);
-	    CDC.printChar('.');
-	    CDC.printNumber(t.fraction, DEC);
-	    CDC.print("C \r");
-              #else
 	    if (t.sign)
               Serial.printChar('-');
 	    //Serial.printf("%d.%dC \r", t.integer, t.fraction);
@@ -51,7 +38,6 @@ void loop()
 	    Serial.printChar('.');
 	    Serial.printNumber(t.fraction, DEC);
 	    Serial.print("C \r");
-              #endif
 	}
 	delay(1000);
 }

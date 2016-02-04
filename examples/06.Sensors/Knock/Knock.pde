@@ -24,7 +24,7 @@
 
 // these constants won't change:
 const int ledPin = 13;      // led connected to digital pin 13
-const int knockSensor = A0; // the piezo is connected to analog pin 0
+const int knockSensor = 0; // the piezo is connected to analog pin 0
 const int threshold = 100;  // threshold value to decide when the detected sound is a knock or not
 
 
