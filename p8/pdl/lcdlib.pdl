@@ -15,11 +15,12 @@ lcd.display lcd_display#include <lcdlib.c>#define LCDDISPLAY
 lcd.noDisplay lcd_noDisplay#include <lcdlib.c>#define LCDNODISPLAY
 lcd.clear lcd_clear#include <lcdlib.c>#define LCDCLEAR
 lcd.home lcd_home#include <lcdlib.c>#define LCDHOME
+lcd.printChar lcd_write#include <lcdlib.c>
+lcd.print lcd_print#include <lcdlib.c>#define LCDPRINT
 lcd.printNumber lcd_printNumber#include <lcdlib.c>#define LCDPRINTNUMBER
 lcd.printFloat lcd_printFloat#include <lcdlib.c>#define LCDPRINTFLOAT
-lcd.print lcd_print#include <lcdlib.c>#define LCDPRINT
+lcd.printf lcd_printf#include <lcdlib.c>#define LCDPRINTF
 lcd.setCursor lcd_setCursor#include <lcdlib.c>#define LCDSETCURSOR
 lcd.command lcd_command#include <lcdlib.c>
 lcd.write lcd_write#include <lcdlib.c>
 lcd.send lcd_send#include <lcdlib.c>
-lcd.printf lcd_printf#include <lcdlib.c>#define LCDPRINTF

@@ -39,12 +39,12 @@
 
     /// MATH
 
-    #ifndef __XC8__
-        #define min(a,b)            ((a)<(b)?(a):(b))
+    //#ifndef __XC8__
+        //#define min(a,b)            ((a)<(b)?(a):(b))
         //#define min(x, y)           (y ^ ((x ^ y) & -(x < y)))
-        #define max(a,b)            ((a)>(b)?(a):(b))
+        //#define max(a,b)            ((a)>(b)?(a):(b))
         //#define max(x, y)           (x ^ ((x ^ y) & -(x < y)))
-    #endif
+    //#endif
     
     //already defined in stdlib.h / mathlib.c
     //#define abs(x)					((x)>0?(x):-(x))

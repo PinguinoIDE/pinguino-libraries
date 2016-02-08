@@ -11,43 +11,50 @@ void setup()
     pin 2 is connected to LOAD 
     1 : We have only a single MAX72XX.
     */
-    LedControl.init(0,1,2,1);
+    // SPI SOFTWARE
+    // pin 3 is connected to the DataIn 
+    // pin 1 is connected to the CLK 
+    // pin 13 is connected to the CS  
+    LedControl.init(SPISW, 0, 1, 2, 1);
+
+    // SPI HARDWARE
+    //LedControl.init(SPI1, 1);
 
     /*
     The MAX72XX is in power-saving mode on startup,
     we have to do a wakeup call
     */
-    LedControl.shutdown(0,false);
+    LedControl.powerOn();
     /* Set the brightness to a medium values */
-    LedControl.setIntensity(0,8);
+    LedControl.setIntensity(8);
     /* and clear the display */
-    LedControl.clearDisplay(0);
+    LedControl.clearDisplay(1);
 }
 
 
 /*
  This method will display the characters for the
- word "Arduino" one after the other on digit 0. 
+ word "Pinguino" one after the other on digit 1. 
  */
 void writePinguinoOn7Segment()
 {
-    LedControl.setChar(0,0,'p',false);
+    LedControl.setChar(1,0,'p',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'i',false);
+    LedControl.setChar(1,0,'i',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'n',false);
+    LedControl.setChar(1,0,'n',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'g',false);
+    LedControl.setChar(1,0,'g',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'u',false);
+    LedControl.setChar(1,0,'u',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'i',false);
+    LedControl.setChar(1,0,'i',false);
     delay(DELAYTIME);
-    LedControl.setChar(0,0,'n',false);
+    LedControl.setChar(1,0,'n',false);
     delay(DELAYTIME);
     LedControl.setChar(0,0,'o',false);
     delay(DELAYTIME);
-    LedControl.clearDisplay(0);
+    LedControl.clearDisplay(1);
     delay(DELAYTIME);
 } 
 

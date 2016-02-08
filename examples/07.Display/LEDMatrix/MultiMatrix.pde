@@ -2,13 +2,14 @@
 
 void setup()
 {
-    /*
-    We need a LedControl to work with.
-    pin 0 is connected to the DataIn  
-    pin 1 is connected to the CLK 
-    pin 2 is connected to LOAD 
-    */
-    LedControl.init(0, 1, 2, MATRIX);
+    // SPI SOFTWARE
+    // pin 23 is connected to the DataIn 
+    // pin 1 is connected to the CLK 
+    // pin 13 is connected to the CS  
+    //LedControl.init(SPISW, 23, 1, 13, MATRIX);
+
+    // SPI HARDWARE
+    LedControl.init(SPI1, MATRIX);
 
     /*
     The MAX72XX is in power-saving mode on startup,

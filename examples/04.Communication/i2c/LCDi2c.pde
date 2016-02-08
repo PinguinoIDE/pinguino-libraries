@@ -83,38 +83,17 @@ void setup()
     lcdi2c.backlight();                 // turns backlight on
     lcdi2c.clear();                     // clear screen
     lcdi2c.home();                      // set cursor at (0,0)
-    lcdi2c.printf("   lcdi2c demo  ");
+    lcdi2c.printCenter("LCD I2C Demo");
 }
 
 void loop()
 {
-    lcdi2c.setCursor(0, 1);					// set cursor at line 1, col 0
+    // set cursor at line 1, col 0
+    lcdi2c.setCursor(0, 1);
+    //lcdi2c.print("i=0x");
+    //lcdi2c.printNumber(i++, HEX);
+    // or
     lcdi2c.printf("i=%u ", i++);
     delay(500);
 }
 
-/*
-	available functions :
-		void lcdi2c.init(u8, u8, u8);
-		void lcdi2c.backlight();
-		void lcdi2c.noBacklight();
-		void lcdi2c.clear();
-		void lcdi2c.clearLine(u8);
-		void lcdi2c.home();
-		void lcdi2c.noAutoscroll();
-		void lcdi2c.autoscroll();
-		void lcdi2c.rightToLeft();
-		void lcdi2c.leftToRight();
-		void lcdi2c.scrollDisplayRight();
-		void lcdi2c.scrollDisplayLeft();
-		void lcdi2c.blink();
-		void lcdi2c.noBlink();
-		void lcdi2c.cursor();
-		void lcdi2c.noCursor();
-		void lcdi2c.display();
-		void lcdi2c.noDisplay();
-		void lcdi2c.setCursor(u8, u8);
-		void lcdi2c.write(char);
-		void lcdi2c.printf(char*, ...);
-		void lcdi2c.newchar(const u8 *, u8);
-*/

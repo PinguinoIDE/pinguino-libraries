@@ -85,4 +85,51 @@
 
     #endif
 
+
+    #ifdef _16F1459
+        #define PROC_NAME      "16F1459"
+    #endif
+    #ifdef __18f13k50
+        #define PROC_NAME      "18F13K50"
+    #endif
+    #ifdef __18f14k50
+        #define PROC_NAME      "18F14K50"
+    #endif
+    #ifdef __18f2455
+        #define PROC_NAME      "18F2455"
+    #endif
+    #ifdef __18f4455
+        #define PROC_NAME      "18F4455"
+    #endif
+    #ifdef __18f2550
+        #define PROC_NAME      "18F2550"
+    #endif
+    #ifdef __18f4550
+        #define PROC_NAME      "18F4550"
+    #endif
+    #ifdef __18f25k50
+        #define PROC_NAME      "18F25K50"
+    #endif
+    #ifdef __18f45k50
+        #define PROC_NAME      "18F45K50"
+    #endif
+    #ifdef __18f26j50
+        #define PROC_NAME      "18F26J50"
+    #endif
+    #ifdef __18f46j50
+        #define PROC_NAME      "18F46J50"
+    #endif
+    #ifdef __18f26j53
+        #define PROC_NAME      "18F26J53"
+    #endif
+    #ifdef __18f46j53
+        #define PROC_NAME      "18F46J53"
+    #endif
+    #ifdef __18f27j53
+        #define PROC_NAME      "18F27J53"
+    #endif
+    #ifdef __18f47j53
+        #define PROC_NAME      "18F47J53"
+    #endif
+
 #endif /* __COMPILER_H */

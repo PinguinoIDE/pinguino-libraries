@@ -1,82 +1,54 @@
 /**
-        Author: 	    Régis Blanchot (Apr. 2014)
-        Library :     Thomas Missonier (sourcezax@users.sourceforge.net).
-        Tested on:	Pinguino 32MX250 and Pinguino 47J53A
-        Output:	    Nokia 5110 84x48 LCD Display  with PCD8544 Controller
+    Author:    Régis Blanchot (Apr. 2014)
+    Library :  Thomas Missonier (sourcezax@users.sourceforge.net).
+    Tested on: Pinguino 32MX250 and Pinguino 47J53A
+    Output:    Nokia 5110 84x48 LCD Display  with PCD8544 Controller
+    Wiring:
+
+    1 NOKIA_RST    // any pin 
+    2 NOKIA_SCE    // Pinguino CS or SS
+    3 NOKIA_DC     // any pin
+    4 NOKIA_SDIN   // Pinguino SDO
+    5 NOKIA_SCLK   // Pinguino SCK 
+    6 NOKIA_VCC    // 3.3V 
+    7 NOKIA_LIGHT  // GND or 3.3V depends on models                                      
+    8 NOKIA_GND    // GND 
 **/
 
-/// Load one or more fonts and active them with PCD8544.setFont()
-
-#include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
-
-/* Pin configuration */
-#define PCD8544_INTERFACE     (PCD8544_SPIHW)
-//define PCD8544_INTERFACE       (PCD8544_SPISW | PCD8544_PORTB)
-
-//define PCD8544_INTERFACE       (PCD8544_SPISW)
-#define NOKIA_RST               4  // LCD RST 
-//define NOKIA_SCE               6  // Pinguino SS
-#define NOKIA_DC                6  // LCD Dat/Com
-//define NOKIA_SDIN              4  // Pinguino SDO
-//define NOKIA_SCLK              3  // Pinguino SCLK 
-//define NOKIA_VCC               2  // 3.3V 
-//define NOKIA_LIGHT             1  // GND or 3.3V depends on models                                      
-//define NOKIA_GND               0  // GND 
+// SPI Module
+#define SPILCD SPI1 
 
 u16 alpha=0;                // rotation angle
 u8 x, y;
 u8 xo, yo;
 
+/* Pin configuration */
+
 void setup()
 {
+    pinMode(USERLED, OUTPUT);
+
     /// Screen init
 
-    // if PCD8544_INTERFACE == PCD8544_SPISW or PCD8544_INTERFACE == PCD8544_SPIHW
-    /*
-    digitalWrite(NOKIA_VCC,   HIGH); // LCD NOKIA_VCC to 3.3V
-    digitalWrite(NOKIA_LIGHT, LOW);  // LCD BackNOKIA_LIGHT On
-    digitalWrite(NOKIA_GND,   LOW);  // LCD NOKIA_GND to NOKIA_GND
+    // if SPILCD = SPISW (SPI Software)
+    //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
+    PCD8544.init(SPILCD, 0, 1); // DC and RST pin
 
-    pinMode(NOKIA_VCC,   OUTPUT);
-    pinMode(NOKIA_LIGHT, OUTPUT);
-    pinMode(NOKIA_GND,   OUTPUT);
-    */
+    PCD8544.setContrast(SPILCD, 40); // 0 to 127
     
-    // if PCD8544_INTERFACE == PCD8544_SPISW and PCD8544_PORTB
-    /*
-    PCD8544.init();
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPISW
-    /*
-    PCD8544.init(NOKIA_SCLK, NOKIA_SDIN, NOKIA_DC, NOKIA_SCE, NOKIA_RST);
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPIHW
-    PCD8544.init(NOKIA_DC, NOKIA_RST);
- 
-    PCD8544.setContrast(40); // 0 to 127
-    //PCD8544.refresh(); // show Pinguino splashscreen
-    //delay(1000);
-    
-    xo = PCD8544.screen.width  / 2;
-    yo = PCD8544.screen.height / 2;
+    xo = PCD8544[SPILCD].screen.width  / 2;
+    yo = PCD8544[SPILCD].screen.height / 2;
 }
 
 void loop()
 {
-    x = xo + 24.0f * cosr(alpha);
-    y = yo + 24.0f * sinr(alpha);
+    x = xo + (24.0 * cosr(alpha));
+    y = yo + (24.0 * sinr(alpha));
     
     // display
-    PCD8544.clearScreen();
-    PCD8544.drawLine(xo, yo, x, y);
-    PCD8544.refresh();
+    PCD8544.clearScreen(SPILCD);
+    PCD8544.drawLine(SPILCD, xo, yo, x, y);
+    PCD8544.refresh(SPILCD);
     
     // increments angle
     alpha = (alpha + 1) % 360;

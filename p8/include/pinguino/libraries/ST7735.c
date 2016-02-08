@@ -62,7 +62,17 @@
 
 // Printf
 #ifdef ST7735PRINTF
-    #include <stdio.c>
+    #include <printFormated.c>
+#endif
+
+// PrintFloat
+#if defined(ST7735PRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT)
+    #include <printNumber.c>
 #endif
 
 // Graphics Library
@@ -477,6 +487,11 @@ void ST7735_setFont(u8 module, const u8 *font)
     REMARKS:
 ------------------------------------------------------------------*/
 
+void printChar(u8 c)
+{
+    ST7735_printChar(ST7735_SPI, c);
+}
+
 void ST7735_printChar(u8 module, u8 c)
 {
     u8 h, w, b;
@@ -581,99 +596,17 @@ void ST7735_printCenter(u8 module, const u8 *string)
 
 #if defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT)
 void ST7735_printNumber(u8 module, long value, u8 base)
-{  
-    u8 sign;
-    u8 length;
-
-    long i;
-    unsigned long v;            // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;               // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;            // pointer on string
-
-    if (value==0)
-    {
-        ST7735_printChar(module, '0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (unsigned long)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
-        
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
-    }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    length = sign + tp - tmp + 1;
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    ST7735_print(module, string);
+{
+    ST7735_SPI = module;
+    printNumber(value, base);
 }
 #endif
 
 #if defined(ST7735PRINTFLOAT)
 void ST7735_printFloat(u8 module, float number, u8 digits)
 { 
-	u8 i, toPrint;
-	u16 int_part;
-	float rounding, remainder;
-
-	// Handle negative numbers
-	if (number < 0.0)
-	{
-		ST7735_printChar(module, '-');
-		number = -number;
-	}
-
-	// Round correctly so that print(1.999, 2) prints as "2.00"  
-	rounding = 0.5;
-	for (i=0; i<digits; ++i)
-		rounding /= 10.0;
-
-	number += rounding;
-
-	// Extract the integer part of the number and print it  
-	int_part = (u16)number;
-	remainder = number - (float)int_part;
-	ST7735_printNumber(module, int_part, 10);
-
-	// Print the decimal point, but only if there are digits beyond
-	if (digits > 0)
-		ST7735_printChar(module, '.'); 
-
-	// Extract digits from the remainder one at a time
-	while (digits-- > 0)
-	{
-		remainder *= 10.0;
-		toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-		ST7735_printNumber(module, toPrint, 10);
-		remainder -= toPrint; 
-	}
+    ST7735_SPI = module;
+    printFloat(number, digits);
 }
 #endif
 
@@ -708,7 +641,8 @@ void ST7735_printf(u8 module, const u8 *fmt, ...)
 
 void ST7735_setCursor(u8 module, u8 x, u8 y)
 {
-    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
+    if (x >= ST7735[module].screen.width)  return;
+    if (y >= ST7735[module].screen.height) return;
 
     ST7735[module].cursor.x = x;
     ST7735[module].cursor.y = y;
@@ -725,7 +659,8 @@ void ST7735_setCursor(u8 module, u8 x, u8 y)
 
 void ST7735_drawPixel(u8 module, u8 x, u8 y)
 {
-    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
+    if (x >= ST7735[module].screen.width)  return;
+    if (y >= ST7735[module].screen.height) return;
 
     //ST7735_low(ST7735[module].pin.cs);           // Chip select
     ST7735_select(module);
@@ -761,7 +696,8 @@ void ST7735_drawPixel(u8 module, u8 x, u8 y)
 
 void ST7735_clearPixel(u8 module, u8 x, u8 y)
 {
-    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
+    if (x >= ST7735[module].screen.width)  return;
+    if (y >= ST7735[module].screen.height) return;
     
     //ST7735_low(ST7735[module].pin.cs);           // Chip select
     ST7735_select(module);
@@ -802,7 +738,8 @@ void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
     u8 ch = ST7735[module].color.c >> 8;
     u8 cl = ST7735[module].color.c & 0xFF;
 
-    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
+    if (x >= ST7735[module].screen.width)  return;
+    if (y >= ST7735[module].screen.height) return;
 
     if ((y+h-1) >= ST7735[module].screen.height)
         h = ST7735[module].screen.height - y;
@@ -847,7 +784,8 @@ void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
     u8 ch = ST7735[module].color.c >> 8;
     u8 cl = ST7735[module].color.c & 0xFF;
 
-    if ( x >= ST7735[module].screen.width || y >= ST7735[module].screen.height ) return;
+    if (x >= ST7735[module].screen.width)  return;
+    if (y >= ST7735[module].screen.height) return;
 
     if ((x+w-1) >= ST7735[module].screen.width)
         w = ST7735[module].screen.width - x;

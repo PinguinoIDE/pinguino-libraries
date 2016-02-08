@@ -30,7 +30,7 @@
 #include <const.h>   	    // HIGH, LOW, OUTPUT, ...
 #include <lcdlib.h>
 #ifdef LCDPRINTF
-#include <stdio.c>
+#include <printFormated.c>
 #include <stdarg.h>
 #endif
 

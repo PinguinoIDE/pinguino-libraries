@@ -8,7 +8,7 @@
     LAST RELEASE:   27 Jan. 2016
     --------------------------------------------------------------------
     CHANGELOG :
-// added interrupt.c functions (regis blanchot 2011)
+            2011 - Régis Blanchot - added interrupt.c functions
     14 May. 2012 - JP Mandon      - changed long to u32 and Millis to millis
                                     thanks to Mark Harper]
     31 Jan. 2013 - Régis Blanchot - use of System_getPeripheralFrequency()
@@ -30,6 +30,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
     ------------------------------------------------------------------*/
+
 #ifndef _MILLIS_C_
 #define _MILLIS_C_
 

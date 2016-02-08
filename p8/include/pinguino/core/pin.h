@@ -40,53 +40,28 @@
 /**********************************************************************/
 
     #define A5          0
-
     #define A4          1
-//    #define AN3         1
-    
-    #define C5          2
-    #define PWM1        2
+    #define A3          2
+    #define C5          3
+    #define C4          4
+    #define C3          5
+    #define C6          6
+    #define C7          7
+    #define B7          8
 
-    #define C4          3
+    #define A0          9
+    #define A1          10
+    // VUSB3V3 unused   11
+    #define C0          12
+    #define C1          13
+    #define C2          14
+    #define B4          15
+    #define B5          16
+    #define B6          17
 
-    #define C3          4
-//    #define AN7         4
-
-    #define C6          5
-//    #define AN8         5
-    #define PWM2        5
-//    #define SS          5
-//    #define CS          5
-    
-    #define C7          6
-//    #define AN9         6
-//    #define SDO         6
-
-    #define B7          7
-//    #define TX          7
-
-    #define C0          8
-//    #define AN4         8
-
-    #define C1          9
-//    #define AN5         9
-
-    #define C2          10
-//    #define AN6         10
-    #define USERLED     10
-
-    #define B4          11
-//    #define AN10        11
-//    #define SDA         11
-//    #define SDI         11
-
-    #define B5          12
-//    #define RX          12
-//    #define AN11        12
-
-    #define B6          13
-//    #define SCL         13
-//    #define SCK         13
+    #define PWM1        3
+    #define PWM2        6
+    #define USERLED     14
 
 /**********************************************************************/
 #elif defined(__18f4685)		// Added by Andrej Golac

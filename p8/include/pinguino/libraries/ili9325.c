@@ -36,7 +36,7 @@
 #include <delayms.c>
 #include <graphics.c>
 #include <digitalw.c>
-#include <stdio.c>
+#include <printFormated.c>
 
 ///	--------------------------------------------------------------------
 /// Write functions

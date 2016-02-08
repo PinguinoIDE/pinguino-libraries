@@ -40,6 +40,7 @@
 #define pE	4
 #define pF	5
 #define pG	6
+#define pU  0xFF    // unused
 
 #define _0	0x01    // 1<<0
 #define _1	0x02    // 1<<1 
@@ -49,6 +50,7 @@
 #define _5	0x20    // 1<<5 
 #define _6	0x40    // 1<<6 
 #define _7	0x80    // 1<<7 
+#define _U  0xFF    // unused
 
 /**********************************************************************/
 #if defined(CURIOSITY1708)
@@ -65,14 +67,14 @@ const u8 port[18]={
 /**********************************************************************/
 #elif defined(PINGUINO1459)
 /**********************************************************************/
-                                                    // Pinguino pin number
-const u8 mask[14]={
-                    _5,_4,_5,_4,_3,_6,_7,_7,        // 0 - 7
-                    _0,_1,_2,_4,_5,_6};             // 8 - 13
+                                                        // Pinguino pin number
+const u8 mask[18]={
+                    _5,_4,_3,_5,_4,_3,_6,_7,_7,         // 00 - 09
+                    _0,_1,_U,_0,_1,_2,_4,_5,_6  };      // 10 - 18
 
-const u8 port[14]={
-                    pA, pA, pC, pC, pC, pC, pC, pB, // 0 - 7
-                    pC, pC, pC, pB, pB, pB};        // 8 - 13
+const u8 port[18]={
+                    pA, pA, pA, pC, pC, pC, pC, pC, pB, // 00 - 09
+                    pA, pA, pU, pC, pC, pC, pB, pB, pB};// 10 - 18
 
 /**********************************************************************/
 #elif defined(PINGUINO1220) || defined(PINGUINO1320)

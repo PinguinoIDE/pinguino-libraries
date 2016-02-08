@@ -17,6 +17,12 @@ lcdi2c.noCursor lcdi2c_noCursor#include <lcdi2c.c>#define LCDI2CNOCURSOR
 lcdi2c.display lcdi2c_display#include <lcdi2c.c>#define LCDI2CDISPLAY
 lcdi2c.noDisplay lcdi2c_noDisplay#include <lcdi2c.c>#define LCDI2CNODISPLAY
 lcdi2c.setCursor lcdi2c_setCursor#include <lcdi2c.c>#define LCDI2CSETCURSOR
-lcdi2c.write lcdi2c_write#include <lcdi2c.c>#define LCDI2CWRITE
+lcdi2c.write lcdi2c_send8#include <lcdi2c.c>#define LCDI2CPRINTCHAR
+lcdi2c.printChar lcdi2c_send8#include <lcdi2c.c>#define LCDI2CPRINTCHAR
+lcdi2c.print lcdi2c_print#include <lcdi2c.c>#define LCDI2CPRINT
+lcdi2c.println lcdi2c_println#include <lcdi2c.c>#define LCDI2CPRINTLN
+lcdi2c.printCenter lcdi2c_printCenter#include <lcdi2c.c>#define LCDI2CPRINTCENTER
+lcdi2c.printNumber lcdi2c_printNumber#include <lcdi2c.c>#define LCDI2CPRINTNUMBER
+lcdi2c.printFloat lcdi2c_printFloat#include <lcdi2c.c>#define LCDI2CPRINTFLOAT
 lcdi2c.printf lcdi2c_printf#include <lcdi2c.c>#define LCDI2CPRINTF
 lcdi2c.newchar lcdi2c_newchar#include <lcdi2c.c>#define LCDI2CNEWCHAR

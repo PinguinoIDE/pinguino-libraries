@@ -5,10 +5,10 @@ u8 i;
 void setup()
 {
     // SPI SOFTWARE
-    // pin 3 is connected to the DataIn 
+    // pin 0 is connected to the DataIn 
     // pin 1 is connected to the CLK 
-    // pin 13 is connected to the CS  
-    //LedControl.init(SPISW, 23, 1, 13, MATRIX);
+    // pin 2 is connected to the CS  
+    //LedControl.init(SPISW, 0, 1, 2, MATRIX);
 
     // SPI HARDWARE
     LedControl.init(SPI1, MATRIX);

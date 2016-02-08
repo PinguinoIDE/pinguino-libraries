@@ -23,7 +23,7 @@
         LED       VSS (backlight on)
         SCK       SCK
         SDA       SDO
-        A0 (DC)   can be connected to any digital pin
+        A0        DC (any digital pin)
         RESET     VSS
         CS        CS or SS
         GND       GND
@@ -47,7 +47,7 @@ void setup()
     ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
     ST7735.setColor(SPIMODULE, ST7735_YELLOW);
-    ST7735.setOrientation(SPIMODULE, 270);
+    ST7735.setOrientation(SPIMODULE, 90);
     ST7735.clearScreen(SPIMODULE);
 }   
 

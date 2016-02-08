@@ -40,9 +40,20 @@
 #include <delayms.c>
 #include <oscillator.c>
 
+// Printf
 #if defined(SERIALPRINTF)
-    #include <stdio.c>
+    #include <printFormated.c>
     #include <stdarg.h>
+#endif
+
+// PrintFloat
+#if defined(SERIALPRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+    #include <printNumber.c>
 #endif
 
 //extern u32 _cpu_clock_
@@ -85,7 +96,7 @@ void Serial_begin(u32 baudrate)
         BAUDCON = 0;                // polarity : non-inverted
         
         // IO's
-        //TRISBbits.TRISB5 = 1;       // RX is an input
+        TRISBbits.TRISB5 = 1;       // RX is an input
         //TRISBbits.TRISB7 = 0;       // see SPEN bit below
 
         // Baud Rate
@@ -195,59 +206,14 @@ void Serial_begin(u32 baudrate)
 #define Serial_flush()              { wpointer=1; rpointer=1; }
 
 /***********************************************************************
- * Interruption routine called by main.c
- **********************************************************************/
-
-void serial_interrupt(void)
-{
-    u8 caractere;
-    u8 newwp;
-
-    #if defined(__16F1459)  || \
-        defined(__18f1220)  || defined(__18f1320)   || \
-        defined(__18f14k22) || defined(__18lf14k22) || \
-        defined(__18f2455)  || defined(__18f4455)   || \
-        defined(__18f2550)  || defined(__18f4550)   || \
-        defined(__18f25k50) || defined(__18f45k50)
-
-    if (PIR1bits.RCIF)
-    { 
-        PIR1bits.RCIF=0;            // clear RX interrupt flag
-        caractere=RCREG;            // take received char
-
-    #elif defined(__18f26j50) || defined(__18f46j50) || \
-          defined(__18f26j53) || defined(__18f46j53) || \
-          defined(__18f27j53) || defined(__18f47j53)
-
-    if (PIR1bits.RC1IF) 
-    {
-        PIR1bits.RC1IF=0;           // clear RX interrupt flag
-        caractere=RCREG1;           // take received char
-
-    #else
-
-        #error "Processor Not Yet Supported. Please, Take Contact with Developpers."
-
-    #endif
-
-        if (wpointer!=RXBUFFERLENGTH-1)  // if not last place in buffer
-            newwp=wpointer+1;       // place=place+1
-
-        else
-            newwp=1;                // else place=1
-
-        if (rpointer!=newwp)        // if read pointer!=write pointer
-            rx[wpointer++]=caractere;// store received char
-
-        if (wpointer==RXBUFFERLENGTH)// if write pointer=length buffer
-            wpointer=1;             // write pointer = 1
-    }
-}
-
-/***********************************************************************
  * Serial.write()
  * Write a char on Serial port
  **********************************************************************/
+
+void printChar(u8 c)
+{
+    Serial_putchar(c);
+}
 
 void Serial_putchar(u8 caractere)
 {
@@ -274,28 +240,6 @@ void Serial_putchar(u8 caractere)
 
     #endif
 }
-
-/***********************************************************************
- * Serial.read()
- * Get a char from Serial port
- **********************************************************************/
-
-#if defined(SERIALREAD) || defined(SERIALGETKEY) || defined(SERIALGETSTRING)
-u8 Serial_read()
-{
-    u8 caractere=0;
-
-    if (Serial_available())
-    {
-        PIE1bits.RCIE = 0;             // Atomic operation start
-        caractere = rx[rpointer++];
-        if (rpointer == RXBUFFERLENGTH)
-            rpointer = 1;
-        PIE1bits.RCIE = 1;             // Atomic operation end
-    }
-    return(caractere);
-}
-#endif /* SERIALREAD */
 
 /***********************************************************************
  * USB SERIAL print routine (SERIAL.print)
@@ -339,56 +283,9 @@ void Serial_println(const char *string)
  **********************************************************************/
 
 #if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
-void Serial_printNumber(long value, u8 base)
+void printNumber(long value, u8 base)
 {  
-    u8 sign;
-
-    long i;
-    unsigned long v;    // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;       // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;    // pointer on string
-
-    if (value==0)
-    {
-        Serial_putchar('0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (unsigned long)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
-        
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
-    }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    Serial_print(string);
+    Serial_printNumber(value, base);
 }
 #endif /* SERIALPRINTNUMBER */
 
@@ -400,43 +297,9 @@ void Serial_printNumber(long value, u8 base)
  **********************************************************************/
 
 #if defined(SERIALPRINTFLOAT)
-void Serial_printFloat(float number, u8 digits)
+void printFloat(float number, u8 digits)
 { 
-    u8 i, toPrint;
-    u16 int_part;
-    float rounding, remainder;
-
-    // Handle negative numbers
-    if (number < 0.0)
-    {
-        Serial_puts('-', 1);
-        number = -number;
-    }
-
-    // Round correctly so that print(1.999, 2) prints as "2.00"  
-    rounding = 0.5;
-    for (i=0; i<digits; ++i)
-        rounding /= 10.0;
-
-    number += rounding;
-
-    // Extract the integer part of the number and print it  
-    int_part = (u16)number;
-    remainder = number - (float)int_part;
-    Serial_printNumber(int_part, 10);
-
-    // Print the decimal point, but only if there are digits beyond
-    if (digits > 0)
-        Serial_puts('.', 1); 
-
-    // Extract digits from the remainder one at a time
-    while (digits-- > 0)
-    {
-        remainder *= 10.0;
-        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-        Serial_printNumber(toPrint, 10);
-        remainder -= toPrint; 
-    }
+    Serial_printFloat(number, digits);
 }
 #endif /* SERIALPRINTFLOAT */
 
@@ -456,6 +319,28 @@ void Serial_printf(char *fmt, ...)
     va_end(args);
 }
 #endif /* SERIALPRINTF__ */
+
+/***********************************************************************
+ * Serial.read()
+ * Get a char from Serial port
+ **********************************************************************/
+
+#if defined(SERIALREAD) || defined(SERIALGETKEY) || defined(SERIALGETSTRING)
+u8 Serial_read()
+{
+    u8 caractere=0;
+
+    if (Serial_available())
+    {
+        PIE1bits.RCIE = 0;             // Atomic operation start
+        caractere = rx[rpointer++];
+        if (rpointer == RXBUFFERLENGTH)
+            rpointer = 1;
+        PIE1bits.RCIE = 1;             // Atomic operation end
+    }
+    return(caractere);
+}
+#endif /* SERIALREAD */
 
 /***********************************************************************
  * Serial.getKey
@@ -509,6 +394,56 @@ u8 * Serial_getstring()
     return (buffer);
 }
 #endif /* SERIALGETSTRING__ */
+
+/***********************************************************************
+ * Interruption routine called by main.c
+ **********************************************************************/
+
+void serial_interrupt(void)
+{
+    u8 caractere;
+    u8 newwp;
+
+    #if defined(__16F1459)  || \
+        defined(__18f1220)  || defined(__18f1320)   || \
+        defined(__18f14k22) || defined(__18lf14k22) || \
+        defined(__18f2455)  || defined(__18f4455)   || \
+        defined(__18f2550)  || defined(__18f4550)   || \
+        defined(__18f25k50) || defined(__18f45k50)
+
+    if (PIR1bits.RCIF)
+    { 
+        PIR1bits.RCIF=0;            // clear RX interrupt flag
+        caractere=RCREG;            // take received char
+
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    if (PIR1bits.RC1IF) 
+    {
+        PIR1bits.RC1IF=0;           // clear RX interrupt flag
+        caractere=RCREG1;           // take received char
+
+    #else
+
+        #error "Processor Not Yet Supported. Please, Take Contact with Developpers."
+
+    #endif
+
+        if (wpointer!=RXBUFFERLENGTH-1)  // if not last place in buffer
+            newwp=wpointer+1;       // place=place+1
+
+        else
+            newwp=1;                // else place=1
+
+        if (rpointer!=newwp)        // if read pointer!=write pointer
+            rx[wpointer++]=caractere;// store received char
+
+        if (wpointer==RXBUFFERLENGTH)// if write pointer=length buffer
+            wpointer=1;             // write pointer = 1
+    }
+}
 
 /**********************************************************************/
 

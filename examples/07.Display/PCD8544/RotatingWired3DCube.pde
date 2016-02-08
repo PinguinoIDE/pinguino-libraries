@@ -3,44 +3,20 @@
         Library :     Thomas Missonier (sourcezax@users.sourceforge.net).
         Tested on:	Pinguino 32MX250 and Pinguino 47J53A
         Output:	    Nokia 5110 84x48 LCD Display  with PCD8544 Controller
+    Wiring:
 
-        PCD8544_SPISW
-        - connect the display on any digital pin you want
-        PCD8544_SPISW | PCD8544_PORTB
-        - connect the display on PORTB
-        PCD8544_SPIHW
-        - connect SCE, SDIN et SCK to the CS/SS, SDO and SCK pin of your Pinguino
-        (Pinguino xxj5x : 0, 3, 2)
-        - connect RST, DC, and LIGHT to any digital pin you want
+    1 NOKIA_RST    // any pin 
+    2 NOKIA_SCE    // Pinguino CS or SS
+    3 NOKIA_DC     // any pin
+    4 NOKIA_SDIN   // Pinguino SDO
+    5 NOKIA_SCLK   // Pinguino SCK 
+    6 NOKIA_VCC    // 3.3V 
+    7 NOKIA_LIGHT  // GND or 3.3V depends on models                                      
+    8 NOKIA_GND    // GND 
 **/
 
-/* Pin configuration */
-
-#define PCD8544_INTERFACE     (PCD8544_SPIHW)
-#define NOKIA_RST               4  // Connected to LCD RST 
-//define NOKIA_SCE                 // Pinguino (SS) connected to LCD CS/CE  
-#define NOKIA_DC                6  // Connected to LCD Dat/Com
-//define NOKIA_SDIN                // Pinguino (SDO) connected to LCD SPIDat/DIN/NOKIA_SDIN
-//define NOKIA_SCLK                // Pinguino (SCK) connected to LCD SPIClk/CLK 
-//define NOKIA_VCC                 // Connected to 3.3V 
-//define NOKIA_LIGHT               // Connected to GND or 3.3V depends on models                                      
-//define NOKIA_GND                 // Connected to GND 
-
-/*
-define PCD8544_INTERFACE       (PCD8544_SPISW | PCD8544_PORTB)
-*/
-
-/*
-define PCD8544_INTERFACE       (PCD8544_SPISW)
-define NOKIA_RST               0  // LCD RST 
-define NOKIA_SCE               1  // LCD CS/CE  
-define NOKIA_DC                2  // LCD Dat/Com
-define NOKIA_SDIN              3  // LCD SPIDat/DIN/NOKIA_SDIN
-define NOKIA_SCLK              4  // LCD SPIClk/CLK 
-define NOKIA_VCC               5  // LCD NOKIA_VCC 3.3V 
-define NOKIA_LIGHT             6  // LCD BACKNOKIA_LIGHT : GROUND or NOKIA_VCC 3.3V depends on models                                      
-define NOKIA_GND               7  // LCD GROUND 
-*/
+// SPI Module
+#define SPILCD SPI1 
 
 /**
     Load one or more fonts and active them with PCD8544.setFont()
@@ -146,18 +122,18 @@ void initCube()
 
 void drawCube()
 {
-    PCD8544.drawLine( Point2D[0].x, Point2D[0].y, Point2D[1].x, Point2D[1].y	);
-    PCD8544.drawLine( Point2D[1].x, Point2D[1].y, Point2D[2].x, Point2D[2].y	);
-    PCD8544.drawLine( Point2D[2].x, Point2D[2].y, Point2D[3].x, Point2D[3].y	);
-    PCD8544.drawLine( Point2D[3].x, Point2D[3].y, Point2D[0].x, Point2D[0].y	);
-    PCD8544.drawLine( Point2D[4].x, Point2D[4].y, Point2D[5].x, Point2D[5].y	);
-    PCD8544.drawLine( Point2D[5].x, Point2D[5].y, Point2D[6].x, Point2D[6].y	);
-    PCD8544.drawLine( Point2D[6].x, Point2D[6].y, Point2D[7].x, Point2D[7].y	);
-    PCD8544.drawLine( Point2D[7].x, Point2D[7].y, Point2D[4].x, Point2D[4].y	);
-    PCD8544.drawLine( Point2D[0].x, Point2D[0].y, Point2D[5].x, Point2D[5].y	);
-    PCD8544.drawLine( Point2D[1].x, Point2D[1].y, Point2D[4].x, Point2D[4].y	);
-    PCD8544.drawLine( Point2D[2].x, Point2D[2].y, Point2D[7].x, Point2D[7].y	);
-    PCD8544.drawLine( Point2D[3].x, Point2D[3].y, Point2D[6].x, Point2D[6].y	);
+    PCD8544.drawLine(SPILCD, Point2D[0].x, Point2D[0].y, Point2D[1].x, Point2D[1].y	);
+    PCD8544.drawLine(SPILCD, Point2D[1].x, Point2D[1].y, Point2D[2].x, Point2D[2].y	);
+    PCD8544.drawLine(SPILCD, Point2D[2].x, Point2D[2].y, Point2D[3].x, Point2D[3].y	);
+    PCD8544.drawLine(SPILCD, Point2D[3].x, Point2D[3].y, Point2D[0].x, Point2D[0].y	);
+    PCD8544.drawLine(SPILCD, Point2D[4].x, Point2D[4].y, Point2D[5].x, Point2D[5].y	);
+    PCD8544.drawLine(SPILCD, Point2D[5].x, Point2D[5].y, Point2D[6].x, Point2D[6].y	);
+    PCD8544.drawLine(SPILCD, Point2D[6].x, Point2D[6].y, Point2D[7].x, Point2D[7].y	);
+    PCD8544.drawLine(SPILCD, Point2D[7].x, Point2D[7].y, Point2D[4].x, Point2D[4].y	);
+    PCD8544.drawLine(SPILCD, Point2D[0].x, Point2D[0].y, Point2D[5].x, Point2D[5].y	);
+    PCD8544.drawLine(SPILCD, Point2D[1].x, Point2D[1].y, Point2D[4].x, Point2D[4].y	);
+    PCD8544.drawLine(SPILCD, Point2D[2].x, Point2D[2].y, Point2D[7].x, Point2D[7].y	);
+    PCD8544.drawLine(SPILCD, Point2D[3].x, Point2D[3].y, Point2D[6].x, Point2D[6].y	);
 }
 
 void setup()
@@ -166,37 +142,17 @@ void setup()
 
     /// Screen init
 
-    // if PCD8544_INTERFACE == PCD8544_SPISW or PCD8544_INTERFACE == PCD8544_SPIHW
-    /*
-    digitalWrite(NOKIA_VCC,   HIGH); // LCD NOKIA_VCC to 3.3V
-    digitalWrite(NOKIA_LIGHT, LOW);  // LCD BackNOKIA_LIGHT On
-    digitalWrite(NOKIA_GND,   LOW);  // LCD NOKIA_GND to NOKIA_GND
+    // if SPILCD = SPISW (SPI Software)
+    //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
+    PCD8544.init(SPILCD, 0, 1); // DC and RST pin
 
-    pinMode(NOKIA_VCC,   OUTPUT);
-    pinMode(NOKIA_LIGHT, OUTPUT);
-    pinMode(NOKIA_GND,   OUTPUT);
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPISW and PCD8544_PORTB
-    /*
-    PCD8544.init();
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPISW
-    /*
-    PCD8544.init(NOKIA_SCLK, NOKIA_SDIN, NOKIA_DC, NOKIA_SCE, NOKIA_RST);
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPIHW
-    PCD8544.init(NOKIA_DC, NOKIA_RST);
- 
-    PCD8544.setContrast(40); // 0 to 127
+    PCD8544.setContrast(SPILCD, 40); // 0 to 127
     //PCD8544.setFont(font6x8);
-    PCD8544.clearScreen();
+    PCD8544.clearScreen(SPILCD);
     
     // Cube's location
-    Xoff = PCD8544.screen.width  / 2;
-    Yoff = PCD8544.screen.height / 2;
+    Xoff = PCD8544[SPILCD].screen.width  / 2;
+    Yoff = PCD8544[SPILCD].screen.height / 2;
     Zoff = 2048;
 
     // create 3D cube
@@ -215,18 +171,19 @@ void loop()
         Projection();
         
         // display
-        PCD8544.clearScreen();
-        //PCD8544.printf("%ufps (max.%u)", fps, maxfps);
-        // Or if your Pinguino runsout of memory :
-        /*
-        PCD8544.printNumber(fps, DEC);
-        PCD8544.print("fps (max.");
-        PCD8544.printNumber(maxfps, DEC);
-        PCD8544.print(")");
-        */
-        //
+        PCD8544.clearScreen(SPILCD);
+        
+        //PCD8544.printf(SPILCD, "%ufps (max.%u)", fps, maxfps);
+        // Or if your Pinguino runs out of memory :
+        
+        PCD8544.printNumber(SPILCD, fps, DEC);
+        PCD8544.print(SPILCD, "fps (max.");
+        PCD8544.printNumber(SPILCD, maxfps, DEC);
+        PCD8544.print(SPILCD, ")");
+        
+        // draw the cube
         drawCube();
-        PCD8544.refresh();
+        PCD8544.refresh(SPILCD);
 
         // update angles
         xa = (xa + 1) % 360;

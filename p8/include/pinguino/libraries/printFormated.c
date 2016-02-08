@@ -1,13 +1,15 @@
 /*	--------------------------------------------------------------------
-    FILE:			printf.c
+    FILE:			printFormated.c
     PROJECT:		pinguino - http://www.pinguino.cc/
     PURPOSE:		alternative printf and sprintf functions
     PROGRAMERS:		regis blanchot <rblanchot@gmail.com>
                     mark harper <markfh@f2s.com>
-    FIRST RELEASE:	10 Nov 2010
-    LAST RELEASE:	16 Jan 2012
     --------------------------------------------------------------------
     TODO : thousands separator
+    --------------------------------------------------------------------
+    CHANGELOG
+    10 Nov 2010 - Régis Blanchot - first release
+    08 Feb 2016 - Régis Blanchot - excluded float support (%f) for the 16F1459
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -175,6 +177,7 @@ static u8 pprinti(u8 **out, u32 i, u8 islong, u8 base, u8 sign, u8 width, u8 pad
     pprintfl = pinguino print float
     ------------------------------------------------------------------*/
 
+#if !defined(__16F1459)
 static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 precision)
 {
     union
@@ -330,6 +333,7 @@ static u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 pre
 
     return count + pprints(out, buffer, width, pad);
 }
+#endif
 
 /*	--------------------------------------------------------------------
     pprint = pinguino print
@@ -396,12 +400,16 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
                     precision += *format - '0';
                 }
             }
+            
+            #if !defined(__16F1459)
 
             if (*format == 'f') 	// float
             {
                 pc += pprintfl(out, va_arg(args, float), width, pad, separator, precision);
                 continue;
             }
+            
+            #endif
 
             if (*format == 's')		// string
             {
@@ -451,13 +459,17 @@ static u8 pprint(u8 **out, const u8 *format, va_list args)
                 continue;
             }
 
+            #if !defined(__16F1459)
+
             if (*format == 'o')		// octal
             {
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, 8, 0, width, pad, separator, 'a');
                 continue;
             }
-
+            
+            #endif
+            
             if (*format == 'c') 	// ascii
             {
                 scr[0] = va_arg(args, u16);

@@ -50,7 +50,7 @@
 
 // Printf
 #ifdef LEDCONTROLPRINTF
-    #include <stdio.c>
+    #include <printFormated.c>
 #endif
 
 void LedControl_spiTransfer(u8 matrix, u8 opcode, u8 data)
@@ -99,8 +99,8 @@ void LedControl_init(u8 module, ...)
         sda = va_arg(args, u8);                 // get the next arg
         sck = va_arg(args, u8);                 // get the next arg
         cs  = va_arg(args, u8);                 // get the next arg
-        SPI_setPin(LEDCONTROL_SPI, sda, sck, cs);
         SPI_setBitOrder(LEDCONTROL_SPI, SPI_MSBFIRST);
+        SPI_begin(LEDCONTROL_SPI, sda, sck, cs);
     }
     else
     {

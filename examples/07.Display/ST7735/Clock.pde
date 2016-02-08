@@ -60,6 +60,7 @@ void setup()
     ST7735.init(SPITFT, 7); // DC
     ST7735.setFont(SPITFT, font6x8);
     ST7735.setBackgroundColor(SPITFT, ST7735_BLACK);
+    ST7735.setColor(SPITFT, ST7735_GREEN);
     ST7735.setOrientation(SPITFT, 90);
     ST7735.clearScreen(SPITFT);
 

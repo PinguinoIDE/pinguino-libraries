@@ -49,7 +49,7 @@ void setup()
 void loop()
 {
     ST7735.printf(SPITFT, "f=%.3f\r\n",f);
-    f = f + 0.01f;
+    f = f + 0.01;
     toggle(USERLED);
     delay(100);
 }

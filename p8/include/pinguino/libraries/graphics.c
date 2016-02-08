@@ -52,17 +52,18 @@
 #include <typedef.h>    // u8, u16, ..
 #include <macro.h>      // swap
 #include <mathlib.c>    // abs
+
 #ifdef DRAWBITMAP
-#define SDOPEN
-#define SDLSEEK
-#define SDCLOSE
-#define SDMOUNT
-#define SDREAD
-#define SDREAD16
-#define SDREAD32
-#include <sd/tff.h>
-//#include <sd/diskio.h>
-#include <sd/diskio.c>
+    #define SDOPEN
+    #define SDLSEEK
+    #define SDCLOSE
+    #define SDMOUNT
+    #define SDREAD
+    #define SDREAD16
+    #define SDREAD32
+    #include <sd/tff.h>
+    //#include <sd/diskio.h>
+    #include <sd/diskio.c>
 #endif
 
 //#define _abs_(a) (((a)> 0) ? (a) : -(a))

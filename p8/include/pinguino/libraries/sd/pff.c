@@ -30,7 +30,7 @@
 
 #include <sd/diskio.c>		/* Declarations of low level disk I/O functions */
 #include <string.h>
-#include <stdio.c>
+#include <printFormated.c>
 
 /*--------------------------------------------------------------------------
 

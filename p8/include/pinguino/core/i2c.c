@@ -43,8 +43,8 @@
 #endif
 
 //#include <interrupt.c>
-#include <stdio.c>
-#include <stdarg.h>
+//#include <printFormated.c>
+//#include <stdarg.h>
 
 // Modules
 #define I2C1            1
@@ -147,23 +147,27 @@ void I2C_init(u8 mode, u16 sora)
 {
     u8 conf;
     
-    // In Slave mode, the SCL and SDA pins must be configured as inputs
+    // Datasheet 22.4.3 SDA AND SCL PINS
+    // Selection of any I2C mode with the SSPEN bit set, forces the SCL
+    // and SDA pins to be open-drain. These pins should be set by the
+    // user to inputs by setting the appropriate TRIS bits.
+    
     #if defined(__16F1459)
     
-    TRISCbits.TRISC1 = INPUT;            // SDA = INPUT
-    TRISCbits.TRISC0 = INPUT;            // SCL = INPUT
+    TRISBbits.TRISB4 = INPUT;           // SDA = INPUT
+    TRISBbits.TRISB6 = INPUT;           // SCL = INPUT
     
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
 
-    TRISBbits.TRISB5 = INPUT;			// SDA = INPUT
-    TRISBbits.TRISB4 = INPUT;			// SCL = INPUT
+    TRISBbits.TRISB5 = INPUT;           // SDA = INPUT
+    TRISBbits.TRISB4 = INPUT;           // SCL = INPUT
 
     #else // x550 and x5k50
 
-    TRISBbits.TRISB0 = INPUT;			// SDA = INPUT
-    TRISBbits.TRISB1 = INPUT;			// SCL = INPUT
+    TRISBbits.TRISB0 = INPUT;           // SDA = INPUT
+    TRISBbits.TRISB1 = INPUT;           // SCL = INPUT
 
     #endif
 

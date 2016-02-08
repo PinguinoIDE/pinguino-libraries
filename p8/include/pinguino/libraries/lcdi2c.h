@@ -73,7 +73,7 @@
 #define __LCDI2C_H
 
 #include <typedef.h>
-//#include <delay.c>
+#include <delayms.c>
 
 typedef union
 {
@@ -219,29 +219,18 @@ static void lcdi2c_send4(u8, u8);
 static void lcdi2c_send8(u8, u8);
 
 // public
+void printChar(u8);
 void lcdi2c_init(u8, u8, u8);
 void lcdi2c_backlight();
 void lcdi2c_noBacklight();
-//void lcdi2c_clear();
 void lcdi2c_clearLine(u8);
-//void lcdi2c_home();
-//void lcdi2c_noAutoscroll();
-//void lcdi2c_autoscroll();
-//void lcdi2c_rightToLeft();
-//void lcdi2c_leftToRight();
-//void lcdi2c_scrollDisplayRight();
-//void lcdi2c_scrollDisplayLeft();
-//void lcdi2c_blink();
-//void lcdi2c_noBlink();
-//void lcdi2c_cursor();
-//void lcdi2c_noCursor();
-//void lcdi2c_display();
-//void lcdi2c_noDisplay();
 void lcdi2c_setCursor(u8, u8);
-void lcdi2c_write(u8);
 void lcdi2c_printf(char*, ...);
 void lcdi2c_newchar(const u8 *, u8);
 //void lcdi2c_newpattern();
+
+#define lcdi2c_write(c)             lcdi2c_send8(c, LCD_DATA)
+#define lcdi2c_printChar(c)         lcdi2c_send8(c, LCD_DATA)
 
 #if defined(LCDI2CCLEAR)
 #define lcdi2c_clear()              do { lcdi2c_send8(LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)

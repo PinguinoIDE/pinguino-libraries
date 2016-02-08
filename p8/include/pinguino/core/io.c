@@ -84,7 +84,11 @@ void IO_init(void)
 
     TRISA = 0x00;
     #ifndef I2CINT
-    TRISB = 0x00;
+        #if defined(__SERIAL__) && defined(__16F1459)
+        TRISB |= 0b11011111; // Clear all bits except RB5 (Serial INPUT)
+        #else
+        TRISB = 0x00;
+        #endif
     #endif
     
     #if defined(__16F1459) || defined(__16F1708)

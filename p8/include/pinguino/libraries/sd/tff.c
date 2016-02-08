@@ -61,7 +61,7 @@
 // Printf
 #ifdef SDPRINTF
     #include <stdarg.h>
-    #include <stdio.c>
+    #include <printFormated.c>
 #endif
 
 FATFS FAT;                  // File system object

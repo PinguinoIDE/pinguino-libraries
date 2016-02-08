@@ -22,7 +22,7 @@
 #define __SWSERIAL__
 
 #include <delay.h>
-#include <stdio.c>
+#include <printFormated.c>
 #include <stdarg.h>
 
 char uartdata;
