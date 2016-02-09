@@ -55,7 +55,9 @@ void System_sleep()
 	#endif
 
 	//Device enters Sleep mode (not Idle mode) on SLEEP instruction
+    #ifndef __16F1459
     OSCCONbits.IDLEN = 0;
+    #endif
     sleep();
 }
 #endif

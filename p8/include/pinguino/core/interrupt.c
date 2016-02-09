@@ -94,7 +94,7 @@ void IntSetEnable(u8 inter, u8 enable)
     {
         #if defined(INT0INT)
         case INT_INT0:
-            #ifdef _16F1459
+            #ifdef __16F1459
             INTCONbits.INTE = enable;
             #else
             INTCONbits.INT0IE = enable;
@@ -116,30 +116,38 @@ void IntSetEnable(u8 inter, u8 enable)
 
         #if defined(TMR0INT)
         case INT_TMR0:
+            #ifndef __16F1459
             INTCON2bits.TMR0IP = INT_LOW_PRIORITY;
+            #endif
             INTCONbits.TMR0IE = enable;
             break;
         #endif
 
         #if defined(TMR1INT)
         case INT_TMR1:
+            #ifndef __16F1459
             IPR1bits.TMR1IP = INT_LOW_PRIORITY;
+            #endif
             PIE1bits.TMR1IE = enable;
             break;
         #endif
 
         #if defined(TMR2INT)
         case INT_TMR2:
+            #ifndef __16F1459
             IPR1bits.TMR2IP = INT_LOW_PRIORITY;
+            #endif
             PIE1bits.TMR2IE = enable;
             break;
         #endif
 
         #if defined(TMR3INT)
+        #ifndef __16F1459
         case INT_TMR3:
             IPR2bits.TMR3IP = INT_LOW_PRIORITY;
             PIE2bits.TMR3IE = enable;
             break;
+        #endif
         #endif
 
             
@@ -349,21 +357,21 @@ void IntEnable(u8 inter)
 }
 #endif /* defined(INTENABLE) */
 
+#if 0
 #if defined(INTSTART)
 void IntStart()
 {
-    INTCONbits.GIEH = 1;   // Enable global HP interrupts
-    INTCONbits.GIEL = 1;   // Enable global LP interrupts
+    interrupts();
 }
 #endif /* defined(INTSTART) */
 
 #if defined(INTSTOP)
 void IntStop()
 {
-    INTCONbits.GIEH = 0;   // Enable global HP interrupts
-    INTCONbits.GIEL = 0;   // Enable global LP interrupts
+    noInterrupts();
 }
 #endif /* defined(INTSTOP) */
+#endif
 
 /*	----------------------------------------------------------------------------
     ---------- IntClearFlag
@@ -800,8 +808,10 @@ void IntTimerStart()
         T2CONbits.TMR2ON = 1;
     #endif
 
+    #ifndef __16F1459
     #ifdef TMR3INT
         T3CONbits.TMR3ON = 1;
+    #endif
     #endif
 
     #if defined(__18f26j50) || defined(__18f46j50) || \
@@ -853,8 +863,10 @@ void IntTimerStop()
         T2CONbits.TMR2ON = 0;
     #endif
 
+    #ifndef __16F1459
     #ifdef TMR3INT
         T3CONbits.TMR3ON = 0;
+    #endif
     #endif
 
     #if defined(__18f26j50) || defined(__18f46j50) || \
@@ -1014,10 +1026,8 @@ u8 OnTimer1(callback func, u32 timediv, u16 delay)
             _cycles_ = osc / timediv;
         }
         
-        preloadH[INT_TMR1] = high8(0xFFFF - _cycles_);
-        preloadL[INT_TMR1] =  low8(0xFFFF - _cycles_);
-
-        #if defined(__18f25k50) || defined(__18f45k50) || \
+        #if defined(__16F1459)  || \
+            defined(__18f25k50) || defined(__18f45k50) || \
             defined(__18f26j50) || defined(__18f46j50) || \
             defined(__18f26j53) || defined(__18f46j53) || \
             defined(__18f27j53) || defined(__18f47j53)
@@ -1026,10 +1036,14 @@ u8 OnTimer1(callback func, u32 timediv, u16 delay)
         
         #endif
 
-        T1CON = T1_0 | T1_16BIT | T1_SYNC_EXT_0 | _presca_ | T1_SOURCE_FOSCDIV4;
-        IPR1bits.TMR1IP = INT_LOW_PRIORITY;
         TMR1H = preloadH[INT_TMR1];
         TMR1L = preloadL[INT_TMR1];
+        #ifdef __16F1459
+        T1CON = T1_ON | T1_SYNC_EXT_ON | _presca_ | T1_SOURCE_FOSCDIV4;
+        #else
+        T1CON = T1_ON | T1_16BIT | T1_SYNC_EXT_ON | _presca_ | T1_SOURCE_FOSCDIV4;
+        IPR1bits.TMR1IP = INT_LOW_PRIORITY;
+        #endif
         PIR1bits.TMR1IF = 0;
         PIE1bits.TMR1IE = INT_ENABLE;
         
@@ -1037,9 +1051,9 @@ u8 OnTimer1(callback func, u32 timediv, u16 delay)
     }
     else
     {
-    #ifdef DEBUG
+        #ifdef DEBUG
         debug("Error : interrupt TIMER1 is already used !");
-    #endif
+        #endif
         return INT_USED;
     }
 }
@@ -1133,26 +1147,37 @@ u8 OnTimer2(callback func, u8 timediv, u16 delay)
             case INT_MICROSEC:
                 // 1us = 12 cy
                 _pr2 = System_getPeripheralFrequency() / 1000 / 1000;
-                _t2con = T2_0 | T2_PS_1_1 | T2_POST_1_1;
+                #ifdef __16F1459
+                #else
+                _t2con = T2_ON | T2_PS_1_1 | T2_POST_1_1;
+                #endif
                 break;
             case INT_MILLISEC:
                 // 1ms = 12.000 cy
                 // 12.000 / 15 / 16 = 50
                 _pr2 = System_getPeripheralFrequency() / 1000 / 240;
-                _t2con = T2_0 | T2_POST_1_15 | T2_PS_1_16;
+                #ifdef __16F1459
+                #else
+                _t2con = T2_ON | T2_POST_1_15 | T2_PS_1_16;
+                #endif
                 break;
             case INT_SEC:
                 // 1sec = 12.000.000 cy
                 // 12.000.000 / 15 / 16 = 50.000 = 200 * 250
                 _pr2 = System_getPeripheralFrequency() / 240 / 200;
+                #ifdef __16F1459
+                #else
                 intCountLimit[INT_TMR2] = delay * 200;
-                _t2con = T2_0 | T2_POST_1_15 | T2_PS_1_16;
+                _t2con = T2_ON | T2_POST_1_15 | T2_PS_1_16;
+                #endif
                 break;
         }
 
         T2CON = _t2con;
         PR2 = _pr2;	// Timer2 Match value
+        #ifndef __16F1459
         IPR1bits.TMR2IP = INT_LOW_PRIORITY;
+        #endif
         PIR1bits.TMR2IF = 0;
         PIE1bits.TMR2IE = INT_ENABLE;
         return INT_TMR2;
@@ -1178,6 +1203,7 @@ u8 OnTimer2(callback func, u8 timediv, u16 delay)
     --------------------------------------------------------------------------*/
 
 #ifdef TMR3INT
+#ifndef __16F1459 
 /* Note: This function needs T1OSC as its clock source */
 u8 OnTimer3(callback func, u32 timediv, u16 delay)
 {
@@ -1239,6 +1265,11 @@ u8 OnTimer3(callback func, u32 timediv, u16 delay)
         return INT_USED;
     }
 }
+#else
+
+    #error "Your processor don't have any Timer3."
+    
+#endif
 #endif
 
 /*	----------------------------------------------------------------------------

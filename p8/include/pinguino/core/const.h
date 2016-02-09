@@ -77,6 +77,6 @@
     #define HEX				16
     #define FLOAT			32
 
-    #define MHZ             1000000UL
+    #define MHZ             1000000
 #endif
 

@@ -210,11 +210,6 @@ void Serial_begin(u32 baudrate)
  * Write a char on Serial port
  **********************************************************************/
 
-void printChar(u8 c)
-{
-    Serial_putchar(c);
-}
-
 void Serial_putchar(u8 caractere)
 {
     #if defined(__16F1459)  || \
@@ -239,6 +234,11 @@ void Serial_putchar(u8 caractere)
         #error "Processor Not Yet Supported. Please, Take Contact with Developpers."
 
     #endif
+}
+
+void printChar(u8 c)
+{
+    Serial_putchar(c);
 }
 
 /***********************************************************************

@@ -27,7 +27,7 @@
     
     /// C
 
-    #define NoEndLoop		        while(1)
+    #define noEndLoop()             while(1)
 
     /// BYTES
 

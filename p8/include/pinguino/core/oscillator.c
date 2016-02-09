@@ -50,7 +50,11 @@
 //#include <millis.c>
 
 #if defined(_MILLIS_C_)
-extern volatile u32 _reload_val;
+#if defined(__16F1459) || defined(__16F1708)
+extern volatile u8 _PR0_;
+#else
+extern volatile u16 _PR0_;
+#endif
 #endif
 
 volatile u32 _cpu_clock_;
@@ -63,7 +67,7 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     8000000
     // The indices are valid values for CPDIV
-    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
+    static const u8 _cpudiv[] = { 1, 2, 3, 6 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
@@ -72,9 +76,9 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     16000000
     // The indices are valid values for CPDIV
-    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
+    static const u8 _cpudiv[] = { 1, 2, 3, 6 };
     // The indices are valid values for IRCF
-    static const u32 ircf[] = { 31000, 31250, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
+    static const u32 ircf[] = { 31000, 31000, 31250, 31250, 62500, 125000, 250000, 500000, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
 #elif   defined(__18f14k22) || \
         defined(__18f25k50) || defined(__18f45k50)
@@ -336,7 +340,7 @@ u8 System_getPLLDIV()
     Return CPU divider 
     ------------------------------------------------------------------*/
 
-static u8 System_getCPUDIV(u8 pll)
+static u8 System_getCPUDIV()
 {
     #if defined(__16F1708)
 
@@ -344,11 +348,13 @@ static u8 System_getCPUDIV(u8 pll)
 
     #elif defined(__16F1459)
 
-    return _cpudiv[(Flash_read(__CONFIG2) & 0b00110000 ) >> 4];
+    return _cpudiv[(Flash_read(__CONFIG2) & 0x0030) >> 4];
 
     #elif defined(__18f2455)  || defined(__18f4455)  || \
           defined(__18f2550)  || defined(__18f4550)
 
+    u8 pll = System_getPLLDIV();
+    
     if (pll)
         return _cpudiv[(Flash_read(__CONFIG1L) & 0b00011000 ) >> 3];
     else
@@ -400,13 +406,14 @@ u32 System_getCpuFrequency()
 
             pll = System_getPLL();
             plldiv = System_getPLLDIV();
-            cpudiv = System_getCPUDIV(pll);
+            cpudiv = System_getCPUDIV();
+            source = System_getSource();
 
             #if defined(__18f2455) || defined(__18f4455) || \
                 defined(__18f2550) || defined(__18f4550)
               
-            source = System_getSource() >> 1;
-            if( (source==1) || (source==3) || (source==7) )
+            source = source >> 1;
+            if( (source == 1) || (source == 3) || (source == 7) )
             {
                 _cpu_clock_ = 96000000UL / cpudiv; // pll is enabled
             }
@@ -415,14 +422,20 @@ u32 System_getCpuFrequency()
                 _cpu_clock_ = CRYSTAL / cpudiv;
             }
             
-            #elif defined(__16F1459)  || defined(__16F1708)  || \
-                  defined(__18f25k50) || defined(__18f45k50) || \
+            #elif defined(__16F1459)  || defined(__16F1708)
+            
+            if (source == 8)    // INTOSC
+                _cpu_clock_ = pll * ircf[OSCCONbits.IRCF] / cpudiv;
+            else
+                _cpu_clock_ = pll * CRYSTAL / cpudiv;
+
+            #elif defined(__18f25k50) || defined(__18f45k50) || \
                   defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
                   defined(__18f27j53) || defined(__18f47j53)
 
             if (pll)
-                _cpu_clock_ = 48000000UL / cpudiv; // pll is enabled
+                _cpu_clock_ = 48000000 / cpudiv; // pll is enabled
             else
                 _cpu_clock_ = CRYSTAL / cpudiv;
             
@@ -644,7 +657,7 @@ void System_setIntOsc(u32 freq)
     /// -----------------------------------------------------------------
 
     if (status)
-        INTCONbits.GIE = 0;
+        noInterrupts();
 
     /// -----------------------------------------------------------------
     /// 2- if freq > FINTOSC
@@ -699,60 +712,79 @@ void System_setIntOsc(u32 freq)
 
     if (freq <= FINTOSC)
     {
+        // *** LFINTOSC ***
         //INTSRC: Internal Oscillator Low-Frequency Source Select bit
         //0 = 31 kHz device clock derived directly from INTRC internal oscillator
         if (freq == 31000)
         {
             _cpu_clock_ = 31000;
             
-            #if defined(__16F1459)  || defined(__16F1708)  || \
-                defined(__18f25k50) || defined(__18f45k50)
+            #if defined(__16F1459) || defined(__16F1708)
+            
+            //OSCCONbits.SPLLEN = 0;      // PLL disabled
+            OSCCONbits.IRCF = 0;        // 31KHz
+            OSCCONbits.SCS = 0b10;      // Internal Oscillator
+
+            // The Low-Frequency Internal Oscillator Ready bit
+            // (LFIOFR) of the OSCSTAT register indicates when the
+            // LFINTOSC is running.
+            while (!OSCSTATbits.LFIOFR);
+            
+            #elif defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
+            OSCCONbits.IRCF = 0;        // 31KHz
 
             #elif defined(__18f2455) || defined(__18f4455) || \
                   defined(__18f2550) || defined(__18f4550)
 
             OSCTUNEbits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
+            OSCCONbits.IRCF = 0;        // 31KHz
 
             #else
 
             OSCTUNEbits.PLLEN = 0;      // PLL disabled
             OSCTUNEbits.INTSRC = 0;     // select INTOSC as a 31 KHz clock source
+            OSCCONbits.IRCF = 0;        // 31KHz
 
             #endif
-
-            OSCCONbits.IRCF = 0;
         }
 
+        // *** LFINTOSC ***
         //INTSRC: Internal Oscillator Low-Frequency Source Select bit
         //1 = 31.25 kHz device clock derived from INTOSC source
         else if (freq == 31250)
         {
             _cpu_clock_ = 31250;
             
-            #if defined(__16F1459)  || defined(__16F1708)  || \
-                defined(__18f25k50) || defined(__18f45k50)
+            #if defined(__16F1459)  || defined(__16F1708)
+            
+            OSCCONbits.SPLLEN = 0;      // PLL disabled
+            OSCCONbits.IRCF = 0b0010;   // 31.25 KHz
+
+            #elif defined(__18f25k50) || defined(__18f45k50)
 
             OSCCON2bits.PLLEN = 0;      // PLL disabled
             OSCCON2bits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
+            OSCCONbits.IRCF = 0;        // 
 
             #elif defined(__18f2455) || defined(__18f4455) || \
                   defined(__18f2550) || defined(__18f4550)
 
             OSCTUNEbits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
+            OSCCONbits.IRCF = 0;        // 
 
             #else
 
             OSCTUNEbits.PLLEN = 0;      // PLL disabled
             OSCTUNEbits.INTSRC = 1;     // select INTOSC as a 31.25 KHz clock source
+            OSCCONbits.IRCF = 0;        // 
 
             #endif
-
-            OSCCONbits.IRCF = 0;
         }
 
+        // *** HFINTOSC ***
         else
         {
             
@@ -791,7 +823,11 @@ void System_setIntOsc(u32 freq)
     #if defined(_MILLIS_C_)
     
     //INTCONbits.TMR0IE = 0; //INT_DISABLE;
-    _reload_val = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
+    #if   defined(__16F1459) || defined(__16F1708)
+    _PR0_ = 69; // 0xFF - (_cpu_clock_ / 4 / 1000) ;
+    #else
+    _PR0_ = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
+    #endif
     //INTCONbits.TMR0IE = 1; //INT_ENABLE;
     
     #endif
@@ -801,7 +837,7 @@ void System_setIntOsc(u32 freq)
     /// -----------------------------------------------------------------
 
     if (status)
-        INTCONbits.GIE = 1;
+        interrupts();
 }
 #endif /* defined(SYSTEMSETINTOSC) || defined(SYSTEMSETPERIPHERALFREQUENCY) */
 

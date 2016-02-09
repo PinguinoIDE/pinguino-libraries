@@ -238,8 +238,8 @@
     ---------- global variables
     --------------------------------------------------------------------------*/
 
-    u8 numcolmax;			// from 0 to 15 = 16
-    u8 numlinemax;			// from 0 to 1 = 2
+    u8 gLCDWIDTH;			// from 0 to 15 = 16
+    u8 gLCDHEIGHT;			// from 0 to 1 = 2
     u8 gBacklight = 0;		// memorise l'etat du backlight du LCD
     u8 PCF8574_address;
     _Byte_ PCF8574_data;
@@ -344,11 +344,11 @@ void lcdi2c_setCursor(u8 col, u8 line)
 {
     int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 
-    if ( line > numlinemax )
-        line = numlinemax - 1;    // we count rows starting w/0
+    if ( line > gLCDHEIGHT )
+        line = gLCDHEIGHT;// - 1;    // we count rows starting w/0
         
-    if ( col > numcolmax )
-        col = numcolmax - 1;    // we count rows starting w/0
+    if ( col > gLCDWIDTH )
+        col = gLCDWIDTH;// - 1;    // we count rows starting w/0
         
     lcdi2c_send8(LCD_SETDDRAMADDR | (col + row_offsets[line]), LCD_CMD);
 }
@@ -364,7 +364,7 @@ void lcdi2c_clearLine(u8 line)
     u8 i;
 
     lcdi2c_setCursor(0, line);
-    for (i = 0; i < numcolmax; i++)
+    for (i = 0; i <= gLCDWIDTH; i++)
         lcdi2c_write(SPACE);  // affiche des espaces
 }
 #endif
@@ -419,21 +419,18 @@ void lcdi2c_println(const u8 *string)
 #if defined(LCDI2CPRINTCENTER)
 void lcdi2c_printCenter(const u8 *string)
 {
-    u8 strlen, nbspace;
-    const u8 *p;
+    u8 len=0, nbspace;
+    const u8 *p = string;
 
-    for (p = string; *p; --p);
-        strlen = p - string;
-
-    nbspace = (numcolmax - strlen) / 2;
+    while (*p++) len++;
+    nbspace = (gLCDWIDTH + 1 - len) / 2;
     
     // write spaces before
     while(nbspace--)
-        lcdi2c_printChar(SPACE);
+        lcdi2c_send8((u8)SPACE, LCD_DATA);
 
     // write string
     lcdi2c_print(string);
-    //lcdi2c_print(module, (u8*)"\n\r");
 }
 #endif
 
@@ -443,7 +440,10 @@ void lcdi2c_printCenter(const u8 *string)
     --------------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT)
-#define lcdi2c_printNumber(value, base)     printNumber(value, base)
+void lcdi2c_printNumber(s32 value, u8 base)
+{
+    printNumber(value, base);
+}
 #endif
 
 /*	----------------------------------------------------------------------------
@@ -452,7 +452,10 @@ void lcdi2c_printCenter(const u8 *string)
     --------------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTFLOAT)
-#define lcdi2c_printFloat(number, digits)   printFloat(number, digits)
+void lcdi2c_printFloat(float number, u8 digits)
+{
+    printFloat(number, digits);
+}
 #endif
 
 /*	----------------------------------------------------------------------------
@@ -534,8 +537,8 @@ void lcdi2c_newpattern()
 
 void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address)
 {
-    numcolmax  = numcol - 1;
-    numlinemax = numline - 1;
+    gLCDWIDTH  = numcol - 1;
+    gLCDHEIGHT = numline - 1;
     //PCF8574_address = 0b01001110 | i2c_address;
     PCF8574_address = i2c_address;
     PCF8574_data.val = 0;
