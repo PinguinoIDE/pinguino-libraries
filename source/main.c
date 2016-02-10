@@ -171,7 +171,7 @@
     /// Disables all interrupt
     /// ----------------------------------------------------------------
 
-    /*
+    /* RB : useless, interrupts are disabled per default after reset
     #if defined(__16F1459)
     INTCONbits.GIE  = 0;            // Disable global interrupt
     #else
@@ -205,7 +205,7 @@
         OSCCON = 0b11111100;        // SPLLEN   : 1 = PLL is enabled (see config.h)
                                     // SPLLMULT : 1 = 3x PLL is enabled (16x3=48MHz)
                                     // IRCF     : 1111 = HFINTOSC (16 MHz)
-                                    // SCS      : 11 = use clock determined by IRCF
+                                    // SCS      : 00 = use clock determined by IRCF
 
         // Wait HFINTOSC frequency is stable (HFIOFS=1) 
         while (!OSCSTATbits.HFIOFS);
@@ -338,15 +338,7 @@
     #endif
 
     #ifdef ON_EVENT         // defined if interrupt.c is used
-
-    //IntInit();
-    #if defined(_PIC14E)    // __16F1459 || __16F1708
-    INTCONbits.GIE  = 1;    // Enable global interrupts
-    #else
-    INTCONbits.GIEH = 1;    // Enable global HP interrupts
-    INTCONbits.GIEL = 1;    // Enable global LP interrupts
-    #endif
-    
+    interrupts();           // starts interrupts
     #endif
 
     while (1)

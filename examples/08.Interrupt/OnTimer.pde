@@ -13,8 +13,10 @@ void setup()
 {
     pinMode(USERLED,OUTPUT);
 
-    // Use Timer1 to toggle USERLED every 1000 ms
-    OnTimer1(blink, INT_MILLISEC, 1000);
+    // Use Timer to toggle USERLED every 500 ms
+    //OnTimer0(blink, INT_MILLISEC, 500);
+    OnTimer1(blink, INT_MILLISEC, 500);
+    //OnTimer2(blink, INT_MILLISEC, 500);
 }
 
 void loop()

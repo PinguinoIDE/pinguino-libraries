@@ -44,20 +44,21 @@
 #ifdef SYSTEMSLEEP
 void System_sleep()
 {
-	// This bit has no effect if the Configuration bit, WDTEN, is enabled.
-    WDTCONbits.SWDTEN = 1;   // turn on the watch dog timer
+    // This bit has no effect if the Configuration bit, WDTEN, is enabled.
+    //WDTCONbits.SWDTEN = 1;   // turn on the watch dog timer
 
-	#if defined(__18f26j50) || defined(__18f46j50) || \
-		defined(__18f26j53) || defined(__18f46j53) || \
-		defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__18f26j50) || defined(__18f46j50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
     // Device and on-chip regulator enter sleep mode on SLEEP instruction
     WDTCONbits.REGSLP = 1;
-	#endif
+    #endif
 
-	//Device enters Sleep mode (not Idle mode) on SLEEP instruction
+    // Device enters Sleep mode (not Idle mode) on SLEEP instruction
     #ifndef __16F1459
     OSCCONbits.IDLEN = 0;
     #endif
+    
     sleep();
 }
 #endif
