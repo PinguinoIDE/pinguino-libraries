@@ -263,10 +263,17 @@
 	#define T2_ON				(1<<2)  // Timer2 is on
 	#define T2_OFF				(0)     // Timer2 is off
 	// bit 1-0 T2CKPS1:T2CKPS0: Timer2 Clock Prescale Select bits
+    #if defined(__16F1459)
+	#define T2_PS_1_1			0b00 // Prescaler is 1
+	#define T2_PS_1_4			0b01 // Prescaler is 4
+	#define T2_PS_1_16			0b10 // Prescaler is 16
+	#define T2_PS_1_64			0b11 // Prescaler is 16
+    #else
 	#define T2_PS_1_1			0b00 // Prescaler is 1
 	#define T2_PS_1_4			0b01 // Prescaler is 4
 	#define T2_PS_1_16			0b11 // Prescaler is 16
-
+    #endif
+    
 	///
 	/// T3CON: TIMER3 CONTROL REGISTER
 	///

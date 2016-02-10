@@ -999,7 +999,7 @@ u8 OnTimer1(callback func, u32 timediv, u16 delay)
 {
     u8  _presca_;
     u16 _cycles_;
-    u32 osc = System_getPeripheralFrequency();
+    u32 fosc = System_getPeripheralFrequency();
 
     if (intUsed[INT_TMR1] == INT_NOT_USED)
     {
@@ -1016,16 +1016,20 @@ u8 OnTimer1(callback func, u32 timediv, u16 delay)
         {
             _presca_ = T1_PS_1_8;
             intCountLimit[INT_TMR1] = delay * 25;
-            _cycles_ = osc / 8 / 25;
+            _cycles_ = fosc / 8 / 25;
         }
         
         else // INT_MICROSEC or INT_MILLISEC
         {
             _presca_ = T1_PS_1_1;
             intCountLimit[INT_TMR1] = delay;
-            _cycles_ = osc / timediv;
+            _cycles_ = fosc / timediv;
         }
         
+        _cycles_ = 0xFFFF - _cycles_;
+        preloadH[INT_TMR1] = high8(_cycles_);
+        preloadL[INT_TMR1] = low8(_cycles_);
+
         #if defined(__16F1459)  || \
             defined(__18f25k50) || defined(__18f45k50) || \
             defined(__18f26j50) || defined(__18f46j50) || \
@@ -1133,7 +1137,8 @@ u8 OnTimer2(callback func, u8 timediv, u16 delay)
 {
     u8 _t2con = 0;
     u8 _pr2 = 0;
-
+    u32 fosc = System_getPeripheralFrequency();
+    
     if (intUsed[INT_TMR2] == INT_NOT_USED)
     {
         intUsed[INT_TMR2] = INT_USED;
@@ -1146,27 +1151,26 @@ u8 OnTimer2(callback func, u8 timediv, u16 delay)
         {
             case INT_MICROSEC:
                 // 1us = 12 cy
-                _pr2 = System_getPeripheralFrequency() / 1000 / 1000;
-                #ifdef __16F1459
-                #else
-                _t2con = T2_ON | T2_PS_1_1 | T2_POST_1_1;
-                #endif
+                _pr2 = fosc / 1000 / 1000;
+                _t2con = T2_ON | T2_POST_1_1 | T2_PS_1_1;
                 break;
             case INT_MILLISEC:
                 // 1ms = 12.000 cy
                 // 12.000 / 15 / 16 = 50
-                _pr2 = System_getPeripheralFrequency() / 1000 / 240;
-                #ifdef __16F1459
-                #else
+                _pr2 = fosc / 1000 / 240;
                 _t2con = T2_ON | T2_POST_1_15 | T2_PS_1_16;
-                #endif
                 break;
             case INT_SEC:
+                #if defined(__16F1459)
+                // 1sec = 12.000.000 cy
+                // 12.000.000 / 15 / 64 = 12.500 = 250 * 50
+                _pr2 = fosc / 250 / 50;
+                intCountLimit[INT_TMR2] = delay * 50;
+                _t2con = T2_ON | T2_POST_1_15 | T2_PS_1_64;
+                #else
                 // 1sec = 12.000.000 cy
                 // 12.000.000 / 15 / 16 = 50.000 = 200 * 250
-                _pr2 = System_getPeripheralFrequency() / 240 / 200;
-                #ifdef __16F1459
-                #else
+                _pr2 = fosc / 240 / 200;
                 intCountLimit[INT_TMR2] = delay * 200;
                 _t2con = T2_ON | T2_POST_1_15 | T2_PS_1_16;
                 #endif
