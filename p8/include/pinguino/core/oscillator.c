@@ -50,11 +50,7 @@
 //#include <millis.c>
 
 #if defined(_MILLIS_C_)
-#if defined(__16F1459) || defined(__16F1708)
-extern volatile u8 _PR0_;
-#else
-extern volatile u16 _PR0_;
-#endif
+extern volatile u16 _PERIOD_;
 #endif
 
 volatile u32 _cpu_clock_;
@@ -823,11 +819,7 @@ void System_setIntOsc(u32 freq)
     #if defined(_MILLIS_C_)
     
     //INTCONbits.TMR0IE = 0; //INT_DISABLE;
-    #if   defined(__16F1459) || defined(__16F1708)
-    _PR0_ = 69; // 0xFF - (_cpu_clock_ / 4 / 1000) ;
-    #else
-    _PR0_ = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
-    #endif
+    _PERIOD_ = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
     //INTCONbits.TMR0IE = 1; //INT_ENABLE;
     
     #endif

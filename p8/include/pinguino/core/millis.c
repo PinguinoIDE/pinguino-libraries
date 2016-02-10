@@ -15,6 +15,8 @@
     09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
     12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    10 Feb. 2016 - Régis Blanchot - changed from Timer0 to Timer1 for PIC16F
+                                    Timer1 is the only 16-bit timer available on 16F
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -34,80 +36,67 @@
 #ifndef _MILLIS_C_
 #define _MILLIS_C_
 
-#include <compiler.h>
-#include <typedef.h>
-//#include <interrupt.h>
-//#include <interrupt.c>
-#if !defined(__16F1459) &&  !defined(__16F1708)
+#include <compiler.h>           // compatibility between SDCC and XC8
+#include <typedef.h>            // u8, u32, ...
+#include <macro.h>              // interrupts() and noInterrupts
 #include <oscillator.c>         // System_getPeripheralFrequency()
-#endif
 
 volatile u32 _millis;
-#if defined(__16F1459) || defined(__16F1708)
-volatile u8 _PR0_;
-#else
-volatile u16 _PR0_;
-#endif
+volatile u16 _PERIOD_;
 
 void updateMillisReloadValue(void )   /* Call from System_setIntOsc() */
 {
     /* Atomic operation */
-    INTCONbits.TMR0IE = 0;      //INT_DISABLE;
+    
     #if defined(__16F1459) || defined(__16F1708)
-    //_PR0_ = (0xFFFF - System_getPeripheralFrequency() / 1000) >> 8;
-    _PR0_ = 69;
+    
+    PIE1bits.TMR1IE = 0;
+    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+    PIE1bits.TMR1IE = 1;
+
     #else
-    _PR0_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+
+    INTCONbits.TMR0IE = 0;
+    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+    INTCONbits.TMR0IE = 1;
+
     #endif
-    INTCONbits.TMR0IE = 1;      //INT_ENABLE;
 }
+
+/*  --------------------------------------------------------------------
+    if Fosc = 48 MHz then Fosc/4 = 12MHz
+    which means 12.E-06 cycles/sec = 12.000 cycles/ms
+    if TMR0 is loaded with 65536 - 12000
+    overload will occur after 12.000 cycles = 1ms
+    ------------------------------------------------------------------*/
 
 void millis_init(void)
 {
-//    intUsed[INT_TMR0] = INT_USED;
+    noInterrupts();             // Disable global interrupts
+    
+    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
 
-    /*
-    T0CON = 0x80;               // TMR0 on, 16 bits counter, prescaler=2
-    INTCON |= 0xA0;             // set GIE and TMR0IE
-    */
-    
-    // if Fosc = 48 MHz then Fosc/4 = 12MHz
-    // which means 12.E-06 cycles/sec = 12.000 cycles/ms
-    // if TMR0 is loaded with 65536 - 12000
-    // overload will occur after 12.000 cycles = 1ms
-    
     #if defined(__16F1459) || defined(__16F1708)
-    INTCONbits.GIE     = 0;     // Disable global interrupts
+
+    T1CON = 0b00000001;         //T1_ON | T1_SOURCE_FOSCDIV4 | T1_PS_1_1;
+    T1GCONbits.TMR1GE = 0;      // Ignore T1DIG effection 
+    TMR1H = high8(_PERIOD_);
+    TMR1L =  low8(_PERIOD_);
+    PIR1bits.TMR1IF = 0;
+    PIE1bits.TMR1IE = 1;
+
     #else
-    INTCONbits.GIEH    = 0;     // Disable global HP interrupts
-    INTCONbits.GIEL    = 0;     // Disable global LP interrupts
-    #endif
-    
-    #if defined(__16F1459) || defined(__16F1708)
-    OPTION_REG = 0b00000111;    // Clock source FOSC/4, prescaler 1:256
-    //_PR0_ = (0xFFFF - System_getPeripheralFrequency() / 1000) >> 8;
-    _PR0_ = 69;
-    TMR0 = _PR0_;
-    #else
-    T0CON = 0b00001000;         //T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
-    _PR0_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
-    TMR0H = high8(_PR0_);
-    TMR0L =  low8(_PR0_);
-    #endif
-    
-    #if !defined(__16F1459) && !defined(__16F1708)
+
+    T0CON = 0b00001000;         //T0_ON | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
+    TMR0H = high8(_PERIOD_);
+    TMR0L =  low8(_PERIOD_);
     INTCON2bits.TMR0IP = 1;     //INT_HIGH_PRIORITY;
-    #endif
     INTCONbits.TMR0IF  = 0;
     INTCONbits.TMR0IE  = 1;     //INT_ENABLE;
 
-    #if defined(__16F1459) || defined(__16F1708)
-    INTCONbits.GIE     = 1;     // Enable global interrupts
-    #else
-    T0CONbits.TMR0ON   = 1;
-    INTCONbits.GIEH    = 1;     // Enable global HP interrupts
-    INTCONbits.GIEL    = 1;     // Enable global LP interrupts
     #endif
+
+    interrupts();               // Enable global interrupts
 
     _millis = 0;
 }
@@ -115,27 +104,50 @@ void millis_init(void)
 u32 millis()
 {
     u32 temp;
-    /* Atomic operation for multibyte value */
+
+    /* Atomic operation */
+
+    #if defined(__16F1459) || defined(__16F1708)
+    
+    PIE1bits.TMR1IE = 0;
+    temp = _millis;
+    PIE1bits.TMR1IE = 1;
+
+    #else
+
     INTCONbits.TMR0IE = 0;      //INT_DISABLE;
     temp = _millis;
     INTCONbits.TMR0IE = 1;      //INT_ENABLE;
+
+    #endif
+
     return (temp);
 }
 
-// called by interruption service routine in main.c    if (INTCONbits.TMR0IF)
+// called by interruption service routine in main.c
 void millis_interrupt(void)
 {
+    #if defined(__16F1459) || defined(__16F1708)
+    
+    if (PIR1bits.TMR1IF)
+    {
+        PIR1bits.TMR1IF = 0;
+        TMR1H = high8(_PERIOD_);
+        TMR1L =  low8(_PERIOD_);
+        _millis++;
+    }
+
+    #else
+
     if (INTCONbits.TMR0IF)
     {
         INTCONbits.TMR0IF = 0;
-        #if defined(__16F1459) || defined(__16F1708)
-        TMR0 = _PR0_;
-        #else
-        TMR0H = high8(_PR0_);
-        TMR0L =  low8(_PR0_);
-        #endif
+        TMR0H = high8(_PERIOD_);
+        TMR0L =  low8(_PERIOD_);
         _millis++;
     }
+
+    #endif
 }
 
 #endif /* _MILLIS_C_ */

@@ -210,7 +210,7 @@ void Serial_begin(u32 baudrate)
  * Write a char on Serial port
  **********************************************************************/
 
-void Serial_putchar(u8 caractere)
+void Serial_putchar(u8 c)
 {
     #if defined(__16F1459)  || \
         defined(__18f1220)  || defined(__18f1320)   || \
@@ -221,13 +221,13 @@ void Serial_putchar(u8 caractere)
 
         //while (!PIR1bits.TXIF);     // Ready ?
         while (!TXSTAbits.TRMT);
-        TXREG=caractere;            // yes, send char
+        TXREG=c;            // yes, send char
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f27j53) || defined(__18f47j53)
 
         while (!TXSTA1bits.TRMT);   // Ready ?
-        TXREG1=caractere;           // yes, send char
+        TXREG1=c;           // yes, send char
 
     #else
 
@@ -283,9 +283,9 @@ void Serial_println(const char *string)
  **********************************************************************/
 
 #if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
-void printNumber(long value, u8 base)
+void Serial_printNumber(s32 value, u8 base)
 {  
-    Serial_printNumber(value, base);
+    printNumber(value, base);
 }
 #endif /* SERIALPRINTNUMBER */
 
@@ -297,9 +297,9 @@ void printNumber(long value, u8 base)
  **********************************************************************/
 
 #if defined(SERIALPRINTFLOAT)
-void printFloat(float number, u8 digits)
+void Serial_printFloat(float number, u8 digits)
 { 
-    Serial_printFloat(number, digits);
+    printFloat(number, digits);
 }
 #endif /* SERIALPRINTFLOAT */
 
