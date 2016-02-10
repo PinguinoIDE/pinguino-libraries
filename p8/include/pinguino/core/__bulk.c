@@ -19,7 +19,7 @@
 #include <usb/usb_bulk.c>
 #include <typedef.h>
 #include <delayms.c>
-#include <stdio.c>                  // Pinguino printf
+#include <printFormated.c>                  // Pinguino printf
 #include <stdarg.h>
 
 // BULK buffer length

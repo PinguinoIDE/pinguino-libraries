@@ -1086,12 +1086,12 @@ void OnRTCC(callback func, u16 delay)
             // TMR1CS  = 1	External clock from RC0/T1OSO/T13CKI pin (on the rising edge)
             // TMR1ON  = 0	Stops Timer1
             #if defined(__18f25k50) || defined(__18f45k50)
-            _t1con = T1_0 | T1_16BIT | T1_SYNC_EXT_ON | T1_SOSC_ON | T1_PS_1_1 | T1_SOURCE_FOSC;
+            _t1con = T1_ON | T1_16BIT | T1_SYNC_EXT_ON | T1_SOSC_ON | T1_PS_1_1 | T1_SOURCE_FOSC;
             #else
-            _t1con = T1_0 | T1_16BIT | T1_SYNC_EXT_ON  | T1_OSC_ON | T1_PS_1_1 | T1_RUN_FROM_ANOTHER | T1_SOURCE_EXT;
-          //_t1con = T1_0 | T1_16BIT | T1_SYNC_EXT_0 | T1_OSC_0 | T1_PS_1_8 | T1_SOURCE_FOSC;
+            _t1con = T1_ON | T1_16BIT | T1_SYNC_EXT_ON  | T1_OSC_ON | T1_PS_1_1 | T1_RUN_FROM_ANOTHER | T1_SOURCE_EXT;
+          //_t1con = T1_ON | T1_16BIT | T1_SYNC_EXT_ON | T1_OSC_ON | T1_PS_1_8 | T1_SOURCE_FOSC;
             #endif
-            // 18F26J50 -> _t1con = T1_0 | T1_16BIT | T1_PS_1_1 | T1_OSC_ON | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
+            // 18F26J50 -> _t1con = T1_ON | T1_16BIT | T1_PS_1_1 | T1_OSC_ON | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
 
             IPR1bits.TMR1IP = INT_LOW_PRIORITY;
             PIE1bits.TMR1IE = INT_ENABLE;
@@ -1248,7 +1248,7 @@ u8 OnTimer3(callback func, u32 timediv, u16 delay)
         
         #endif
 
-        T3CON = T3_0 | T3_16BIT | T3_SYNC_EXT_0 | _presca_ | T3_SOURCE_FOSCDIV4;
+        T3CON = T3_ON | T3_16BIT | T3_SYNC_EXT_ON | _presca_ | T3_SOURCE_FOSCDIV4;
         IPR2bits.TMR3IP = INT_LOW_PRIORITY;
         TMR3H = preloadH[INT_TMR3];
         TMR3L = preloadL[INT_TMR3];
@@ -1306,20 +1306,20 @@ u8 OnTimer4(callback func, u8 timediv, u16 delay)
             case INT_MICROSEC:
                 // 1us = 12 cy
                 _pr4 = System_getPeripheralFrequency() / 1000 / 1000;
-                _t4con = T4_0 | T4_PS_1_1 | T4_POST_1_1;
+                _t4con = T4_ON | T4_PS_1_1 | T4_POST_1_1;
                 break;
             case INT_MILLISEC:
                 // 1ms = 12.000 cy
                 // 12.000 / 15 / 16 = 50
                 _pr4 = System_getPeripheralFrequency() / 1000 / 240;
-                _t4con = T4_0 | T4_POST_1_15 | T4_PS_1_16;
+                _t4con = T4_ON | T4_POST_1_15 | T4_PS_1_16;
                 break;
             case INT_SEC:
                 // 1sec = 12.000.000 cy
                 // 12.000.000 / 15 / 16 = 50.000 = 200 * 25
                 _pr4 = System_getPeripheralFrequency() / 240 / 200;
                 intCountLimit[INT_TMR4] = delay * 200;
-                _t4con = T4_0 | T4_POST_1_15 | T4_PS_1_16;
+                _t4con = T4_ON | T4_POST_1_15 | T4_PS_1_16;
                 break;
         }
 
@@ -1394,7 +1394,7 @@ u8 OnTimer5(callback func, u32 timediv, u16 delay)
 
         T5GCONbits.TMR5GE = 0;				/* First Ignore T1DIG effection */ 
 
-        T5CON = T5_0 | T5_16BIT | T5_SYNC_EXT_0 | T5_SOURCE_T10 | _presca_ | T5_SOURCE_FOSCDIV4;
+        T5CON = T5_ON | T5_16BIT | T5_SYNC_EXT_ON | T5_SOURCE_T10 | _presca_ | T5_SOURCE_FOSCDIV4;
         IPR5bits.TMR5IP = INT_LOW_PRIORITY;
         TMR5H = preloadH[INT_TMR5];
         TMR5L = preloadL[INT_TMR5];
@@ -1448,20 +1448,20 @@ u8 OnTimer6(callback func, u8 timediv, u16 delay)
             case INT_MICROSEC:
                 // 1us = 12 cy
                 _pr6 = System_getPeripheralFrequency() / 1000 / 1000;
-                _t6con = T6_0 | T6_PS_1_1 | T6_POST_1_1;
+                _t6con = T6_ON | T6_PS_1_1 | T6_POST_1_1;
                 break;
             case INT_MILLISEC:
                 // 1ms = 12.000 cy
                 // 12.000 / 15 / 16 = 50
                 _pr6 = System_getPeripheralFrequency() / 1000 / 240;
-                _t6con = T6_0 | T6_POST_1_15 | T6_PS_1_16;
+                _t6con = T6_ON | T6_POST_1_15 | T6_PS_1_16;
                 break;
             case INT_SEC:
                 // 1sec = 12.000.000 cy
                 // 12.000.000 / 15 / 16 = 50.000 = 200 * 25
                 _pr6 = System_getPeripheralFrequency() / 240 / 200;
                 intCountLimit[INT_TMR6] = delay * 200;
-                _t6con = T6_0 | T6_POST_1_15 | T6_PS_1_16;
+                _t6con = T6_ON | T6_POST_1_15 | T6_PS_1_16;
                 break;
         }
 
@@ -1518,20 +1518,20 @@ u8 OnTimer8(callback func, u8 timediv, u16 delay)
             case INT_MICROSEC:
                 // 1us = 12 cy
                 _pr8 = System_getPeripheralFrequency() / 1000 / 1000;
-                _t8con = T8_0 | T8_PS_1_1 | T8_POST_1_1;
+                _t8con = T8_ON | T8_PS_1_1 | T8_POST_1_1;
                 break;
             case INT_MILLISEC:
                 // 1ms = 12.000 cy
                 // 12.000 / 15 / 16 = 50
                 _pr8 = System_getPeripheralFrequency() / 1000 / 240;
-                _t8con = T8_0 | T8_POST_1_15 | T8_PS_1_16;
+                _t8con = T8_ON | T8_POST_1_15 | T8_PS_1_16;
                 break;
             case INT_SEC:
                 // 1sec = 12.000.000 cy
                 // 12.000.000 / 15 / 16 = 50.000 = 200 * 25
                 _pr8 = System_getPeripheralFrequency() / 240 / 200;
                 intCountLimit[INT_TMR8] = delay * 200;
-                _t8con = T8_0 | T8_POST_1_15 | T8_PS_1_16;
+                _t8con = T8_ON | T8_POST_1_15 | T8_PS_1_16;
                 break;
         }
 
@@ -1612,7 +1612,7 @@ void OnCounter1(callback func, u8 config)
         preloadL[INT_TMR1] = 0;
         TMR1H = 0;
         TMR1L = 0;
-        T1CON = T1_ON | T1_16BIT | T1_PS_1_8 | T1_RUN_FROM_ANOTHER | T1_OSC_0 | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
+        T1CON = T1_ON | T1_16BIT | T1_PS_1_8 | T1_RUN_FROM_ANOTHER | T1_OSC_ON | T1_SYNC_EXT_ON | T1_SOURCE_EXT;
         T1CON |= config;
         PIR1bits.TMR1IF = 0;
     }

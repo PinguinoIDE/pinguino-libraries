@@ -35,7 +35,7 @@
 //#endif
 
 #if defined(CDCPRINTF)
-    #include <stdio.c>                  // Pinguino printf
+    #include <printFormated.c>                  // Pinguino printf
     #include <stdarg.h>
 #endif
 
