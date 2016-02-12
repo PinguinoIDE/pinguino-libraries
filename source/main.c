@@ -305,7 +305,7 @@
     #endif
 
     #if defined(__MILLIS__) || defined(__DELAYMS__)
-    millis_init();              // Use Timer 0
+    millis_init();              // Use Timer 0 (16F use Timer 1)
     #endif
 
     #ifdef __SPI__

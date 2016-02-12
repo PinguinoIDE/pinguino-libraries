@@ -42,26 +42,7 @@
 #include <oscillator.c>         // System_getPeripheralFrequency()
 
 volatile u32 _millis;
-volatile u16 _PERIOD_;
-
-void updateMillisReloadValue(void )   /* Call from System_setIntOsc() */
-{
-    /* Atomic operation */
-    
-    #if defined(__16F1459) || defined(__16F1708)
-    
-    PIE1bits.TMR1IE = 0;
-    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
-    PIE1bits.TMR1IE = 1;
-
-    #else
-
-    INTCONbits.TMR0IE = 0;
-    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
-    INTCONbits.TMR0IE = 1;
-
-    #endif
-}
+volatile t16 _period;
 
 /*  --------------------------------------------------------------------
     if Fosc = 48 MHz then Fosc/4 = 12MHz
@@ -74,25 +55,26 @@ void millis_init(void)
 {
     noInterrupts();             // Disable global interrupts
     
-    _PERIOD_ = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+    _period.w = 0xFFFF - (System_getPeripheralFrequency() / 1000);
 
     #if defined(__16F1459) || defined(__16F1708)
 
     T1CON = 0b00000001;         //T1_ON | T1_SOURCE_FOSCDIV4 | T1_PS_1_1;
     T1GCONbits.TMR1GE = 0;      // Ignore T1DIG effection 
-    TMR1H = high8(_PERIOD_);
-    TMR1L =  low8(_PERIOD_);
+    TMR1H = _period.h8;
+    TMR1L = _period.l8;
     PIR1bits.TMR1IF = 0;
     PIE1bits.TMR1IE = 1;
 
     #else
 
     T0CON = 0b00001000;         //T0_ON | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
-    TMR0H = high8(_PERIOD_);
-    TMR0L =  low8(_PERIOD_);
+    TMR0H = _period.h8;
+    TMR0L = _period.l8;
     INTCON2bits.TMR0IP = 1;     //INT_HIGH_PRIORITY;
     INTCONbits.TMR0IF  = 0;
     INTCONbits.TMR0IE  = 1;     //INT_ENABLE;
+    T0CONbits.TMR0ON   = 1;
 
     #endif
 
@@ -121,7 +103,7 @@ u32 millis()
 
     #endif
 
-    return (temp);
+    return temp;
 }
 
 // called by interruption service routine in main.c
@@ -132,8 +114,8 @@ void millis_interrupt(void)
     if (PIR1bits.TMR1IF)
     {
         PIR1bits.TMR1IF = 0;
-        TMR1H = high8(_PERIOD_);
-        TMR1L =  low8(_PERIOD_);
+        TMR1H = _period.h8;
+        TMR1L = _period.l8;
         _millis++;
     }
 
@@ -142,8 +124,8 @@ void millis_interrupt(void)
     if (INTCONbits.TMR0IF)
     {
         INTCONbits.TMR0IF = 0;
-        TMR0H = high8(_PERIOD_);
-        TMR0L =  low8(_PERIOD_);
+        TMR0H = 0xD1;//_period.h8;
+        TMR0L = 0x1F;//_period.l8;
         _millis++;
     }
 

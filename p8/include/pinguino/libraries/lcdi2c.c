@@ -1,11 +1,11 @@
-/*	----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     FILE:				lcdi2c.c
     PROJECT:			pinguino - http://www.pinguino.cc/
     PURPOSE:			driving lcd display through i2c pcf8574 i/o expander
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	29 jul. 2008
     LAST RELEASE:	06 apr. 2011
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -19,11 +19,11 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-/*	----------------------------------------------------------------------------
-    ---------- LCD 2x16 (GDM1602A with build-in Samsung KS0066/S6A0069)
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    LCD 2x16 (GDM1602A with build-in Samsung KS0066/S6A0069)
+    --------------------------------------------------------------------
 
     01 - VSS (GRND)
     02 - VDD (+5V)
@@ -35,11 +35,11 @@
     11 a 16 - D4 a D7 du LCD sont reliées au PIC ou PCF8574
     15 - LED+ ???
     16 - LED- ???
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-/*	----------------------------------------------------------------------------
-    ---------- PCF8574P
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    PCF8574P
+    --------------------------------------------------------------------
 
     +5V		A0		-|o|-		VDD	+5V
     +5V		A1		-|	|-		SDA	pull-up 1K8 au +5V
@@ -67,7 +67,7 @@
     SCL		14		serial clock line				uC_SCL
     SDA		15		serial data line				uC_SDA
     VDD		16		supply voltage
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __LCDI2C_C
 #define __LCDI2C_C
@@ -94,14 +94,14 @@
     #include <printNumber.c>
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- Défintion des caractères spéciaux
-    ----------------------------------------------------------------------------
-    ---------- â, à, ç, é, î, ô, ù, ê, è, ë, ï, û, €
-    ---------- usage :
-    ---------- 1/ réservation de l'emplacement 0 (max. 7) pour la lettre "é" : lcdi2c_newchar(car3, 0);
-    ---------- 2/ écriture du nouveau caractère sur le LCD : lcdi2c_write(0);
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Défintion des caractères spéciaux
+    --------------------------------------------------------------------
+    â, à, ç, é, î, ô, ù, ê, è, ë, ï, û, €
+    usage :
+    1/ réservation de l'emplacement 0 (max. 7) pour la lettre "é" : lcdi2c_newchar(car3, 0);
+    2/ écriture du nouveau caractère sur le LCD : lcdi2c_write(0);
+    ------------------------------------------------------------------*/
 /*
     const u8 car0[8]={
         0b00000100,      //â
@@ -234,9 +234,9 @@
         0b00000000
     };
 */
-/*	----------------------------------------------------------------------------
-    ---------- global variables
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    global variables
+    ------------------------------------------------------------------*/
 
     u8 gLCDWIDTH;			// from 0 to 15 = 16
     u8 gLCDHEIGHT;			// from 0 to 1 = 2
@@ -244,16 +244,16 @@
     u8 PCF8574_address;
     _Byte_ PCF8574_data;
 
-/*	----------------------------------------------------------------------------
-    ---------- Ecriture d'un quartet (mode 4 bits) dans le LCD
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Ecriture d'un quartet (mode 4 bits) dans le LCD
+    --------------------------------------------------------------------
     Envoie d'un quartet vers les pins :
     - D4 a D7 du LCD
     - P4 a P7 du PCF8574
     NB : quartet est en fait un 8 bits dont seuls les 4 bits de poids fort nous interessent
     @param quartet = 4 bits a envoyer au LCD
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static void lcdi2c_send4(u8 quartet, u8 mode)
 {
@@ -264,7 +264,7 @@ static void lcdi2c_send4(u8 quartet, u8 mode)
     LCD_RS = mode;					// x  x  x  x  0  0  0/1  0
     LCD_BL = gBacklight;				// x  x  x  x  0  0  0/1  0/1
 
-    /// ---------- LCD Enable Cycle
+    /// LCD Enable Cycle
 
     I2C_start();                    // send start condition
 
@@ -282,9 +282,9 @@ static void lcdi2c_send4(u8 quartet, u8 mode)
     I2C_stop();                     // send stop confition
 }
 
-/*	----------------------------------------------------------------------------
-    ---------- Ecriture d'un octet dans le LCD en mode 4 bits
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Ecriture d'un octet dans le LCD en mode 4 bits
+    --------------------------------------------------------------------
     Les données sont écrites en envoyant séquentiellement :
     1/ les quatre bits de poids fort
     2/ les quatre bits de poids faible
@@ -292,7 +292,7 @@ static void lcdi2c_send4(u8 quartet, u8 mode)
     qui correspondent aux pins D4 a D7 du LCD ou du PCF8574
     @param octet = octet a envoyer au LCD
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 static void lcdi2c_send8(u8 octet, u8 mode)
 {
@@ -301,14 +301,17 @@ static void lcdi2c_send8(u8 octet, u8 mode)
     //Delayus(46);			 // Wait for instruction excution time (more than 46us)
 }
 
-/*	----------------------------------------------------------------------------
-    ---------- backlight
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    backlight
+    NB : PCF8574 is logical inverted so :
+    0 = ON
+    1 = OFF
+    ------------------------------------------------------------------*/
 
-#if defined(LCDI2CBACKLIGHT)
-void lcdi2c_backlight()
+#if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
+void lcdi2c_blight(u8 status)
 {
-    gBacklight = 0; 	// 0 = ON since PCF8574 is logical inverted
+    gBacklight = status;
     LCD_BL = gBacklight;
     I2C_start();
     I2C_write((PCF8574_address << 1) | I2C_WRITE);
@@ -317,46 +320,29 @@ void lcdi2c_backlight()
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- noBacklight
-    --------------------------------------------------------------------------*/
-
-#if defined (LCDI2CNOBACKLIGHT)
-void lcdi2c_noBacklight()
-{
-    gBacklight = 1;	// 1 = OFF since PCF8574 is logical inverted
-    LCD_BL = gBacklight;
-    I2C_start();
-    I2C_write((PCF8574_address << 1) | I2C_WRITE);
-    I2C_write(PCF8574_data.val);
-    I2C_stop();
-}
-#endif
-
-/*	----------------------------------------------------------------------------
-    ---------- Positionne le curseur sur le LCD
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Positionne le curseur sur le LCD
     from (0,0) to (15,1)
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CSETCURSOR)
 void lcdi2c_setCursor(u8 col, u8 line)
 {
     int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 
-    if ( line > gLCDHEIGHT )
+    if (line > gLCDHEIGHT)
         line = gLCDHEIGHT;// - 1;    // we count rows starting w/0
         
-    if ( col > gLCDWIDTH )
-        col = gLCDWIDTH;// - 1;    // we count rows starting w/0
+    if (col > gLCDWIDTH)
+        col = gLCDWIDTH;  // - 1;    // we count rows starting w/0
         
     lcdi2c_send8(LCD_SETDDRAMADDR | (col + row_offsets[line]), LCD_CMD);
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- Efface une ligne
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Efface une ligne
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CCLEARLINE)
 void lcdi2c_clearLine(u8 line)
@@ -369,21 +355,19 @@ void lcdi2c_clearLine(u8 line)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- Affiche un caractere ASCII a la position courante du curseur
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Affiche un caractere ASCII a la position courante du curseur
     c = code ASCII du caractere
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 void printChar(u8 c)
 {
     lcdi2c_send8(c, LCD_DATA);
 }
 
-/*	----------------------------------------------------------------------------
-    ---------- print
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    print
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINT)       || defined(LCDI2CPRINTLN)    || \
     defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT) || \
@@ -396,10 +380,9 @@ void lcdi2c_print(const u8 *string)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- println : useless on a LCD
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    println : useless on a LCD
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTLN)
 #if 0
@@ -411,10 +394,9 @@ void lcdi2c_println(const u8 *string)
 #endif
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- println
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    println
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTCENTER)
 void lcdi2c_printCenter(const u8 *string)
@@ -434,10 +416,9 @@ void lcdi2c_printCenter(const u8 *string)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- printNumber
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    printNumber
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT)
 void lcdi2c_printNumber(s32 value, u8 base)
@@ -446,10 +427,9 @@ void lcdi2c_printNumber(s32 value, u8 base)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- printFloat
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    printFloat
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTFLOAT)
 void lcdi2c_printFloat(float number, u8 digits)
@@ -458,10 +438,9 @@ void lcdi2c_printFloat(float number, u8 digits)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- printf
-    ----------------------------------------------------------------------------
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    printf
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTF)
 void lcdi2c_printf(char *fmt, ...)
@@ -474,14 +453,14 @@ void lcdi2c_printf(char *fmt, ...)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- Définit un caractère personnalisé de 8x8 points.
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Définit un caractère personnalisé de 8x8 points.
+    --------------------------------------------------------------------
     Le LCD utilisé admet au maximum 8 caractères spéciaux.
     char_code : code du caractère à définir (0 <= char_code <= 7)
     lcdi2c_newchar(car3, 0); Définit le caractère 'é' à l'adresse 0 de la mémoire CG RAM
     lcdi2c_newchar(car8, 1); Définit le caractère 'è' à l'adresse 1.
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #if defined(LCDI2CNEWCHAR)
 void lcdi2c_newchar(const u8 *c, u8 char_code)
@@ -499,9 +478,9 @@ void lcdi2c_newchar(const u8 *c, u8 char_code)
 }
 #endif
 
-/*	----------------------------------------------------------------------------
-    ---------- Définition de 8 nouveaux caractères
-    --------------------------------------------------------------------------*/
+/*  --------------------------------------------------------------------
+    Définition de 8 nouveaux caractères
+    ------------------------------------------------------------------*/
 /*
 void lcdi2c_newpattern()
 {
@@ -525,25 +504,24 @@ void lcdi2c_newpattern()
     //lcdi2c_newchar(car12, UCIRC);		// û
 }
 */
-/*	----------------------------------------------------------------------------
-    ---------- Initialisation du LCD
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Initialisation du LCD
+    --------------------------------------------------------------------
     This function must be called before any other function.
     No need to wait between 2 commands because i2c bus is quite slow.
     cf. Microchip AN587 Interfacing PICmicro® MCUs to an LCD Module
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     pcf8574 adress format is [0 1 0 0 A2 A1 A0 0]
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address)
 {
     gLCDWIDTH  = numcol - 1;
     gLCDHEIGHT = numline - 1;
-    //PCF8574_address = 0b01001110 | i2c_address;
     PCF8574_address = i2c_address;
     PCF8574_data.val = 0;
 
-    I2C_init(I2C_MASTER_MODE, I2C_100KHZ);
+    I2C_init(I2C_MASTER_MODE, I2C_400KHZ);
 
     Delayms(15);								// Wait more than 15 ms after VDD rises to 4.5V
     lcdi2c_send4(0x30, LCD_CMD);			// 0x30 - Mode 8 bits

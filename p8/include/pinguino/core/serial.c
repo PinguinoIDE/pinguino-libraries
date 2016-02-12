@@ -56,8 +56,6 @@
     #include <printNumber.c>
 #endif
 
-//extern u32 _cpu_clock_
-
 // RX buffer length
 #ifndef RXBUFFERLENGTH
     #if defined(__16F1459) || \
@@ -81,12 +79,7 @@ u8 wpointer=1,rpointer=1;           // write and read pointer
 
 void Serial_begin(u32 baudrate)
 {
-    // TO FIX
-    #if defined(__16F1459)
-    u16 spbrg = (u16)BaudRateDivisor(48*1000000UL, baudrate);
-    #else
     u16 spbrg = (u16)BaudRateDivisor(System_getCpuFrequency(), baudrate);
-    #endif
     
     #if defined(__16F1459)
     
@@ -117,6 +110,11 @@ void Serial_begin(u32 baudrate)
     #elif defined(__18f1220) || defined(__18f1320) || \
           defined(__18f14k22) || defined(__18lf14k22)
 
+        // 8-bit asynchronous operation
+        RCSTA = 0;                  // 8-bit RX (RX9=0)
+        TXSTA = 0;                  // 8-bit TX (TX9=0), asynchronous (SYNC=0)
+        BAUDCON = 0;                // polarity : non-inverted
+
         TXSTAbits.BRGH=1;           // set BRGH bit
         BAUDCTLbits.BRG16=1;        // set 16 bits SPBRG
         SPBRGH=high8(spbrg);        // set UART speed SPBRGH
@@ -130,18 +128,30 @@ void Serial_begin(u32 baudrate)
         IPR1bits.RCIP = 1;         // Define high priority for RX interrupt
         PIE1bits.RCIE = 1;         // Enable interrupt on RX
 
-    #elif defined(__18f2455) || defined(__18f4455) || \
-          defined(__18f2550) || defined(__18f4550) || \
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)  || \
           defined(__18f25k50) || defined(__18f45k50)
 
-        TRISCbits.TRISC7= 1;        // Rx1    set input
-        TXSTAbits.BRGH=1;           // set BRGH bit
-        BAUDCONbits.BRG16=1;        // set 16 bits SPBRG
+        // 8-bit asynchronous operation
+        RCSTA = 0;                  // 8-bit RX (RX9=0)
+        TXSTA = 0;                  // 8-bit TX (TX9=0), asynchronous (SYNC=0)
+        BAUDCON = 0;                // polarity : non-inverted
+
+        // IO's
+        TRISCbits.TRISC7= 1;        // RX as input
+        //TRISCbits.TRISC6= 0;        // TX as output
+        
+        // Baud Rate
         SPBRGH=high8(spbrg);        // set UART speed SPBRGH
         SPBRG=low8(spbrg);          // set UART speed SPBRGL
-        RCSTA=0x90;                 // set RCEN and SPEN
+        TXSTAbits.BRGH=1;           // High Baud Rate
+        BAUDCONbits.BRG16=1;        // use 16 bits SPBRG
+
         BAUDCONbits.RCIDL=1;        // set receive active
-        TXSTAbits.TXEN=1;           // enable TX
+        // Enable EUSART
+        TXSTAbits.TXEN = 1;         // Transmit Enabled
+        RCSTAbits.CREN = 1;         // Receiver Enabled
+        RCSTAbits.SPEN = 1;         // Serial Port Enabled (RX/TX pins as input/output)
 
         // Enable RX interrupt
         PIR1bits.RCIF = 0;         // Clear RX interrupt flag
@@ -177,16 +187,7 @@ void Serial_begin(u32 baudrate)
     //wpointer=1;                     // initialize write pointer
     //rpointer=1;                     // initialize read pointer
 
-    INTCONbits.PEIE = 1;            // Enable peripheral interrupts
-
-    #if defined(__16F1459)
-    INTCONbits.GIE  = 1;            // Enable global interrupts
-    #else
-    //RB: IPEN is managed both by bootloader and main.c
-    //RCONbits.IPEN = 1;            //  enable interrupt priorities
-    INTCONbits.GIEH = 1;            // Enable global HP interrupts
-    INTCONbits.GIEL = 1;            // Enable global LP interrupts
-    #endif
+    interrupts();                   // Enable global interrupts
     
     //Delayms(1000);                  // AG : 12-11-2012
 }
@@ -221,13 +222,13 @@ void Serial_putchar(u8 c)
 
         //while (!PIR1bits.TXIF);     // Ready ?
         while (!TXSTAbits.TRMT);
-        TXREG=c;            // yes, send char
+        TXREG=c;                    // yes, send char
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f27j53) || defined(__18f47j53)
 
         while (!TXSTA1bits.TRMT);   // Ready ?
-        TXREG1=c;           // yes, send char
+        TXREG1=c;                   // yes, send char
 
     #else
 
@@ -401,8 +402,7 @@ u8 * Serial_getstring()
 
 void serial_interrupt(void)
 {
-    u8 caractere;
-    u8 newwp;
+    u8 c, newwp;
 
     #if defined(__16F1459)  || \
         defined(__18f1220)  || defined(__18f1320)   || \
@@ -414,7 +414,7 @@ void serial_interrupt(void)
     if (PIR1bits.RCIF)
     { 
         PIR1bits.RCIF=0;            // clear RX interrupt flag
-        caractere=RCREG;            // take received char
+        c = RCREG;                  // take received char
 
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
@@ -423,7 +423,7 @@ void serial_interrupt(void)
     if (PIR1bits.RC1IF) 
     {
         PIR1bits.RC1IF=0;           // clear RX interrupt flag
-        caractere=RCREG1;           // take received char
+        c = RCREG1;                 // take received char
 
     #else
 
@@ -432,15 +432,15 @@ void serial_interrupt(void)
     #endif
 
         if (wpointer!=RXBUFFERLENGTH-1)  // if not last place in buffer
-            newwp=wpointer+1;       // place=place+1
+            newwp = wpointer + 1;        // place=place+1
 
         else
-            newwp=1;                // else place=1
+            newwp = 1;              // else place=1
 
-        if (rpointer!=newwp)        // if read pointer!=write pointer
-            rx[wpointer++]=caractere;// store received char
+        if (rpointer != newwp)      // if read pointer!=write pointer
+            rx[wpointer++] = c;     // store received char
 
-        if (wpointer==RXBUFFERLENGTH)// if write pointer=length buffer
+        if (wpointer == RXBUFFERLENGTH)// if write pointer=length buffer
             wpointer=1;             // write pointer = 1
     }
 }

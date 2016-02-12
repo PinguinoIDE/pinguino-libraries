@@ -924,10 +924,10 @@ u8 OnTimer0(callback func, u8 timediv, u16 delay)
                 _cycles_ = System_getPeripheralFrequency() / 1000 / 1000;
                 #ifdef __16F1459
                 _t0con = T0_SOURCE_INT | T0_PS_OFF;
-                preloadL[INT_TMR0] =  0xFF - _cycles_; // 12
+                preloadL[INT_TMR0] =  0xFF - (u8)_cycles_; // 12
                 #else
-                preloadH[INT_TMR0] = high8(0xFFFF - _cycles_);
-                preloadL[INT_TMR0] =  low8(0xFFFF - _cycles_);
+                preloadH[INT_TMR0] = 0xFF;
+                preloadL[INT_TMR0] = 0xFF - (u8)_cycles_;
                 _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
                 #endif
                 break;
@@ -939,9 +939,9 @@ u8 OnTimer0(callback func, u8 timediv, u16 delay)
                 _t0con = T0_SOURCE_INT | T0_PS_ON | T0_PS_1_64;
                 preloadL[INT_TMR0] =  0xFF - (_cycles_/64); // 12000/64=187
                 #else
+                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
                 preloadH[INT_TMR0] = high8(0xFFFF - _cycles_);
                 preloadL[INT_TMR0] =  low8(0xFFFF - _cycles_);
-                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
                 #endif
                 break;
             case INT_SEC:
@@ -953,9 +953,9 @@ u8 OnTimer0(callback func, u8 timediv, u16 delay)
                 intCountLimit[INT_TMR0] = 256 * delay;
                 preloadL[INT_TMR0] =  0xFF - (_cycles_/256); // 46875/256 = 183
                 #else
+                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_ON | T0_PS_1_256;
                 preloadH[INT_TMR0] = high8(0xFFFF - _cycles_);
                 preloadL[INT_TMR0] =  low8(0xFFFF - _cycles_);
-                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_ON | T0_PS_1_256;
                 #endif
                 break;
         }

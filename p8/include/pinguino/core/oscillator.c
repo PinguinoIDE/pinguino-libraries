@@ -46,14 +46,19 @@
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
-#include <flash.c>
-//#include <millis.c>
 
-#if defined(_MILLIS_C_)
-extern volatile u16 _PERIOD_;
+#ifndef __XC8__
+    #ifndef FLASHREAD
+    #define FLASHREAD
+    #endif
+    #include <flash.c>
 #endif
 
-volatile u32 _cpu_clock_;
+#if defined(_MILLIS_C_)
+extern volatile t16 _period;
+#endif
+
+volatile u32 _cpu_clock_ = 48000000;
 
 // The indices are valid values for PLLDIV
 //static const u8 plldiv[] = { 12, 10, 6, 5, 4, 3, 2, 1 };
@@ -82,7 +87,7 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     16000000
     // The indices are valid values for CPDIV
-    static const u8 _cpudiv[] = { 6, 3, 2, 1 };
+    static const u8 _cpudiv[] = { 1, 2, 3, 6 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000 };
 
@@ -92,7 +97,7 @@ volatile u32 _cpu_clock_;
     // INTOSC Frequency
     #define FINTOSC     8000000
     // The indices are valid values for CPDIV
-    static const u8 _cpudiv[] = { 6, 4, 3, 2 };
+    static const u8 _cpudiv[] = { 2, 3, 4, 6 };
     static const u8 _cpudiv_nopll[] = { 1, 2, 3, 4 };
     // The indices are valid values for IRCF
     static const u32 ircf[] = { 31250, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000 };
@@ -153,7 +158,7 @@ volatile u32 _cpu_clock_;
     ------------------------------------------------------------------*/
 
 #if defined(_PIC14E) //__16F1459 || __16F1708
-
+/*
     // CONFIG1: CONFIGURATION REGISTER 1 (BYTE ADDRESS 8007h)    
     #if !defined(__CONFIG1)
     #define __CONFIG1 0x8007
@@ -163,8 +168,24 @@ volatile u32 _cpu_clock_;
     #if !defined(__CONFIG2)
     #define __CONFIG2 0x8008
     #endif
+*/
+    const u16 config1 @ 0x8007;
+    const u16 config2 @ 0x8008;
 
 #else
+
+    #ifdef __XC8__
+    
+    extern const u16 config1l @ 0x300000;
+    extern const u16 config1h @ 0x300001;
+    extern const u16 config2l @ 0x300002;
+
+    #else
+    /*
+    __code u16 __at (__CONFIG1L) config1l;
+    __code u16 __at (__CONFIG1H) config1h;
+    __code u16 __at (__CONFIG2L) config2l ;
+    */
 
     // CONFIG1L: CONFIGURATION REGISTER 1 LOW (BYTE ADDRESS 300000h)
     #if !defined(__CONFIG1L)
@@ -181,6 +202,8 @@ volatile u32 _cpu_clock_;
     #define __CONFIG2L 0x300002
     #endif
 
+    #endif // __XC8__
+    
 #endif
 
 /*  --------------------------------------------------------------------
@@ -243,19 +266,28 @@ u8 System_getSource()
 {
     #if defined(__16F1459) || defined(__16F1708)
 
-    return Flash_read(__CONFIG1) & 0b00000111;
+    //return Flash_read(__CONFIG1) & 0b00000111;
+    return config1 & 0b00000111;
 
     #elif defined(__18f2455)  || defined(__18f4455)  || \
           defined(__18f2550)  || defined(__18f4550)  || \
           defined(__18f25k50) || defined(__18f45k50)
 
+    #ifdef __XC8__
+    return config1h & 0b00001111;
+    #else
     return Flash_read(__CONFIG1H) & 0b00001111;
-
+    #endif
+    
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
 
+    #ifdef __XC8__
+    return config2l & 0b00001111;
+    #else
     return Flash_read(__CONFIG2L) & 0b00000111;
+    #endif
 
     #else
 
@@ -316,13 +348,21 @@ u8 System_getPLLDIV()
     #elif defined(__18f2455)  || defined(__18f4455)  || \
           defined(__18f2550)  || defined(__18f4550)
 
+    #ifdef __XC8__
+    return 8 - (config1l & 0b00000111 );
+    #else
     return 8 - (Flash_read(__CONFIG1L) & 0b00000111 );
-
+    #endif
+    
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
 
-    return 8 -((Flash_read(__CONFIG1L) & 0b00001110 ) >> 1);
+    #ifdef __XC8__
+    return 8 - ((config1l & 0b00001110 ) >> 1);
+    #else
+    return 8 - ((Flash_read(__CONFIG1L) & 0b00001110 ) >> 1);
+    #endif
 
     #else
 
@@ -338,31 +378,61 @@ u8 System_getPLLDIV()
 
 static u8 System_getCPUDIV()
 {
+    /**---------------------------------------------------------------*/
     #if defined(__16F1708)
+    /**---------------------------------------------------------------*/
 
     return 1; // No CPU Div
 
+    /**---------------------------------------------------------------*/
     #elif defined(__16F1459)
+    /**---------------------------------------------------------------*/
 
-    return _cpudiv[(Flash_read(__CONFIG2) & 0x0030) >> 4];
+    //return _cpudiv[(Flash_read(__CONFIG2) & 0x0030) >> 4];
+    return _cpudiv[(config2 & 0x0030) >> 4];
 
+    /**---------------------------------------------------------------*/
     #elif defined(__18f2455)  || defined(__18f4455)  || \
           defined(__18f2550)  || defined(__18f4550)
+    /**---------------------------------------------------------------*/
 
     u8 pll = System_getPLLDIV();
-    
+
+    #ifdef __XC8__
+    if (pll)
+        return _cpudiv[(config1l & 0b00011000 ) >> 3];
+    else
+        return _cpudiv_nopll[(config1l & 0b00011000 ) >> 3];
+    #else
     if (pll)
         return _cpudiv[(Flash_read(__CONFIG1L) & 0b00011000 ) >> 3];
     else
         return _cpudiv_nopll[(Flash_read(__CONFIG1L) & 0b00011000 ) >> 3];
+    #endif
     
-    #elif defined(__18f25k50) || defined(__18f45k50) || \
-          defined(__18f26j50) || defined(__18f46j50) || \
+    /**---------------------------------------------------------------*/
+    #elif defined(__18f25k50) || defined(__18f45k50)
+    /**---------------------------------------------------------------*/
+
+    #ifdef __XC8__
+    return _cpudiv[(config1h & 0b00011000) >> 3];
+    #else
+    return _cpudiv[(Flash_read(__CONFIG1H) & 0b00011000) >> 3];
+    #endif
+    
+    /**---------------------------------------------------------------*/
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
+    /**---------------------------------------------------------------*/
 
+    #ifdef __XC8__
+    return _cpudiv[config1h & 0b00000011];
+    #else
     return _cpudiv[Flash_read(__CONFIG1H) & 0b00000011];
+    #endif
 
+    /**---------------------------------------------------------------*/
     #else
 
         #error "This library doesn't support your processor."
@@ -405,36 +475,39 @@ u32 System_getCpuFrequency()
             cpudiv = System_getCPUDIV();
             source = System_getSource();
 
+            /**-------------------------------------------------------*/
             #if defined(__18f2455) || defined(__18f4455) || \
                 defined(__18f2550) || defined(__18f4550)
-              
+            /**-------------------------------------------------------*/
+
             source = source >> 1;
             if( (source == 1) || (source == 3) || (source == 7) )
-            {
                 _cpu_clock_ = 96000000UL / cpudiv; // pll is enabled
-            }
             else
-            {
                 _cpu_clock_ = CRYSTAL / cpudiv;
-            }
             
+            /**-------------------------------------------------------*/
             #elif defined(__16F1459)  || defined(__16F1708)
-            
+            /**-------------------------------------------------------*/
+
             if (source == 8)    // INTOSC
                 _cpu_clock_ = pll * ircf[OSCCONbits.IRCF] / cpudiv;
             else
                 _cpu_clock_ = pll * CRYSTAL / cpudiv;
 
+            /**-------------------------------------------------------*/
             #elif defined(__18f25k50) || defined(__18f45k50) || \
                   defined(__18f26j50) || defined(__18f46j50) || \
                   defined(__18f26j53) || defined(__18f46j53) || \
                   defined(__18f27j53) || defined(__18f47j53)
+            /**-------------------------------------------------------*/
 
             if (pll)
-                _cpu_clock_ = 48000000 / cpudiv; // pll is enabled
+                _cpu_clock_ = 48000000UL / cpudiv; // pll is enabled
             else
                 _cpu_clock_ = CRYSTAL / cpudiv;
             
+            /**-------------------------------------------------------*/
             #else
 
                 #error "This library doesn't support your processor."
@@ -783,7 +856,6 @@ void System_setIntOsc(u32 freq)
         // *** HFINTOSC ***
         else
         {
-            
             // calculate a valid freq (must be a multiple of FINTOSC)
             // and get the corresponding bits (IRCF) to select
             while ( ( (FINTOSC / freq) << sel++ ) < 0x80 );
@@ -814,13 +886,28 @@ void System_setIntOsc(u32 freq)
 
     #endif
 
+    /// -----------------------------------------------------------------
+    /// 6- update millis if used
+    /// -----------------------------------------------------------------
+
     // RB : Can not work because this function call System_getPeripheralFrequency()
     //updateMillisReloadValue();
+
     #if defined(_MILLIS_C_)
     
-    //INTCONbits.TMR0IE = 0; //INT_DISABLE;
-    _PERIOD_ = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
-    //INTCONbits.TMR0IE = 1; //INT_ENABLE;
+        #if defined(__16F1459) || defined(__16F1708)
+        
+        PIE1bits.TMR1IE = 0;
+        _period.w = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
+        PIE1bits.TMR1IE = 1;
+
+        #else
+
+        INTCONbits.TMR0IE = 0;
+        _period.w = 0xFFFF - (_cpu_clock_ / 4 / 1000) ;
+        INTCONbits.TMR0IE = 1;
+
+        #endif
     
     #endif
     

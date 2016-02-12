@@ -33,19 +33,45 @@
     typedef signed char         s8;
     typedef signed int          s16;
     typedef signed long         s32;
-    //typedef signed long long  s64;        // SDCC doesn't support 64-bit type
-
+    #ifdef __XC8__
+    typedef signed long long    s64;        // SDCC doesn't support 64-bit type
+    #endif
+    
     typedef unsigned char       u8;
     typedef unsigned int        u16;
     typedef unsigned long       u32;
-    //typedef unsigned long long 	u64;    // SDCC doesn't support 64-bit type
+    #ifdef __XC8__
+    typedef unsigned long long  u64;        // SDCC doesn't support 64-bit type
+    #endif
     
+    typedef union
+    {
+        u16 w;
+        struct
+        {
+            u8 h8;
+            u8 l8;
+        };
+    } t16;
+
+    typedef union
+    {
+        u32 w;
+        struct
+        {
+            u8 u;
+            u8 h;
+            u8 l;
+        };
+    } t24;
+
+
 /*	----------------------------------------------------------------------------
     avr-gcc types
     --------------------------------------------------------------------------*/
 
     typedef unsigned char       byte;
-    typedef unsigned char       BOOL;       //bool is not compatible with c++
+    typedef unsigned char       BOOL;       // bool is not compatible with c++
     typedef unsigned char       boolean;
 
     typedef unsigned int        word;

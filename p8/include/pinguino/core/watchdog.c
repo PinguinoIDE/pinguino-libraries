@@ -37,47 +37,59 @@
 #include <oscillator.c>
 #include <flash.c>
 
-// Timeout period (from 1 ms to 256s)
 #if defined(__16F1459)
 
-#define _1MS_   0b00000 // 1:32      (Interval 1 ms nominal)
-#define _2MS_   0b00001 // 1:64      (Interval 2 ms nominal)
-#define _4MS_   0b00010 // 1:128     (Interval 4 ms nominal)
-#define _8MS_   0b00011 // 1:256     (Interval 8 ms nominal)
-#define _16MS_  0b00100 // 1:512     (Interval 16 ms nominal)
-#define _32MS_  0b00101 // 1:1024    (Interval 32 ms nominal)
-#define _64MS_  0b00110 // 1:2048    (Interval 64 ms nominal)
-#define _128MS_ 0b00111 // 1:4096    (Interval 128 ms nominal)
-#define _256MS_ 0b01000 // 1:8192    (Interval 256 ms nominal)
-#define _512MS_ 0b01001 // 1:16384   (Interval 512 ms nominal)
-#define _1S_    0b01010 // 1:32768   (Interval 1s nominal)
-#define _2S_    0b01011 // 1:65536   (Interval 2s nominal) (Reset value)
-#define _4S_    0b01100 // 1:131072  (Interval 4s nominal)
-#define _8S_    0b01101 // 1:262144  (Interval 8s nominal)
-#define _16S_   0b01110 // 1:524288  (Interval 16s nominal)
-#define _32S_   0b01111 // 1:1048576 (Interval 32s nominal)
-#define _64S_   0b10000 // 1:2097152 (Interval 64s nominal)
-#define _128S_  0b10001 // 1:4194304 (Interval 128s nominal)
-#define _256S_  0b10010 // 1:8388608 (Interval 256s nominal)
+    // Timeout period (from 1 ms to 256s)
+    #define _1MS_   0b00000 // 1:32      (Interval 1 ms nominal)
+    #define _2MS_   0b00001 // 1:64      (Interval 2 ms nominal)
+    #define _4MS_   0b00010 // 1:128     (Interval 4 ms nominal)
+    #define _8MS_   0b00011 // 1:256     (Interval 8 ms nominal)
+    #define _16MS_  0b00100 // 1:512     (Interval 16 ms nominal)
+    #define _32MS_  0b00101 // 1:1024    (Interval 32 ms nominal)
+    #define _64MS_  0b00110 // 1:2048    (Interval 64 ms nominal)
+    #define _128MS_ 0b00111 // 1:4096    (Interval 128 ms nominal)
+    #define _256MS_ 0b01000 // 1:8192    (Interval 256 ms nominal)
+    #define _512MS_ 0b01001 // 1:16384   (Interval 512 ms nominal)
+    #define _1S_    0b01010 // 1:32768   (Interval 1s nominal)
+    #define _2S_    0b01011 // 1:65536   (Interval 2s nominal) (Reset value)
+    #define _4S_    0b01100 // 1:131072  (Interval 4s nominal)
+    #define _8S_    0b01101 // 1:262144  (Interval 8s nominal)
+    #define _16S_   0b01110 // 1:524288  (Interval 16s nominal)
+    #define _32S_   0b01111 // 1:1048576 (Interval 32s nominal)
+    #define _64S_   0b10000 // 1:2097152 (Interval 64s nominal)
+    #define _128S_  0b10001 // 1:4194304 (Interval 128s nominal)
+    #define _256S_  0b10010 // 1:8388608 (Interval 256s nominal)
 
 #else
 
-// Other PICs have a nominal period of 4ms 
+    // Other PICs have a nominal period of 4ms * 256 = 1 sec.
 
 #endif
 
 u8 boot_from_watchdog = 0;
 
-// When the WDTE bits of Configuration Words are set to ‘01’,
-// the WDT is controlled by the SWDTEN bit of the WDTCON register.
+/*  --------------------------------------------------------------------
+    When the WDTE bits of Configuration Words are set to ‘01’,
+    the WDT is controlled by the SWDTEN bit of the WDTCON register.
+    ------------------------------------------------------------------*/
 
 #define Watchdog_enable()               (WDTCONbits.SWDTEN = 1)
 #define Watchdog_disable()              (WDTCONbits.SWDTEN = 0)
 #define Watchdog_clear()                clrwdt()
 
-// TO: Watchdog Time-out Flag bit
-// 1 = Set by power-up, CLRWDT instruction or SLEEP instruction
-// 0 = A WDT time-out occurred
+/*  ---18F--------------------------------------------------------------
+    RCONbits.TO: Watchdog Time-out Flag bit
+    1 = Set by power-up, CLRWDT instruction or SLEEP instruction
+    0 = A WDT time-out occurred
+    ---16F--------------------------------------------------------------
+    PCONbits.nRWDT : Watchdog Timer Reset Flag bit
+    1 = A Watchdog Timer Reset has not occurred or set by firmware
+    0 = A Watchdog Timer Reset has occurred (cleared by hardware)
+    --------------------------------------------------------------------
+    STATUSbits.nTO: Time-Out bit
+    1 = After power-up, CLRWDT instruction or SLEEP instruction
+    0 = A WDT time-out occurred
+    ------------------------------------------------------------------*/
 
 #if defined(__16F1459)
     #define Watchdog_readPostscaler()   (32 * (1 << WDTCONbits.WDTPS))
@@ -93,17 +105,21 @@ u8 boot_from_watchdog = 0;
 
 #define Watchdog_event()                (boot_from_watchdog)
 
+/*  --------------------------------------------------------------------
+    Init the Watchdog
+    User will have to enable it with Watchdog_enable()
+    in order to use it.
+    Timeout is set to 1 second for all PIC
+    ------------------------------------------------------------------*/
+
 void watchdog_init()
 {
     // Timeout period
     #if defined(__16F1459)
     WDTCONbits.WDTPS  = _1S_;
-    //WDTCONbits.WDTPS  = _4MS_;          // 256*4ms = 1 sec.
     #endif
-    // Enable watchdog (8.2 seconds)
     if (Watchdog_readEvent())
         boot_from_watchdog = 1;
-    //Watchdog_enable();
     Watchdog_disable();
     Watchdog_clearEvent();
     Watchdog_clear();

@@ -165,7 +165,7 @@ u8 CDCgets(u8 *buffer)
 
 u8 CDCputs(const u8 *buffer, u8 length)
 {
-    u8 i;
+    u8 i=0;
 
     if (deviceState != CONFIGURED) return 0;
     

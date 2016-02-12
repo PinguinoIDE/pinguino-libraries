@@ -232,6 +232,11 @@ void lcdi2c_newchar(const u8 *, u8);
 #define lcdi2c_write(c)             lcdi2c_send8(c, LCD_DATA)
 #define lcdi2c_printChar(c)         lcdi2c_send8(c, LCD_DATA)
 
+#if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
+#define lcdi2c_backlight()          lcdi2c_blight(0)
+#define lcdi2c_noBacklight()        lcdi2c_blight(1)
+#endif
+
 #if defined(LCDI2CCLEAR)
 #define lcdi2c_clear()              do { lcdi2c_send8(LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
 #endif

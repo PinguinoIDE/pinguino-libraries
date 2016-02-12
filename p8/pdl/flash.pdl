@@ -1,3 +1,3 @@
-Flash.erase Flash_erase#include <flash.c>
-Flash.read Flash_read#include <flash.c>
-Flash.write Flash_write#include <flash.c>
+Flash.erase Flash_erase#include <flash.c>#define FLASHERASE
+Flash.read Flash_read#include <flash.c>#define FLASHREAD
+Flash.write Flash_write#include <flash.c>#define FLASHWRITE

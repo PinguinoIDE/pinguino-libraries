@@ -144,7 +144,8 @@
 	#define	T0_H2L				(1<<4)  // 1 = Increment on high-to-low transition on T0CKI pin
 	#define	T0_L2H				(0)     // 0 = Increment on low-to-high transition on T0CKI pin
 	// bit 3   PSA: Timer0 Prescaler Assignment bit
-	#define	T0_PS_OFF			(1<<3)  // 1 = TImer0 prescaler is NOT assigned. Timer0 clock input bypasses prescaler.
+	#define	T0_PS_OFF			(1<<3)  // 1 = Timer0 prescaler is NOT assigned. Timer0 clock input bypasses prescaler.
+	#define	T0_PS_1_1			(1<<3)  // 1 = Timer0 prescaler is NOT assigned. Timer0 clock input bypasses prescaler.
 	#define	T0_PS_ON			(0)     // 0 = Timer0 prescaler is assigned. Timer0 clock input comes from prescaler output.
 	// bit 2-0 T0PS2:T0PS0: Timer0 Prescaler Select bits
 	#define	T0_PS_1_256			0b111 // 1:256 Prescale value

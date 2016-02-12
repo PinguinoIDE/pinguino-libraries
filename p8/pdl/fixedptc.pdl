@@ -1,0 +1,25 @@
+f32 fixedpt#include <fixedptc.h>
+
+fconst fixedpt_rconst#include <fixedptc.h>
+fint  fixedpt_fromint#include <fixedptc.h>
+ftoi  fixedpt_toint#include <fixedptc.h>
+ftof  fixedpt_tofloat#include <fixedptc.h>
+ffrac fixedpt_fracpart#include <fixedptc.h>
+
+fadd  fixedpt_add#include <fixedptc.h>
+fsub  fixedpt_sub#include <fixedptc.h>
+fxmul fixedpt_xmul#include <fixedptc.h>
+fxdiv fixedpt_xdiv#include <fixedptc.h>
+fabs  fixedpt_abs#include <fixedptc.h>
+fmul  fixedpt_mul#include <fixedptc.h>
+fdiv  fixedpt_div#include <fixedptc.h>
+fstr  fixedpt_str#include <fixedptc.h>
+fcstr fixedpt_cstr#include <fixedptc.h>
+fsqrt fixedpt_sqrt#include <fixedptc.h>
+fsin  fixedpt_sin#include <fixedptc.h>
+fcos  fixedpt_cos#include <fixedptc.h>
+ftan  fixedpt_tan#include <fixedptc.h>
+fexp  fixedpt_exp#include <fixedptc.h>
+fln   fixedpt_ln#include <fixedptc.h>
+flog  fixedpt_log#include <fixedptc.h>
+fpow  fixedpt_pow#include <fixedptc.h>

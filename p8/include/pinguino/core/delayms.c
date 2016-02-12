@@ -10,8 +10,6 @@
     * 2013-01-17    rblanchot - delays are now based on SystemGetClock()
     * 2015-09-09    rblanchot - PIC16F / workaround to "undefined symbol: _Delay1KTCYx"
     * 2016-01-13    rblanchot - added #ifndef __DELAYMS__ if the lib is called from another one 
-    TODO:
-    * check rountines are interuptible
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public

@@ -307,15 +307,22 @@ void I2C_init(u8 mode, u16 sora)
 u8 I2C_write(u8 value)
 {
     I2C_idle();                     // Wait the MSSP module is inactive
+    
     #if defined(__16F1459)  || \
         defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
+        
     SSP1BUF = value;                 // Write byte to SSPBUF (BF is set to 1)
+
     #else
+
     SSPBUF = value;                 // Write byte to SSPBUF (BF is set to 1)
+
     #endif
+
     I2C_idle();                     // Wait the MSSP module is inactive
+
 /*
     while (SSPCON1bits.WCOL)        // Send again if write collision occurred 
     {
@@ -325,14 +332,19 @@ u8 I2C_write(u8 value)
     }
 */
 //    while (SSPSTATbits.BF);         // Wait until buffer is empty (BF set to 0)
+
     // ACKSTAT can be returned now because it was loaded before BF was cleared
     #if defined(__16F1459)  || \
         defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
+
     return (!SSP1CON2bits.ACKSTAT);  // 1 if Ack, 0 if NAck
+
     #else
+
     return (!SSPCON2bits.ACKSTAT);  // 1 if Ack, 0 if NAck
+
     #endif
 }
 
@@ -360,24 +372,32 @@ u8 I2C_read()
         defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
+        
     SSP1CON2bits.RCEN = 1;       // Initiate reception of byte
+    
     #else
+    
     SSPCON2bits.RCEN = 1;       // Initiate reception of byte
+    
     #endif
     
 
     #if defined(__16F1459)  || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
+        
     PIR1bits.SSP1IF = 0;         // Clear SSP interrupt flag
     while (!PIR1bits.SSP1IF);    // Wait the interrupt flag is set
     PIR1bits.SSP1IF=0;           // ROlf clear SSPIF
     PIR1bits.SSP1IF=0;           // ROlf clear SSPIF
+    
     #else
+    
     PIR1bits.SSPIF = 0;         // Clear SSP interrupt flag
     while (!PIR1bits.SSPIF);    // Wait the interrupt flag is set
     PIR1bits.SSPIF=0;           // ROlf clear SSPIF
     PIR1bits.SSPIF=0;           // ROlf clear SSPIF
+    
     #endif
 
     #if defined(__16F1459)  || \

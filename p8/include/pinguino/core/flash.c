@@ -38,16 +38,11 @@
 #include <typedef.h>
 //#include <system.c>
 
-#if defined(__16F1459)
-    #define ERASE   PMCON1bits.FREE
-#else
-    #define ERASE   EECON1bits.FREE
-#endif
-
 /**------------------------------------------------------------------**/
 #if defined(_PIC14E) //__16F1459 || __16F1708
 /**------------------------------------------------------------------**/
 
+#ifdef FLASHREAD
 u16 Flash_read(u16 address)
 {
     // 1. Write the desired address to the PMADRH:PMADRL register pair.
@@ -65,7 +60,9 @@ u16 Flash_read(u16 address)
     //return ((PMDATH << 8) + PMDATL);
     return PMDAT;
 }
+#endif
 
+#ifdef FLASHERASE
 void Flash_erase(u16 address)
 {
     PMADR = address;
@@ -79,7 +76,9 @@ void Flash_erase(u16 address)
     __asm__("NOP");
     PMCON1bits.WREN = 0;
 }
+#endif
 
+#ifdef FLASHWRITE
 void Flash_write(u16 address, u16 *pdata, u8 counter)
 {
     PMADR = address;
@@ -108,27 +107,37 @@ void Flash_write(u16 address, u16 *pdata, u8 counter)
     __asm__("NOP");
     PMCON1bits.WREN = 0;
 }
+#endif
 
 /**------------------------------------------------------------------**/
 #else
 /**------------------------------------------------------------------**/
 
+#ifdef FLASHREAD
 u16 Flash_read(u32 address)
 {
     u8 h8,l8;
-
-    TBLPTRU = address >> 16;
-    TBLPTRH = address >> 8;
-    TBLPTRL = address;
-
-    __asm__("tblrd*+");
-    l8 = TABLAT;
-    __asm__("tblrd*+");
-    h8 = TABLAT;
+    //t16 r;
+    
+    //if (status) noInterrupts();
+    
+    TBLPTRU = (u8) ((address >> 16) & 0xFF);
+    TBLPTRH = (u8) ((address >> 8)  & 0xFF);
+    TBLPTRL = (u8) ( address        & 0xFF);
+    
+    __asm__("TBLRD*+");
+     l8 = TABLAT;
+    //r.l8 = TABLAT;
+    __asm__("TBLRD*+");
+     h8 = TABLAT;
+    //r.h8 = TABLAT;
     
     return ((h8 << 8) + l8);
+    //return r.w;
 }
+#endif // FLASHREAD
 
+#ifdef FLASHERASE
 void Flash_erase(u32 address)
 {
     u8 status = INTCONbits.GIE;
@@ -140,21 +149,28 @@ void Flash_erase(u32 address)
     #if !defined(__18f26j50) && !defined(__18f46j50) && \
         !defined(__18f26j53) && !defined(__18f46j53) && \
         !defined(__18f27j53) && !defined(__18f47j53)
+        
     EECON1bits.EEPGD = 1; // Program Memory
     EECON1bits.CFGS = 0;  // but not the config space
+    
     #endif
+    
     EECON1bits.WREN = 1;  // Write enabled
     EECON1bits.FREE = 1;  // Erase operation
 
     if (status)           // Disabled interrupts
         INTCONbits.GIE = 0;
+        
     EECON2 = 0x55;
     EECON2 = 0xAA;
     EECON1bits.WR = 1;
+    
     if (status)           // Re-enabled interrupts
         INTCONbits.GIE = 1;
 }
+#endif // FLASHERASE
 
+#ifdef FLASHWRITE
 void Flash_write(u16 destination_add, u8 *destination)
 {
     u8 i;
@@ -176,20 +192,26 @@ void Flash_write(u16 destination_add, u8 *destination)
     #if !defined(__18f26j50) && !defined(__18f46j50) && \
         !defined(__18f26j53) && !defined(__18f46j53) && \
         !defined(__18f27j53) && !defined(__18f47j53)
+        
     EECON1bits.EEPGD = 1; // Program Memory
     EECON1bits.CFGS = 0;  // but not the config space
+    
     #endif
+    
     EECON1bits.WREN = 1;  // Write enabled
     EECON1bits.FREE = 0;  // Write operation
 
     if (status)           // Disabled interrupts
         INTCONbits.GIE = 0;
+        
     EECON2 = 0x55;
-    EECON2 = 0xAA;
+    EECON2 = 0xAA;    
     EECON1bits.WR = 1;
+    
     if (status)           // Re-enabled interrupts
         INTCONbits.GIE = 1;
 }
+#endif // FLASHWRITE
 
 #endif // _PIC14E
 
