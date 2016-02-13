@@ -221,8 +221,8 @@ static void lcdi2c_send8(u8, u8);
 // public
 void printChar(u8);
 void lcdi2c_init(u8, u8, u8);
-void lcdi2c_backlight();
-void lcdi2c_noBacklight();
+//void lcdi2c_backlight();
+//void lcdi2c_noBacklight();
 void lcdi2c_clearLine(u8);
 void lcdi2c_setCursor(u8, u8);
 void lcdi2c_printf(char*, ...);
