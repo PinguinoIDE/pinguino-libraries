@@ -73,27 +73,39 @@
     
     --------------------------------------------------------------------------*/
 
-u16 i=0;
-
 void setup()
 {
+    u8 cpu;
+    
+    pinMode(USERLED, OUTPUT);
+
     // PCF8574  : slave adress is 0 1 0 0 A2 A1 A0
     // PCF8574A : slave adress is 0 1 1 1 A2 A1 A0
     lcdi2c.init(16, 2, 0x27);           // display is 2x16, ic2 address is 0100111 (see above)
     lcdi2c.backlight();                 // turns backlight on
     lcdi2c.clear();                     // clear screen
-    lcdi2c.home();                      // set cursor at (0,0)
-    lcdi2c.printCenter("LCD I2C Demo");
+    lcdi2c.printCenter("PINGUINO INFO.");
+    cpu = System.getCpuFrequency() / MHZ;
+    lcdi2c.setCursor(0, 1);	    // set cursor at line 1, col 0
+    lcdi2c.print("CPU=");
+    lcdi2c.printNumber(cpu, DEC);
+    lcdi2c.print("MHz");
+    delay(2500);
 }
 
 void loop()
 {
-    // set cursor at line 1, col 0
-    lcdi2c.setCursor(0, 1);
-    //lcdi2c.print("i=0x");
-    //lcdi2c.printNumber(i++, HEX);
-    // or
-    lcdi2c.printf("i=%u ", i++);
-    delay(500);
-}
 
+    u16 fps;                       // frame per second
+    u32 timeEnd = millis() + 1000; // 1000 ms = 1 sec
+
+    for (fps = 1; millis() < timeEnd; fps++);
+
+    lcdi2c.setCursor(0, 1);	    // set cursor at line 1, col 0
+    //lcdi2c.printf("MIPS=%u", fps);
+    lcdi2c.print("MIPS=");
+    lcdi2c.printNumber(fps, DEC);
+
+    delay(500);
+    toggle(USERLED);
+}

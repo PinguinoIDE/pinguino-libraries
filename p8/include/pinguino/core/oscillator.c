@@ -47,7 +47,7 @@
 #include <const.h>
 #include <macro.h>
 
-#ifndef __XC8__
+#if defined(_PIC14E) || (!defined(_PIC14E) && !defined(__XC8__))
     #ifndef FLASHREAD
     #define FLASHREAD
     #endif
@@ -158,7 +158,7 @@ volatile u32 _cpu_clock_ = 48000000;
     ------------------------------------------------------------------*/
 
 #if defined(_PIC14E) //__16F1459 || __16F1708
-/*
+
     // CONFIG1: CONFIGURATION REGISTER 1 (BYTE ADDRESS 8007h)    
     #if !defined(__CONFIG1)
     #define __CONFIG1 0x8007
@@ -168,9 +168,11 @@ volatile u32 _cpu_clock_ = 48000000;
     #if !defined(__CONFIG2)
     #define __CONFIG2 0x8008
     #endif
-*/
+
+/*
     const u16 config1 @ 0x8007;
     const u16 config2 @ 0x8008;
+*/
 
 #else
 
@@ -266,8 +268,8 @@ u8 System_getSource()
 {
     #if defined(__16F1459) || defined(__16F1708)
 
-    //return Flash_read(__CONFIG1) & 0b00000111;
-    return config1 & 0b00000111;
+    return Flash_read(__CONFIG1) & 0b00000111;
+    //return config1 & 0b00000111;
 
     #elif defined(__18f2455)  || defined(__18f4455)  || \
           defined(__18f2550)  || defined(__18f4550)  || \
@@ -388,8 +390,8 @@ static u8 System_getCPUDIV()
     #elif defined(__16F1459)
     /**---------------------------------------------------------------*/
 
-    //return _cpudiv[(Flash_read(__CONFIG2) & 0x0030) >> 4];
-    return _cpudiv[(config2 & 0x0030) >> 4];
+    return _cpudiv[(Flash_read(__CONFIG2) & 0x0030) >> 4];
+    //return _cpudiv[(config2 & 0x0030) >> 4];
 
     /**---------------------------------------------------------------*/
     #elif defined(__18f2455)  || defined(__18f4455)  || \

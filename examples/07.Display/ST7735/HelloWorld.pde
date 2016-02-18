@@ -35,15 +35,16 @@
 
 #define SPIMODULE SPI2
 
+u8 i;
+
 void setup()
 {
     pinMode(USERLED, OUTPUT);
     
     // SDA and SCK pins must be defined by user
     // if module used is SPISW (SPI Software)
-    // ST7735.init(SPISW, 6, 5, 7, 1); // SDA, SCK, CS, DC
-
-    ST7735.init(SPIMODULE, 7); // CS and DC
+    //ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
+    ST7735.init(SPIMODULE, 7); // DC
     ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
     ST7735.setColor(SPIMODULE, ST7735_YELLOW);
@@ -53,7 +54,11 @@ void setup()
 
 void loop()
 {
-    ST7735.print(SPIMODULE, "Hello World!\r\n");
+    //ST7735.printf(SPIMODULE, "%03d Hello World!\r\n", i++);
+    ST7735.setCursor(SPIMODULE, 0, 0);
+    ST7735.printNumber(SPIMODULE, i++, DEC);
+    ST7735.setCursor(SPIMODULE, 0, 7);
+    ST7735.printCenter(SPIMODULE, " Hello World!   \r");
     toggle(USERLED);
     delay(1000);
 }

@@ -36,6 +36,12 @@
 #define SPI2    2
 
 // pins
+#if defined(__16F1459)
+#elif defined(__18f2455) || defined(__18f4455) || \
+      defined(__18f2550) || defined(__18f4550)
+#else
+#endif
+
 #if   defined(__16F1459)
 
     #define SD_CS           PORTCbits.RC6       // SPI1 Chip Select cf. io.c/IO_remap()
@@ -43,16 +49,29 @@
     #define SDIPIN          TRISBbits.TRISB4    // SPI1 SDI Master input/Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB6    // SPI1 SCK Clock TRIS
     #define SDOPIN          TRISCbits.TRISC7    // SPI1 SDO Master output/Slave input TRIS
+    #define SSP1BUF         SSPBUF
+    #define SSP1INTFLAG          PIR1bits.SSP1INTFLAG
 
 #elif defined(__18f2455)  || defined(__18f4455)  || \
-      defined(__18f2550)  || defined(__18f4550)  || \
-      defined(__18f25k50) || defined(__18f45k50)
+      defined(__18f2550)  || defined(__18f4550)
+
+    #define SD_CS           PORTAbits.RA5       // D13 - Chip Select
+    #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
+    #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
+    #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
+    #define SDOPIN          TRISCbits.TRISC7    // D23 - SDO Master output/SDI Slave input TRIS
+    #define SSP1BUF         SSPBUF
+    #define SSP1INTFLAG     PIR1bits.SSPIF
+
+#elif defined(__18f25k50) || defined(__18f45k50)
     
     #define SD_CS           PORTAbits.RA5       // D13 - Chip Select
     #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
     #define SDOPIN          TRISCbits.TRISC7    // D23 - SDO Master output/SDI Slave input TRIS
+    #define SSP1BUF         SSPBUF
+    #define SSP1INTFLAG     PIR1bits.SSPIF
 
 #elif defined(__18f26j50)|| defined(__18f46j50) || \
       defined(__18f27j53)|| defined(__18f47j53)
@@ -63,6 +82,7 @@
     #define SDIPIN          TRISBbits.TRISB5    // SPI1 SDO Master input/Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB4    // SPI1 SCK Clock TRIS
     #define SDOPIN          TRISCbits.TRISC7    // SPI1 SDI Master output/Slave input TRIS
+    #define SSP1INTFLAG     PIR1bits.SSP1IF
 
     // SPI2
     #define SD_CS2          LATBbits.LATB0      // SPI2 Chip Select
@@ -70,7 +90,7 @@
     #define SDI2PIN         TRISBbits.TRISB3    // SPI2 SDO Master input/Slave output TRIS
     #define SCK2PIN         TRISBbits.TRISB2    // SPI2 SCK Clock TRIS
     #define SDO2PIN         TRISBbits.TRISB1    // SPI2 SDI Master output/Slave input TRIS
-
+    #define SSP2INTFLAG     PIR3bits.SSP2IF
 #else
 
     #error "Your processor is not yet supported"
@@ -132,21 +152,21 @@
 
 typedef struct
 {
-    u8  mode;
-    u32 divider;
-    u8  role;
-    u8  bitorder;
-    u8  phase;
-    u8  sda;
-    u8  sck;
-    u8  cs;
+    u8 mode;
+    u8 divider;
+    u8 role;
+    u8 bitorder;
+    u8 phase;
+    u8 sda;
+    u8 sck;
+    u8 cs;
 } spi_t;
 
 /// Prototypes
 
 void SPI_select(u8 module);
 void SPI_deselect(u8 module);
-void SPI_begin(u8 module, ...);
+void SPI_begin(int module, ...);
 void SPI_close(u8 module);
 void SPI_init();
 void SPI_setMode(u8 module, u8 mode);

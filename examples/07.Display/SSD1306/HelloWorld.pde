@@ -3,51 +3,60 @@
         Tested on:	Pinguino 47J53A & Pinguino 32MX250
         Output:	Oled 0.96" with SSD1306 Controller
 
-        2 size available : SSD1306_128X64 or SSD1306_128X32
-        
         Wiring :
         
-        if SSD1306_6800
-            if SSD1306_PMP
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO
-                OLED D/C#   connected to Pinguino PMA[0:15]
-                OLED W/R#  connected to Pinguino PMRD/PMWR
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino PMD[7:0]
-            else
-                OLED CS#     connected to GND
+        if MODULE = PMP6800
+                OLED CS#    connected to GND
+                OLED RES#   connected to any GPIO (res)
+                OLED D/C#   connected to Pinguino PMA[0:15] (dc)
+                OLED W/R#   connected to Pinguino PMRD/PMWR
+                OLED E/RD#  connected to GND
+                OLED D[7:0] connected to Pinguino PMD[7:0]
+                SSD1306.init(PMP6800, rst, dc);
+                
+        if MODULE = PMP8080
+                OLED CS#    connected to GND
+                OLED RES#   connected to any GPIO (res)
+                OLED D/C#   connected to Pinguino PMA1
+                OLED W/R#   connected to Pinguino PMWR
+                OLED E/RD#  connected to GND
+                OLED D[7:0] connected to Pinguino PMD[7:0]
+                SSD1306.init(PMP6800, rst);
+                
+        if MODULE = PORTB
+                OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO
                 OLED D/C#   connected to any GPIO
-                OLED W/R#  connected to any GPIO
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to any GPIO
-        if SSD1306_8080 
-            if SSD1306_PMP
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO (D3)
-                OLED D/C#   connected to Pinguino PMA1 (D4)
-                OLED W/R#  connected to Pinguino PMWR (D14)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino PMD[7:0]
-            else
-                OLED CS#     connected to GND
+                OLED W/R#   connected to any GPIO
+                OLED E/RD#  connected to GND
+                OLED D[7:0] connected to Pinguino D[0:7]
+                
+        if MODULE = PORTD 
+                OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO (D0)
                 OLED D/C#   connected to any GPIO (D1)
-                OLED W/R#  connected to any GPIO (D2)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino D[31:24]
-        if SSD1306_I2C
-        if SSD1306_SPI3
-        if SSD1306_SPI4
-**/
+                OLED W/R#   connected to any GPIO (D2)
+                OLED E/RD#  connected to GND
+                OLED D[7:0] connected to Pinguino D[31:24]
+                
+        if MODULE = I2C
+                SSD1306.init(I2C, address);
+        
+        if MODULE = SPISW
+                SSD1306.init(SPISW, rst, dc, sda, sck, cs);
+        
+        if MODULE = SPIx (SPI1, SPI2, ...)
+                SSD1306.init(SPI1, rst, dc);
+        
+    ------------------------------------------------------------------*/
 
-//#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
-#define DISPLAY (SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_8080 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_I2C  | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI3 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI4 | SSD1306_128X64)
+#define MODULE SPI1
+
+/*
+#define MODULE I2C
+#define MODULE SPISW      // or SPI1, SPI2, ...
+#define MODULE PMP6800    // or PMP8080
+*/
 
 /**
     Load one or more fonts and active them with SSD1306.setFont()

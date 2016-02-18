@@ -30,6 +30,7 @@
 
 #include <compiler.h>
 #include <typedef.h>
+#include <digitalw.c>
 
 #define __ST7735__
 
@@ -221,7 +222,7 @@ void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
 
 //void ST7735_init(u8, u8, u8, u8, u8);
-void ST7735_init(u8 module, ...);
+void ST7735_init(int module, ...);
 
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
@@ -277,8 +278,9 @@ extern void drawBitmap(u8, const u8 *, u16, u16);
 #define ST7735_normalDisplay(m)  ST7735_sendCommand(m, ST7735_INVOFF)
 #define ST7735_displayOn(m)      ST7735_sendCommand(m, ST7735_DISPON)
 #define ST7735_displayOff(m)     ST7735_sendCommand(m, ST7735_DISPOFF)
-#define ST7735_low(x)            digitalwrite(x, LOW)
-#define ST7735_high(x)           digitalwrite(x, HIGH)
+#define ST7735_reset(m)          ST7735_sendCommand(m, ST7735_SWRESET);
+#define ST7735_low(x)            digitalwrite(x, 0)
+#define ST7735_high(x)           digitalwrite(x, 1)
 #define ST7735_select(m)         SPI_select(m)
 #define ST7735_deselect(m)       SPI_deselect(m)
 

@@ -1,11 +1,11 @@
 /*	----------------------------------------------------------------------------
-    FILE:			spi.c
-    PROJECT:		pinguino
-    PURPOSE:		Include all functions to handle SPI communication
+    FILE:           spi.c
+    PROJECT:        pinguino
+    PURPOSE:        Include all functions to handle SPI communication
                     Master and Slave
-    PROGRAMER:		Régis Blanchot
-    FIRST RELEASE:	03 Apr. 2010
-    LAST RELEASE:	01 Oct. 2015
+    PROGRAMER:      Régis Blanchot
+    FIRST RELEASE:  03 Apr. 2010
+    LAST RELEASE:   01 Oct. 2015
     ----------------------------------------------------------------------------
     CHANGELOG
     01 Oct. 2015 - Régis Blanchot - added SPI2 support
@@ -41,22 +41,9 @@
 #include <compiler.h>
 #include <const.h>
 #include <spi.h>
-//#include <delayms.c>
-//#if defined(SPISETPIN)
+#include <delayms.c>
 #include <digitalp.c>
 #include <digitalw.c>
-//#endif
-
-#if defined(__16F1459)
-    #define SSP1BUF SSPBUF
-    #define SSP1IF  PIR1bits.SSP1IF
-#elif defined(__18f2455) || defined(__18f4455) || \
-      defined(__18f2550) || defined(__18f4550)
-    #define SSP1BUF SSPBUF
-    #define SSP1IF  PIR1bits.SSPIF
-#else
-    #define SSP1IF  PIR1bits.SSP1IF
-#endif
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -119,12 +106,15 @@ void SPI_select(u8 module)
     switch(module)
     {
         case SPISW:
-            digitalwrite(_spi[SPISW].cs, LOW);
+            // Pinguino pins <0:7> are always multiplexed with PORTB
+            if (_spi[SPISW].cs < 8)
+                BitClear(LATB, _spi[SPISW].cs);
+            else
+                digitalwrite(_spi[SPISW].cs, LOW);
             break;
 
         case SPI1:
             SD_CS = LOW;
-            //digitalwrite(_spi[SPI1].cs, LOW);
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
@@ -132,7 +122,6 @@ void SPI_select(u8 module)
             
         case SPI2:
             SD_CS2 = LOW;
-            //digitalwrite(_spi[SPI2].cs, LOW);
             break;
             
         #endif
@@ -148,12 +137,15 @@ void SPI_deselect(u8 module)
     switch(module)
     {
         case SPISW:
-            digitalwrite(_spi[SPISW].cs, HIGH);
+            // Pinguino pins <0:7> are always multiplexed with PORTB
+            if (_spi[SPISW].cs < 8)
+                BitSet(LATB, _spi[SPISW].cs);
+            else
+                digitalwrite(_spi[SPISW].cs, HIGH);
             break;
 
         case SPI1:
             SD_CS = HIGH;
-            //digitalwrite(_spi[SPI1].cs, HIGH);
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
@@ -161,7 +153,6 @@ void SPI_deselect(u8 module)
 
         case SPI2:
             SD_CS2 = HIGH;
-            //digitalwrite(_spi[SPI2].cs, HIGH);
             break;
             
         #endif
@@ -169,7 +160,7 @@ void SPI_deselect(u8 module)
 }
 
 //#ifdef SPIBEGIN
-void SPI_begin(u8 module, ...)
+void SPI_begin(int module, ...)
 {
     va_list args;
     
@@ -179,144 +170,144 @@ void SPI_begin(u8 module, ...)
     //SPI_close(module);
     SPI_deselect(module);
     
-    switch(module)
+    if (module == SPISW)
     {
-        case SPISW:
-            _spi[SPISW].sda = va_arg(args, u8); // get the first arg
-            _spi[SPISW].sck = va_arg(args, u8);
-            _spi[SPISW].cs  = va_arg(args, u8);
+            _spi[SPISW].sda = va_arg(args, int); // get the first arg
+            _spi[SPISW].sck = va_arg(args, int);
+            _spi[SPISW].cs  = va_arg(args, int);
             pinmode(_spi[SPISW].sda, OUTPUT);
             pinmode(_spi[SPISW].sck, OUTPUT);
             pinmode(_spi[SPISW].cs,  OUTPUT);
-            break;
-            
-        case SPI1:
-            SSPCON1bits.SSPEN = 0;          // first disables serial port and configures SPI pins as I/O pins
-            SSPSTAT = 0x0;                  // power on state (SMP=0, CKE=0) 
-            SSPCON1 = _spi[SPI1].divider;   // select serial speed
-            SSPSTATbits.SMP = _spi[SPI1].phase;
+            //TRISBbits.TRISB1 = 0;
+            //TRISBbits.TRISB2 = 0;
+            //TRISBbits.TRISB0 = 0;
+    }
 
-            switch(_spi[SPI1].mode)
-            {
-                case SPI_MODE0:             // SPI bus mode 0,0
-                  SSPCON1bits.CKP = 0;      // clock idle state low
-                  SSPSTATbits.CKE = 0;      // data transmitted on falling edge
-                  break;
-                  
-                case SPI_MODE1:             // default SPI bus mode 0,1
-                  SSPCON1bits.CKP = 0;      // clock idle state low
-                  SSPSTATbits.CKE = 1;      // data transmitted on falling edge
-                  break;
-                  
-                case SPI_MODE2:             // SPI bus mode 1,0
-                  SSPCON1bits.CKP = 1;      // clock idle state high
-                  SSPSTATbits.CKE = 0;      // data transmitted on rising edge
-                  break;
-                  
-                case SPI_MODE3:             // SPI bus mode 1,1
-                  SSPCON1bits.CKP = 1;      // clock idle state high
-                  SSPSTATbits.CKE = 1;      // data transmitted on falling edge
-                  break;
-            }
+    else if (module == SPI1)
+    {
+        SSPCON1bits.SSPEN = 0;          // first disables serial port and configures SPI pins as I/O pins
+        SSPSTAT = 0x00;                 // power on state (SMP=0, CKE=0) 
+        SSPCON1 = _spi[SPI1].divider;   // select serial speed
+        SSPSTATbits.SMP = _spi[SPI1].phase;
 
-            SDIPIN = INPUT;                 // define SDI pin as input
-            SDOPIN = OUTPUT;                // define SDO pin as output
+        switch(_spi[SPI1].mode)
+        {
+            case SPI_MODE0:             // SPI bus mode 0,0
+              SSPCON1bits.CKP = 0;      // clock idle state low
+              SSPSTATbits.CKE = 0;      // data transmitted on falling edge
+              break;
+              
+            case SPI_MODE1:             // default SPI bus mode 0,1
+              SSPCON1bits.CKP = 0;      // clock idle state low
+              SSPSTATbits.CKE = 1;      // data transmitted on falling edge
+              break;
+              
+            case SPI_MODE2:             // SPI bus mode 1,0
+              SSPCON1bits.CKP = 1;      // clock idle state high
+              SSPSTATbits.CKE = 0;      // data transmitted on rising edge
+              break;
+              
+            case SPI_MODE3:             // SPI bus mode 1,1
+              SSPCON1bits.CKP = 1;      // clock idle state high
+              SSPSTATbits.CKE = 1;      // data transmitted on falling edge
+              break;
+        }
 
-            switch(_spi[SPI1].role)
-            {
-                case SPI_SLAVE_SS:          // slave mode w /SS enable
-                    SSPIN  = INPUT;         // define /SS pin as input
-                    SCKPIN = INPUT;         // define clock pin as input
-                    break;
+        SDIPIN = INPUT;                 // define SDI pin as input
+        SDOPIN = OUTPUT;                // define SDO pin as output
 
-                case SPI_SLAVE:             // slave mode w/o /SS enable
-                    SCKPIN = INPUT;         // define clock pin as input
-                    break;
+        switch(_spi[SPI1].role)
+        {
+            case SPI_SLAVE_SS:          // slave mode w /SS enable
+                SSPIN  = INPUT;         // define /SS pin as input
+                SCKPIN = INPUT;         // define clock pin as input
+                break;
 
-                default:                    // master mode, define clock en SS pin as output
-                    SSPIN  = OUTPUT;        // define SS  pin as output
-                    SCKPIN = OUTPUT;        // define clock pin as output
-                    break;
-            }
+            case SPI_SLAVE:             // slave mode w/o /SS enable
+                SCKPIN = INPUT;         // define clock pin as input
+                break;
 
-            SSPCON1bits.SSPEN = 1;          // finally, enables serial port and configures SPI pins
-            //Delayms(30);
+            default:                    // master mode, define clock en SS pin as output
+                SSPIN  = OUTPUT;        // define SS  pin as output
+                SCKPIN = OUTPUT;        // define clock pin as output
+                break;
+        }
 
-            #ifdef SPIINT
-                PIE1bits.SSPIE = 1;
-                INTCONbits.GIEH = 1;
-                INTCONbits.GIEL = 1;
-                INTCONbits.PEIE = 1;
-                //IPR1bits.SSPIP = 1;
-                SSP1IF = 0;
-            #endif
-            break;
+        SSPCON1bits.SSPEN = 1;          // finally, enables serial port and configures SPI pins
+        //Delayms(30);
 
-        #if defined(__18f26j50)|| defined(__18f46j50) || \
-            defined(__18f27j53)|| defined(__18f47j53)
-            
-        case SPI2:
-            SSP2CON1bits.SSPEN = 0;         // first disables serial port and configures SPI pins as I/O pins
-            SSP2STAT = 0x00;                // power on state (SMP=0, CKE=0) 
-            SSP2CON1 = _spi[SPI2].divider;  // select serial mode
-            SSP2STATbits.SMP = _spi[SPI2].phase;
-
-            switch(_spi[SPI2].mode)
-            {
-                case SPI_MODE0:             // SPI bus mode 0,0
-                  SSP2CON1bits.CKP = 0;     // clock idle state low
-                  SSP2STATbits.CKE = 0;     // data transmitted on falling edge
-                  break;    
-                case SPI_MODE1:             // default SPI bus mode 0,1
-                  SSP2CON1bits.CKP = 0;     // clock idle state low
-                  SSP2STATbits.CKE = 1;     // data transmitted on falling edge
-                  break;
-                case SPI_MODE2:             // SPI bus mode 1,0
-                  SSP2CON1bits.CKP = 1;     // clock idle state high
-                  SSP2STATbits.CKE = 0;     // data transmitted on rising edge
-                  break;
-                case SPI_MODE3:             // SPI bus mode 1,1
-                  SSP2CON1bits.CKP = 1;     // clock idle state high
-                  SSP2STATbits.CKE = 1;     // data transmitted on falling edge
-                  break;
-            }
-
-            SDI2PIN = INPUT;                // define SDI pin as input
-            SDO2PIN = OUTPUT;               // define SDO pin as output
-
-            switch(_spi[SPI2].role)
-            {
-                case SPI_SLAVE_SS:          // slave mode w /SS enable
-                    SS2PIN  = INPUT;        // define /SS pin as input
-                    SCK2PIN = INPUT;        // define clock pin as input
-                    break;
-
-                case SPI_SLAVE:             // slave mode w/o /SS enable
-                    SCK2PIN = INPUT;        // define clock pin as input
-                    break;
-
-                default:                    // master mode, define clock en SS pin as output
-                    SS2PIN  = OUTPUT;       // define SS  pin as output
-                    SCK2PIN = OUTPUT;       // define clock pin as output
-                    break;
-            }
-
-            SSP2CON1bits.SSPEN = 1;         // finally, enables serial port and configures SPI pins
-            //Delayms(30);
-
-            #ifdef SPIINT
-                PIE3bits.SSP2IE = 1;
-                INTCONbits.GIEH = 1;
-                INTCONbits.GIEL = 1;
-                INTCONbits.PEIE = 1;
-                //IPR1bits.SSPIP = 1;
-                PIR3bits.SSP1IF = 0;
-            #endif
-            break;
-            
+        #ifdef SPIINT
+            //IPR1bits.SSPIP = 1;
+            SSP1INTFLAG = 0;
+            PIE1bits.SSPIE = 1;
+            interrupts();
         #endif
-    } // end switch
+    } // end if SPI1
 
+    #if defined(__18f26j50)|| defined(__18f46j50) || \
+        defined(__18f27j53)|| defined(__18f47j53)
+
+    else if (module == SPI2)
+    {
+        SSP2CON1bits.SSPEN = 0;         // first disables serial port and configures SPI pins as I/O pins
+        SSP2STAT = 0x00;                // power on state (SMP=0, CKE=0) 
+        SSP2CON1 = _spi[SPI2].divider;  // select serial mode
+        SSP2STATbits.SMP = _spi[SPI2].phase;
+
+        switch(_spi[SPI2].mode)
+        {
+            case SPI_MODE0:             // SPI bus mode 0,0
+              SSP2CON1bits.CKP = 0;     // clock idle state low
+              SSP2STATbits.CKE = 0;     // data transmitted on falling edge
+              break;    
+            case SPI_MODE1:             // default SPI bus mode 0,1
+              SSP2CON1bits.CKP = 0;     // clock idle state low
+              SSP2STATbits.CKE = 1;     // data transmitted on falling edge
+              break;
+            case SPI_MODE2:             // SPI bus mode 1,0
+              SSP2CON1bits.CKP = 1;     // clock idle state high
+              SSP2STATbits.CKE = 0;     // data transmitted on rising edge
+              break;
+            case SPI_MODE3:             // SPI bus mode 1,1
+              SSP2CON1bits.CKP = 1;     // clock idle state high
+              SSP2STATbits.CKE = 1;     // data transmitted on falling edge
+              break;
+        }
+
+        SDI2PIN = INPUT;                // define SDI pin as input
+        SDO2PIN = OUTPUT;               // define SDO pin as output
+
+        switch(_spi[SPI2].role)
+        {
+            case SPI_SLAVE_SS:          // slave mode w /SS enable
+                SS2PIN  = INPUT;        // define /SS pin as input
+                SCK2PIN = INPUT;        // define clock pin as input
+                break;
+
+            case SPI_SLAVE:             // slave mode w/o /SS enable
+                SCK2PIN = INPUT;        // define clock pin as input
+                break;
+
+            default:                    // master mode, define clock en SS pin as output
+                SS2PIN  = OUTPUT;       // define SS  pin as output
+                SCK2PIN = OUTPUT;       // define clock pin as output
+                break;
+        }
+
+        SSP2CON1bits.SSPEN = 1;         // finally, enables serial port and configures SPI pins
+        //Delayms(30);
+
+        #ifdef SPIINT
+            PIE3bits.SSP2IE = 1;
+            INTCONbits.GIEH = 1;
+            INTCONbits.GIEL = 1;
+            INTCONbits.PEIE = 1;
+            //IPR1bits.SSPIP = 1;
+            PIR3bits.SSP1INTFLAG = 0;
+        #endif
+    } // end if SPI2
+    #endif
+    
     va_end(args);           // cleans up the list
 }
 //#endif
@@ -326,7 +317,8 @@ void SPI_begin(u8 module, ...)
  * Stops and resets the SPIx
  * Clears the receive buffer
  **/
- 
+
+#ifdef SPICLOSE
 void SPI_close(u8 module)
 {
     u8 rData;
@@ -365,6 +357,7 @@ void SPI_close(u8 module)
         #endif
     }
 }
+#endif
 
 /**
  * This function sets the order of the bits shifted out of and into the SPI bus,
@@ -442,22 +435,32 @@ u8 SPI_write(u8 module, u8 dataout)
                     bitMask = (0x80 >> i);
                 else
                     bitMask = (0x01 << i);
-                digitalwrite(_spi[SPISW].sda, (dataout & bitMask) ? HIGH : LOW);
-                digitalwrite(_spi[SPISW].sck, HIGH);
-                digitalwrite(_spi[SPISW].sck, LOW);
+                // Pinguino pins <0:7> are always multiplexed with PORTB
+                if (_spi[SPISW].sda < 8 && _spi[SPISW].sck < 8)
+                {
+                    (dataout & bitMask) ? BitSet(LATB, _spi[SPISW].sda) : BitClear(LATB, _spi[SPISW].sda);
+                    BitSet(LATB, _spi[SPISW].sck);
+                    BitClear(LATB, _spi[SPISW].sck);
+                }
+                else
+                {
+                    digitalwrite(_spi[SPISW].sda, (dataout & bitMask) ? 1:0);
+                    digitalwrite(_spi[SPISW].sck, 1);
+                    digitalwrite(_spi[SPISW].sck, 0);
+                }
             }
             return dataout;
         
         case SPI1:
             clear = SSP1BUF;                // clears buffer
-            SSP1IF = 0;                     // enables SPI1 interrupt
+            SSP1INTFLAG = 0;                // enables SPI1 interrupt
             SSPCON1bits.WCOL = 0;           // must be cleared in software
-            SSP1BUF = dataout;                // send data
+            SSP1BUF = dataout;              // send data
 
             if (SSPCON1bits.WCOL)           // still transmitting the previous data 
                 return -1;                  // abort transmission
             else
-                while (!SSP1IF);            // wait for transfer is complete
+                while (!SSP1INTFLAG);       // wait for transfer is complete
 
             return SSP1BUF;
 
@@ -466,15 +469,23 @@ u8 SPI_write(u8 module, u8 dataout)
             
         case SPI2:
             clear = SSP2BUF;                // clears buffer
-            PIR3bits.SSP2IF = 0;            // enables SPI2 interrupt
-            SSP2CON1bits.WCOL = 0;
-            SSP2BUF = dataout;                // send data
+            SSP2INTFLAG = 0;                // enables SPI2 interrupt
+            do                              // RB: 18-02-2016
+            { 
+                SSP2CON1bits.WCOL = 0;      // must be cleared in software
+                SSP2BUF = dataout;          // send data again
+            }
+            while (SSP2CON1bits.WCOL);      // we're still transmitting the previous data
+            while (!SSP2INTFLAG);           // wait for transfer is complete
 
+            /*
+            SSP2CON1bits.WCOL = 0;          // clears colision flag
+            SSP2BUF = dataout;              // send data
             if (SSP2CON1bits.WCOL)          // still transmitting the previous data 
                 return -1;                  // abort transmission
             else
-                while (!PIR3bits.SSP2IF);   // wait for transfer is complete
-
+                while (!SSP2INTFLAG);       // wait for transfer is complete
+            */
             return SSP2BUF;
 
         #endif
@@ -496,11 +507,11 @@ u8 SPI_write(u8 module, u8 dataout)
 void spi1_interrupt()
 {
     u8 c;
-    if (SSP1IF)
+    if (SSP1INTFLAG)
     {
         c = SSP1BUF;
         SSP1BUF = SPI1_onEvent_func(c);
-        SSP1IF = 0;
+        SSP1INTFLAG = 0;
     }
 }
 
@@ -515,11 +526,11 @@ static void SPI1_onEvent(u8(*func)(u8))
 void spi2_interrupt()
 {
     u8 c;
-    if (PIR3bits.SSP2IF)
+    if (SSP2INTFLAG)
     {
         c = SSP2BUF;
         SSP2BUF = SPI2_onEvent_func(c);
-        PIR3bits.SSP2IF = 0;
+        SSP2INTFLAG = 0;
     }
 }
 

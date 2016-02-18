@@ -471,7 +471,7 @@
             CDC_interrupt();
             #endif
             
-            #if defined(__USBBULK)
+            #ifdef __USBBULK
             bulk_interrupt();
             #endif
 

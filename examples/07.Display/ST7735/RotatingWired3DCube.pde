@@ -34,11 +34,11 @@
 
 #define SPIMODULE    SPI2
 #define NBPOINTS     8
-#define SIZE         100
-#define DISTANCE     256
+#define SIZE         100.0
+#define DISTANCE     256.0
 
-typedef struct { int x, y, z, xy; } point3D;
-typedef struct { int x, y;        } point2D;
+typedef struct { s16 x, y, z; } point3D;  //xy;
+typedef struct { s16 x, y;    } point2D;
 
 point3D Sommet[NBPOINTS];   // les sommets du cube
 point3D Point3D[NBPOINTS];  // les sommets apres rotation
@@ -46,57 +46,40 @@ point2D Point2D[NBPOINTS];  // les sommets apres projection
 
 float matrice[3][3];          // 3*3 rotation matrix
 
-u16 fps=0, maxfps=0;         // frame per second and stats
-u16 xa=0, ya=0, za=0;        // angles de rotation
+u8 maxfps=0;         // frame per second and stats
+u16 Xa=0, Ya=0, Za=0;        // angles de rotation
 u16 Xoff, Yoff, Zoff;       // position de l'observateur
 
 ///
 /// Effectue la rotation des points Sommet -> Point3D
 ///
 
-void Rotation(u16 Xa, u16 Ya, u16 Za)
+void Rotation()
 {
     u8 i;
-    float a[3];
+    //float a[3];
 
     // Calcul de la matrice de rotation 3*3
 
-    matrice[0][0] = cosr(Za) * cosr(Ya); 
-    matrice[1][0] = sinr(Za) * cosr(Ya); 
-    matrice[2][0] = - sinr(Ya); 
+    matrice[0][0] = (cosr(Za) * cosr(Ya)); 
+    matrice[1][0] = (sinr(Za) * cosr(Ya)); 
+    matrice[2][0] = (-sinr(Ya)); 
 
-    matrice[0][1] = cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa); 
-    matrice[1][1] = sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za); 
-    matrice[2][1] = sinr(Xa) * cosr(Ya); 
+    matrice[0][1] = (cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa)); 
+    matrice[1][1] = (sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za)); 
+    matrice[2][1] = (sinr(Xa) * cosr(Ya)); 
 
-    matrice[0][2] = cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa); 
-    matrice[1][2] = sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa); 
-    matrice[2][2] = cosr(Xa) * cosr(Ya); 
-
-    a[0] = - (matrice[0][0] * matrice[0][1]); 
-    a[1] = - (matrice[1][0] * matrice[1][1]); 
-    a[2] = - (matrice[2][0] * matrice[2][1]); 
+    matrice[0][2] = (cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa)); 
+    matrice[1][2] = (sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa)); 
+    matrice[2][2] = (cosr(Xa) * cosr(Ya)); 
 
     // Rotation des sommets de l'objet
 
     for (i = 0; i < NBPOINTS; i++)
     {
-        Point3D[i].x = ((matrice[0][1] + Sommet[i].x) * (matrice[0][0] + Sommet[i].y)
-            + a[0] + Sommet[i].xy
-            + matrice[0][2] * Sommet[i].z);
-
-        Point3D[i].y = ((matrice[1][1] + Sommet[i].x) * (matrice[1][0] + Sommet[i].y)
-            + a[1] + Sommet[i].xy
-            + matrice[1][2] * Sommet[i].z);
-
-        Point3D[i].z = ((matrice[2][1] + Sommet[i].x) * (matrice[2][0] + Sommet[i].y)
-            + a[2] + Sommet[i].xy
-            + matrice[2][2] * Sommet[i].z);
-    /*
         Point3D[i].x = matrice[0][0]*Sommet[i].x + matrice[1][0]*Sommet[i].y + matrice[2][0]*Sommet[i].z;
         Point3D[i].y = matrice[0][1]*Sommet[i].x + matrice[1][1]*Sommet[i].y + matrice[2][1]*Sommet[i].z;
         Point3D[i].z = matrice[0][2]*Sommet[i].x + matrice[1][2]*Sommet[i].y + matrice[2][2]*Sommet[i].z;
-     */
     }
 }
 
@@ -133,8 +116,8 @@ void initCube()
     Sommet[6].x = -SIZE;  Sommet[6].y =  SIZE;  Sommet[6].z =  SIZE;
     Sommet[7].x =  SIZE;  Sommet[7].y =  SIZE;  Sommet[7].z =  SIZE;
 
-    for (i = 0; i < NBPOINTS; i++)
-        Sommet[i].xy = - Sommet[i].x * Sommet[i].y;
+    //for (i = 0; i < NBPOINTS; i++)
+    //    Sommet[i].xy = - Sommet[i].x * Sommet[i].y;
 }
 
 ///
@@ -171,12 +154,13 @@ void setup()
     // 4/ Set Fspi to 30MHz :
     //    Fspi max = Fpb max / 2 with Fpb max = Fosc max
     //    Fspi max for ST7735 is 30 MHz so Fpb max = 60 MHz
+    //    Adjust the following according to your processor
+    //System.setCpuFrequency(60000000);
+    //System.setPeripheralFrequency(60000000);
     
-    // Adjust the following according to your processor
-    System.setCpuFrequency(60000000);
-    System.setPeripheralFrequency(60000000);
-    
-    ST7735.init(SPIMODULE, 7);// DC
+    //ST7735.init(SPIMODULE, 7);// DC
+    ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
+
     ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLUE);
     ST7735.setColor(SPIMODULE, ST7735_WHITE);
@@ -198,47 +182,40 @@ void setup()
 
 void loop()
 {
-    u16 frame=0;                   // so frame will be reset every loop
+    u8 fps=0;
     u32 timeEnd = millis() + 1000; // 1000 ms = 1 sec
     
     while (millis() < timeEnd)
     {
         // calculations
-        Rotation(xa, ya, za);
+        Rotation();
         Projection();
         
-        // clear screen and draw the cube
-        ST7735.clearWindow(SPIMODULE,0,12,ST7735[SPIMODULE].screen.width,ST7735[SPIMODULE].screen.height);
+        // display
+        //ST7735.clearScreen(SPIMODULE);
+        ST7735.clearWindow(SPIMODULE,
+            0,
+            ST7735[SPIMODULE].font.height,
+            ST7735[SPIMODULE].screen.width,
+            ST7735[SPIMODULE].screen.height - ST7735[SPIMODULE].font.height);
         drawCube();
 
         // update angles
-        xa = (xa + 1) % 360;
-        ya = (ya + 3) % 360;
-        za = (za + 1) % 360;
+        Xa = (Xa + 1) % 360;
+        Ya = (Ya + 3) % 360;
+        Za = (Za + 1) % 360;
         
-        // one more frame done !
-        frame++;
+        // one frame done !
+        fps++;
     }
     
-    // frame per second
-    fps = frame;
+    //ST7735.printf(SPIMODULE, "%u fps (max. %u)", fps, maxfps);
+    ST7735.printNumber(SPIMODULE, fps, DEC);
     if (fps > maxfps)
     {
         maxfps = fps;
-        ST7735.printf(SPIMODULE, "%ufps (max.%u)", fps, maxfps);
-        /*
-        ST7735.printNumber(SPIMODULE, fps, DEC);
-        ST7735.print(SPIMODULE, "fps@");
-        ST7735.printNumber(SPIMODULE, System.getPeripheralFrequency()/(2000000*(SPI2BRG+1)), DEC);
-        ST7735.print(SPIMODULE, "MHz (max.");
+        ST7735.print(SPIMODULE, " fps (max.");
         ST7735.printNumber(SPIMODULE, maxfps, DEC);
         ST7735.print(SPIMODULE, ")");
-        */
     }
-    // Benchmark
-    // 47J53   :  4 fps
-    // 32MX2x0 : 15 fps (40MHz/20MHz/MIPS16)
-    // 32MX2x0 : 11 fps (40MHz/20MHz/MIPS32)
-    // 32MX2x0 :  8 fps (60MHz/30MHz/MIPS16)
-    // 32MX2x0 :  8 fps (60MHz/30MHz/MIPS32)
 }
