@@ -18,17 +18,23 @@
   // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   //
 
+#ifndef PICUSB_C
+#define PICUSB_C
+
 #include <compiler.h>
 #include <string.h>
 
-#include "picUSB.h"
-#include "usb_config.h"
+#include <usb/picUSB.h>
+#include <usb/usb_config.h>
 
 #ifdef USB_USE_CDC
-#include "usb_cdc.h"
+#include <usb/usb_cdc.c>
 #endif
 #ifdef USB_USE_BULK
-#include "usb_bulk.h"
+#include <usb/usb_bulk.c>
+#endif
+#ifdef USB_USE_HID
+#include <usb/usb_hid.c>
 #endif
 
 #define ALLOW_SUSPEND 0
@@ -40,10 +46,12 @@
   // host enumerates the device and discovers what class of device
   // it is and what interfaces it supports.
   // TODO: remove below lines and replace with the apropriate device_desc.blength etc.
+/*
 #define DEVICE_DESCRIPTOR_SIZE 0x12
 #define CONFIG_HEADER_SIZE  0x09
 #define HID_DESCRIPTOR_SIZE 0x20
 #define HID_HEADER_SIZE 0x09
+*/
 
   // Global variables
 u8 deviceState;
@@ -59,8 +67,6 @@ u8 currentConfiguration;
 #define STATUS_STAGE   3                // Unused - if data I/O went ok, then back to Setup
 
 u8 ctrlTransferStage;                 // Holds the current stage in a control transfer
-
-u8 HIDPostProcess;                    // Set to 1 if HID needs to process after the data stage
 u8 requestHandled;                    // Set to 1 if request was understood and processed.
 
 u8 *outPtr;                           // Data to send to the host
@@ -68,9 +74,12 @@ u8 *inPtr;                            // Data from the host
 word wCount;                            // Number of bytes of data
 
   // HID Class variables
+#ifdef USB_USE_HID
+u8 HIDPostProcess;                    // Set to 1 if HID needs to process after the data stage
 u8 hidIdleRate;
 u8 hidProtocol;                       // [0] Boot Protocol [1] Report Protocol
 u8 hidRxLen;                          // # of bytes put into buffer
+#endif
 
   /** Buffer descriptors Table (see datasheet page 171)
   RAM Bank 4 (0x400 though 0x4ff) is used spEcifically for endpoint buffer control
@@ -85,38 +94,21 @@ u8 hidRxLen;                          // # of bytes put into buffer
 //  RB 30/11/2015 : added PIC16F1459 support
 //
 
-/*
-#if   defined(__18f14k50) || defined(__18f14k50)  // Bank 2
-    volatile BufferDescriptorTable __at (0x200) ep_bdt[32];
-#elif defined(__18f26j53) || defined(__18f46j53) || \
-      defined(__18f27j53) || defined(__18f47j53)  // Bank 13
-    volatile BufferDescriptorTable __at (0xD00) ep_bdt[32];
-#else                                             // Bank 4
-    volatile BufferDescriptorTable __at (0x400) ep_bdt[32];
-#endif
-*/
-
-// sizeof(BufferDescriptorTable) = 4 bytes
-// sizeof(setupPacketStruct) = EP0_BUFFER_SIZE
-// sizeof(controlTransferBuffer) = EP0_BUFFER_SIZE
-
-// Each endpoint has IN and OUT direction
-// if 2 endpoints, sizeof(ep_bdt) = 2*2*4 bytes = 16 ou 0x10
-// if 3 endpoints, sizeof(ep_bdt) = 2*3*4 bytes = 24 ou 0x18
-
-
 #ifdef __XC8__
-    BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
+    #define BD_ADDR_TAG @##BD_ADDR
+    volatile BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS] BD_ADDR_TAG;
     #if defined(__16F1459)
+        #define PA_ADDR_TAG @##PA_ADDR
+        #define TR_ADDR_TAG @##TR_ADDR
         u8 __section("usbram5") dummy; // to prevent a compilation error
-        setupPacketStruct SetupPacket @ 0x2018;
-        u8 controlTransferBuffer[EP0_BUFFER_SIZE] @ 0x2020; //0x2058;
+        setupPacketStruct SetupPacket PA_ADDR_TAG; //@ 0x2020; //0x2018;
+        u8 controlTransferBuffer[EP0_BUFFER_SIZE] TR_ADDR_TAG; //@ 0x2028; //0x2020; //0x2058;
     #else
         setupPacketStruct __section("usbram5") SetupPacket;
         u8 __section("usbram5") controlTransferBuffer[EP0_BUFFER_SIZE];
     #endif
 #else // SDCC
-    BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
+    volatile BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
     #pragma udata usbram5 SetupPacket controlTransferBuffer
     setupPacketStruct SetupPacket;
     u8 controlTransferBuffer[EP0_BUFFER_SIZE];
@@ -130,46 +122,32 @@ u8 hidRxLen;                          // # of bytes put into buffer
 static void GetDescriptor(void)
 {
     #ifdef DEBUG_PRINT
+    u8 descriptorType  = SetupPacket.wValue1;
+    u8 descriptorIndex = SetupPacket.wValue0;
     printf("GetDescriptor\r\n");
     #endif
 
     if(SetupPacket.bmRequestType == 0x80)
     {
-        u8 descriptorType  = SetupPacket.wValue1;
-        u8 descriptorIndex = SetupPacket.wValue0;
-
-        if (descriptorType == DEVICE_DESCRIPTOR)
+        if (SetupPacket.wValue1 == DEVICE_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
-            printf("DEVICE_DESCRIPTOR (0x%ux)\r\n",(word)descriptorType);
+            printf("DEVICE_DESCRIPTOR (0x%ux)\r\n",(u16)descriptorType);
             #endif
             requestHandled = 1;
-            outPtr = (u8 *)&libdevice_descriptor;
+            outPtr = (u8*)&libdevice_descriptor;
             wCount = sizeof(USB_Device_Descriptor);
         }
 
         else if (descriptorType == CONFIGURATION_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
-            printf("CONFIGURATION_DESCRIPTOR (0x%ux): %d\r\n", (word)descriptorType, descriptorIndex);
+            printf("CONFIGURATION_DESCRIPTOR (0x%ux): %d\r\n", (u16)descriptorType, descriptorIndex);
             #endif
 
             requestHandled = 1;
-
-            #if 0
-            outPtr = (u8 *)&libconfiguration_descriptor;
-            // wCount = *(outPtr + 2);
-            wCount = CFSZ;
-            #else
-            // SDCC 2.5 makes bad code with the following two lines.  The
-            // unusual thing is that it is the first of the two lines that
-            // is compiled incorrectly (outPtr gets the contents of
-            // libconfiguration_descriptor rather than the address), even though it
-            // is the second line that changes from above.
-            outPtr = (u8 *)&libconfiguration_descriptor;
-            //wCount = libconfiguration_descriptor.configHeader[2]; // Note: SDCC makes bad code with this
+            outPtr = (u8*)&libconfiguration_descriptor;
             wCount = libconfiguration_descriptor.Header.wTotalLength;
-            #endif
 
             #ifdef DEBUG_PRINT
             printf("Total config size: %d\r\n", wCount);
@@ -179,15 +157,17 @@ static void GetDescriptor(void)
         else if (descriptorType == STRING_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
-            printf("STRING_DESCRIPTOR: %d\r\n", (word)descriptorIndex);
+            printf("STRING_DESCRIPTOR: %d\r\n", (u16)descriptorIndex);
             #endif
 
             requestHandled = 1;
             //outPtr = (u8 *)&libstring_descriptor[descriptorIndex];
             //outPtr = libstring_descriptor[descriptorIndex];
-            outPtr = (u8 *)&libstring_descriptor+descriptorIndex;
+            outPtr = (u8*)&libstring_descriptor+descriptorIndex;
             wCount = *outPtr;
         }
+
+        #if !defined(__16F1459)
 
         else if (descriptorType == DEVICE_QUALIFIER_DESCRIPTOR)
         {
@@ -198,21 +178,24 @@ static void GetDescriptor(void)
             requestHandled = 1;
             // TODO: check if this is needed if not requestHandled is not set to 1 the device will
             // stall later when the linux kernel requests this descriptor
-            //outPtr = (u8 *)&libconfiguration_descriptor;
+            //outPtr = (u8*)&libconfiguration_descriptor;
             //wCount = sizeof();
         }
 
         else
         {
             #ifdef DEBUG_PRINT
-            printf("Unknown Descriptor: 0x%ux\r\n", (word)descriptorType);
+            printf("Unknown Descriptor: 0x%ux\r\n", (u16)descriptorType);
             #endif
         }
+        
+        #endif
     }
 }
 
 
-  // Process GET_STATUS
+// Process GET_STATUS
+#if !defined(__16F1459)
 static void GetStatus(void)
 {
     // Mask off the Recipient bits
@@ -264,8 +247,7 @@ static void GetStatus(void)
     }
 }
 
-
-  // Process SET_FEATURE and CLEAR_FEATURE
+// Process SET_FEATURE and CLEAR_FEATURE
 static void SetFeature(void)
 {
     u8 recipient = SetupPacket.bmRequestType & 0x1F;
@@ -315,204 +297,202 @@ static void SetFeature(void)
         }
     }
 }
-
-
-void ProcessStandardRequest(void) {
-  u8 request = SetupPacket.bRequest;
-
-  if((SetupPacket.bmRequestType & 0x60) != 0x00)
-  // Not a standard request - don't process here.  Class or Vendor
-  // requests have to be handled seperately.
-    return;
-
-  if (request == SET_ADDRESS) {
-  // Set the address of the device.  All future requests
-  // will come to that address.  Can't actually set UADDR
-  // to the new address yet because the rest of the SET_ADDRESS
-  // transaction uses address 0.
-#ifdef DEBUG_PRINT
-    printf("SET_ADDRESS: %uhx\r\n", SetupPacket.wValue0);
 #endif
-    requestHandled = 1;
-    deviceState = ADDRESS;
-    deviceAddress = SetupPacket.wValue0;
-  }
-  else if (request == GET_DESCRIPTOR) {
-    GetDescriptor();
-  }
-  else if (request == SET_CONFIGURATION) {
-#ifdef DEBUG_PRINT
-    printf("SET_CONFIGURATION\r\n");
-#endif
-    requestHandled = 1;
-    currentConfiguration = SetupPacket.wValue0;
-  // TBD: ensure the new configuration value is one that
-  // exists in the descriptor.
-    if (currentConfiguration == 0)
-  // If configuration value is zero, device is put in
-  // address state (USB 2.0 - 9.4.7)
-      deviceState = ADDRESS;
-    else {
-  // Set the configuration.
-      deviceState = CONFIGURED;
 
-  // Initialize the endpoints for all interfaces
-#ifdef USB_USE_HID
-      HIDInitEndpoint();
-#endif
-#ifdef USB_USE_UART
-      UARTInitEndpoint();
-#endif
-#ifdef USB_USE_CDC
-      CDCInitEndpoint();
-#endif      
-#ifdef USB_USE_BULK
-      BULKInitEndpoint();
-#endif   
+void ProcessStandardRequest(void)
+{
+    u8 request = SetupPacket.bRequest;
 
-  // TBD: Add initialization code here for any additional
-  // interfaces beyond the one used for the HID
+    // Not a standard request - don't process here.  Class or Vendor
+    // requests have to be handled seperately.
+    if((SetupPacket.bmRequestType & 0x60) != 0x00)
+        return;
+
+    // Set the address of the device.  All future requests
+    // will come to that address.  Can't actually set UADDR
+    // to the new address yet because the rest of the SET_ADDRESS
+    // transaction uses address 0.
+    if (request == SET_ADDRESS)
+    {
+        #ifdef DEBUG_PRINT
+        printf("SET_ADDRESS: %uhx\r\n", SetupPacket.wValue0);
+        #endif
+        requestHandled = 1;
+        deviceState = ADDRESS;
+        deviceAddress = SetupPacket.wValue0;
     }
-  }
-  else if (request == GET_CONFIGURATION) {
-#ifdef DEBUG_PRINT
-    printf("GET_CONFIGURATION\r\n");
-#endif
-    requestHandled = 1;
-    outPtr = (u8*)&currentConfiguration;
-    wCount = 1;
-  }
-  else if (request == GET_STATUS) {
-    GetStatus();
-  }
-  else if ((request == CLEAR_FEATURE) ||
-  (request == SET_FEATURE)) {
-    SetFeature();
-  }
-  else if (request == GET_INTERFACE) {
-  // No support for alternate interfaces.  Send
-  // zero back to the host.
-#ifdef DEBUG_PRINT
-    printf("GET_INTERFACE\r\n");
-#endif
-    requestHandled = 1;
-    controlTransferBuffer[0] = 0;
-    outPtr = (u8 *)&controlTransferBuffer;
-    wCount = 1;
-  }
-  else if (request == SET_INTERFACE) {
-  // No support for alternate interfaces - just ignore.
-#ifdef DEBUG_PRINT
-    printf("SET_INTERFACE\r\n");
-#endif
-    requestHandled = 1;
-  }
-  else if (request == SET_DESCRIPTOR) {
-#ifdef DEBUG_PRINT
-    printf("SET_DESCRIPTOR\r\n");
-#endif
-  }
-  else if (request == SYNCH_FRAME) {
-#ifdef DEBUG_PRINT
-    printf("SYNCH_FRAME\r\n");
-#endif
-  }
-  else {
-#ifdef DEBUG_PRINT
-    printf("Default Std Request\r\n");
-#endif
-  }
+
+    else if (request == GET_DESCRIPTOR)
+    {
+        GetDescriptor();
+    }
+
+    else if (request == SET_CONFIGURATION)
+    {
+        #ifdef DEBUG_PRINT
+        printf("SET_CONFIGURATION\r\n");
+        #endif
+        requestHandled = 1;
+        currentConfiguration = SetupPacket.wValue0;
+        // TBD: ensure the new configuration value is one that
+        // exists in the descriptor.
+
+        // If configuration value is zero, device is put in
+        // address state (USB 2.0 - 9.4.7)
+        if (currentConfiguration == 0)
+            deviceState = ADDRESS;
+        else
+        {
+            // Set the configuration.
+              deviceState = CONFIGURED;
+
+            // Initialize the endpoints for all interfaces
+            #ifdef USB_USE_HID
+              HIDInitEndpoint();
+            #endif
+            #ifdef USB_USE_UART
+              UARTInitEndpoint();
+            #endif
+            #ifdef USB_USE_CDC
+              CDCInitEndpoint();
+            #endif      
+            #ifdef USB_USE_BULK
+              BULKInitEndpoint();
+            #endif   
+
+            // TBD: Add initialization code here for any additional
+            // interfaces beyond the one used for the HID
+        }
+    }
+    
+    else if (request == GET_CONFIGURATION)
+    {
+        #ifdef DEBUG_PRINT
+        printf("GET_CONFIGURATION\r\n");
+        #endif
+        requestHandled = 1;
+        outPtr = (u8*)&currentConfiguration;
+        wCount = 1;
+    }
+    
+    else if (request == GET_INTERFACE)
+    {
+        // No support for alternate interfaces.  Send
+        // zero back to the host.
+        #ifdef DEBUG_PRINT
+        printf("GET_INTERFACE\r\n");
+        #endif
+        requestHandled = 1;
+        controlTransferBuffer[0] = 0;
+        outPtr = (u8 *)&controlTransferBuffer;
+        wCount = 1;
+    }
+
+    #if !defined(__16F1459)
+
+    else if (request == GET_STATUS)
+    {
+        GetStatus();
+    }
+    
+    else if ((request == CLEAR_FEATURE) || (request == SET_FEATURE))
+    {
+        SetFeature();
+    }
+    
+    else if (request == SET_INTERFACE)
+    {
+        // No support for alternate interfaces - just ignore.
+        #ifdef DEBUG_PRINT
+        printf("SET_INTERFACE\r\n");
+        #endif
+        requestHandled = 1;
+    }
+    
+    else if (request == SET_DESCRIPTOR)
+    {
+        #ifdef DEBUG_PRINT
+        printf("SET_DESCRIPTOR\r\n");
+        #endif
+    }
+    
+    else if (request == SYNCH_FRAME)
+    {
+        #ifdef DEBUG_PRINT
+        printf("SYNCH_FRAME\r\n");
+        #endif
+    }
+    
+    else
+    {
+        #ifdef DEBUG_PRINT
+        printf("Default Std Request\r\n");
+        #endif
+    }
+    
+    #endif
 }
 
+/**
+    Data stage for a Control Transfer that sends data to the host
+**/
+void InDataStage() //unsigned char ep)
+{
+    u16 bufferSize;
 
-  /**
-   Data stage for a Control Transfer that sends data to the host
-  **/
-void InDataStage(unsigned char ep) {
-#if !USE_MEMCPY
-  u8 i;
-#endif
-  word bufferSize;
+    // Determine how many bytes are going to the host
+    if(wCount < EP0_BUFFER_SIZE)
+        bufferSize = wCount;
+    else
+        bufferSize = EP0_BUFFER_SIZE;
 
-  // Determine how many bytes are going to the host
-  if(wCount < EP0_BUFFER_SIZE)
-    bufferSize = wCount;
-  else
-    bufferSize = EP0_BUFFER_SIZE;
+    // Load the high two bits of the u8 count into BC8:BC9
+    // Clear BC8 and BC9
+    EP_IN_BD(0).Stat.uc &= ~(BDS_BC8 | BDS_BC9);
+    EP_IN_BD(0).Stat.uc |= (u8)((bufferSize & 0x0300) >> 8);
+    EP_IN_BD(0).Cnt = (u8)(bufferSize & 0xFF);
+    EP_IN_BD(0).ADDR = PTR16(&controlTransferBuffer);
 
-#ifdef DEBUG_PRINT
-  //    printf("USBCtrlTrfTxService: %d\r\n", bufferSize);
-#endif
+    // Update the number of bytes that still need to be sent.  Getting
+    // all the data back to the host can take multiple transactions, so
+    // we need to track how far along we are.
+    wCount = wCount - bufferSize;
 
-  // Load the high two bits of the u8 count into BC8:BC9
-  // Clear BC8 and BC9
-  EP_IN_BD(ep).Stat.uc &= ~(BDS_BC8 | BDS_BC9);
-  EP_IN_BD(ep).Stat.uc |= (u8)((bufferSize & 0x0300) >> 8);
-  EP_IN_BD(ep).Cnt = (u8)(bufferSize & 0xFF);
-  EP_IN_BD(ep).ADDR = PTR16(&controlTransferBuffer);
+    // Move data to the USB output buffer from wherever it sits now.
+    inPtr = (u8*)&controlTransferBuffer;
 
-  // Update the number of bytes that still need to be sent.  Getting
-  // all the data back to the host can take multiple transactions, so
-  // we need to track how far along we are.
-  wCount = wCount - bufferSize;
-
-  // Move data to the USB output buffer from wherever it sits now.
-  inPtr = (u8 *)&controlTransferBuffer;
-
-#if USE_MEMCPY
-  memcpy(inPtr, outPtr, bufferSize);
-#else
-  for (i=0;i<bufferSize;i++) {
-#ifdef DEBUG_PRINT
-  //printf("0x%x = 0x%x (0x%uhx) ", PTR16(ramPtr), PTR16(romPtr), *romPtr);
-#endif
-    *inPtr++ = *outPtr++;
-  }
-#endif
+    //for (i=0; i<bufferSize; i++)
+    while (bufferSize--)
+        *inPtr++ = *outPtr++;
 }
 
 
 /**
-Data stage for a Control Transfer that reads data from the host
+    Data stage for a Control Transfer that reads data from the host
 **/
 
 void OutDataStage(unsigned char ep)
 {
-    word i, bufferSize;
+    u16 bufferSize;
 
     bufferSize = ((0x03 & EP_OUT_BD(ep).Stat.uc) << 8) | EP_OUT_BD(ep).Cnt;
-
-    #ifdef DEBUG_PRINT
-    //    printf("OutDataStage: %d\r\n", bufferSize);
-    #endif
 
     // Accumulate total number of bytes read
     wCount = wCount + bufferSize;
 
     outPtr = (u8*)&controlTransferBuffer;
 
-    #if USE_MEMCPY
-        memcpy(inPtr, outPtr, bufferSize);
-        #else
-        for (i=0;i<bufferSize;i++)
-        {
-        #ifdef DEBUG_PRINT
-        // printf("0x%x = 0x%x (0x%uhx) ", PTR16(inPtr), PTR16(outPtr), *outPtr);
-        #endif
+    //for (i=0; i<bufferSize; i++)
+    while (bufferSize--)
         *inPtr++ = *outPtr++;
-        }
-        #ifdef DEBUG_PRINT
-        // printf("\r\n");
-        #endif
-    #endif
 }
 
 /**
-Process the Setup stage of a control transfer.  This code initializes the
-flags that let the firmware know what to do during subsequent stages of
-the transfer.
-TODO:
-Only Ep0 is handled here.
+    Process the Setup stage of a control transfer.  This code initializes the
+    flags that let the firmware know what to do during subsequent stages of
+    the transfer.
+    TODO:
+    Only Ep0 is handled here.
 **/
 
 void SetupStage(void)
@@ -525,7 +505,9 @@ void SetupStage(void)
     // Initialize the transfer process
     ctrlTransferStage = SETUP_STAGE;
     requestHandled = 0;                   // Default is that request hasn't been handled
+    #ifdef USB_USE_HID
     HIDPostProcess = 0;                   // Assume standard request until know otherwise
+    #endif
     wCount = 0;                           // No bytes transferred
 
     // See if this is a standard (as definded in USB chapter 9) request
@@ -599,9 +581,10 @@ void WaitForSetupStage(void)
     ctrlTransferStage = SETUP_STAGE;
     EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
     EP_OUT_BD(0).ADDR = PTR16(&SetupPacket);
-    // Give to SIE, enable data toggle checks
+    // Give EP OUT control to SIE, enable data toggle checks
     EP_OUT_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
-    EP_IN_BD(0).Stat.uc = 0x00;           // Give control to CPU
+    // Give EP IN control to CPU
+    EP_IN_BD(0).Stat.uc  = BDS_COWN;
 }
 
 
@@ -625,6 +608,7 @@ void ProcessControlTransfer(void)
             // SETUP PID - a transaction is starting
             SetupStage();
         }
+        
         else if (ctrlTransferStage == DATA_OUT_STAGE)
         {
             // Complete the data stage so that all information has
@@ -668,7 +652,7 @@ void ProcessControlTransfer(void)
             WaitForSetupStage();
         }
     }
-    else if(USTATbits.DIR == IN)
+    else if (USTATbits.DIR == IN)
     {
         // Endpoint 0:in
         if ((UADDR == 0) && (deviceState == ADDRESS))
@@ -677,30 +661,30 @@ void ProcessControlTransfer(void)
             // "deviceAddress" (which came in through a SET_ADDRESS).
             UADDR = SetupPacket.wValue0;
             #ifdef DEBUG_PRINT
-            printf("UADDR = 0x%x\r\n", (word)UADDR);
+            printf("UADDR = 0x%x\r\n", (u16)UADDR);
             #endif
             if(UADDR == 0)
                 // If we get a reset after a SET_ADDRESS, then we need
                 // to drop back to the Default state.
                 deviceState = DEFAULT_STATUS;
-    }
+        }
 
-    if (ctrlTransferStage == DATA_IN_STAGE)
-    {
-        // Start (or continue) transmitting data
-        InDataStage(0);
+        if (ctrlTransferStage == DATA_IN_STAGE)
+        {
+            // Start (or continue) transmitting data
+            InDataStage(0);
 
-        // Turn control over to the SIE and toggle the data bit
-        if(EP_IN_BD(0).Stat.DTS)
-            EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
+            // Turn control over to the SIE and toggle the data bit
+            if(EP_IN_BD(0).Stat.DTS)
+                EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN;
+            else
+                EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTSEN | BDS_DTS ;
+        }
         else
-            EP_IN_BD(0).Stat.uc = BDS_UOWN | BDS_DTS | BDS_DTSEN;
-    }
-    else
-    {
-        // Prepare for the Setup stage of a control transfer
-        WaitForSetupStage();
-    }
+        {
+            // Prepare for the Setup stage of a control transfer
+            WaitForSetupStage();
+        }
     }
     else
     {
@@ -743,6 +727,7 @@ void EnableUSBModule(void)
 
 
   // Unsuspend the device
+#if 0
 void UnSuspend(void)
 {
     #ifdef DEBUG_PRINT
@@ -753,15 +738,17 @@ void UnSuspend(void)
     UIEbits.ACTVIE = 0;
     UIRbits.ACTVIF = 0;
 }
-
+#endif
 
   // Full speed devices get a Start Of Frame (SOF) packet every 1 millisecond.
   // Nothing is currently done with this interrupt (it is simply masked out).
+#if 0
 void StartOfFrame(void)
 {
       // TBD: Add a callback routine to do something
       UIRbits.SOFIF = 0;
 }
+#endif
 
   // This routine is called in response to the code stalling an endpoint.
 void Stall(void)
@@ -779,11 +766,10 @@ void Stall(void)
 }
 
 
-  // Suspend all processing until we detect activity on the USB bus
+// Suspend all processing until we detect activity on the USB bus
+#ifdef ALLOW_SUSPEND    // cf. picUSB.c 
 void Suspend(void)
 {
-    #ifdef ALLOW_SUSPEND
-
         #ifdef DEBUG_PRINT
         printf("Suspend\r\n");
         #endif
@@ -800,6 +786,8 @@ void Suspend(void)
         PIE2bits.USBIE = 1;
         #endif
         
+        // Why ???
+        #if 0
         #if defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
         INTCONbits.IOCIF = 0;
         INTCONbits.IOCIE = 1;
@@ -807,7 +795,7 @@ void Suspend(void)
         INTCONbits.RBIF = 0;
         INTCONbits.RBIE = 1;
         #endif
-
+        #endif
         
         // disable the USART
         #ifdef DEBUG_PRINT
@@ -839,15 +827,16 @@ void Suspend(void)
         PIE2bits.USBIE = 0;
         #endif
         
-
+        // Why ???
+        #if 0
         #if defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
         INTCONbits.IOCIE = 0;
         #else
         INTCONbits.RBIE = 0;
         #endif
-
-    #endif
+        #endif
 }
+#endif
 
 
 void BusReset()
@@ -883,16 +872,21 @@ void BusReset()
 void ProcessUSBTransactions(void)
 {
     // See if the device is connected yet.
-    if(deviceState == DETACHED)
+    if (deviceState == DETACHED)
         return;
 
     // If the USB became active then wake up from suspend
-    if(UIRbits.ACTVIF && UIEbits.ACTVIE)
-        UnSuspend();
-
+    if (UIRbits.ACTVIF && UIEbits.ACTVIE)
+    {
+        //UnSuspend();
+        UCONbits.SUSPND = 0;
+        UIEbits.ACTVIE = 0;
+        UIRbits.ACTVIF = 0;
+    }
+    
     // If we are supposed to be suspended, then don't try performing any
     // processing.
-    if(UCONbits.SUSPND == 1)
+    if (UCONbits.SUSPND == 1)
         return;
 
     // Process a bus reset
@@ -900,12 +894,17 @@ void ProcessUSBTransactions(void)
         BusReset();
 
     // No bus activity for a while - suspend the firmware
+    #ifdef ALLOW_SUSPEND    // cf. picUSB.c 
     if (UIRbits.IDLEIF && UIEbits.IDLEIE)
         Suspend();
-
+    #endif
+    
     if (UIRbits.SOFIF && UIEbits.SOFIE)
-        StartOfFrame();
-
+    {
+        // StartOfFrame();
+        UIRbits.SOFIF = 0;
+    }
+    
     if (UIRbits.STALLIF && UIEbits.STALLIE)
         Stall();
 
@@ -922,7 +921,6 @@ void ProcessUSBTransactions(void)
     if(UIRbits.TRNIF && UIEbits.TRNIE)
     {
         ProcessControlTransfer();
-        // Turn off interrupt
         UIRbits.TRNIF = 0;
     }
 }
@@ -930,9 +928,11 @@ void ProcessUSBTransactions(void)
 
 #if 0
   // Test - put something into EEPROM
-code at 0xF00000 word dataEEPROM[] = {
+code at 0xF00000 u16 dataEEPROM[] = {
   0, 1, 2, 3, 4, 5, 6, 7,
   '0', '1', '2', '3', '4', '5', '6', '7',
   '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 #endif
+
+#endif // PICUSB_C

@@ -75,7 +75,7 @@
 
         // XC8 bug ? We must declare at least one variable in the section
         // or the linker complains
-        #if !defined(__USB__) && !defined(__USBCDC) && !defined(__USBBULK)
+        #if !defined(__USB__) && !defined(__USBCDC__) && !defined(__USBBULK)
         volatile unsigned char __section("usbram5") __dummy__;
         #endif
 

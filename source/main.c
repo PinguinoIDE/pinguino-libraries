@@ -207,16 +207,15 @@
                                     // IRCF     : 1111 = HFINTOSC (16 MHz)
                                     // SCS      : 00 = use clock determined by IRCF
 
+        #if defined(__USB__) || defined(__USBCDC__) || defined(__USBBULK)
+        ACTCON = 0x90;              // Enable active clock tuning with USB
+        #endif
         // Wait HFINTOSC frequency is stable (HFIOFS=1) 
         while (!OSCSTATbits.HFIOFS);
 
         // Wait until the PLLRDY bit is set in the OSCSTAT register
         // before attempting to set the USBEN bit.
         while (!OSCSTATbits.PLLRDY);
-
-        #if defined(__USB__) || defined(__USBCDC) || defined(__USBBULK)
-        ACTCON = 0x90;              // Enable active clock tuning with USB
-        #endif
 
     #elif defined(__18f2455) || defined(__18f4455) || \
           defined(__18f2550) || defined(__18f4550)
@@ -288,8 +287,10 @@
     usb_init();
     #endif
 
-    #ifdef __USBCDC
-    cdc_init();
+    /* NB : will be up to users soon */
+    #ifdef __USBCDC__
+    //CDCbegin(9600);
+    CDCbegin(115200);
     #endif    
 
     #ifdef __USBBULK
@@ -353,7 +354,7 @@
 /// Interrupt 
 /// ----------------------------------------------------------------
 
-#if  defined(__USBCDC)      || defined(__USBBULK)   || defined(__USB__)     || \
+#if  defined(__USBCDC__)    || defined(__USBBULK)   || defined(__USB__)     || \
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
@@ -369,8 +370,7 @@
 
         void interrupt PIC16F_isr(void)
         {
-
-            #ifdef __USBCDC
+            #ifdef __USBCDC__
             CDC_interrupt();
             #endif
             
@@ -467,7 +467,7 @@
             __endasm;
             #endif
 
-            #ifdef __USBCDC
+            #ifdef __USBCDC__
             CDC_interrupt();
             #endif
             

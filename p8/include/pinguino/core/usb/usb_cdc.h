@@ -1,13 +1,15 @@
+/**
+    Definitinos for the USB CDC
+**/
+
 #ifndef USB_CDC_H_
 #define USB_CDC_H_
 
 #include <typedef.h>
+#include <usb/picUSB.h>                 // BufferDescriptorTable
+//#include <usb/usb_config.h>             // USB_MAX_ENDPOINTS
 
 //#define DEBUG_PRINT_CDC 1
-
-/**
-This file contains the definitinos for the USB cdc examples
-**/
 
 /* conventional codes for class-specific descriptors */
 #define USB_DT_CS_DEVICE                0x21
@@ -45,9 +47,7 @@ This file contains the definitinos for the USB cdc examples
 /* Communication Interface Class Control Protocol Codes */
 #define V25TER                          0x01    // Common AT commands ("Hayes(TM)")
 
-/*
- * Class-Specific descriptors ... there are a couple dozen of them
- */
+/* Class-Specific descriptors */
 
 #define USB_CDC_HEADER_TYPE             0x00            /* header_desc */
 #define USB_CDC_CALL_MANAGEMENT_TYPE    0x01            /* call_mgmt_descriptor */
@@ -84,13 +84,13 @@ This file contains the definitinos for the USB cdc examples
 #define USB_CDC_SET_ETHERNET_PACKET_FILTER      0x43
 #define USB_CDC_GET_ETHERNET_STATISTIC          0x44
 
-
 /*
  * USB directions
  *
  * This bit flag is used in endpoint descriptors' bEndpointAddress field.
  * It's also one of three fields in control requests bRequestType.
  */
+
 #define USB_DIR_OUT                     0               /* to device */
 #define USB_DIR_IN                      0x80            /* to host */
 
@@ -106,6 +106,7 @@ This file contains the definitinos for the USB cdc examples
 /*
  * USB recipients, the third of three bRequestType fields
  */
+ 
 #define USB_RECIP_MASK                  0x1f
 #define USB_RECIP_DEVICE                0x00
 #define USB_RECIP_INTERFACE             0x01
@@ -120,6 +121,7 @@ http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
 /** Header Functional Descriptor 
 The class-specific descriptor shall start with a header that is defined in Table 23. The bcdCDC field identifies the release of the USB Class Definitions for Communication Devices Specification (this specification) with which this interface and its descriptors comply. 
 **/
+
 typedef struct
 {
     u8 bFunctionLength;		/*!< Size of this descriptor in u8s. */
@@ -134,13 +136,20 @@ typedef struct
 The Call Management functional descriptor describes the processing of calls for the Communication Class interface. It
 can only occur within the class-specific portion of an Interface descriptor.
 **/
+
 typedef struct
 {
-  u8 bFunctionLength;			/*!< Size of this functional descriptor, in u8s. */
-  u8 bDescriptorType;			/*!< CS_INTERFACE */
-  u8 bDescriptorSubtype;		/*!< Call Management functional descriptor subtype, as defined in Table 25. */
-  u8 bmCapabilities;			/*!< The capabilities that this configuration supports:<ul><li>D7..D2: RESERVED (Reset to zero)</li><li> D1: 0 - Device sends/receives call management information only over the Communication Class interface.<br>1 - Device can send/receive call management information over a Data Class interface.</li><li>D0: 0 - Device does not handle call management itself. 1 - Device handles call management itself.</li></ul>The previous bits, in combination, identify which call management scenario is used. If bit D0 is reset to 0, then the value of bit D1 is ignored. In this case, bit D1 is reset to zero for future compatibility. */
-  u8 bDataInterface;			/*!< Interface number of Data Class interface optionally used for call management. */
+  u8 bFunctionLength;           // Size of this functional descriptor, in u8s.
+  u8 bDescriptorType;           // CS_INTERFACE
+  u8 bDescriptorSubtype;        // Call Management functional descriptor subtype, as defined in Table 25.
+  u8 bmCapabilities;            // The capabilities that this configuration supports:
+                                // D7..D2: RESERVED (Reset to zero)
+                                // D1: 0 - Device sends/receives call management information only over the Communication Class interface.<br>1 - Device can send/receive call management information over a Data Class interface.
+                                // D0: 0 - Device does not handle call management itself. 1 - Device handles call management itself.
+                                // The previous bits, in combination, identify which call management scenario is used.
+                                // If bit D0 is reset to 0, then the value of bit D1 is ignored.
+                                // In this case, bit D1 is reset to zero for future compatibility.
+  u8 bDataInterface;            // Interface number of Data Class interface optionally used for call management.
 } USB_Call_Management_Functional_Descriptor;
 
 /**
@@ -149,14 +158,21 @@ The Abstract Control Management functional descriptor describes the commands sup
 Class interface, as defined in Section 3.6.2, with the SubClass code of Abstract Control Model. It can only occur
 within the class-specific portion of an Interface descriptor.
 **/
+
 typedef struct
 {
-  u8 bFunctionLength;			/*!< Size of this functional descriptor, in u8s. */
-  u8 bDescriptorType;			/*!< CS_INTERFACE */
-  u8 bDescriptorSubtype;		/*!< Abstract Control Management functional descriptor subtype as defined in Table 25.*/
-  u8 bmCapabilities;			/*!< The capabilities that this configuration supports. (A bit value of zero means that the request is not supported.)<ul><li>D7..D4: RESERVED (Reset to zero)</li><li>D3: 1 - Device supports the notification Network_Connection.</li><li>D2: 1 - Device supports the request Send_Break</li><li>D1: 1 - Device supports the request combination of Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State.</li><li>D0: 1 - Device supports the request combination of Set_Comm_Feature, Clear_Comm_Feature, and Get_Comm_Feature.</li></ul>The previous bits, in combination, identify which requests/notifications are supported by a Communication Class interface with the SubClass code of Abstract Control Model. */
+  u8 bFunctionLength;           // Size of this functional descriptor, in u8s.
+  u8 bDescriptorType;           // CS_INTERFACE
+  u8 bDescriptorSubtype;        // Abstract Control Management functional descriptor subtype as defined in Table 25.
+  u8 bmCapabilities;            // The capabilities that this configuration supports.
+                                // (A bit value of zero means that the request is not supported.)
+                                // D7..D4: RESERVED (Reset to zero)
+                                // D3: 1 - Device supports the notification Network_Connection.
+                                // D2: 1 - Device supports the request Send_Break
+                                // D1: 1 - Device supports the request combination of Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State.
+                                // D0: 1 - Device supports the request combination of Set_Comm_Feature, Clear_Comm_Feature, and Get_Comm_Feature.
+                                // The previous bits, in combination, identify which requests/notifications are supported by a Communication Class interface with the SubClass code of Abstract Control Model.
 } USB_Abstract_Control_Management_Functional_Descriptor;
-
 
 /**
 Union Functional Descriptor
@@ -168,21 +184,21 @@ interface but apply to the entire group of interfaces. Interfaces in this group 
 other valid USB interface class (including, but not limited to, Audio, HID, and Monitor).
 TODO: expand to more than 1 slave interfaces
 **/
+
 typedef struct 
 {
-  u8 bFunctionLength;			/*!< Size of this functional descriptor, in u8s. */
-  u8 bDescriptorType;			/*!< CS_INTERFACE */
-  u8 bMasterInterface;		/*!< The interface number of the Communication or Data Class interface, designated as the master or controlling interface for the union.*/
-  u8 bSlaveInterface0;			/*!< Interface number of first slave or associated interface in the union. */
+  u8 bFunctionLength;           // Size of this functional descriptor, in bytes.
+  u8 bDescriptorType;           // CS_INTERFACE
+  u8 bMasterInterface;          // The interface number of the Communication or Data Class interface, designated as the master or controlling interface for the union.
+  u8 bSlaveInterface0;          // Interface number of first slave or associated interface in the union.
   u8 bSlaveInterface1;
 } USB_Union_Functional_Descriptor;
-
-
 
 /**
 Line Coding
 See http://www.usb.org/developers/devclass_docs/usbcdc11.pdf Chap. 6.2.13
 **/
+
 typedef struct
 {
    u32 dwDTERate;			/*!< Data terminal rate, in bits per second. */
@@ -197,36 +213,36 @@ Used to aknoledge a set_control_line request
 **/
 typedef struct
 {
-	u8 wValue0;
-	u8 wValue1;
-	u8 wValue2;
-	u8 wValue3;
-	u8 wValue4;
-	u8 wValue5;
-	u8 wValue6;
-	u8 wValue7;
+    u8 wValue0;
+    u8 wValue1;
+    u8 wValue2;
+    u8 wValue3;
+    u8 wValue4;
+    u8 wValue5;
+    u8 wValue6;
+    u8 wValue7;
 } Zero_Packet_Length;
 
 /*
 Functions for CDC classes
 */
-#ifdef USB_USE_CDC
 
-#define CDC_IN_EP_SIZE 16
+//#ifdef USB_USE_CDC
 
-#define CDC_BULK_IN_SIZE    EP0_BUFFER_SIZE//64 
-#define CDC_BULK_OUT_SIZE   EP0_BUFFER_SIZE//64
-
-// CDC specific buffers
-//extern volatile u8 CDCControlBuffer[CDC_IN_EP_SIZE];
-//extern volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
-//extern volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
+#define USB_CDC_CTRL_EP_SIZE 8
+#ifdef __16F1459
+#define USB_CDC_IN_EP_SIZE   32
+#define USB_CDC_OUT_EP_SIZE  32
+#else
+#define USB_CDC_IN_EP_SIZE   64
+#define USB_CDC_OUT_EP_SIZE  64
+#endif
 
 u8 CONTROL_LINE=0;
 
 void ProcessCDCRequest(void);
 void CDCInitEndpoint(void);
-#endif
 
-#endif
+//#endif // USB_USE_CDC
 
+#endif // USB_CDC_H_

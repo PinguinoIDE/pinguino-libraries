@@ -1,5 +1,6 @@
+CDC.begin CDCbegin#include <__cdc.c>#define CDCBEGIN
 CDC.write CDCwrite#include <__cdc.c>#define CDCWRITE
-CDC.printChar CDCwrite#include <__cdc.c>#define CDCPRINTCHAR
+CDC.printChar CDCprintChar#include <__cdc.c>#define CDCPRINTCHAR
 CDC.print CDCprint#include <__cdc.c>#define CDCPRINT
 CDC.println CDCprintln#include <__cdc.c>#define CDCPRINTLN
 CDC.printNumber CDCprintNumber#include <__cdc.c>#define CDCPRINTNUMBER

@@ -17,41 +17,51 @@
                   init optimized
     ------------------------------------------------------------------*/
 
-#ifndef __USBCDC
-#define __USBCDC
+#ifndef __USBCDC__
+#define __USBCDC__
 
 #define USB_USE_CDC
 
 #include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
-#include <usb/usb_cdc.h>
-#include <usb/usb_config.c>
-#include <usb/picUSB.c>
+//#include <usb/usb_cdc.h>
 #include <usb/usb_cdc.c>
+//#include <usb/usb_config.h>
+//#include <usb/usb_config.c>
+//#include <usb/picUSB.h>
+#include <usb/picUSB.c>
 
-//#ifdef boot2
+#ifdef boot2
     #include <delayms.c>
-//#endif
+#endif
 
+// Printf
 #if defined(CDCPRINTF)
-    #include <printFormated.c>                  // Pinguino printf
+    #include <printFormated.c>
     #include <stdarg.h>
 #endif
 
-// CDC buffer length
-#ifndef _CDCBUFFERLENGTH_
-#define _CDCBUFFERLENGTH_ 64
+// PrintFloat
+#if defined(CDCPRINTFLOAT)
+    #include <printFloat.c>
 #endif
 
-u8 _cdc_buffer[_CDCBUFFERLENGTH_];  // usb buffer
+// PrintNumber
+#if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
+    #include <printNumber.c>
+#endif
+
+u32 cdc_baudrate = USB_CDC_BAUDRATE_DEFAULT;
 
 /***********************************************************************
  * USB CDC init routine
  * called from main.c
+ * 2016-02-18 - RB - renamed cdc_init to CDC_begin(u32 baudrate)
+ * where baudrate can be 9600, 38400 or 115200
  **********************************************************************/
 
-void cdc_init(void)
+void CDCbegin(u32 baudrate)
 {
     u32 counter=1;
 
@@ -63,21 +73,28 @@ void cdc_init(void)
     UCON=0;
     UCFG=0;
 
-    UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
-    UEP6=0;UEP7=0;UEP8=0;UEP9=0;UEP10=0;UEP11=0;
-    UEP12=0;UEP13=0;UEP14=0;UEP15=0;
+    UEP1=0;UEP2=0;UEP3=0;
+    UEP4=0;UEP5=0;UEP6=0;
+    UEP7=0;UEP8=0;UEP9=0;
+    UEP10=0;UEP11=0;UEP12=0;
+    UEP13=0;UEP14=0;UEP15=0;
     
     // and wait 2 seconds
     Delayms(2000);
 
     #endif
 
-    // Initialize USB for CDC
-    UCFG = 0x14;            // Enable pullup resistors; full speed mode
+    // Enable pullup resistors; full speed mode (0x14)
+    #ifdef __XC8__
+    UCFG = _UCFG_UPUEN_MASK | _UCFG_FSEN_MASK;
+    #else
+    UCFG = _UPUEN | _FSEN;
+    #endif
     deviceState = DETACHED;
-    remoteWakeup = 0x00;
-    currentConfiguration = 0x00;
-
+    remoteWakeup = 0;
+    currentConfiguration = 0;
+    cdc_baudrate = baudrate;
+    
     // Enable USB module
     #if 0
     while (deviceState != CONFIGURED)
@@ -86,7 +103,7 @@ void cdc_init(void)
         ProcessUSBTransactions();
     }
     #else
-    while ( counter++ && deviceState != CONFIGURED )
+    while (counter++ && deviceState != CONFIGURED)
     {
         EnableUSBModule();
         ProcessUSBTransactions();
@@ -111,12 +128,78 @@ void cdc_init(void)
 }
 
 /***********************************************************************
- * USB CDC write routine (CDC.write)
+ * USB CDC send routine (private)
+ * added by Regis Blanchot 18/02/2016
+ * send len bytes of the CDCTxBuffer on CDC port
+ **********************************************************************/
+
+static void CDCsend(u8 len)
+{
+    u8 t=0xFF;
+
+    if (deviceState != CONFIGURED) return;
+
+    if (!CONTROL_LINE) return;
+
+    if (!EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
+    {
+        if (len > USB_CDC_IN_EP_SIZE)
+            len = USB_CDC_IN_EP_SIZE;
+        
+        // Set counter to num bytes ready for send
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Cnt = len;
+        // clear BDT Stat bits beside DTS
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
+        // togle DTS
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
+        // reset Buffer to original state
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
+    }
+    
+    while(t--);
+}
+
+/***********************************************************************
+ * USB CDC read routine (private)
+ * added by Regis Blanchot 18/02/2016
+ * read CDC port and fill CDCRxBuffer 
+ **********************************************************************/
+
+#if defined(CDCGETKEY) || defined(CDCGETSTRING)
+static void CDCread()
+{
+    if (deviceState != CONFIGURED) return;
+    
+    if (!CONTROL_LINE) return;
+    
+    if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
+    {
+        // Set counter to num bytes ready for read
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
+        // clear BDT Stat bits beside DTS
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
+        // toggle DTS
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
+        // reset Buffer to original state
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
+    }
+}
+#endif
+
+/***********************************************************************
+ * USB CDCprintChar routine (CDC.printChar or CDC.write)
  * added by regis blanchot 14/06/2011
  * write 1 char on CDC port
  **********************************************************************/
 
-#define CDCwrite(c) CDCputc(c)
+void printChar(u8 c)
+{
+    CDCTxBuffer[0] = c;
+    CDCsend(1);
+}
+
+#define CDCwrite(c)     printChar(c)
+#define CDCprintChar(c) printChar(c)
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)
@@ -127,7 +210,17 @@ void cdc_init(void)
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
 void CDCprint(const char *string)
 {
-    CDCputs(string, strlen(string));
+    //CDCputs(string, strlen(string));
+    u8 len=0;
+    char *s = CDCTxBuffer;
+
+    while (*string)
+    {
+        *s++ = *string++;
+        len++;
+    }
+ 
+    CDCsend(len);
 }
 #endif
 
@@ -141,14 +234,18 @@ void CDCprint(const char *string)
 #if defined(CDCPRINTLN)
 void CDCprintln(const char *string)
 {
-    CDCputs(string, strlen(string));
-    Delayms(1);
-    CDCputc('\r');
-    Delayms(1);
-    CDCputc('\n');
-    Delayms(1);
-    //CDCprint(string);
-    //CDCprint("\n\r");
+    u8 len=0;
+    char *s = CDCTxBuffer;
+
+    while (*string)
+    {
+        *s++ = *string++;
+        len++;
+    }
+    *s++ = '\r';
+    *s++ = '\n';
+    
+    CDCsend(len+2);
 }
 #endif
 
@@ -162,58 +259,7 @@ void CDCprintln(const char *string)
 #if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
 void CDCprintNumber(long value, u8 base)
 {  
-    u8 sign;
-    u8 length;
-
-    long i;
-    unsigned long v;    // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;       // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;    // pointer on string
-
-    if (value==0)
-    {
-        //CDCputs("0", 1);
-        CDCputc('0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (unsigned long)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
-        
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
-    }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    length = sign + tp - tmp + 1;
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    CDCputs(string, length);
+    printNumber(value, base);
 }
 #endif
 
@@ -227,46 +273,7 @@ void CDCprintNumber(long value, u8 base)
 #if defined(CDCPRINTFLOAT)
 void CDCprintFloat(float number, u8 digits)
 { 
-    u8 i, toPrint;
-    u16 int_part;
-    float rounding, remainder;
-
-    // Handle negative numbers
-    if (number < 0.0)
-    {
-        //CDCputs('-', 1);
-        CDCputc('-');
-        number = -number;
-    }
-
-    // Round correctly so that print(1.999, 2) prints as "2.00"  
-    rounding = 0.5;
-    for (i=0; i<digits; ++i)
-        rounding /= 10.0;
-
-    number += rounding;
-
-    // Extract the integer part of the number and print it  
-    int_part = (u16)number;
-    remainder = number - (float)int_part;
-    CDCprintNumber(int_part, 10);
-
-    // Print the decimal point, but only if there are digits beyond
-    if (digits > 0)
-    {
-        //CDCputs('.', 1); 
-        CDCputc('.'); 
-    }
-    
-    // Extract digits from the remainder one at a time
-    while (digits-- > 0)
-    {
-        remainder *= 10.0;
-		// Integer part without use of math.h lib, I think better! (Fazzi)
-        toPrint = (unsigned int)remainder;
-        CDCprintNumber(toPrint, 10);
-        remainder -= toPrint; 
-    }
+    printFloat(number, digits);
 }
 #endif
 
@@ -279,12 +286,13 @@ void CDCprintFloat(float number, u8 digits)
 #if defined(CDCPRINTF)
 void CDCprintf(const u8 *fmt, ...)
 {
-    u8 length;
+    u8 len;
     va_list	args;
 
     va_start(args, fmt);
-    length = psprintf2(_cdc_buffer, fmt, args);
-    CDCputs(_cdc_buffer, length);
+    len = psprintf2(&CDCTxBuffer[0], fmt, args);
+    CDCsend(len);
+
     va_end(args);
 }
 #endif
@@ -298,10 +306,16 @@ void CDCprintf(const u8 *fmt, ...)
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
 u8 CDCgetkey(void)
 {
-    u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
-
-    while (!CDCgets(buffer));
-    return (buffer[0]);	// return only the first character
+    //u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
+    //while (!CDCgets(_cdc_buffer));
+    //return (_cdc_buffer[0]);	// return only the first character
+    u8 c=0;
+    CDCRxBuffer[0]=0;
+    do {
+        CDCread();
+        c = CDCRxBuffer[0];
+    } while (!c);
+    return c;
 }
 #endif
 
@@ -315,16 +329,16 @@ u8 CDCgetkey(void)
 u8 * CDCgetstring(void)
 {
     u8 c, i = 0;
-    static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
+    //static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
     
     do {
         c = CDCgetkey();
         buffer[i++] = c;
         //CDCputs(&buffer[i-1], 1);
-        CDCputc(buffer[i-1]);
+        CDCputc(_cdc_buffer[i-1]);
     } while (c != '\r');
-    buffer[i] = '\0';
-    return buffer;
+    _cdc_buffer[i] = '\0';
+    return _cdc_buffer;
 }
 #endif
 
@@ -352,5 +366,5 @@ void CDC_interrupt(void)
     }
 }
 
-#endif /* __USBCDC */
+#endif /* __USBCDC__ */
 

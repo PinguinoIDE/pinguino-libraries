@@ -1,56 +1,114 @@
 /**
-All CDC functions should go here
+    All CDC functions should go here
 **/
+
+#ifndef USB_CDC_C_
+#define USB_CDC_C_
 
 //#include <string.h>
 #include <typedef.h>
 #include <usb/usb_cdc.h>
-#include <usb/picUSB.h>
-#include <usb/usb_config.h>
+#include <usb/picUSB.c>
+#include <usb/usb_config.c>
 
-#ifdef USB_USE_CDC
+//#ifdef USB_USE_CDC
 
 // Put USB CDC specific I/O buffers into dual port RAM.
 // sizeof(CDCRxBuffer) = CDC_BULK_OUT_SIZE = 64
 // sizeof(CDCTxBuffer) = CDC_BULK_IN_SIZE  = 64
 
+//extern setupPacketStruct SetupPacket;
+//extern u8 requestHandled;
+extern u32 cdc_baudrate;
+
 #ifdef __XC8__
+    //extern volatile BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS];
     #if defined(__16F1459)
+        #define RX_ADDR_TAG @##RX_ADDR
+        #define TX_ADDR_TAG @##TX_ADDR
         u8 __section("usbram5") dummy; // to prevent a compilation error
-        u8 CDCRxBuffer[CDC_BULK_OUT_SIZE] @ 0x2028; //0x2098;
-        u8 CDCTxBuffer[CDC_BULK_IN_SIZE]  @ 0x2030; //0x20D8;
+        u8 CDCRxBuffer[USB_CDC_OUT_EP_SIZE] RX_ADDR_TAG; //@ 0x2028; //0x2098;
+        u8 CDCTxBuffer[USB_CDC_IN_EP_SIZE]  TX_ADDR_TAG; //@ 0x2030; //0x20D8;
     #else
-        u8 __section("usbram5") CDCRxBuffer[CDC_BULK_OUT_SIZE];
-        u8 __section("usbram5") CDCTxBuffer[CDC_BULK_IN_SIZE];
+        u8 __section("usbram5") CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
+        u8 __section("usbram5") CDCTxBuffer[USB_CDC_IN_EP_SIZE];
     #endif
 #else // SDCC
+    //extern volatile BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
     #pragma udata usbram5 CDCRxBuffer CDCTxBuffer
-    volatile u8 CDCRxBuffer[CDC_BULK_OUT_SIZE];
-    volatile u8 CDCTxBuffer[CDC_BULK_IN_SIZE];
+    volatile u8 CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
+    volatile u8 CDCTxBuffer[USB_CDC_IN_EP_SIZE];
 #endif
 
-volatile u8 CDCControlBuffer[CDC_IN_EP_SIZE];
-
+u8 CDCControlBuffer[USB_CDC_CTRL_EP_SIZE];
 USB_CDC_Line_Coding line_config;
 Zero_Packet_Length zlp;
 
-u8 CDCgets(u8 *buffer);
+/**
+    Initialize all enpoints
+**/
+
+void CDCInitEndpoint(void)
+{
+    #ifdef DEBUG_PRINT_CDC
+    printf("CDCInitEndpoint\r\n");
+    #endif
+
+    line_config.dwDTERate =   cdc_baudrate;
+    line_config.bDataBits =   USB_CDC_DATA_BITS;    // 8
+    line_config.bParityType = USB_CDC_PARITY;       // N
+    line_config.bCharFormat = USB_CDC_STOP_BITS;    // 1
+    
+    zlp.wValue0=0;
+    zlp.wValue1=0;
+    zlp.wValue2=0;
+    zlp.wValue3=0;
+    zlp.wValue4=0;
+    zlp.wValue5=0;
+    zlp.wValue6=0;
+    zlp.wValue7=0;
+    
+    // set global state variable
+
+    // Configure USB_COMM_EP_UEP as IN and Communication PIPE
+    USB_COMM_EP_UEP = EP_IN | HSHK_EN;
+
+    // CDC Data EP is IN and OUT EP
+    USB_CDC_DATA_EP_UEP = EP_OUT_IN | HSHK_EN;
+
+    // Communication EP (not used, to remove ?)
+    EP_IN_BD(USB_COMM_EP_NUM).ADDR = PTR16(&CDCControlBuffer);
+    EP_IN_BD(USB_COMM_EP_NUM).Stat.uc = BDS_DAT1 | BDS_COWN;
+
+    // Data OUT EP
+    EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
+    EP_OUT_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
+    EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc = BDS_DAT0 | BDS_UOWN | BDS_DTSEN;
+
+    // Data IN EP
+    EP_IN_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCTxBuffer); // +1 
+    EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc = BDS_DAT1 | BDS_COWN; 
+
+    deviceState=CONFIGURED; 
+
+    #ifdef DEBUG_PRINT_CDC
+    printf("end CDCInitEndpoint\r\n");
+    #endif         
+}
 
 /**
-Special Setup function for CDC Class to handle Setup requests.
+    Special Setup function for CDC Class to handle Setup requests.
 **/
+
 void ProcessCDCRequest(void)
 {
-    /*
-    If its not a Class request return
-    TODO: Check if the folowing check can be done in picUSB.c -> SetupStage like the check for the Interface
-    */
-
     #ifdef DEBUG_PRINT_CDC
     printf("requete %x\r\n",SetupPacket.bmRequestType);
     #endif  
 
-    if ((SetupPacket.bmRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS) return;
+    // If its not a Class request return
+    if ((SetupPacket.bmRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS)
+        return;
 
     #ifdef DEBUG_PRINT_CDC
     printf("%x\r\n",SetupPacket.bRequest);
@@ -60,35 +118,12 @@ void ProcessCDCRequest(void)
     {
         //****** These commands are required ******//
         case USB_CDC_SEND_ENCAPSULATED_COMMAND:
-            //send the packet
-            #ifdef DEBUG_PRINT_CDC
-            printf("send\r\n");
-            #endif
-            break;
-
         case USB_CDC_GET_ENCAPSULATED_RESPONSE:
-            // Populate dummy_encapsulated_cmd_response first.
-            #ifdef DEBUG_PRINT_CDC
-            printf("get\r\n");
-            #endif
             break;
 
         case USB_CDC_REQ_SET_LINE_CODING:
-            // Populate dummy_encapsulated_cmd_response first.
-            #ifdef DEBUG_PRINT_CDC
-            printf("set line\r\n");
-            #endif
-            outPtr = (u8 *)&line_config;
-            wCount = sizeof(USB_CDC_Line_Coding) ;
-            requestHandled = 1;				
-            break;
-
         case USB_CDC_REQ_GET_LINE_CODING:
-            // Populate dummy_encapsulated_cmd_response first.
-            #ifdef DEBUG_PRINT_CDC
-            printf("get line\r\n");
-            #endif
-            outPtr = (u8 *)&line_config;
+            outPtr = (u8*)&line_config;
             wCount = sizeof(USB_CDC_Line_Coding) ;
             requestHandled = 1;
             break;
@@ -100,22 +135,25 @@ void ProcessCDCRequest(void)
             printf("%x\r\n",SetupPacket.wValue0);
             printf("%x\r\n",SetupPacket.wValue1);
             #endif
-            if (SetupPacket.wValue0==3) CONTROL_LINE=1;
-            else CONTROL_LINE=0;		
-            outPtr = (u8 *)&zlp;
+            if (SetupPacket.wValue0==3)
+                CONTROL_LINE=1;
+            else
+                CONTROL_LINE=0;
+            outPtr = (u8*)&zlp;
             wCount = sizeof(Zero_Packet_Length) ;
-            requestHandled = 1;						
-            break;								
-    }
+            requestHandled = 1;
+            break;
         //****** End of required commands ******//    
+    }
 }
 
-  /**
-  Function to read a string from USB
-  @param buffer Buffer for reading data
-  @param lenght Number of u8s to be read
-  @return number of u8s acutally read
-  **/
+/**
+    Function to read a string from USB
+    @param buffer Buffer for reading data
+    @param lenght Number of u8s to be read
+    @return number of u8s acutally read
+**/
+/*
 u8 CDCgets(u8 *buffer)
 {
     u8 i=0;
@@ -129,17 +167,17 @@ u8 CDCgets(u8 *buffer)
         return 0;
 
     // Only process if a serial device is connected
-    if (!EP_OUT_BD(CDC_DATA_EP_NUM).Stat.UOWN)
+    if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
         #ifdef DEBUG_PRINT_CDC
-        printf("Rx on EP %d, Size %d\r\n", CDC_DATA_EP_NUM, EP_OUT_BD(CDC_DATA_EP_NUM).Cnt);
+        printf("Rx on EP %d, Size %d\r\n", USB_CDC_DATA_EP_NUM, EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt);
         #endif
 
         // check how much bytes came
-        if (length > EP_OUT_BD(CDC_DATA_EP_NUM).Cnt)
-            length = EP_OUT_BD(CDC_DATA_EP_NUM).Cnt;
+        if (length > EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt)
+            length = EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt;
             
-        for (i=0; i < EP_OUT_BD(CDC_DATA_EP_NUM).Cnt; i++)
+        for (i=0; i < EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt; i++)
         {
             buffer[i] = CDCRxBuffer[i];
 
@@ -153,16 +191,18 @@ u8 CDCgets(u8 *buffer)
         #endif
 
         // clear BDT Stat bits beside DTS and then togle DTS
-        EP_OUT_BD(CDC_DATA_EP_NUM).Stat.uc &= 0x40;
-        EP_OUT_BD(CDC_DATA_EP_NUM).Stat.DTS = !EP_OUT_BD(CDC_DATA_EP_NUM).Stat.DTS;
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
+        //!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS;
         // reset buffer count and handle controll of buffer to USB
-        EP_OUT_BD(CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
-        EP_OUT_BD(CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
     }
     // return number of bytes read
     return i;
 }
-
+*/
+/*
 u8 CDCputs(const u8 *buffer, u8 length)
 {
     u8 i=0;
@@ -171,7 +211,7 @@ u8 CDCputs(const u8 *buffer, u8 length)
     
     if (!CONTROL_LINE) return 0;
     
-    if (!EP_IN_BD(CDC_DATA_EP_NUM).Stat.UOWN)
+    if (!EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
         if (length > CDC_BULK_IN_SIZE)
             length = CDC_BULK_IN_SIZE;
@@ -190,83 +230,38 @@ u8 CDCputs(const u8 *buffer, u8 length)
         #endif
 
         // Set counter to num bytes ready for send
-        EP_IN_BD(CDC_DATA_EP_NUM).Cnt = i;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Cnt = i;
         // clear BDT Stat bits beside DTS and then togle DTS
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc &= 0x40;
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.DTS;
         // reset Buffer to original state
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
     }
     return i;
 }
+*/
 
+/*
 void CDCputc(u8 c)
 {
     if (deviceState != CONFIGURED) return;
     
     if (!CONTROL_LINE) return;
     
-    if (!EP_IN_BD(CDC_DATA_EP_NUM).Stat.UOWN)
+    if (!EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
         CDCTxBuffer[0] = c;
 
         // Set counter to num bytes ready for send
-        EP_IN_BD(CDC_DATA_EP_NUM).Cnt = 1;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Cnt = 1;
         // clear BDT Stat bits beside DTS and then togle DTS
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc &= 0x40;
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(CDC_DATA_EP_NUM).Stat.DTS;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= 0x40;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.DTS;
         // reset Buffer to original state
-        EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+        EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
     }
 }
+*/
 
-/**
-Initialize
-**/
-
-void CDCInitEndpoint(void)
-{
-    #ifdef DEBUG_PRINT_CDC
-    printf("CDCInitEndpoint\r\n");
-    #endif
-
-    line_config.dwDTERate = USB_CDC_BAUD_RATE;
-    line_config.bCharFormat = USB_CDC_STOP_BITS;
-    line_config.bParityType = USB_CDC_PARITY;
-    line_config.bDataBits = USB_CDC_DATA_BITS;
-    zlp.wValue0=0;
-    zlp.wValue1=0;
-    zlp.wValue2=0;
-    zlp.wValue3=0;
-    zlp.wValue4=0;
-    zlp.wValue5=0;
-    zlp.wValue6=0;
-    zlp.wValue7=0;
-
-    // set global state variable
-
-    // Configure USB_COMM_EP_UEP as IN and Communication PIPE
-    USB_COMM_EP_UEP = EP_IN | HSHK_EN;
-
-    // CDC Data EP is IN and OUT EP
-    CDC_DATA_EP_UEP = EP_OUT_IN | HSHK_EN;
-
-    // configure buffer for the Eps
-    // firt communication EP
-    EP_IN_BD(USB_COMM_EP_NUM).ADDR = PTR16(&CDCControlBuffer);
-    EP_IN_BD(USB_COMM_EP_NUM).Stat.uc = BDS_DAT1 | BDS_COWN;
-
-    // now Buld EP
-    EP_OUT_BD(CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
-    EP_OUT_BD(CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
-    EP_OUT_BD(CDC_DATA_EP_NUM).Stat.uc = BDS_UOWN | BDS_DAT0 | BDS_DTSEN;
-
-    EP_IN_BD(CDC_DATA_EP_NUM).ADDR = PTR16(&CDCTxBuffer); // +1 
-    EP_IN_BD(CDC_DATA_EP_NUM).Stat.uc = BDS_DAT1 | BDS_COWN; 
-    deviceState=CONFIGURED; 
-
-    #ifdef DEBUG_PRINT_CDC
-    printf("end CDCInitEndpoint\r\n");
-    #endif         
-}
-#endif
+//#endif // USB_USE_CDC
+#endif // USB_CDC_C_

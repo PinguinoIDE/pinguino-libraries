@@ -1,10 +1,12 @@
-  /**
-  All BULK functions should go here
-  **/
+/**
+    All BULK functions should go here
+**/
 
-#include <string.h>
+//#include <string.h>
+#include <typedef.h>
 #include "picUSB.h"
 #include "usb_config.h"
+#include "usb_bulk.h"
 
 #ifdef USB_USE_BULK
 
@@ -15,11 +17,12 @@ volatile u8 BULKTxBuffer[BULK_BULK_IN_SIZE] @ (0x540);
 #else
 // Put USB I/O buffers into dual port RAM.
 #pragma udata usbram5 BULKRxBuffer BULKTxBuffer
-volatile byte BULKRxBuffer[BULK_BULK_OUT_SIZE];
-volatile byte BULKTxBuffer[BULK_BULK_IN_SIZE];
+volatile u8 BULKRxBuffer[BULK_BULK_OUT_SIZE];
+volatile u8 BULKTxBuffer[BULK_BULK_IN_SIZE];
 #endif
+
 /**
-Initialize
+    Initialize
 **/
 void BULKInitEndpoint(void)
 {
@@ -38,21 +41,23 @@ void BULKInitEndpoint(void)
     EP_IN_BD(BULK_DATA_EP_NUM).Stat.uc = BDS_DTS ;
 }
 
-byte BULKavailable()
+u8 BULKavailable()
 {
     u8 received = (!EP_OUT_BD(BULK_DATA_EP_NUM).Stat.UOWN) && (EP_OUT_BD(BULK_DATA_EP_NUM).Cnt > 0);
     return(received );
 }
-  /**
-  Function to read a string from USB
-  @param buffer Buffer for reading data
-  @param lenght Number of bytes to be read
-  @return number of bytes acutally read
-  **/
-byte BULKgets(char *buffer)
+
+/**
+    Function to read a string from USB
+    @param buffer Buffer for reading data
+    @param lenght Number of bytes to be read
+    @return number of bytes acutally read
+**/
+
+u8 BULKgets(char *buffer)
 {
-    byte i=0;
-    byte length=64;
+    u8 i=0;
+    u8 length=64;
 
     if (deviceState != CONFIGURED)
         return 0;
@@ -77,13 +82,15 @@ byte BULKgets(char *buffer)
     return i;
 }
 
+/**
+    Function writes string to USB
+    atm not more than MAX_SIZE is allowed
+    if more is needed transfer must be split up
+**/
 
-  /**
-  Function writes string to USB, atm not more than MAX_SIZE is allowed if more is needed transfer must be split up
-  **/
-byte BULKputs(char *buffer, byte length)
+u8 BULKputs(char *buffer, u8 length)
 {
-    byte i=0;
+    u8 i=0;
 
     if (deviceState != CONFIGURED) return 0;
 
