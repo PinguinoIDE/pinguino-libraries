@@ -1,5 +1,5 @@
 /**
-    Definitinos for the USB CDC
+    Definitions for the USB CDC
 **/
 
 #ifndef USB_CDC_H_

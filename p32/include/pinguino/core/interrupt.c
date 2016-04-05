@@ -74,6 +74,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;
             
         case INT_EXTERNAL0_VECTOR:
+            IFS0bits.INT0IF = 0;
+            IPC0bits.INT0IP = pri;
+            IPC0bits.INT0IS = sub;
             break;
             
         case INT_TIMER1_VECTOR:
@@ -89,6 +92,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;
             
         case INT_EXTERNAL1_VECTOR:
+            IFS0bits.INT1IF = 0;
+            IPC1bits.INT1IP = pri;
+            IPC1bits.INT1IS = sub;
             break;
             
         case INT_TIMER2_VECTOR:
@@ -104,6 +110,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;
             
         case INT_EXTERNAL2_VECTOR:
+            IFS0bits.INT2IF = 0;
+            IPC2bits.INT2IP = pri;
+            IPC2bits.INT2IS = sub;
             break;
             
         case INT_TIMER3_VECTOR:
@@ -119,6 +128,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;
             
         case INT_EXTERNAL3_VECTOR:
+            IFS0bits.INT3IF = 0;
+            IPC3bits.INT3IP = pri;
+            IPC3bits.INT3IS = sub;
             break;
             
         case INT_TIMER4_VECTOR:
@@ -134,6 +146,9 @@ void IntSetVectorPriority(u8 vector, u8 pri, u8 sub)
             break;
             
         case INT_EXTERNAL4_VECTOR:
+            IFS0bits.INT4IF = 0;
+            IPC4bits.INT4IP = pri;
+            IPC4bits.INT4IS = sub;
             break;
             
         case INT_TIMER5_VECTOR:
@@ -348,6 +363,7 @@ u32 IntGetVectorPriority(u8 vector)
         case INT_CORE_SOFTWARE1_VECTOR:
             break;
         case INT_EXTERNAL0_VECTOR:
+            pri = IPC0bits.INT0IP;
             break;
         case INT_TIMER1_VECTOR:
             pri = IPC1bits.T1IP;
@@ -357,6 +373,7 @@ u32 IntGetVectorPriority(u8 vector)
         case INT_OUTPUT_COMPARE1_VECTOR:
             break;
         case INT_EXTERNAL1_VECTOR:
+            pri = IPC1bits.INT1IP;
             break;    
         case INT_TIMER2_VECTOR:
             break;
@@ -365,6 +382,7 @@ u32 IntGetVectorPriority(u8 vector)
         case INT_OUTPUT_COMPARE2_VECTOR:
             break;
         case INT_EXTERNAL2_VECTOR:
+            pri = IPC2bits.INT2IP;
             break;    
         case INT_TIMER3_VECTOR:
             break;
@@ -373,6 +391,7 @@ u32 IntGetVectorPriority(u8 vector)
         case INT_OUTPUT_COMPARE3_VECTOR:
             break;
         case INT_EXTERNAL3_VECTOR:
+            pri = IPC3bits.INT3IP;
             break;     
         case INT_TIMER4_VECTOR:
             break;
@@ -381,6 +400,7 @@ u32 IntGetVectorPriority(u8 vector)
         case INT_OUTPUT_COMPARE4_VECTOR:
             break;
         case INT_EXTERNAL4_VECTOR:
+            pri = IPC4bits.INT4IP;
             break;
         case INT_TIMER5_VECTOR:
             break;
@@ -498,6 +518,7 @@ u32 IntGetVectorSubPriority(u8 vector)
         case INT_CORE_SOFTWARE1_VECTOR:
             break;
         case INT_EXTERNAL0_VECTOR:
+            sub = IPC0bits.INT0IS;
             break;
         case INT_TIMER1_VECTOR:
             sub = IPC1bits.T1IS;
@@ -507,6 +528,7 @@ u32 IntGetVectorSubPriority(u8 vector)
         case INT_OUTPUT_COMPARE1_VECTOR:
             break;
         case INT_EXTERNAL1_VECTOR:
+            sub = IPC1bits.INT1IS;
             break;    
         case INT_TIMER2_VECTOR:
             break;
@@ -515,6 +537,7 @@ u32 IntGetVectorSubPriority(u8 vector)
         case INT_OUTPUT_COMPARE2_VECTOR:
             break;
         case INT_EXTERNAL2_VECTOR:
+            sub = IPC2bits.INT2IS;
             break;    
         case INT_TIMER3_VECTOR:
             break;
@@ -523,6 +546,7 @@ u32 IntGetVectorSubPriority(u8 vector)
         case INT_OUTPUT_COMPARE3_VECTOR:
             break;
         case INT_EXTERNAL3_VECTOR:
+            sub = IPC3bits.INT3IS;
             break;     
         case INT_TIMER4_VECTOR:
             break;
@@ -531,6 +555,7 @@ u32 IntGetVectorSubPriority(u8 vector)
         case INT_OUTPUT_COMPARE4_VECTOR:
             break;
         case INT_EXTERNAL4_VECTOR:
+            sub = IPC4bits.INT4IS;
             break;
         case INT_TIMER5_VECTOR:
             break;

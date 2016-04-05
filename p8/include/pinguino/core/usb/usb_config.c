@@ -3,9 +3,11 @@
 
 #include <typedef.h>
 #include <usb/usb_config.h>
+
 #ifdef USB_USE_CDC
 #include <usb/usb_cdc.h>
 #endif
+
 #ifdef USB_USE_BULK
 #include <usb/usb_bulk.h>
 #endif
@@ -229,7 +231,8 @@ const USB_String_Descriptor manu =
 {
     sizeof(manu),
     STRING_DESCRIPTOR,
-    {'S','e','a','I','c','e','L','a','b'}
+    //{'S','e','a','I','c','e','L','a','b'}
+    {'P','i','n','g','u','i','n','o'}
 };
 
 // Product string descriptor

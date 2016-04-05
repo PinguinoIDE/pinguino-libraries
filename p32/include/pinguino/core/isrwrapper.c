@@ -48,6 +48,12 @@
     void Timer3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+	//EXTERNAL
+    void Int0Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     // SPI
     void SPI1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void SPI2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
@@ -137,6 +143,24 @@
 
     #if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
     void Timer5Interrupt(void) { Nop(); }
+    #endif
+
+    /**************************************************************************/
+    
+    #if !defined(INT0INT)
+    void Int0Interrupt(void) { Nop(); }
+    #endif
+    #if !defined(INT1INT)
+    void Int1Interrupt(void) { Nop(); }
+    #endif
+    #if !defined(INT2INT)
+    void Int2Interrupt(void) { Nop(); }
+    #endif
+    #if !defined(INT3INT)
+    void Int3Interrupt(void) { Nop(); }
+    #endif
+    #if !defined(INT4INT)
+    void Int4Interrupt(void) { Nop(); }
     #endif
 
     /**************************************************************************/

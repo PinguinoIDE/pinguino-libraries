@@ -1,26 +1,33 @@
-// cdc module for Pinguino
-// Jean-Pierre Mandon 2010
+// Bulk module for Pinguino
+// André Gentric 2013
 
 #ifndef __USBBULK
+#define __USBBULK
 
 /**********************************************************************/
 #ifdef boot4
 /**********************************************************************/
 
-#define __USBBULK
-
 #define USB_USE_BULK
 //#define BULKDEBUG
+//#define DEBUG_PRINT
 #define EP1_BUFFER_SIZE 64//added 24-8-13
 
-#include <usb/usb_bulk.h>
-#include <usb/usb_config.c>
-#include <usb/picUSB.c>
-#include <usb/usb_bulk.c>
+#include <compiler.h>
 #include <typedef.h>
+#include <macro.h>
+//#include <usb/usb_bulk.h>
+#include <usb/usb_bulk.c>
+//#include <usb/usb_config.h>
+//#include <usb/usb_config.c>
+//#include <usb/picUSB.h>
+#include <usb/picUSB.c>
+
 #include <delayms.c>
+// TODO in usb.pdl : #if defined(BULKPRINTF)
 #include <printFormated.c>                  // Pinguino printf
 #include <stdarg.h>
+// TODO : #endif
 
 // BULK buffer length
 #ifndef _BULKBUFFERLENGTH_
@@ -32,6 +39,7 @@ u8 _bulk_buffer[_BULKBUFFERLENGTH_];  // usb buffer
 #ifdef BULKDEBUG
 #include <serial.c>
 #endif
+
 void bulk_init()
 {
     #ifdef BULKDEBUG
@@ -39,10 +47,10 @@ void bulk_init()
     #endif
 
     // Init
-//    INTCON=0;
+    //INTCON=0;
     INTCONbits.GIEH = 0;
     INTCONbits.GIEL = 0;
-//    INTCON2=0xC0;
+    //INTCON2=0xC0;
     UCON=0;
     UCFG=0;
     UEP0=0;UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
@@ -83,11 +91,11 @@ void bulk_interrupt(void)
     #if defined(__18f25k50) || defined(__18f45k50)
     if(PIR3bits.USBIF)
     {
-	    PIR3bits.USBIF = 0;
+        PIR3bits.USBIF = 0;
     #else
     if(PIR2bits.USBIF)
     {
-	    PIR2bits.USBIF = 0;
+        PIR2bits.USBIF = 0;
    #endif
         ProcessUSBTransactions();
         UIRbits.SOFIF = 0;

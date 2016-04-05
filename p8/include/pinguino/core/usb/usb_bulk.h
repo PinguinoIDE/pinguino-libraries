@@ -1,7 +1,12 @@
+/**
+    Definitions for the USB BULK
+**/
+
 #ifndef USB_BULK_H_
 #define USB_BULK_H_
 
 #include <typedef.h>
+#include <usb/picUSB.h>                 // BufferDescriptorTable
 
 /**
 This file contains the definitinos for the USB BULK examples

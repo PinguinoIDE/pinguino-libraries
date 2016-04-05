@@ -152,6 +152,14 @@ vector_\_XX\()_ISR_wrapper:
     ISR_wrapper _TIMER_4_VECTOR, Timer4Interrupt
     ISR_wrapper _TIMER_5_VECTOR, Timer5Interrupt
 
+    /*** INTx ***************************************************************/
+
+    ISR_wrapper _EXTERNAL_0_VECTOR, Int0Interrupt
+    ISR_wrapper _EXTERNAL_1_VECTOR, Int1Interrupt
+    ISR_wrapper _EXTERNAL_2_VECTOR, Int2Interrupt
+    ISR_wrapper _EXTERNAL_3_VECTOR, Int3Interrupt
+    ISR_wrapper _EXTERNAL_4_VECTOR, Int4Interrupt
+
     /*** MISC *****************************************************************/
 
     ISR_wrapper _RTCC_VECTOR,    RTCCInterrupt

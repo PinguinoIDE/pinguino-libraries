@@ -2,13 +2,16 @@
     All BULK functions should go here
 **/
 
+#ifndef USB_BULK_C_
+#define USB_BULK_C_
+
 //#include <string.h>
 #include <typedef.h>
-#include "picUSB.h"
-#include "usb_config.h"
-#include "usb_bulk.h"
+#include <usb/picUSB.c>
+#include <usb/usb_bulk.h>
+#include <usb/usb_config.c>
 
-#ifdef USB_USE_BULK
+//#ifdef USB_USE_BULK
 
 #ifdef __XC8
 // CDC specific buffers
@@ -28,22 +31,22 @@ void BULKInitEndpoint(void)
 {
 
     // BULK Data EP is IN and OUT EP
-    BULK_DATA_EP_UEP = EP_OUT_IN | HSHK_EN;
+    USB_BULK_DATA_EP_UEP = EP_OUT_IN | HSHK_EN;
 
     // now build EP
-    EP_OUT_BD(BULK_DATA_EP_NUM).Cnt = sizeof(BULKRxBuffer);
-    EP_OUT_BD(BULK_DATA_EP_NUM).ADDR = PTR16(&BULKRxBuffer);
+    EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt = sizeof(BULKRxBuffer);
+    EP_OUT_BD(USB_BULK_DATA_EP_NUM).ADDR = PTR16(&BULKRxBuffer);
     // USB owns buffer
-    EP_OUT_BD(BULK_DATA_EP_NUM).Stat.uc = BDS_UOWN | BDS_DTSEN;
+    EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.uc = BDS_UOWN | BDS_DTSEN;
 
-    EP_IN_BD(BULK_DATA_EP_NUM).ADDR = PTR16(&BULKTxBuffer);
+    EP_IN_BD(USB_BULK_DATA_EP_NUM).ADDR = PTR16(&BULKTxBuffer);
     // CPU owns buffer
-    EP_IN_BD(BULK_DATA_EP_NUM).Stat.uc = BDS_DTS ;
+    EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.uc = BDS_DTS ;
 }
 
 u8 BULKavailable()
 {
-    u8 received = (!EP_OUT_BD(BULK_DATA_EP_NUM).Stat.UOWN) && (EP_OUT_BD(BULK_DATA_EP_NUM).Cnt > 0);
+    u8 received = (!EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.UOWN) && (EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt > 0);
     return(received );
 }
 
@@ -63,20 +66,20 @@ u8 BULKgets(char *buffer)
         return 0;
 
     // Only Process if we own the buffer aka not own by SIE
-    if (!EP_OUT_BD(BULK_DATA_EP_NUM).Stat.UOWN)
+    if (!EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.UOWN)
     {
         // check how much bytes came
-        if (length > EP_OUT_BD(BULK_DATA_EP_NUM).Cnt)
-            length = EP_OUT_BD(BULK_DATA_EP_NUM).Cnt;
-        for (i=0; i < EP_OUT_BD(BULK_DATA_EP_NUM).Cnt; i++)
+        if (length > EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt)
+            length = EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt;
+        for (i=0; i < EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt; i++)
             buffer[i] = BULKRxBuffer[i];
 
         // clear BDT Stat bits beside DTS and then togle DTS
-        EP_OUT_BD(BULK_DATA_EP_NUM).Stat.uc &= 0x40;
-        EP_OUT_BD(BULK_DATA_EP_NUM).Stat.DTS = !EP_OUT_BD(BULK_DATA_EP_NUM).Stat.DTS;
+        EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.uc &= 0x40;
+        EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.DTS = !EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.DTS;
         // reset buffer count and handle controll of buffer to USB
-        EP_OUT_BD(BULK_DATA_EP_NUM).Cnt = sizeof(BULKRxBuffer);
-        EP_OUT_BD(BULK_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+        EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt = sizeof(BULKRxBuffer);
+        EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
     }
     // return number of bytes read
     return i;
@@ -94,7 +97,7 @@ u8 BULKputs(char *buffer, u8 length)
 
     if (deviceState != CONFIGURED) return 0;
 
-    if (!EP_IN_BD(BULK_DATA_EP_NUM).Stat.UOWN)
+    if (!EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.UOWN)
     {
         if (length > BULK_BULK_IN_SIZE)
             length = BULK_BULK_IN_SIZE;
@@ -102,14 +105,16 @@ u8 BULKputs(char *buffer, u8 length)
             BULKTxBuffer[i] = buffer[i];
 
         // Set counter to num bytes ready for send
-        EP_IN_BD(BULK_DATA_EP_NUM).Cnt = i;
+        EP_IN_BD(USB_BULK_DATA_EP_NUM).Cnt = i;
         // clear BDT Stat bits beside DTS and then togle DTS
-        EP_IN_BD(BULK_DATA_EP_NUM).Stat.uc &= 0x40;
-        EP_IN_BD(BULK_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(BULK_DATA_EP_NUM).Stat.DTS;
+        EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.uc &= 0x40;
+        EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.DTS = !EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.DTS;
         // reset Buffer to original state
-        EP_IN_BD(BULK_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
+        EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.uc |= BDS_UOWN | BDS_DTSEN;
     }
     return i;
 }
 
-#endif /* USB_USE_BULK */
+//#endif /* USB_USE_BULK */
+
+#endif /* USB_BULK_C_  */

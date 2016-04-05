@@ -17,10 +17,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
-/**
-TODO:
- - BufferDescriptorTable should be an array
-**/
+
 #ifndef PICUSB_H
 #define PICUSB_H
 
@@ -33,6 +30,10 @@ TODO:
 
 #ifdef USB_USE_CDC
 #include <usb/usb_cdc.h>
+#endif
+
+#ifdef USB_USE_BULK
+#include <usb/usb_bulk.h>
 #endif
 
 #ifdef USB_USE_HID

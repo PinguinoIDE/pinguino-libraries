@@ -30,9 +30,11 @@
 #ifdef USB_USE_CDC
 #include <usb/usb_cdc.c>
 #endif
+
 #ifdef USB_USE_BULK
 #include <usb/usb_bulk.c>
 #endif
+
 #ifdef USB_USE_HID
 #include <usb/usb_hid.c>
 #endif
@@ -81,15 +83,10 @@ u8 hidProtocol;                       // [0] Boot Protocol [1] Report Protocol
 u8 hidRxLen;                          // # of bytes put into buffer
 #endif
 
-  /** Buffer descriptors Table (see datasheet page 171)
-  RAM Bank 4 (0x400 though 0x4ff) is used spEcifically for endpoint buffer control
-  in a structure known as Buffer Descriptor Table (BDTZ).
-  TODO: find something smarter to allocate the buffer, like in usbmmap.c
-  of the microchip firmware. If not all endpoints are used the space in RAM is wasted.
-  **/
-
 //
 //  USB RAM / Buffer Descriptor Table
+//  BDT is used specifically for endpoint buffer control
+//  NB : If not all endpoints are used the space in RAM is wasted.
 //  RB 09/09/2012 : added some other PIC support
 //  RB 30/11/2015 : added PIC16F1459 support
 //
@@ -139,7 +136,7 @@ static void GetDescriptor(void)
             wCount = sizeof(USB_Device_Descriptor);
         }
 
-        else if (descriptorType == CONFIGURATION_DESCRIPTOR)
+        else if (SetupPacket.wValue1 == CONFIGURATION_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
             printf("CONFIGURATION_DESCRIPTOR (0x%ux): %d\r\n", (u16)descriptorType, descriptorIndex);
@@ -154,22 +151,22 @@ static void GetDescriptor(void)
             #endif
         }
 
-        else if (descriptorType == STRING_DESCRIPTOR)
+        else if (SetupPacket.wValue1 == STRING_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
             printf("STRING_DESCRIPTOR: %d\r\n", (u16)descriptorIndex);
             #endif
 
             requestHandled = 1;
-            //outPtr = (u8 *)&libstring_descriptor[descriptorIndex];
-            //outPtr = libstring_descriptor[descriptorIndex];
-            outPtr = (u8*)&libstring_descriptor+descriptorIndex;
+            //outPtr = (u8 *)&libstring_descriptor[SetupPacket.wValue0];
+            //outPtr = libstring_descriptor[SetupPacket.wValue0];
+            outPtr = (u8*)&libstring_descriptor+SetupPacket.wValue0;
             wCount = *outPtr;
         }
 
         #if !defined(__16F1459)
 
-        else if (descriptorType == DEVICE_QUALIFIER_DESCRIPTOR)
+        else if (SetupPacket.wValue1 == DEVICE_QUALIFIER_DESCRIPTOR)
         {
             #ifdef DEBUG_PRINT
             printf("DEVICE_QUALIFIER_DESCRIPTOR\r\n");

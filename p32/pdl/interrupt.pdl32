@@ -21,6 +21,12 @@ INT_TMR3 INT_TMR3#define TMR3INT
 INT_TMR4 INT_TMR4#define TMR4INT
 INT_TMR5 INT_TMR5#define TMR5INT
 
+INT_EXTERNAL0 INT_EXTERNAL0#define INT0INT
+INT_EXTERNAL1 INT_EXTERNAL1#define INT1INT
+INT_EXTERNAL2 INT_EXTERNAL2#define INT2INT
+INT_EXTERNAL3 INT_EXTERNAL3#define INT3INT
+INT_EXTERNAL4 INT_EXTERNAL4#define INT4INT
+
 OnTimer1 OnTimer1#include <onevent.c>#define TMR1INT
 OnTimer2 OnTimer2#include <onevent.c>#define TMR2INT
 OnTimer3 OnTimer3#include <onevent.c>#define TMR3INT
@@ -39,6 +45,12 @@ Timer2Interrupt Timer2Interrupt#define TMR2INT
 Timer3Interrupt Timer3Interrupt#define TMR3INT
 Timer4Interrupt Timer4Interrupt#define TMR4INT
 Timer5Interrupt Timer5Interrupt#define TMR5INT
+
+Int0Interrupt Int0Interrupt#define INT0INT
+Int1Interrupt Int1Interrupt#define INT1INT
+Int2Interrupt Int2Interrupt#define INT2INT
+Int3Interrupt Int3Interrupt#define INT3INT
+Int4Interrupt Int4Interrupt#define INT4INT
 
 SPI1Interrupt SPI1Interrupt#define __SPI__
 SPI2Interrupt SPI2Interrupt#define __SPI__

@@ -283,211 +283,100 @@
     #endif
     
 /**********************************************************************/
-#elif defined(PINGUINO2455)  || defined(PINGUINO4455)  || \
-      defined(PINGUINO2550)  || defined(PINGUINO4550)  || \
-      defined(PINGUINO25K50) || defined(PINGUINO45K50) || \
-      defined(PINGUINO26J50) || defined(PINGUINO27J53) || \
-      defined(CHRP3)
-/**********************************************************************/
-
-    // Common definition
-    
-    #define B0 0
-//    #define RB0 0
-//    #define AN12 0
-//    #define INT0 0
-//    #define FLT0 0
-//    #define SDI 0
-//    #define SDA 0
-
-    #define B1 1
-//    #define RB1 1
-//    #define AN10 1
-//    #define INT1 1
-//    #define SCK 1
-//    #define SCL 1
-
-    #define B2 2
-//    #define RB2 2
-//    #define AN8 2
-//    #define INT2 2
-//    #define VMO 2
-
-    #define B3 3
-//    #define RB3 3
-//    #define AN9 3
-//    #define VPO 3
-
-    #define B4 4
-//    #define RB4 4
-//    #define AN11 4
-//    #define KBI0 4
-
-    #define B5 5
-//    #define RB5 5
-//    #define KBI1 5
-//    #define PGM 5
-
-    #define B6 6
-//    #define RB6 6
-//    #define KBI2 6
-//    #define PGC 6
-
-    #define B7 7
-//    #define RB7 7
-//    #define KBI3 7
-//    #define PGD 7
-
-    #define C6 8
-//    #define RC6 8
-//    #define TX 8
-//    #define CK 8
-
-    #define C7 9
-//    #define RC7 9
-//    #define RX 9
-//    #define DT 9
-//    #define SDO 9
-
-    #define C0 10
-//    #define RC0 10
-//    #define T1OSO 10
-//    #define T13CK 10
-
-    #define C1 11
-//    #define RC1 11
-//    #define T1OSI 11
-//    #define PWM2 11
-//    #define UOE 11
-
-    #define C2 12
-//    #define RC2 12
-//    #define PWM1 12
-
-    #define A0 13
-//    #define RA0 13
-//    #define AN0 13
-
-    #define A1 14
-//    #define RA1 14
-//    #define AN1 14
-
-    #define A2 15
-//    #define RA2 15
-//    #define AN2 15
-
-    #define A3 16
-//    #define RA3 16
-//    #define AN3 16
-
-    #define A5 17
-//    #define RA5 17
-//    #define AN4 17
-//    #define SS 17
-//    #define HLVDIN 17
-//    #define C2OU 17
-
-/**********************************************************************/
-    #if defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(PINGUINO2455)
+#elif defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(PINGUINO2455)
 /**********************************************************************/
     
-        #define A4          18
-        //#define RA4       18
-        #define RUNLED      18
-        #define LED1        18
-        #define USERLED     18
-        #define PWM1        12
-        #define PWM2        11
+    #define A4          18
+    #define RUNLED      18
+    #define LED1        18
+    #define USERLED     18
+    #define PWM1        12
+    #define PWM2        11
 
 /**********************************************************************/
-    #elif defined(CHRP3)
+#elif defined(CHRP3)
 /**********************************************************************/
 
-        #define USERLED 17
-        #define BACKLIGHT 17 // RA4
-        #define LED12   8
-        #define LED11   20
-        #define LED10   0
-        #define LED9    1
-        #define LED8    2
-        #define LED7    3
-        #define LED6    4
-        #define LED5    5
-        #define LED4    6
-        #define LED3    7
-        #define LED2    17
-        #define SERVO1  10 // RC0
-        #define SERVO2  11 // RC1
-        #define SERVO3  12 // RC2
-        #define SERVO4  12 // RC3 ???
-        #define BUTTONS2 0 
-        #define BUTTONS3 1 
-        #define BUTTONS4 2 
-        #define BUTTONS5 3 
-        #define BUTTONS6 4 
-        #define BUTTONS7 5
-        #define LIGHTSENSOR1 0
-        #define LIGHTSENSOR2 1
-        #define POSITIONSENSOR 2
-        #define TEMPSENSOR 3
-        #define POWERSENSOR 4
-        #define IRSENSOR 9  // RC7
-        #define BUZZER  19
-        #define PWM1        12
-        #define PWM2        11
+    #define USERLED 17
+    #define BACKLIGHT 17 // RA4
+    #define LED12   8
+    #define LED11   20
+    #define LED10   0
+    #define LED9    1
+    #define LED8    2
+    #define LED7    3
+    #define LED6    4
+    #define LED5    5
+    #define LED4    6
+    #define LED3    7
+    #define LED2    17
+    #define SERVO1  10 // RC0
+    #define SERVO2  11 // RC1
+    #define SERVO3  12 // RC2
+    #define SERVO4  12 // RC3 ???
+    #define BUTTONS2 0 
+    #define BUTTONS3 1 
+    #define BUTTONS4 2 
+    #define BUTTONS5 3 
+    #define BUTTONS6 4 
+    #define BUTTONS7 5
+    #define LIGHTSENSOR1 0
+    #define LIGHTSENSOR2 1
+    #define POSITIONSENSOR 2
+    #define TEMPSENSOR 3
+    #define POWERSENSOR 4
+    #define IRSENSOR 9  // RC7
+    #define BUZZER  19
+    #define PWM1        12
+    #define PWM2        11
+        
+/**********************************************************************
+#elif defined(PINGUINO4455) || defined(PINGUINO4550)
+ **********************************************************************
+    
+    #define A4          29
+    #define RUNLED      29
+    #define LED1        29
+    #define USERLED     29
+    #define PWM1        12
+    #define PWM2        11
+
+ **********************************************************************/
+#elif defined(PINGUINO4455) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+/**********************************************************************/
+    
+    #define RUNLED      12  // RA4
+    #define LED1        12
+    #define USERLED     12
+    #define PWM1        18  // RC2
+    #define PWM2        17  // RC1
         
 /**********************************************************************/
-    #elif defined(PINGUINO4455) || defined(PINGUINO4550)
-/**********************************************************************/
-    
-        #define A4          29
-        //#define RA4       29
-        #define RUNLED      29
-        #define LED1        29
-        #define USERLED     29
-        #define PWM1        12
-        #define PWM2        11
-
-/**********************************************************************/
-    #elif defined(PINGUINO45K50)
-/**********************************************************************/
-    
-        #define A4          12
-        //#define RA4       29
-        #define RUNLED      12
-        #define LED1        12
-        #define USERLED     12
-        #define PWM1        18  // RC2
-        #define PWM2        17  // RC1
-        
-/**********************************************************************/
-    #elif defined(PINGUINO26J50)
+#elif defined(PINGUINO26J50)
 /**********************************************************************/
 
-        #define RTC        1
-        #define PWM1        10  // cf. io.c
-        #define PWM2        11
-        #define LED1        12
-        #define USERLED     12
+    #define RTC         1
+    #define PWM1        10  // cf. io.c
+    #define PWM2        11
+    #define LED1        12
+    #define USERLED     12
 
 /**********************************************************************/
-    #elif defined(PINGUINO27J53)
+#elif defined(PINGUINO27J53)
 /**********************************************************************/
 
-        #define RTC        1
-        //#define PWM1        10
-        //#define PWM2        11
-        #define LED1        12
-        #define USERLED     12
-        #define PWM1        4 
-        #define PWM2        5 
-        #define PWM3        6 
-        #define PWM4        7  
-        #define PWM5        17
-        #define PWM6        22
-        #define PWM7        23
-
-    #endif
+    #define RTC         1
+    //#define PWM1        10
+    //#define PWM2        11
+    #define LED1        12
+    #define USERLED     12
+    #define PWM1        4 
+    #define PWM2        5 
+    #define PWM3        6 
+    #define PWM4        7  
+    #define PWM5        17
+    #define PWM6        22
+    #define PWM7        23
 
 /**********************************************************************/
 #elif defined(PINGUINO46J50)
@@ -495,7 +384,7 @@
 
     #define B0          0
     #define B1          1
-    #define RTC        1  // RB1
+    #define RTC         1  // RB1
     #define B2          2
     #define B3          3
     #define B4          4

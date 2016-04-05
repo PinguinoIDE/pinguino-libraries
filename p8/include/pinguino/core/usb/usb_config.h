@@ -1,31 +1,23 @@
 #ifndef USBCONFIG_H_
 #define USBCONFIG_H_
 
-/**
-This file need to be filled up with the desired data for the usb bus
-See also: http://www.linuxjournal.com/article/6573
-**/
-
-/** 
-How many Endpoints do we have, should be at least one for the configuration endpoint 
-not used ATM
-TODO: use it 
-**/
-#define USB_MAX_ENDPOINTS 4
-
-/** how many different configuration should be available. At least configuration 1 must exist.
-TODO: implement ;)
-**/
-#define USB_MAX_CONFIGURATION 1
+#define USB_MAX_ENDPOINTS       4       // How many Endpoints do we have
+#define USB_MAX_CONFIGURATION   1       // How many different configuration
 
 #include <compiler.h>
 #include <typedef.h>
 #include <usb/picUSB.h>
+
 #ifdef USB_USE_UART
     #include <usb/usb_uart.h>
 #endif
+
 #ifdef USB_USE_CDC
     #include <usb/usb_cdc.h>
+#endif
+
+#ifdef USB_USE_BULK
+    #include <usb/usb_bulk.h>
 #endif
 
 /**
