@@ -42,38 +42,58 @@ u8 _bulk_buffer[_BULKBUFFERLENGTH_];  // usb buffer
 
 void bulk_init()
 {
+    u32 counter=1;
+
     #ifdef BULKDEBUG
     serial_begin(9600);
     #endif
 
     // Init
     //INTCON=0;
-    INTCONbits.GIEH = 0;
-    INTCONbits.GIEL = 0;
+    //INTCONbits.GIEH = 0;
+    //INTCONbits.GIEL = 0;
     //INTCON2=0xC0;
-    UCON=0;
-    UCFG=0;
-    UEP0=0;UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
-    UEP6=0;UEP7=0;UEP8=0;UEP9=0;UEP10=0;UEP11=0;
-    UEP12=0;UEP13=0;UEP14=0;UEP15=0;
-    // and wait 5 seconds
-    Delayms(2000);
 
-    // Initialize USB for CDC
-    UCFG = 0x14; 				// Enable pullup resistors; full speed mode
+    // Disable global interrupts
+    noInterrupts();
+
+    //UCON=0;
+    //UCFG=0;
+    //UEP0=0;UEP1=0;UEP2=0;UEP3=0;UEP4=0;UEP5=0;
+    //UEP6=0;UEP7=0;UEP8=0;UEP9=0;UEP10=0;UEP11=0;
+    //UEP12=0;UEP13=0;UEP14=0;UEP15=0;
+    // and wait 5 seconds
+    //Delayms(2000);
+
+    // Enable pullup resistors; full speed mode (0x14)
+    #ifdef __XC8__
+    UCFG = _UCFG_UPUEN_MASK | _UCFG_FSEN_MASK;
+    #else
+    UCFG = _UPUEN | _FSEN;
+    #endif
     deviceState = DETACHED;
     remoteWakeup = 0x00;
     currentConfiguration = 0x00;
 
-    // enable USB module
-    while(deviceState != CONFIGURED)
+    // Check USB activity
+    #if 0
+    while (deviceState != CONFIGURED)
     {
-      EnableUSBModule();
-      ProcessUSBTransactions();
+        EnableUSBModule();
+        ProcessUSBTransactions();
     }
+    #else
+    while (counter++ && deviceState != CONFIGURED)
+    {
+        EnableUSBModule();
+        ProcessUSBTransactions();
+    }
+    #endif
 
-    // Enable Interrupt
-    #if defined(__18f25k50) || defined(__18f45k50)
+    #if defined(__16F1459)
+        PIR2bits.USBIF = 0;     // clear usb interrupt flag
+        PIE2bits.USBIE = 1;     // enable usb interrupt
+    #elif defined(__18f25k50) || defined(__18f45k50)
         PIR3bits.USBIF = 0;     // clear usb interrupt flag
         PIE3bits.USBIE = 1;     // enable usb interrupt
         IPR3bits.USBIP = 1;     // high priority interrupt
@@ -82,8 +102,8 @@ void bulk_init()
         PIE2bits.USBIE = 1;     // enable usb interrupt
         IPR2bits.USBIP = 1;     // high priority interrupt
     #endif
-    INTCONbits.GIEH = 1;   // Enable global HP interrupts
-    INTCONbits.GIEL = 1;   // Enable global LP interrupts
+    
+    interrupts();
 }
 
 void bulk_interrupt(void)

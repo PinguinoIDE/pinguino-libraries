@@ -759,7 +759,7 @@ void SSD1306_setFont(u8 module, const u8 *font)
     REMARKS:
 ------------------------------------------------------------------*/
 
-void printChar(u8 c)
+void SSD1306_printChar2(u8 c)
 {
     SSD1306_printChar(SSD1306_SPI, c);
 }
@@ -855,7 +855,7 @@ void SSD1306_printCenter(u8 module, const u8 *string)
 void SSD1306_printNumber(u8 module, long value, u8 base)
 {  
     SSD1306_MOD = module;
-    printNumber(value, base);
+    printNumber(SSD1306_printChar2, value, base);
 }
 #endif
 
@@ -863,7 +863,7 @@ void SSD1306_printNumber(u8 module, long value, u8 base)
 void SSD1306_printFloat(u8 module, float number, u8 digits)
 { 
     SSD1306_MOD = module;
-    printFloat(number, digits);
+    printFloat(SSD1306_printChar2, number, digits);
 }
 #endif
 

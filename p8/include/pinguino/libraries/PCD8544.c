@@ -321,11 +321,13 @@ void PCD8544_setFont(u8 module, const u8 *font)
 #if defined(PCD8544PRINTCHAR)   || defined(PCD8544PRINT)      || \
     defined(PCD8544PRINTNUMBER) || defined(PCD8544PRINTFLOAT) || \
     defined(PCD8544PRINTLN)     || defined(PCD8544PRINTF)
-    
+
+/*    
 void printChar(u8 c)
 {
     PCD8544_printChar(PCD8544_SPI, c);
 }
+*/
 
 void PCD8544_printChar(u8 module, u8 c)
 {
@@ -410,7 +412,7 @@ void PCD8544_printCenter(u8 module, const u8 *string)
 void PCD8544_printNumber(u8 module, long value, u8 base)
 {  
     PCD8544_SPI = module;
-    printNumber(value, base);
+    printNumber(PCD8544_printChar, value, base);
 }
 #endif
 
@@ -418,7 +420,7 @@ void PCD8544_printNumber(u8 module, long value, u8 base)
 void PCD8544_printFloat(u8 module, float number, u8 digits)
 { 
     PCD8544_SPI = module;
-    printFloat(number, digits);
+    printFloat(PCD8544_printChar, number, digits);
 }
 #endif
 

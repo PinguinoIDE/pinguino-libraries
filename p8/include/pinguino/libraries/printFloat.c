@@ -29,16 +29,14 @@
 #define __PRINTFLOAT_C
 
 #include <typedef.h>
+#include <printNumber.c>
 
-extern void printChar(u8);
-extern void printNumber(long, u8);
-
-void printFloat(float number, u8 digits)
+void printFloat(funcout printChar, float number, u8 digits)
 { 
     u8 i, toPrint;
     u16 int_part;
     float rounding, remainder;
-
+    
     // Handle negative numbers
     if (number < 0.0)
     {
@@ -56,7 +54,7 @@ void printFloat(float number, u8 digits)
     // Extract the integer part of the number and print it  
     int_part = (u16)number;
     remainder = number - (float)int_part;
-    printNumber(int_part, 10);
+    printNumber(printChar, int_part, 10);
 
     // Print the decimal point, but only if there are digits beyond
     if (digits > 0)
@@ -67,7 +65,7 @@ void printFloat(float number, u8 digits)
     {
         remainder *= 10.0;
         toPrint = (unsigned int)remainder;
-        printNumber(toPrint, 10);
+        printNumber(printChar, toPrint, 10);
         remainder -= toPrint; 
     }
 }

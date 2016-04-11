@@ -360,7 +360,7 @@ void lcdi2c_clearLine(u8 line)
     c = code ASCII du caractere
     ------------------------------------------------------------------*/
 
-void printChar(u8 c)
+void lcdi2c_printChar(u8 c)
 {
     lcdi2c_send8(c, LCD_DATA);
 }
@@ -423,7 +423,7 @@ void lcdi2c_printCenter(const u8 *string)
 #if defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT)
 void lcdi2c_printNumber(s32 value, u8 base)
 {
-    printNumber(value, base);
+    printNumber(lcdi2c_printChar, value, base);
 }
 #endif
 
@@ -434,7 +434,7 @@ void lcdi2c_printNumber(s32 value, u8 base)
 #if defined(LCDI2CPRINTFLOAT)
 void lcdi2c_printFloat(float number, u8 digits)
 {
-    printFloat(number, digits);
+    printFloat(lcdi2c_printChar, number, digits);
 }
 #endif
 
@@ -448,7 +448,7 @@ void lcdi2c_printf(char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    pprintf(printChar, fmt, args);
+    pprintf(lcdi2c_printChar, fmt, args);
     va_end(args);
 }
 #endif

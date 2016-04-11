@@ -523,7 +523,7 @@ void ST7735_setFont(u8 module, const u8 *font)
     REMARKS:
 ------------------------------------------------------------------*/
 
-void printChar(u8 c)
+void ST7735_printChar2(u8 c)
 {
     ST7735_printChar(ST7735_SPI, c);
 }
@@ -634,7 +634,7 @@ void ST7735_printCenter(u8 module, const u8 *string)
 void ST7735_printNumber(u8 module, long value, u8 base)
 {
     ST7735_SPI = module;
-    printNumber(value, base);
+    printNumber(ST7735_printChar2, value, base);
 }
 #endif
 
@@ -642,7 +642,7 @@ void ST7735_printNumber(u8 module, long value, u8 base)
 void ST7735_printFloat(u8 module, float number, u8 digits)
 { 
     ST7735_SPI = module;
-    printFloat(number, digits);
+    printFloat(ST7735_printChar2, number, digits);
 }
 #endif
 

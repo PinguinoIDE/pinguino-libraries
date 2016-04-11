@@ -34,7 +34,6 @@
 
 #define PRINTF_BUF_LEN 12		// should be enough for 32 bits
 
-typedef void (*funcout) (u8);	// type of void foo(u8)
 static funcout pputchar;		// then void pputchar(u8)
 
 /*	--------------------------------------------------------------------

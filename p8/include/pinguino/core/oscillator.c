@@ -58,7 +58,7 @@
 extern volatile t16 _period;
 #endif
 
-volatile u32 _cpu_clock_ = 48000000;
+//extern volatile u32 _cpu_clock_;
 
 // The indices are valid values for PLLDIV
 //static const u8 plldiv[] = { 12, 10, 6, 5, 4, 3, 2, 1 };
@@ -417,9 +417,9 @@ static u8 System_getCPUDIV()
     /**---------------------------------------------------------------*/
 
     #ifdef __XC8__
-    return _cpudiv[(config1h & 0b00011000) >> 3];
+    return _cpudiv[(config1l & 0b00011000) >> 3];
     #else
-    return _cpudiv[(Flash_read(__CONFIG1H) & 0b00011000) >> 3];
+    return _cpudiv[(Flash_read(__CONFIG1L) & 0b00011000) >> 3];
     #endif
     
     /**---------------------------------------------------------------*/

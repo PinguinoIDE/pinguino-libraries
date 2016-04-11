@@ -237,10 +237,12 @@ void Serial_putchar(u8 c)
     #endif
 }
 
+/*
 void printChar(u8 c)
 {
     Serial_putchar(c);
 }
+*/
 
 /***********************************************************************
  * USB SERIAL print routine (SERIAL.print)
@@ -255,8 +257,8 @@ void printChar(u8 c)
 
 void Serial_print(const char *s)
 {
-    while (*s++)
-        Serial_putchar(*s);
+    while (*s)
+        Serial_putchar(*s++);
 }
 #endif /* SERIALPRINTSTRING */
 
@@ -286,7 +288,7 @@ void Serial_println(const char *string)
 #if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 void Serial_printNumber(s32 value, u8 base)
 {  
-    printNumber(value, base);
+    printNumber(Serial_putchar, value, base);
 }
 #endif /* SERIALPRINTNUMBER */
 
@@ -300,7 +302,7 @@ void Serial_printNumber(s32 value, u8 base)
 #if defined(SERIALPRINTFLOAT)
 void Serial_printFloat(float number, u8 digits)
 { 
-    printFloat(number, digits);
+    printFloat(Serial_putchar, number, digits);
 }
 #endif /* SERIALPRINTFLOAT */
 

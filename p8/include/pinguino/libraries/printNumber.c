@@ -30,15 +30,14 @@
 
 #include <typedef.h>
 
-extern void printChar(u8);
-
-void printNumber(s32 value, u8 base)
+void printNumber(funcout printChar, s32 value, u8 base)
 {  
     u8 tmp[12];
     u8 *tp = tmp;               // pointer on tmp
     u8 i, sign;
-
     u32 v;                      // absolute value
+
+    //pn_printChar = func;
 
     if (value == 0)
     {

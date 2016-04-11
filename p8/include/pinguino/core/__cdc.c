@@ -32,9 +32,9 @@
 //#include <usb/picUSB.h>
 #include <usb/picUSB.c>
 
-#ifdef boot2
-    #include <delayms.c>
-#endif
+//#ifdef boot2
+//    #include <delayms.c>
+//#endif
 
 // Printf
 #if defined(CDCPRINTF)
@@ -63,13 +63,12 @@ u32 cdc_baudrate = USB_CDC_BAUDRATE_DEFAULT;
 
 void CDCbegin(u32 baudrate)
 {
-    u32 counter=1;
+    u32 counter=-1;
 
     // Disable global interrupts
     noInterrupts();
 
-    #ifdef boot2
-    
+    // Disable the USB module
     UCON=0;
     UCFG=0;
 
@@ -78,24 +77,22 @@ void CDCbegin(u32 baudrate)
     UEP7=0;UEP8=0;UEP9=0;
     UEP10=0;UEP11=0;UEP12=0;
     UEP13=0;UEP14=0;UEP15=0;
+
+    // Delayms(2000);
     
-    // and wait 2 seconds
-    Delayms(2000);
-
-    #endif
-
     // Enable pullup resistors; full speed mode (0x14)
     #ifdef __XC8__
     UCFG = _UCFG_UPUEN_MASK | _UCFG_FSEN_MASK;
     #else
     UCFG = _UPUEN | _FSEN;
     #endif
+    
     deviceState = DETACHED;
     remoteWakeup = 0;
     currentConfiguration = 0;
     cdc_baudrate = baudrate;
-    
-    // Enable USB module
+
+    // Check USB activity
     #if 0
     while (deviceState != CONFIGURED)
     {
@@ -103,7 +100,7 @@ void CDCbegin(u32 baudrate)
         ProcessUSBTransactions();
     }
     #else
-    while (counter++ && deviceState != CONFIGURED)
+    while (counter-- && deviceState != CONFIGURED)
     {
         EnableUSBModule();
         ProcessUSBTransactions();
@@ -192,14 +189,13 @@ static void CDCread()
  * write 1 char on CDC port
  **********************************************************************/
 
-void printChar(u8 c)
+void CDCprintChar(u8 c)
 {
     CDCTxBuffer[0] = c;
     CDCsend(1);
 }
 
-#define CDCwrite(c)     printChar(c)
-#define CDCprintChar(c) printChar(c)
+//#define CDCprintChar(c)     printChar(c)
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)
@@ -259,7 +255,7 @@ void CDCprintln(const char *string)
 #if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
 void CDCprintNumber(long value, u8 base)
 {  
-    printNumber(value, base);
+    printNumber(CDCprintChar, value, base);
 }
 #endif
 
@@ -273,7 +269,7 @@ void CDCprintNumber(long value, u8 base)
 #if defined(CDCPRINTFLOAT)
 void CDCprintFloat(float number, u8 digits)
 { 
-    printFloat(number, digits);
+    printFloat(CDCprintChar, number, digits);
 }
 #endif
 
@@ -335,7 +331,8 @@ u8 * CDCgetstring(void)
         c = CDCgetkey();
         buffer[i++] = c;
         //CDCputs(&buffer[i-1], 1);
-        CDCputc(_cdc_buffer[i-1]);
+        //CDCputc(_cdc_buffer[i-1]);
+        CDCputc(CDCRxBuffer[i-1]);
     } while (c != '\r');
     _cdc_buffer[i] = '\0';
     return _cdc_buffer;
@@ -360,9 +357,9 @@ void CDC_interrupt(void)
         PIR2bits.USBIF = 0;
     #endif
         ProcessUSBTransactions();
-        UIRbits.SOFIF = 0;
-        UIRbits.URSTIF = 0;
-        UEIR = 0;
+        //UIRbits.SOFIF = 0;
+        //UIRbits.URSTIF = 0;
+        //UEIR = 0;
     }
 }
 

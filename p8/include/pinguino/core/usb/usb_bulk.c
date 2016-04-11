@@ -27,6 +27,7 @@ volatile u8 BULKTxBuffer[BULK_BULK_IN_SIZE];
 /**
     Initialize
 **/
+
 void BULKInitEndpoint(void)
 {
 
@@ -44,11 +45,7 @@ void BULKInitEndpoint(void)
     EP_IN_BD(USB_BULK_DATA_EP_NUM).Stat.uc = BDS_DTS ;
 }
 
-u8 BULKavailable()
-{
-    u8 received = (!EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.UOWN) && (EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt > 0);
-    return(received );
-}
+#define BULKavailable() (!EP_OUT_BD(USB_BULK_DATA_EP_NUM).Stat.UOWN) && (EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt > 0)
 
 /**
     Function to read a string from USB
@@ -71,6 +68,7 @@ u8 BULKgets(char *buffer)
         // check how much bytes came
         if (length > EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt)
             length = EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt;
+            
         for (i=0; i < EP_OUT_BD(USB_BULK_DATA_EP_NUM).Cnt; i++)
             buffer[i] = BULKRxBuffer[i];
 

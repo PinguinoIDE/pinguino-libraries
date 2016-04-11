@@ -537,7 +537,7 @@ void SetupStage(void)
         // Device-to-host
         if(SetupPacket.wLength < wCount)
             wCount = SetupPacket.wLength;
-        InDataStage(0);
+        InDataStage();
         ctrlTransferStage = DATA_IN_STAGE;
         // Reset the out buffer descriptor for endpoint 0
         EP_OUT_BD(0).Cnt = EP0_BUFFER_SIZE;
@@ -669,7 +669,7 @@ void ProcessControlTransfer(void)
         if (ctrlTransferStage == DATA_IN_STAGE)
         {
             // Start (or continue) transmitting data
-            InDataStage(0);
+            InDataStage();
 
             // Turn control over to the SIE and toggle the data bit
             if(EP_IN_BD(0).Stat.DTS)
@@ -694,16 +694,18 @@ void ProcessControlTransfer(void)
 
 void EnableUSBModule(void)
 {
-    // TBD: Check for voltage coming from the USB cable and use that
-    // as an indication we are attached.
     if(UCONbits.USBEN == 0)
     {
         #ifdef DEBUG_PRINT
         printf("Enable the module\r\n");
         #endif
+        // Reset the USB module
         UCON = 0;
+        // Disable all USB interrupt
         UIE = 0;
+        // Enable the USB module
         UCONbits.USBEN = 1;
+        
         deviceState = ATTACHED;
     }
 
@@ -713,6 +715,7 @@ void EnableUSBModule(void)
     {
         UIR = 0;
         UIE = 0;
+        // Enable Reset and Idle interrupt
         UIEbits.URSTIE = 1;
         UIEbits.IDLEIE = 1;
         deviceState = POWERED;

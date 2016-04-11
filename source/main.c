@@ -37,6 +37,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
     ------------------------------------------------------------------*/
 
+unsigned long _cpu_clock_ = 48000000;
+
 ////////////////////////////////////////////////////////////////////////
 #include "define.h"
 ////////////////////////////////////////////////////////////////////////
@@ -283,6 +285,10 @@
     /// Various Init.
     /// ----------------------------------------------------------------
 
+    #if defined(__MILLIS__) //|| defined(__DELAYMS__)
+    millis_init();              // Use Timer 0 (16F use Timer 1)
+    #endif
+
     #ifdef __USB__
     usb_init();
     #endif
@@ -303,10 +309,6 @@
 
     #ifdef ANALOGWRITE
     analogwrite_init();
-    #endif
-
-    #if defined(__MILLIS__) || defined(__DELAYMS__)
-    millis_init();              // Use Timer 0 (16F use Timer 1)
     #endif
 
     #ifdef __SPI__
@@ -359,7 +361,8 @@
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
      defined(__IRREMOTE__)  || defined(__AUDIO__)   || defined(__STEPPER__) || \
-     defined(__DELAYMS__)   || defined(__CTMU__)    || defined(RTCCALARMINTENABLE)
+     defined(__CTMU__)      || defined(RTCCALARMINTENABLE)
+     // || defined(__DELAYMS__)
      // || defined(__MICROSTEPPING__)
 
     #if defined(_PIC14E)
@@ -386,7 +389,7 @@
             serial_interrupt();
             #endif
 
-            #if defined(__MILLIS__) || defined(__DELAYMS__)
+            #if defined(__MILLIS__) //|| defined(__DELAYMS__)
             millis_interrupt();
             #endif
 
@@ -483,7 +486,7 @@
             serial_interrupt();
             #endif
 
-            #if defined(__MILLIS__) || defined(__DELAYMS__)
+            #if defined(__MILLIS__) //|| defined(__DELAYMS__)
             millis_interrupt();
             #endif
 
