@@ -23,6 +23,6 @@ bitInv BitInv#include <macro.h>
 bit Bit#include <macro.h>
 lowByte low8#include <macro.h>
 highByte high8#include <macro.h>
-Sprintf psprintf#include <stdio.c>
-Printf pprintf#include <stdio.c>
+Sprintf psprintf#include <printFormated.c>
+Printf pprintf#include <printFormated.c>
 KB.get Keyboard_get#include <misc.c>

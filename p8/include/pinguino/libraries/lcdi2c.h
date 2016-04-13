@@ -75,35 +75,6 @@
 #include <typedef.h>
 #include <delayms.c>
 
-typedef union
-{
-    u8 val;
-    struct
-    {
-        unsigned bit0 :1;
-        unsigned bit1 :1;
-        unsigned bit2 :1;
-        unsigned bit3 :1;
-        unsigned bit4 :1;
-        unsigned bit5 :1;
-        unsigned bit6 :1;
-        unsigned bit7 :1;
-    } bits;
-} _Byte_;
-
-extern _Byte_ PCF8574_data;
-
-#define LCD_MASK		        0b11110000	// On ne commande que D7 a D4
-
-#define LCD_BL	PCF8574_data.bits.bit0	// P0
-#define LCD_RS	PCF8574_data.bits.bit1	// P1
-#define LCD_RW	PCF8574_data.bits.bit2	// P2
-#define LCD_EN	PCF8574_data.bits.bit3	// P3
-#define LCD_D4	PCF8574_data.bits.bit4	// P4
-#define LCD_D5	PCF8574_data.bits.bit5	// P5
-#define LCD_D6	PCF8574_data.bits.bit6	// P6
-#define LCD_D7	PCF8574_data.bits.bit7	// P7
-
 #define LCD_WRITE		        0
 #define LCD_READ		        1
 #define LCD_DATA		        1
@@ -219,8 +190,9 @@ static void lcdi2c_send4(u8, u8);
 static void lcdi2c_send8(u8, u8);
 
 // public
-void printChar(u8);
-void lcdi2c_init(u8, u8, u8);
+void lcdi2c_printChar(u8);
+void lcdi2c_init(u8, u8, u8, u8, ...);
+//void lcdi2c_initpins(u8, u8, u8, u8, u8, u8, u8, u8);
 //void lcdi2c_backlight();
 //void lcdi2c_noBacklight();
 void lcdi2c_clearLine(u8);
@@ -230,7 +202,7 @@ void lcdi2c_newchar(const u8 *, u8);
 //void lcdi2c_newpattern();
 
 #define lcdi2c_write(c)             lcdi2c_send8(c, LCD_DATA)
-#define lcdi2c_printChar(c)         lcdi2c_send8(c, LCD_DATA)
+//#define lcdi2c_printChar(c)         lcdi2c_send8(c, LCD_DATA)
 
 #if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
 #define lcdi2c_backlight()          lcdi2c_blight(0)

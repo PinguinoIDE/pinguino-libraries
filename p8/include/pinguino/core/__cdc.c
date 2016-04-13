@@ -132,7 +132,7 @@ void CDCbegin(u32 baudrate)
 
 static void CDCsend(u8 len)
 {
-    u8 t=0xFF;
+    u16 t=0xFF;
 
     if (deviceState != CONFIGURED) return;
 
@@ -143,6 +143,7 @@ static void CDCsend(u8 len)
         if (len > USB_CDC_IN_EP_SIZE)
             len = USB_CDC_IN_EP_SIZE;
         
+        //EP_IN_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCTxBuffer); 
         // Set counter to num bytes ready for send
         EP_IN_BD(USB_CDC_DATA_EP_NUM).Cnt = len;
         // clear BDT Stat bits beside DTS
@@ -171,6 +172,7 @@ static void CDCread()
     
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
+        //EP_OUT_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
         // Set counter to num bytes ready for read
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
         // clear BDT Stat bits beside DTS
@@ -208,7 +210,7 @@ void CDCprint(const char *string)
 {
     //CDCputs(string, strlen(string));
     u8 len=0;
-    char *s = CDCTxBuffer;
+    char *s = &CDCTxBuffer[0];
 
     while (*string)
     {
@@ -216,6 +218,7 @@ void CDCprint(const char *string)
         len++;
     }
  
+    // Send "len" bytes of CDCTxBuffer
     CDCsend(len);
 }
 #endif
@@ -231,7 +234,7 @@ void CDCprint(const char *string)
 void CDCprintln(const char *string)
 {
     u8 len=0;
-    char *s = CDCTxBuffer;
+    char *s = &CDCTxBuffer[0];
 
     while (*string)
     {
@@ -286,6 +289,7 @@ void CDCprintf(const u8 *fmt, ...)
     va_list	args;
 
     va_start(args, fmt);
+    
     len = psprintf2(&CDCTxBuffer[0], fmt, args);
     CDCsend(len);
 
@@ -302,15 +306,14 @@ void CDCprintf(const u8 *fmt, ...)
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
 u8 CDCgetkey(void)
 {
-    //u8 buffer[_CDCBUFFERLENGTH_];		// always get a full packet
-    //while (!CDCgets(_cdc_buffer));
-    //return (_cdc_buffer[0]);	// return only the first character
-    u8 c=0;
+    u8 c;
+    
     CDCRxBuffer[0]=0;
     do {
         CDCread();
         c = CDCRxBuffer[0];
     } while (!c);
+    
     return c;
 }
 #endif
@@ -322,20 +325,16 @@ u8 CDCgetkey(void)
  **********************************************************************/
 
 #if defined(CDCGETSTRING)
-u8 * CDCgetstring(void)
+void CDCgetstring(u8 *buffer)
 {
-    u8 c, i = 0;
-    //static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
+    u8 c;
     
     do {
         c = CDCgetkey();
-        buffer[i++] = c;
-        //CDCputs(&buffer[i-1], 1);
-        //CDCputc(_cdc_buffer[i-1]);
-        CDCputc(CDCRxBuffer[i-1]);
+        CDCprintChar(c);
+        *buffer++ = c;
     } while (c != '\r');
-    _cdc_buffer[i] = '\0';
-    return _cdc_buffer;
+    *buffer = 0;
 }
 #endif
 

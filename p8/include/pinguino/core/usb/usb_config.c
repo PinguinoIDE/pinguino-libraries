@@ -37,7 +37,7 @@ const USB_Device_Descriptor libdevice_descriptor =
     0x00,                               // Protocol code
     EP0_BUFFER_SIZE,                    // Max packet size for EP0
     0x04D8,                             // Vendor ID, microchip=0x04D8
-    0xFEAA,                             // Product ID 0xFEAA Pinguino
+    0xFEAB,                             // Product ID 0xFEAA Pinguino
     0x0000,                             // Device release number in BCD format
     1,                                  // Manufacturer string index
     2,                                  // Product string index

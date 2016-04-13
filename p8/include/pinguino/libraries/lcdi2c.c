@@ -73,6 +73,7 @@
 #define __LCDI2C_C
 
 #include <typedef.h>
+#include <stdarg.h>
 #include <lcdi2c.h>
 //#include <pcf8574.h>
 #include <delayms.c>
@@ -80,7 +81,6 @@
 
 // Printf
 #ifdef LCDI2CPRINTF
-    #include <stdarg.h>
     #include <printFormated.c>
 #endif
 
@@ -238,11 +238,16 @@
     global variables
     ------------------------------------------------------------------*/
 
-    u8 gLCDWIDTH;			// from 0 to 15 = 16
-    u8 gLCDHEIGHT;			// from 0 to 1 = 2
-    u8 gBacklight = 0;		// memorise l'etat du backlight du LCD
+    u8 gLCDWIDTH;                           // from 0 to 15 = 16
+    u8 gLCDHEIGHT;                          // from 0 to 1 = 2
+    u8 gBacklight = 0;                      // backlight status
     u8 PCF8574_address;
-    _Byte_ PCF8574_data;
+    u8 PCF8574_data;
+    u8 posd4_7;
+    u8 pos_en;
+    u8 pos_rw;
+    u8 pos_rs;
+    u8 pos_bl;
 
 /*  --------------------------------------------------------------------
     Ecriture d'un quartet (mode 4 bits) dans le LCD
@@ -257,29 +262,28 @@
 
 static void lcdi2c_send4(u8 quartet, u8 mode)
 {
-                                    // D7 D6 D5 D4 EN RW RS   BL
-    PCF8574_data.val = quartet;     // x  x  x  x  0  0  0    0
-    LCD_EN = LOW;                   // x  x  x  x  0  0  0    0
-    LCD_RW = LCD_WRITE;				// x  x  x  x  0  0  0    0
-    LCD_RS = mode;					// x  x  x  x  0  0  0/1  0
-    LCD_BL = gBacklight;				// x  x  x  x  0  0  0/1  0/1
+    PCF8574_data = quartet;                    // x  x  x  x  0  0  0    0
+    if(mode)
+        PCF8574_data |= (mode << pos_rs);      // x  x  x  x  0  0  0/1  0
+    if(gBacklight)
+        PCF8574_data |= (gBacklight << pos_bl);// x  x  x  x  0  0  0/1  0
 
-    /// LCD Enable Cycle
+    /// ---------- LCD Enable Cycle
 
-    I2C_start();                    // send start condition
+    I2C_start();                            // send start condition
 
     //I2C_writechar(PCF8574_address | I2C_WRITE);
     I2C_write((PCF8574_address << 1) | I2C_WRITE);
 
-    LCD_EN = HIGH;
-    I2C_write(PCF8574_data.val);
+    PCF8574_data |= (1 << pos_en);
+    I2C_write(PCF8574_data);
     // E Pulse Width > 300ns
 
-    LCD_EN = LOW;
-    I2C_write(PCF8574_data.val);
+    PCF8574_data &= ~(1 << pos_en);
+    I2C_write(PCF8574_data);
     // E Enable Cycle > (300 + 200) = 500ns
 
-    I2C_stop();                     // send stop confition
+    I2C_stop();                             // send stop confition
 }
 
 /*  --------------------------------------------------------------------
@@ -296,9 +300,17 @@ static void lcdi2c_send4(u8 quartet, u8 mode)
 
 static void lcdi2c_send8(u8 octet, u8 mode)
 {
-    lcdi2c_send4(octet & LCD_MASK, mode);			// send upper 4 bits
-    lcdi2c_send4((octet << 4) & LCD_MASK, mode);	// send lower 4 bits
-    //Delayus(46);			 // Wait for instruction excution time (more than 46us)
+    if (posd4_7 == 0)
+    {
+        lcdi2c_send4((octet>>4), mode);     // send upper 4 bits
+        lcdi2c_send4(octet & 0x0F, mode);   // send lower 4 bits
+    }
+    else
+    {
+        lcdi2c_send4(octet & 0xF0, mode);   // send upper 4 bits
+        lcdi2c_send4((octet <<4), mode);    // send lower 4 bits
+    }
+    //Delayus(46);                          // Wait for instruction excution time (more than 46us)
 }
 
 /*  --------------------------------------------------------------------
@@ -312,10 +324,11 @@ static void lcdi2c_send8(u8 octet, u8 mode)
 void lcdi2c_blight(u8 status)
 {
     gBacklight = status;
-    LCD_BL = gBacklight;
+    // x  x  x  x  0  0  0/1  0
+    PCF8574_data |= (gBacklight << pos_bl);
     I2C_start();
     I2C_write((PCF8574_address << 1) | I2C_WRITE);
-    I2C_write(PCF8574_data.val);
+    I2C_write(PCF8574_data);
     I2C_stop();
 }
 #endif
@@ -331,10 +344,10 @@ void lcdi2c_setCursor(u8 col, u8 line)
     int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 
     if (line > gLCDHEIGHT)
-        line = gLCDHEIGHT;// - 1;    // we count rows starting w/0
+        line = gLCDHEIGHT;// - 1;           // we count rows starting w/0
         
     if (col > gLCDWIDTH)
-        col = gLCDWIDTH;  // - 1;    // we count rows starting w/0
+        col = gLCDWIDTH;  // - 1;           // we count rows starting w/0
         
     lcdi2c_send8(LCD_SETDDRAMADDR | (col + row_offsets[line]), LCD_CMD);
 }
@@ -351,7 +364,7 @@ void lcdi2c_clearLine(u8 line)
 
     lcdi2c_setCursor(0, line);
     for (i = 0; i <= gLCDWIDTH; i++)
-        lcdi2c_write(SPACE);  // affiche des espaces
+        lcdi2c_write(SPACE);                // display spaces
 }
 #endif
 
@@ -362,6 +375,7 @@ void lcdi2c_clearLine(u8 line)
 
 void lcdi2c_printChar(u8 c)
 {
+    if (c < 32) c = 32;                     // replace ESC char with space
     lcdi2c_send8(c, LCD_DATA);
 }
 
@@ -375,9 +389,10 @@ void lcdi2c_printChar(u8 c)
 
 void lcdi2c_print(const u8 *string)
 {
-    while (*string != 0)
-        lcdi2c_send8(*string++, LCD_DATA);
+    while (*string)
+        lcdi2c_printChar(*string++);
 }
+
 #endif
 
 /*  --------------------------------------------------------------------
@@ -395,7 +410,7 @@ void lcdi2c_println(const u8 *string)
 #endif
 
 /*  --------------------------------------------------------------------
-    println
+    printCenter : centers text in line
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTCENTER)
@@ -512,25 +527,56 @@ void lcdi2c_newpattern()
     cf. Microchip AN587 Interfacing PICmicro® MCUs to an LCD Module
     --------------------------------------------------------------------
     pcf8574 adress format is [0 1 0 0 A2 A1 A0 0]
+    --------------------------------------------------------------------
+    usage : lcdi2c.init(16, 2, 0x27, 4, 2, 1, 0, 3);
     ------------------------------------------------------------------*/
 
-void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address)
+void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address, u8 nargs, ...)
 {
+    u8 cmd03 = 0x03, cmd02 = 0x02;
+    va_list args;
+    
+    va_start(args, nargs); // args points on the argument after i2c_address
+
     gLCDWIDTH  = numcol - 1;
     gLCDHEIGHT = numline - 1;
     PCF8574_address = i2c_address;
-    PCF8574_data.val = 0;
+    PCF8574_data = 0;
+    
+    if (nargs)
+    {
+        posd4_7 = va_arg(args, int); // get the first arg d4_7;
+        pos_en = va_arg(args, int); // en;
+        pos_rw = va_arg(args, int); // rw;
+        pos_rs = va_arg(args, int); // rs;
+        pos_bl = va_arg(args, int); // bl;
+    }
+    else
+    {
+        posd4_7 = 4;
+        pos_en = 3;
+        pos_rw = 2;
+        pos_rs = 1;
+        pos_bl = 0;
+    }
+    va_end(args);           // cleans up the list
+    
+    if(posd4_7 != 0)
+    {
+        cmd03=0x30;
+        cmd02=0x20;
+    }
 
     I2C_init(I2C_MASTER_MODE, I2C_400KHZ);
 
-    Delayms(15);								// Wait more than 15 ms after VDD rises to 4.5V
-    lcdi2c_send4(0x30, LCD_CMD);			// 0x30 - Mode 8 bits
-    Delayms(5);									// Wait for more than 4.1 ms
-    lcdi2c_send4(0x30, LCD_CMD);			// 0x30 - Mode 8 bits
+    //Delayms(15);								// Wait more than 15 ms after VDD rises to 4.5V
+    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
+    //Delayms(5);									// Wait for more than 4.1 ms
+    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
     //Delayus(100);								// Wait more than 100 μs
-    lcdi2c_send4(0x30, LCD_CMD);			// 0x30 - Mode 8 bits
+    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
     //Delayus(100);								// Wait more than 100 μs
-    lcdi2c_send4(0x20, LCD_CMD);			// 0x20 - Mode 4 bits
+    lcdi2c_send4(cmd02, LCD_CMD);			// 0x20 - Mode 4 bits
     lcdi2c_send8(LCD_SYSTEM_SET_4BITS, LCD_CMD); 	// 0x28 - Mode 4 bits - 2 Lignes - 5x8
     //Delayus(4);				// Wait more than 40 ns
     lcdi2c_send8(LCD_DISPLAY_ON, LCD_CMD);		// 0x0C - Display ON + Cursor OFF + Blinking OFF
