@@ -64,7 +64,7 @@ u8 digitalread(u8 pin)
 
         #if defined(PINGUINO4455)   || defined(PINGUINO4550)  || \
             defined(PINGUINO45K50)  || defined(PINGUINO46J50) || \
-            defined(PINGUINO47J53A) || defined(PICUNO_EQUO)
+            defined(PINGUINO47J53) || defined(PICUNO_EQUO)
 
         case pD:
             return ((PORTD & mask[pin])!=0);

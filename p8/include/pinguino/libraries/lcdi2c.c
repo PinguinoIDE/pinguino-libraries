@@ -73,7 +73,6 @@
 #define __LCDI2C_C
 
 #include <typedef.h>
-#include <stdarg.h>
 #include <lcdi2c.h>
 //#include <pcf8574.h>
 #include <delayms.c>
@@ -531,36 +530,18 @@ void lcdi2c_newpattern()
     usage : lcdi2c.init(16, 2, 0x27, 4, 2, 1, 0, 3);
     ------------------------------------------------------------------*/
 
-void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address, u8 nargs, ...)
+void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
 {
     u8 cmd03 = 0x03, cmd02 = 0x02;
-    va_list args;
-    
-    va_start(args, nargs); // args points on the argument after i2c_address
-
     gLCDWIDTH  = numcol - 1;
     gLCDHEIGHT = numline - 1;
     PCF8574_address = i2c_address;
     PCF8574_data = 0;
-    
-    if (nargs)
-    {
-        posd4_7 = va_arg(args, int); // get the first arg d4_7;
-        pos_en = va_arg(args, int); // en;
-        pos_rw = va_arg(args, int); // rw;
-        pos_rs = va_arg(args, int); // rs;
-        pos_bl = va_arg(args, int); // bl;
-    }
-    else
-    {
-        posd4_7 = 4;
-        pos_en = 3;
-        pos_rw = 2;
-        pos_rs = 1;
-        pos_bl = 0;
-    }
-    va_end(args);           // cleans up the list
-    
+	posd4_7 = d4_7;
+	pos_en = en;
+	pos_rw = rw;
+	pos_rs = rs;
+	pos_bl = bl;
     if(posd4_7 != 0)
     {
         cmd03=0x30;

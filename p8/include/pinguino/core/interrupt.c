@@ -759,6 +759,118 @@ u8 IntIsFlagSet(u8 inter)
 }
 #endif /* defined(INTISFLAGSET) */
 
+/*	--------------------------------------------------------------------
+    ---------- IntSetPriority
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		set interrupt priority
+    @param	    inter : interrupt num.
+                pri : INT_LOW_PRIORITY or INT_LOW_PRIORITY
+    ------------------------------------------------------------------*/
+
+#ifdef INTSETPRIORITY
+void IntSetPriority(u8 inter, u8 pri)
+{
+    #ifdef INT1INT
+    INTCON3bits.INT1IP = pri;
+    #endif
+    
+    #ifdef INT2INT
+    INTCON3bits.INT2IP = pri;
+    #endif
+    
+    #ifdef RBINT
+    INTCONbits.RBIP = pri;
+    #endif
+    
+    #if defined (TMR0INT) || defined(CNTR0INT)
+    INTCON2bits.TMR0IP = pri;
+    #endif
+    
+    #if defined (TMR1INT) || defined(CNTR1INT)
+    PIR1bits.TMR1IP = pri;
+    #endif
+    
+    #ifdef TMR2INT
+    PIR1bits.TMR2IP = pri;
+    #endif
+    
+    #if defined (TMR3INT) || defined(CNTR3INT)
+    PIR2bits.TMR3IP = pri;
+    #endif
+    
+    #ifdef TMR4INT
+    PIR3bits.TMR4IP = pri;
+    #endif
+    
+    #ifdef TMR5INT
+    PIR5bits.TMR5IP = pri;
+    #endif
+    
+    #ifdef TMR6INT
+    PIR5bits.TMR6IP = pri;
+    #endif
+    
+    #ifdef TMR8INT
+    PIR5bits.TMR8IP = pri;
+    #endif
+    
+    #ifdef ADINT
+    PIR1bits.ADIP = pri;
+    #endif
+    
+    #ifdef RCINT
+    PIR1bits.RCIP = pri;
+    #endif
+    
+    #ifdef TXINT
+    PIR1bits.TXIP = pri;
+    #endif
+    
+    #ifdef CCP1INT
+    PIR1bits.CCP1IP = pri;
+    #endif
+    
+    #ifdef CCP2INT
+    PIR2bits.CCP2IP = pri;
+    #endif
+    
+    #ifdef EEINT
+    PIR2bits.EEIP = pri;
+    #endif
+    
+    #ifdef USBINT
+    PIR2bits.USBIP = pri;
+    #endif
+    
+    #ifdef OSCFINT
+    PIR2bits.OSCFIP = pri;
+    #endif
+    
+    #ifdef CMINT
+    PIR2bits.CMIP = pri;
+    #endif
+    
+    #ifdef BCLINT
+    PIR2bits.BCLIP = pri;
+    #endif
+    
+    #ifdef HLVDINT
+    PIR2bits.HLVDIP = pri;
+    #endif
+    
+    #ifdef SSPINT
+    PIR1bits.SSPIP = pri;
+    #endif
+
+    #if defined(__18f46j53) || defined(__18f47j53)
+    #if defined(PMPINT)
+    PIR1bits.PMPIP = pri;
+    #endif
+    #endif
+}
+#endif /* INTSETPRIORITY */
+
 /*	----------------------------------------------------------------------------
     ---------- int_init
     ----------------------------------------------------------------------------
@@ -787,7 +899,8 @@ void IntInit()
     ---------- int_start
     ----------------------------------------------------------------------------
     @author		Régis Blanchot <rblanchot@gmail.com>
-    @descr		Start all timers together
+    @descr		Start interrupt
+    @param      none
     --------------------------------------------------------------------------*/
 
 void IntTimerStart()
@@ -926,9 +1039,9 @@ u8 OnTimer0(callback func, u8 timediv, u16 delay)
                 _t0con = T0_SOURCE_INT | T0_PS_OFF;
                 preloadL[INT_TMR0] =  0xFF - (u8)_cycles_; // 12
                 #else
+                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
                 preloadH[INT_TMR0] = 0xFF;
                 preloadL[INT_TMR0] = 0xFF - (u8)_cycles_;
-                _t0con = T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
                 #endif
                 break;
             case INT_MILLISEC:

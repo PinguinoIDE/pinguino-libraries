@@ -191,8 +191,7 @@ static void lcdi2c_send8(u8, u8);
 
 // public
 void lcdi2c_printChar(u8);
-void lcdi2c_init(u8, u8, u8, u8, ...);
-//void lcdi2c_initpins(u8, u8, u8, u8, u8, u8, u8, u8);
+void lcdi2c_init(u8, u8, u8, u8, u8, u8, u8, u8);
 //void lcdi2c_backlight();
 //void lcdi2c_noBacklight();
 void lcdi2c_clearLine(u8);

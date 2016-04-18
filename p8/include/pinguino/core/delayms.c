@@ -33,6 +33,8 @@
 #include <typedef.h>
 #include <macro.h>
 
+extern u32 _cpu_clock_;
+
 // 20 cycles
 u16 umul16(u16 multiplier, u16 multiplicand)
 {
@@ -139,7 +141,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
 {
     u16 d1ms;
     u8  dloop1, dloop2;
-    u8  d1, d2;
+    u8  d1, d2, d3;
     
     // < 250 cycles
     // @48MHz : 12000/250 +/- 1/50 ms =  20 us
@@ -152,6 +154,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
     {
         d1=dloop1+1;                                // 2 cycles (incf+movwf)
         d2=dloop2+1;                                // 2 cycles (incf+movwf)
+        d3=d1;
 
         // XC8  : (150⋅3+5)+(255⋅3+5)⋅15 = 12005 cycles = 1ms @ 48MHz
         // SDCC : (210⋅7+5)+(255⋅7+5)⋅6  = 12215 cycles = 1ms @ 48MHz
@@ -159,7 +162,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
         {
             while(--d1);
             #ifdef _XC8_
-            while(--d1);
+            while(--d3);
             #endif
         }
     }

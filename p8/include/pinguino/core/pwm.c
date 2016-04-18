@@ -46,7 +46,7 @@
 #include <typedef.h>        // u8, u16, u32, ...
 #include <pin.h>            // USERLED, CCPx, PWMx, ...
 #include <digitalp.c>       // pinmode
-#include <oscillator.c>     // System_getPeripheralFrequency
+//#include <oscillator.c>     // System_getPeripheralFrequency
 //#include <interrupt.c>    // to save memory space
 
 // Mode of legacy PWM
@@ -67,6 +67,8 @@
 /*  --------------------------------------------------------------------
     GLOBAL VARIABLES
     ------------------------------------------------------------------*/
+
+extern u32 _cpu_clock_;
 
 u16 gPWMRES;                        // PWM resolution
 u16 gPR2PLUS1 = 256;                // shadow value of PR2 set to max. + 1 
@@ -96,7 +98,8 @@ u16 PWM_setFrequency(u32 freq)
     // PR2+1 calculation
     // Timer2 clock input is the peripheral clock (FOSC/4). 
 
-    gPR2PLUS1 = System_getPeripheralFrequency() / freq;
+    //gPR2PLUS1 = System_getPeripheralFrequency() / freq;
+    gPR2PLUS1 = _cpu_clock_ / 4 / freq;
 
     // Timer2 prescaler calculation
     // PR2 max value is 255, so PR2+1 max value is 256

@@ -21,6 +21,7 @@
     06 Oct. 2015 - Régis Blanchot - added watchdog support
     12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    12 Apr. 2016 - Régis Blanchot - removed __DELAYMS__ flag
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -361,7 +362,7 @@ unsigned long _cpu_clock_ = 48000000;
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
      defined(__IRREMOTE__)  || defined(__AUDIO__)   || defined(__STEPPER__) || \
-     defined(__CTMU__)      || defined(RTCCALARMINTENABLE)
+     defined(__CTMU__)      || defined(__SWPWM__)   || defined(RTCCALARMINTENABLE)
      // || defined(__DELAYMS__)
      // || defined(__MICROSTEPPING__)
 
@@ -430,6 +431,10 @@ unsigned long _cpu_clock_ = 48000000;
             pwm_interrupt();
             #endif
 
+            #ifdef __SWPWM__
+            swpwm_interrupt();
+            #endif
+            
             #ifdef __CTMU__
             //ctmu_interrupt();
             #endif
@@ -527,6 +532,10 @@ unsigned long _cpu_clock_ = 48000000;
             pwm_interrupt();
             #endif
 
+            #ifdef __SWPWM__
+            swpwm_interrupt();
+            #endif
+
             #ifdef __CTMU__
             //ctmu_interrupt();
             #endif
@@ -539,7 +548,6 @@ unsigned long _cpu_clock_ = 48000000;
                 MOVFF   PREINC1, _TBLPTRL
             __endasm;
             #endif
-
         }
 
         /*  ------------------------------------------------------------
@@ -558,7 +566,6 @@ unsigned long _cpu_clock_ = 48000000;
         void low_priority_isr(void) __interrupt 2
         #endif
         {
-
             #ifndef __XC8__
             __asm
                 MOVFF   _TBLPTRL, POSTDEC1
@@ -575,7 +582,7 @@ unsigned long _cpu_clock_ = 48000000;
             #ifdef ON_EVENT
             userlowinterrupt();
             #endif
-
+            
             #ifndef __XC8__
             __asm
                 MOVFF   PREINC1, _TABLAT
@@ -584,7 +591,6 @@ unsigned long _cpu_clock_ = 48000000;
                 MOVFF   PREINC1, _TBLPTRL
             __endasm;
             #endif
-
         }
 
     #endif /* PIC18F */

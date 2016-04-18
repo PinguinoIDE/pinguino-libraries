@@ -17,31 +17,32 @@
 * to 3 minutes in length, but must be called at least a few dozen microseconds
 * before the start of the pulse. 
 */
-u16 pulseIn(u8 pin, u8 state, u16 timeout){
-	
-	u16 width = 0; // keep initialization out of time critical area
-	
-	// convert the timeout from microseconds to a number of times through
-	u16 numloops = 0;
-	u16 maxloops = timeout / 10; //We have a microsecond by 10 loops (mean).
-	
-	// wait for any previous pulse to end
-	while (digitalread(pin) == state)
-		if (numloops++ == maxloops)
-			return 0;
-	
-	// wait for the pulse to start
-	while (digitalread(pin) != state)
-		if (numloops++ == maxloops)
-			return 0;
-	
-	// wait for the pulse to stop
-	while (digitalread(pin) == state)
-		width++;
+u16 pulseIn(u8 pin, u8 state, u16 timeout)
+{
+    
+    u16 width = 0; // keep initialization out of time critical area
+    
+    // convert the timeout from microseconds to a number of times through
+    u16 numloops = 0;
+    u16 maxloops = timeout / 10; //We have a microsecond by 10 loops (mean).
+    
+    // wait for any previous pulse to end
+    while (digitalread(pin) == state)
+        if (numloops++ == maxloops)
+            return 0;
+    
+    // wait for the pulse to start
+    while (digitalread(pin) != state)
+        if (numloops++ == maxloops)
+            return 0;
+    
+    // wait for the pulse to stop
+    while (digitalread(pin) == state)
+        width++;
 
-	//There will be some error introduced by the interrupt handlers.
-	//At last loop, each interaction have 12us + 60us from digitalRead() instructions
-	return width * 12 + 60; 
+    //There will be some error introduced by the interrupt handlers.
+    //At last loop, each interaction have 12us + 60us from digitalRead() instructions
+    return width * 12 + 60; 
 }
 
 #endif

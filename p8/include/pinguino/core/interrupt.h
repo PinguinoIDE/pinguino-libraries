@@ -133,10 +133,12 @@
 	#define T0_ON				(1<<7)  // 1 = Enables Timer0
 	#define T0_OFF				(0)     // 0 = Stops Timer0
 	// bit 6   T08BIT: Timer0 8-Bit/16-Bit Control bit
-    #ifndef __16F1459
+    #ifdef __16F1459
+	#define T0_8BIT				(0)  // 1 = Timer0 is configured as an 8-bit timer/counter
+    #else
 	#define T0_8BIT				(1<<6)  // 1 = Timer0 is configured as an 8-bit timer/counter
-	#define T0_16BIT			(0)     // 0 = Timer0 is configured as a 16-bit timer/counter
     #endif
+	#define T0_16BIT			(0)     // 0 = Timer0 is configured as a 16-bit timer/counter
 	// bit 5   T0CS: Timer0 Clock Source Select bit
 	#define	T0_SOURCE_EXT		(1<<5)  // 1 = Transition on T0CKI pin
 	#define	T0_SOURCE_INT		(0)     // 0 = Internal instruction cycle clock (CLKO)

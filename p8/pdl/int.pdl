@@ -1,4 +1,4 @@
-INT_TMR0 INT_TMR0#define TMR0INT
+INT_TMR0 INT_TMR0#define _TMR0INT
 INT_TMR1 INT_TMR1#define TMR1INT
 INT_TMR2 INT_TMR2#define TMR2INT
 INT_TMR3 INT_TMR3#define TMR3INT
@@ -27,10 +27,12 @@ Int.detach IntDisable#include <interrupt.c>#define INTDISABLE
 Int.disable IntDisable#include <interrupt.c>#define INTDISABLE
 Int.enable IntEnable#include <interrupt.c>#define INTENABLE
 Int.attach IntEnable#include <interrupt.c>#define INTENABLE
+Int.timerStart IntTimerStart#include <interrupt.c>
 Int.start interrupts#include <macro.h>#define INTSTART
 Int.stop noInterrupts#include <macro.h>#define INTSTOP
 Int.clearFlag IntClearFlag#include <interrupt.c>#define INTCLEARFLAG
 Int.isFlagSet IntIsFlagSet#include <interrupt.c>#define INTISFLAGSET
+Int.setPriority IntSetPriority#include <interrupt.c>#define INTSETPRIORITY
 OnTimer0 OnTimer0#include <interrupt.c>#define TMR0INT
 OnTimer1 OnTimer1#include <interrupt.c>#define TMR1INT
 OnTimer2 OnTimer2#include <interrupt.c>#define TMR2INT

@@ -1,0 +1,5 @@
+LedRGB.setFrequency LedRGB_setFrequency#include <ledrgb.c>
+LedRGB.attach LedRGB_attach#include <ledrgb.c>
+LedRGB.setRGBColor LedRGB_setRGBColor#include <ledrgb.c>
+LedRGB.setHexColor LedRGB_setHexColor#include <ledrgb.c>
+LedRGB.setGradient LedRGB_setGradient#include <ledrgb.c>
