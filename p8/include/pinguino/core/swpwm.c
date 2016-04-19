@@ -34,10 +34,11 @@
 
 // Uncomment this line if using a Common Anode LED
 //#define COMMON_ANODE
-#define SWPWMRES  127       // PWM resolution
+#define SWPWMRES  255       // PWM resolution
 
 volatile u8 gDutyCycle[8];
 volatile u8 gCounter=0;
+volatile u8 gPinNum=0;
 volatile u8 gPinActivated=0;
 volatile t16 _swpwm_period;
 
@@ -51,7 +52,7 @@ volatile t16 _swpwm_period;
 
 u16 SWPWM_setFrequency(u32 freq)
 {
-    u16 cycles = 10; //_cpu_clock_ / (4 * freq * SWPWMRES);
+    u16 cycles = 1; //_cpu_clock_ / (4 * freq * SWPWMRES * 8);
     
     _swpwm_period.w = 0xFFFF - cycles;
 
@@ -133,8 +134,6 @@ void SWPWM_setPercentDutyCycle(u8 pin, u8 percent)
 
 void swpwm_interrupt()
 {
-    volatile u8 i;
-    
     //if (Int.isFlagSet(INT_TMR0))
     if (INTCONbits.TMR0IF)
     {
@@ -146,93 +145,47 @@ void swpwm_interrupt()
         //
         gCounter++;
         gCounter &= SWPWMRES;
-        
-        /*
-        for (i=0; i<8; i++)
+        //
+        if ( gPinActivated & 1)
         {
-            if (BitRead(gPinActivated, i))
-            {
-                if ( gCounter < gDutyCycle[i] )
-                    BitSet(LATB, i);
-                else
-                    BitClear(LATB, i);
-            }
+            if ( gCounter < gDutyCycle[0] ) LATBbits.LATB0 = 1;
+            else                            LATBbits.LATB0 = 0;
         }
-        */
-        if (gPinActivated & Bit(0))
+        if ( gPinActivated & 2)
         {
-            if ( gCounter < gDutyCycle[0] )
-                LATBbits.LATB0 = 1;
-            else
-                LATBbits.LATB0 = 0;
+            if ( gCounter < gDutyCycle[1] ) LATBbits.LATB1 = 1;
+            else                            LATBbits.LATB1 = 0;
         }
-        if (gPinActivated & Bit(1))
+        if ( gPinActivated & 4)
         {
-            if ( gCounter < gDutyCycle[1] )
-                LATBbits.LATB1 = 1;
-            else
-                LATBbits.LATB1 = 0;
+            if ( gCounter < gDutyCycle[2] ) LATBbits.LATB2 = 1;
+            else                            LATBbits.LATB2 = 0;
         }
-        if (gPinActivated & Bit(2))
+        if ( gPinActivated & 8)
         {
-            if ( gCounter < gDutyCycle[2] )
-                LATBbits.LATB2 = 1;
-            else
-                LATBbits.LATB2 = 0;
+            if ( gCounter < gDutyCycle[3] ) LATBbits.LATB3 = 1;
+            else                            LATBbits.LATB3 = 0;
         }
-        if (gPinActivated & Bit(3))
+        if ( gPinActivated & 16)
         {
-            if ( gCounter < gDutyCycle[3] )
-                LATBbits.LATB3 = 1;
-            else
-                LATBbits.LATB3 = 0;
+            if ( gCounter < gDutyCycle[4] ) LATBbits.LATB4 = 1;
+            else                            LATBbits.LATB4 = 0;
         }
-        if (gPinActivated & Bit(4))
+        if ( gPinActivated & 32)
         {
-            if ( gCounter < gDutyCycle[4] )
-                LATBbits.LATB4 = 1;
-            else
-                LATBbits.LATB4 = 0;
+            if ( gCounter < gDutyCycle[5] ) LATBbits.LATB5 = 1;
+            else                            LATBbits.LATB5 = 0;
         }
-        if (gPinActivated & Bit(5))
+        if ( gPinActivated & 64)
         {
-            if ( gCounter < gDutyCycle[5] )
-                LATBbits.LATB5 = 1;
-            else
-                LATBbits.LATB5 = 0;
+            if ( gCounter < gDutyCycle[6] ) LATBbits.LATB6 = 1;
+            else                            LATBbits.LATB6 = 0;
         }
-        if (gPinActivated & Bit(6))
+        if ( gPinActivated & 128)
         {
-            if ( gCounter < gDutyCycle[6] )
-                LATBbits.LATB6 = 1;
-            else
-                LATBbits.LATB6 = 0;
+            if ( gCounter < gDutyCycle[7] ) LATBbits.LATB7 = 1;
+            else                            LATBbits.LATB7 = 0;
         }
-        if (gPinActivated & Bit(7))
-        {
-            if ( gCounter < gDutyCycle[7] )
-                LATBbits.LATB7 = 1;
-            else
-                LATBbits.LATB7 = 0;
-        }
-        /*
-        if (gPinActivated & Bit(0))
-            LATBbits.LATB0 = ( gCounter < gDutyCycle[0] ) ? 1:0;
-        if (gPinActivated & Bit(1))
-            LATBbits.LATB1 = ( gCounter < gDutyCycle[1] ) ? 1:0;
-        if (gPinActivated & Bit(2))
-            LATBbits.LATB2 = ( gCounter < gDutyCycle[2] ) ? 1:0;
-        if (gPinActivated & Bit(3))
-            LATBbits.LATB3 = ( gCounter < gDutyCycle[3] ) ? 1:0;
-        if (gPinActivated & Bit(4))
-            LATBbits.LATB4 = ( gCounter < gDutyCycle[4] ) ? 1:0;
-        if (gPinActivated & Bit(5))
-            LATBbits.LATB5 = ( gCounter < gDutyCycle[5] ) ? 1:0;
-        if (gPinActivated & Bit(6))
-            LATBbits.LATB6 = ( gCounter < gDutyCycle[6] ) ? 1:0;
-        if (gPinActivated & Bit(7))
-            LATBbits.LATB7 = ( gCounter < gDutyCycle[7] ) ? 1:0;
-        */
     }
 }
 

@@ -30,10 +30,12 @@
 #include <swpwm.c>          // Software PWM
 #include <delayms.c>        // Delayms
 
-//#define COMMON_ANODE
-#define SMOOTH_MODE
+#define COMMON_CATHODE      0
+#define COMMON_ANODE        1
+//#define SMOOTH_MODE
 
 u8 gRGBPin[8][3];
+u8 gCommon;
 
 // PWM look-up table to linearize the output light
 #ifdef SMOOTH_MODE
@@ -46,8 +48,9 @@ const u8 SWPWM_LUT[64]= {
 
 #define LedRGB_setFrequency(freq)    SWPWM_setFrequency(freq)
 
-void LedRGB_attach(u8 RGBLed, u8 redPin, u8 greenPin, u8 bluePin)
+void LedRGB_attach(u8 RGBLed, u8 common, u8 redPin, u8 greenPin, u8 bluePin)
 {
+    gCommon = common;
     gRGBPin[RGBLed][0] = redPin;
     gRGBPin[RGBLed][1] = greenPin;
     gRGBPin[RGBLed][2] = bluePin;
@@ -55,20 +58,21 @@ void LedRGB_attach(u8 RGBLed, u8 redPin, u8 greenPin, u8 bluePin)
 
 void LedRGB_setRGBColor(u8 RGBLed, u8 r, u8 g, u8 b)
 {
-    #ifdef COMMON_ANODE
-    r = 255 - r;
-    g = 255 - g;
-    b = 255 - b;
-    #endif
+    if ( gCommon == COMMON_ANODE)
+    {
+        r = 255 - r;
+        g = 255 - g;
+        b = 255 - b;
+    }
 
     #ifdef SMOOTH_MODE
     SWPWM_setDutyCycle(gRGBPin[RGBLed][0], SWPWM_LUT[r >> 2]);
     SWPWM_setDutyCycle(gRGBPin[RGBLed][1], SWPWM_LUT[r >> 2]);
     SWPWM_setDutyCycle(gRGBPin[RGBLed][2], SWPWM_LUT[r >> 2]);
     #else
-    SWPWM_setDutyCycle(gRGBPin[RGBLed][0], r >> 1);
-    SWPWM_setDutyCycle(gRGBPin[RGBLed][1], g >> 1);
-    SWPWM_setDutyCycle(gRGBPin[RGBLed][2], b >> 1);
+    SWPWM_setDutyCycle(gRGBPin[RGBLed][0], r);
+    SWPWM_setDutyCycle(gRGBPin[RGBLed][1], g);
+    SWPWM_setDutyCycle(gRGBPin[RGBLed][2], b);
     #endif
 }
 
