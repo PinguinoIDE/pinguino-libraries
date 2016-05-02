@@ -7,9 +7,8 @@
 	LAST RELEASE:	2013-01-17
 	----------------------------------------------------------------------------
 	CHANGELOG:
-    * 2017-01-17    rblanchot - delays are now based on System_getPeripheralFrequency
-    TODO:
-    * check rountines are interuptible
+    * 2015-01-17    rblanchot - delays are now based on System_getPeripheralFrequency
+    * 2016-05-02    rblanchot - delays use now _cpu_clock_
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -31,9 +30,10 @@
 
 #include <compiler.h>
 #include <typedef.h>
-//#include <macro.h>
-//#include <system.c>
-//#include <oscillator.c>             // System_getPeripheralFrequency
+#include <macro.h>
+#include <mathlib.c>
+
+extern u32 _cpu_clock_;
 
 /*
     NB:Cycles per second = FOSC/4
@@ -43,22 +43,16 @@
         0 < Cycles per microsecond < 16
 */
 
-/*
 void Delayus(u16 us)
 {
     u8 i;
-    u8 cyus = SystemGetInstructionClock() / 1000 / 1000;
+    u8 cyus = udiv32(_cpu_clock_, 1000000UL);
+    
     while (us--)
     {
         i = cyus;
         while (i--);
     }
-}
-*/
-
-void Delayus(u32 microseconds)
-{
-    while (microseconds--);
 }
 
 #endif // __DELAYUS_C__ 

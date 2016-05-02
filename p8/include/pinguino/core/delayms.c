@@ -10,6 +10,7 @@
     * 2015-09-09    rblanchot - PIC16F / workaround to "undefined symbol: _Delay1KTCYx"
     * 2016-01-13    rblanchot - added #ifndef __DELAYMS__ if the lib is called from another one 
     * 2016-04-06    rblanchot - added Delay1TCYx, etc ... 
+    * 2016-05-02    rblanchot - added new calculation method
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -32,51 +33,9 @@
 #include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
+#include <mathlib.c>
 
 extern u32 _cpu_clock_;
-
-// 20 cycles
-u16 umul16(u16 multiplier, u16 multiplicand)
-{
-    u16 product;
-
-    #define uLB16(x) (*(u8 *)(&x))
-    #define uHB16(x) (*(((u8 *)(&x))+1))
-
-    product =  (uLB16(multiplier) * uLB16(multiplicand));
-    product += (uLB16(multiplier) * uHB16(multiplicand)) << 8;
-    product += (uHB16(multiplier) * uLB16(multiplicand)) << 8;
-
-    return product;
-}
-
-// 100 cycles
-u32 udiv32(u32 dividend, u32 divisor)
-{
-    u32 quotient;
-    u8  counter;
-
-    quotient = 0;
-    if(divisor != 0)
-    {
-        counter = 1;
-        while((divisor & 0x8000000UL) == 0)
-        {
-            divisor <<= 1;
-            counter++;
-        }
-        do {
-            quotient <<= 1;
-            if(divisor <= dividend)
-            {
-                dividend -= divisor;
-                quotient |= 1;
-            }
-            divisor >>= 1;
-        } while(--counter != 0);
-    }
-    return quotient;
-}
 
 /**
     31000 Hz < Freq. 8-bit PIC Clock < 64MHz

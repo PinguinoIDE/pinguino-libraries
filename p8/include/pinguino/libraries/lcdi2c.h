@@ -3,8 +3,8 @@
 	PROJECT:		pinguino - http://www.pinguino.cc/
 	PURPOSE:		driving lcd display through i2c pcf8574 i/o expander
 	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	29 jul. 2008
-	LAST RELEASE:	06 apr. 2011
+	FIRST RELEASE:	29 Jul. 2008
+	LAST RELEASE:	24 Apr. 2016
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
