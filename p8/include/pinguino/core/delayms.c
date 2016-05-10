@@ -37,35 +37,10 @@
 
 extern u32 _cpu_clock_;
 
-/**
-    31000 Hz < Freq. 8-bit PIC Clock < 64MHz
-    7750 < Cycles per second = Clock / 4 < 16.000.000
-    8 < Cycles per millisecond < 16.000
-    0 < Cycles per microsecond < 16
-    
-    F MHz = F * 1000000 Cycles/s
-          = F * 1000    Cycles/ms
-          = F *         Cycles/us
-**/
-
 // DECFSZ f,d Decrement f (1 cycle), skip if zero (2 cycles)
 // GOTO 2 cycles
 // BANKSEL 1 cycle
 // MOV 1 cycle
-
-#ifdef _XC8_
-    #define KLOOPD1     3
-    #define KLOOPD2     5
-    #define KLOOPZ      10
-    #define KWHILE      16
-#else
-    #define KLOOPD1     7
-    #define KLOOPD2     5
-    #define KLOOPZ      12
-    #define KWHILE      16
-#endif
-
-#define KLOOP       (255*KLOOPD1+KLOOPD2) // XC8 = 770 / SDCC = 1790
 
 /* -------------------------------------------------------------
  * XC8
@@ -73,9 +48,9 @@ extern u32 _cpu_clock_;
     goto    $+3                             // 2 cycles
 loop:
     decfsz  Delayms@d1,f,c                  // 3 cycles, 4 if 0
-    goto    loop
+    goto    loop                            // loop1
     decfsz  Delayms@d2,f,c                  // 5 cycles, 4 if 0
-    goto    loop
+    goto    loop                            // loop2
    -----------------------------------------------------------*/
 
 /* -------------------------------------------------------------
@@ -96,18 +71,42 @@ loopd1:                                     // 7 cycles, 6 if 0
     bra     loopd1
    -----------------------------------------------------------*/
 
+#ifdef _XC8_
+    #define KLOOPD1     3                       // num. cycles for loop1
+    #define KLOOPD2     5                       // num. cycles for loop2
+    #define KLOOPZ      10                      // num. cycles when d1=d2=0
+    #define KWHILE      16                      // num. cycles for Call, While, Return, ...
+#else
+    #define KLOOPD1     7
+    #define KLOOPD2     5
+    #define KLOOPZ      12
+    #define KWHILE      16
+#endif
+
+#define KLOOP           (255*KLOOPD1+KLOOPD2)   // @48MHz : XC8 = 770 / SDCC = 1790
+
 void Delayms(u16 ms)                            // 4 cycles (incl. return)
 {
-    u16 d1ms;
+    u16 d1ms, remain;
     u8  dloop1, dloop2;
     u8  d1, d2, d3;
     
-    // < 250 cycles
-    // @48MHz : 12000/250 +/- 1/50 ms =  20 us
-    // @4MHz  :  1000/250             = 250 us
-    d1ms   = udiv32(_cpu_clock_, 4000UL) - KWHILE - KLOOPZ;         // +/-12000
-    dloop2 = udiv32(d1ms, KLOOP);                                   // XC8=15  / SDCC=6
-    dloop1 = udiv32(((d1ms-umul16(dloop2,KLOOP))+KLOOPD2), KLOOPD1);// XC8=150 / SDCC=210
+    /**
+    31000 Hz < Freq. 8-bit PIC Clock < 64MHz
+    7750 < Cycles per second = Clock / 4 < 16.000.000
+    8 < Cycles per millisecond < 16.000
+    0 < Cycles per microsecond < 16
+    
+    F MHz = F * 1000000 Cycles/s
+          = F * 1000    Cycles/ms
+          = F *         Cycles/us
+    **/
+
+    d1ms   = udiv32(_cpu_clock_, 4000UL);       // @48MHz : 12000
+    d1ms   = d1ms - KWHILE - KLOOPZ;
+    dloop2 = udiv32(d1ms, KLOOP);               // @48MHz : XC8=15  / SDCC=6
+    remain = d1ms - umul16(dloop2, KLOOP);
+    dloop1 = udiv32(remain + KLOOPD2, KLOOPD1); // @48MHz : XC8=150 / SDCC=210
 
     while(--ms)                                     // 10 cycles
     {
@@ -115,12 +114,13 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
         d2=dloop2+1;                                // 2 cycles (incf+movwf)
         d3=d1;
 
+        //        (dloop1*KLOOPD1+KLOOPD2)+(255*KLOOPD1+KLOOPD2)*dloop2
         // XC8  : (150⋅3+5)+(255⋅3+5)⋅15 = 12005 cycles = 1ms @ 48MHz
-        // SDCC : (210⋅7+5)+(255⋅7+5)⋅6  = 12215 cycles = 1ms @ 48MHz
+        // SDCC : (210⋅7+5)+(255⋅7+5)⋅6  = 12203 cycles = 1ms @ 48MHz
         while(--d2)
         {
             while(--d1);
-            #ifdef _XC8_
+            #ifdef __XC8__
             while(--d3);
             #endif
         }

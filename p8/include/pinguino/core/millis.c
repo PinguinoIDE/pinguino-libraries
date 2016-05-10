@@ -17,6 +17,7 @@
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     10 Feb. 2016 - Régis Blanchot - changed from Timer0 to Timer1 for PIC16F
                                     Timer1 is the only 16-bit timer available on 16F
+    10 Mai. 2016 - Régis Blanchot - replaced System_getPeripheralFrequency() with _cpu_clock_
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -39,8 +40,9 @@
 #include <compiler.h>           // compatibility between SDCC and XC8
 #include <typedef.h>            // u8, u32, ...
 #include <macro.h>              // interrupts() and noInterrupts
-#include <oscillator.c>         // System_getPeripheralFrequency()
+//#include <oscillator.c>         // System_getPeripheralFrequency()
 
+extern u32 _cpu_clock_;
 volatile u32 _millis;
 volatile t16 _millis_period;
 
@@ -55,11 +57,12 @@ void millis_init(void)
 {
     noInterrupts();             // Disable global interrupts
     
-    _millis_period.w = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+    //_millis_period.w = 0xFFFF - (System_getPeripheralFrequency() / 1000);
+    _millis_period.w = 0xFFFF - (_cpu_clock_ / 4000);
 
     #if defined(__16F1459) || defined(__16F1708)
 
-    T1CON = 0b00000001;         //T1_ON | T1_SOURCE_FOSCDIV4 | T1_PS_1_1;
+    T1CON = 0b00000001;         // T1_SOURCE_FOSCDIV4 | T1_PS_1_1;
     T1GCONbits.TMR1GE = 0;      // Ignore T1DIG effection 
     TMR1H = _millis_period.h8;
     TMR1L = _millis_period.l8;
@@ -68,12 +71,12 @@ void millis_init(void)
 
     #else
 
-    T0CON = 0b00001000;         //T0_ON | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
+    T0CON = 0b00001000;         // T0_OFF | T0_16BIT | T0_SOURCE_INT | T0_PS_OFF;
     TMR0H = _millis_period.h8;
     TMR0L = _millis_period.l8;
-    INTCON2bits.TMR0IP = 1;     //INT_HIGH_PRIORITY;
+    INTCON2bits.TMR0IP = 1;     // INT_HIGH_PRIORITY;
     INTCONbits.TMR0IF  = 0;
-    INTCONbits.TMR0IE  = 1;     //INT_ENABLE;
+    INTCONbits.TMR0IE  = 1;     // INT_ENABLE;
     T0CONbits.TMR0ON   = 1;
 
     #endif

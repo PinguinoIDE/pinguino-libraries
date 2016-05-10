@@ -49,8 +49,8 @@
         u16 w;
         struct
         {
-            u8 h8;
             u8 l8;
+            u8 h8;
         };
     } t16;
 
@@ -59,13 +59,13 @@
         u32 w;
         struct
         {
-            u8 u;
-            u8 h;
             u8 l;
+            u8 h;
+            u8 u;
         };
     } t24;
 
-    typedef void (*funcout) (u8);   // type of void foo(u8)
+    typedef void (*funcout) (u8);   // type of void funcout(u8)
 
 
 /*	----------------------------------------------------------------------------

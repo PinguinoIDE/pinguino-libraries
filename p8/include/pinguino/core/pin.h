@@ -334,8 +334,7 @@
 #elif defined(PINGUINO4455) || defined(PINGUINO4550)
 /**********************************************************************/
     
-    #define A4          29
-    #define RUNLED      29
+    #define RUNLED      29  // RA4
     #define LED1        29
     #define USERLED     29
     #define PWM1        12
