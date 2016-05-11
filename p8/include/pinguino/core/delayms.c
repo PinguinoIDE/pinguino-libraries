@@ -71,19 +71,21 @@ loopd1:                                     // 7 cycles, 6 if 0
     bra     loopd1
    -----------------------------------------------------------*/
 
-#ifdef _XC8_
+#ifdef __XC8__
     #define KLOOPD1     3                       // num. cycles for loop1
     #define KLOOPD2     5                       // num. cycles for loop2
     #define KLOOPZ      10                      // num. cycles when d1=d2=0
-    #define KWHILE      16                      // num. cycles for Call, While, Return, ...
+    #define KWHILE      14                      // num. cycles for Call, While, Return, ...
+    #define KINIT       2200
 #else
     #define KLOOPD1     7
     #define KLOOPD2     5
     #define KLOOPZ      12
     #define KWHILE      16
+    #define KINIT       -250
 #endif
 
-#define KLOOP           (255*KLOOPD1+KLOOPD2)   // @48MHz : XC8 = 770 / SDCC = 1790
+#define KLOOP           (256*KLOOPD1+KLOOPD2)   // @48MHz : XC8 = 770 / SDCC = 1790
 
 void Delayms(u16 ms)                            // 4 cycles (incl. return)
 {
@@ -103,27 +105,22 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
     **/
 
     d1ms   = udiv32(_cpu_clock_, 4000UL);       // @48MHz : 12000
-    d1ms   = d1ms - KWHILE - KLOOPZ;
+    d1ms   = d1ms - KINIT - KWHILE - KLOOPZ;
     dloop2 = udiv32(d1ms, KLOOP);               // @48MHz : XC8=15  / SDCC=6
     remain = d1ms - umul16(dloop2, KLOOP);
     dloop1 = udiv32(remain + KLOOPD2, KLOOPD1); // @48MHz : XC8=150 / SDCC=210
 
-    while(--ms)                                     // 10 cycles
+    while(--ms)                                 // 10 cycles
     {
-        d1=dloop1+1;                                // 2 cycles (incf+movwf)
-        d2=dloop2+1;                                // 2 cycles (incf+movwf)
-        d3=d1;
+        d1=dloop1 + 1;                          // 2 cycles (incf+movwf)
+        d2=dloop2 + 1;                          // 2 cycles (incf+movwf)
 
-        //        (dloop1*KLOOPD1+KLOOPD2)+(255*KLOOPD1+KLOOPD2)*dloop2
+        // first loop : (dloop1*KLOOPD1+KLOOPD2)
+        // next loops : (255*KLOOPD1+KLOOPD2)*(dloop2-1)
         // XC8  : (150⋅3+5)+(255⋅3+5)⋅15 = 12005 cycles = 1ms @ 48MHz
         // SDCC : (210⋅7+5)+(255⋅7+5)⋅6  = 12203 cycles = 1ms @ 48MHz
-        while(--d2)
-        {
-            while(--d1);
-            #ifdef __XC8__
-            while(--d3);
-            #endif
-        }
+        while(--d2)                             // KLOOPD2
+            while(--d1);                        // KLOOPD1 and then KLOOP
     }
 }
 

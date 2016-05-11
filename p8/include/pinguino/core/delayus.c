@@ -46,7 +46,7 @@ extern u32 _cpu_clock_;
 void Delayus(u16 us)
 {
     u8 i;
-    u8 cyus = udiv32(_cpu_clock_, 1000000UL);
+    u8 cyus = udiv32(_cpu_clock_, 4000000UL);
     
     while (us--)
     {

@@ -398,8 +398,8 @@ void lcdi2c_print(const u8 *string)
     println : useless on a LCD
     ------------------------------------------------------------------*/
 
-#if defined(LCDI2CPRINTLN)
 #if 0
+#if defined(LCDI2CPRINTLN)
 void lcdi2c_println(const u8 *string)
 {
     lcdi2c_print(string);
