@@ -4,7 +4,6 @@
     PURPOSE:		
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
     FIRST RELEASE:	10 nov. 2010
-    LAST RELEASE:	29 Jan. 2015
     --------------------------------------------------------------------
     13 Feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h
     21 Set. 2011 Marcus Fazzi added support for UART3
@@ -13,6 +12,7 @@
     19 May. 2012 jp mandon added support for PINGUINO32MX250 and PINGUINO32MX220
     11 Jun. 2013 MM OERR Gestion on UART 1
     29 Jan. 2015 R. Blanchot - Cleaned up SerialxInterrupt for PIC32MXxx family
+    21 Jun. 2016 R. Blanchot - Added new print functions
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -37,9 +37,21 @@
 #include <interrupt.c>
 #include <digitalw.c>
 
+// Printf
 #ifdef SERIALPRINTF
-#include <printf.c>
+    #include <printFormated.c>
 #endif
+
+// PrintFloat
+#if defined(SERIALPRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+    #include <printNumber.c>
+#endif
+
 
 #define UART1                               1
 #define UART2                               2
@@ -63,55 +75,55 @@
 // ---------------------------------------------------------------------
 
 // bit 15 ON: UARTx Enable bit
-#define UART_DISABLE						0x0000
-#define UART_ENABLE							0x8000
+#define UART_DISABLE                        0x0000
+#define UART_ENABLE                         0x8000
 /*
-#define UART_PERIPHERAL	0x01
-#define UART_RX			0x02	// UART Module receiver
-#define UART_TX			0x04	// UART Module transmitter
+#define UART_PERIPHERAL                     0x01
+#define UART_RX                             0x02        // UART Module receiver
+#define UART_TX                             0x04        // UART Module transmitter
 */
 // bit 13 SIDL: Stop in Idle Mode bit
-#define UART_ENABLE_STOP_ON_IDLE			0x2000
+#define UART_ENABLE_STOP_ON_IDLE            0x2000
 
 // bit 12 IREN: IrDA Encoder and Decoder Enable bit
-#define UART_ENABLE_IRDA					0x1000
+#define UART_ENABLE_IRDA                    0x1000
 
 // bit 11 RTSMD: Mode Selection for UxRTS Pin bit
-#define UART_RTS_WHEN_RX_NOT_FULL			0x000
-#define UART_RTS_WHEN_TX_NOT_EMPTY			0x800
+#define UART_RTS_WHEN_RX_NOT_FULL           0x000
+#define UART_RTS_WHEN_TX_NOT_EMPTY          0x800
 
 // bit 9-8 UEN<1:0>: UARTx Enable bits
-#define UART_ENABLE_PINS_BIT_CLOCK			0x300 // UxTX, UxRX, and UxBCLK pins are enabled and used; UxCTS pin is controlled by port latches
-#define UART_ENABLE_PINS_CTS_RTS			0x200 // UxTX, UxRX, UxCTS, and UxRTS pins are enabled and used
-#define UART_ENABLE_PINS_RTS				0x100 // UxTX, UxRX and UxRTS pins are enabled and used; UxCTS pin is controlled by port latches
-#define UART_ENABLE_PINS_TX_RX_ONLY			0x000 // UxTX and UxRX pins are enabled and used; UxCTS and UxRTS/UxBCLK pins are controlled by port latches
+#define UART_ENABLE_PINS_BIT_CLOCK          0x300       // UxTX, UxRX, and UxBCLK pins are enabled and used; UxCTS pin is controlled by port latches
+#define UART_ENABLE_PINS_CTS_RTS            0x200       // UxTX, UxRX, UxCTS, and UxRTS pins are enabled and used
+#define UART_ENABLE_PINS_RTS                0x100       // UxTX, UxRX and UxRTS pins are enabled and used; UxCTS pin is controlled by port latches
+#define UART_ENABLE_PINS_TX_RX_ONLY         0x000       // UxTX and UxRX pins are enabled and used; UxCTS and UxRTS/UxBCLK pins are controlled by port latches
 
 // bit 7 WAKE: Enable Wake-up on Start bit Detect During Sleep mode bit
-#define UART_ENABLE_WAKE_ON_START			0x80
+#define UART_ENABLE_WAKE_ON_START           0x80
 
 // bit 6 LPBACK: UARTx Loopback Mode Select bit
-#define UART_ENABLE_LOOPBACK				0x40
+#define UART_ENABLE_LOOPBACK                0x40
 
 // bit 5 ABAUD: Auto-Baud Enable bit
 
 // bit 4 RXINV: Receive Polarity Inversion bit
-#define UART_INVERT_RECEIVE_POLARITY		0x10
+#define UART_INVERT_RECEIVE_POLARITY        0x10
 
 // bit 3 BRGH: High Baud Rate Enable bit
-//#define UART_ENABLE_HIGH_SPEED		0x00000008
-#define UART_ENABLE_HIGH_SPEED				1
-#define UART_ENABLE_STANDARD_SPEED			0
+//#define UART_ENABLE_HIGH_SPEED            0x00000008
+#define UART_ENABLE_HIGH_SPEED              1
+#define UART_ENABLE_STANDARD_SPEED          0
 
 // bit 2-1 PDSEL<1:0>: Parity and Data Selection bits
  
-#define UART_9_BITS_NO_PARITY				0x06
-#define UART_8_BITS_ODD_PARITY				0x04
-#define UART_8_BITS_EVEN_PARITY				0x02
-#define UART_8_BITS_NO_PARITY				0x00
+#define UART_9_BITS_NO_PARITY               0x06
+#define UART_8_BITS_ODD_PARITY              0x04
+#define UART_8_BITS_EVEN_PARITY             0x02
+#define UART_8_BITS_NO_PARITY               0x00
 
 // bit 0 STSEL: Stop Selection bit
-#define UART_STOP_BITS_2					0x01	// Enables generation of 2 stop bits per frame.
-#define UART_STOP_BITS_1					0x00	// Enables generation of 1 stop bit per frame (default).
+#define UART_STOP_BITS_2                    0x01        // Enables generation of 2 stop bits per frame.
+#define UART_STOP_BITS_1                    0x00        // Enables generation of 1 stop bit per frame (default).
 
 // ---------------------------------------------------------------------
 // UxSTA
@@ -120,76 +132,78 @@
 // bit 24 ADM_EN: Automatic Address Detect Mode Enable bit
 
 // bit 15-14 UTXISEL<1:0>: Tx Interrupt Mode Selection bits
-#define UART_INTERRUPT_ON_TX_BUFFER_EMPTY	0x8000
-#define UART_INTERRUPT_ON_TX_DONE			0x4000
-#define UART_INTERRUPT_ON_TX_NOT_FULL		0x0000
+#define UART_INTERRUPT_ON_TX_BUFFER_EMPTY   0x8000
+#define UART_INTERRUPT_ON_TX_DONE           0x4000
+#define UART_INTERRUPT_ON_TX_NOT_FULL       0x0000
 
 // bit 13 UTXINV: Transmit Polarity Inversion bit
-#define UART_INVERT_TRANSMIT_POLARITY		0x2000
+#define UART_INVERT_TRANSMIT_POLARITY       0x2000
 
 // bit 12 URXEN: Receiver Enable bit
-#define UART_RX_ENABLED						0x1000	// UARTx receiver is enabled, UxRX pin controlled by UARTx (if ON = 1)
-#define UART_RX_DISABLED					0x0000	// UARTx receiver is disabled, the UxRX pin is ignored by the UARTx module. UxRX pin controlled by PORT.
+#define UART_RX_ENABLED                     0x1000      // UARTx receiver is enabled, UxRX pin controlled by UARTx (if ON = 1)
+#define UART_RX_DISABLED                    0x0000      // UARTx receiver is disabled, the UxRX pin is ignored by the UARTx module. UxRX pin controlled by PORT.
 
 // bit 11 UTXBRK: Transmit Break bit
 
 // bit 10 UTXEN: Transmit Enable bit
-#define UART_TX_ENABLED						0x400		// UARTx transmitter enabled, UxTX pin controlled by UARTx (if ON = 1)
-#define UART_TX_DISABLED					0x000		// UARTx transmitter disabled, any pending transmission is aborted and buffer is reset. UxTX pin controlled by PORT.
+#define UART_TX_ENABLED                     0x400       // UARTx transmitter enabled, UxTX pin controlled by UARTx (if ON = 1)
+#define UART_TX_DISABLED                    0x000       // UARTx transmitter disabled, any pending transmission is aborted and buffer is reset. UxTX pin controlled by PORT.
 
-#define UART_RX_TX_ENABLED					0x1400
+#define UART_RX_TX_ENABLED                  0x1400
 
 // bit 7-6 URXISEL<1:0>: Receive Interrupt Mode Selection bit
-#define UART_INTERRUPT_ON_RX_FULL			0xC0
-#define UART_INTERRUPT_ON_RX_HALF_FULL		0x40
-#define UART_INTERRUPT_ON_RX_NOT_EMPTY		0x00
+#define UART_INTERRUPT_ON_RX_FULL           0xC0
+#define UART_INTERRUPT_ON_RX_HALF_FULL      0x40
+#define UART_INTERRUPT_ON_RX_NOT_EMPTY      0x00
 
 // bit 5 ADDEN: Address Character Detect (bit 8 of received data = 1)
 
 // UART_CONFIGURATION
-#define UART_SUPPORT_IEEE_485				0x00000900
+#define UART_SUPPORT_IEEE_485               0x00000900
 
 // UART_LINE_STATUS;
-#define UART_TRANSMITTER_NOT_FULL			0x00000200	// The transmitter is able to accept data to transmit.
-#define UART_TRANSMITTER_EMPTY				0x00000100	// The transmitter is empty (no data is available to transmit).
-#define UART_RECEIVER_IDLE					0x00000010	// The receiver is currently idle.
-#define UART_PARITY_ERROR					0x00000008	// A received data parity error was detected.
-#define UART_FRAMING_ERROR					0x00000004	// Data was received that violated the framing protocol
-#define UART_OVERRUN_ERROR					0x00000002	// The UART has received more data than it can buffer.  Data has been lost.
-#define UART_DATA_READY						0x00000001	// UART data has been received and is avaiable in the FIFO.
+#define UART_TRANSMITTER_NOT_FULL           0x00000200  // The transmitter is able to accept data to transmit.
+#define UART_TRANSMITTER_EMPTY              0x00000100  // The transmitter is empty (no data is available to transmit).
+#define UART_RECEIVER_IDLE                  0x00000010  // The receiver is currently idle.
+#define UART_PARITY_ERROR                   0x00000008  // A received data parity error was detected.
+#define UART_FRAMING_ERROR                  0x00000004  // Data was received that violated the framing protocol
+#define UART_OVERRUN_ERROR                  0x00000002  // The UART has received more data than it can buffer.  Data has been lost.
+#define UART_DATA_READY                     0x00000001  // UART data has been received and is avaiable in the FIFO.
 
 //#ifndef SERIAL_BUFFERLENGTH
-    #define SERIAL_BUFFERLENGTH 			128			// rx buffer length
+    #define SERIAL_BUFFERLENGTH             128         // rx buffer length
 //#endif
 
-volatile u8 UART1SerialBuffer[SERIAL_BUFFERLENGTH];	// UART1 buffer
-volatile u8 UART2SerialBuffer[SERIAL_BUFFERLENGTH];	// UART2 buffer
+//void SerialUART1WriteChar(u8);
+volatile u8 UART1SerialBuffer[SERIAL_BUFFERLENGTH];     // UART1 buffer
+volatile long UART1wpointer, UART1rpointer;             // write and read pointer
+
+//void SerialUART2WriteChar(u8);
+volatile u8 UART2SerialBuffer[SERIAL_BUFFERLENGTH];     // UART2 buffer
+volatile long UART2wpointer, UART2rpointer;             // write and read pointer
+
 #ifdef ENABLE_UART3
-volatile u8 UART3SerialBuffer[SERIAL_BUFFERLENGTH];	// UART3 buffer
-#endif
-#ifdef ENABLE_UART4
-volatile u8 UART4SerialBuffer[SERIAL_BUFFERLENGTH];	// UART4 buffer
-#endif
-#ifdef ENABLE_UART5
-volatile u8 UART5SerialBuffer[SERIAL_BUFFERLENGTH];	// UART5 buffer
-#endif
-#ifdef ENABLE_UART6
-volatile u8 UART6SerialBuffer[SERIAL_BUFFERLENGTH];	// UART6 buffer
+//void SerialUART3WriteChar(u8);
+volatile u8 UART3SerialBuffer[SERIAL_BUFFERLENGTH];     // UART3 buffer
+volatile long UART3wpointer, UART3rpointer;             // write and read pointer
 #endif
 
-volatile long UART1wpointer, UART1rpointer;			// write and read pointer
-volatile long UART2wpointer, UART2rpointer;			// write and read pointer
-#ifdef ENABLE_UART3
-volatile long UART3wpointer, UART3rpointer;			// write and read pointer
-#endif
 #ifdef ENABLE_UART4
-volatile long UART4wpointer, UART4rpointer;			// write and read pointer
+//void SerialUART4WriteChar(u8);
+volatile u8 UART4SerialBuffer[SERIAL_BUFFERLENGTH];     // UART4 buffer
+volatile long UART4wpointer, UART4rpointer;             // write and read pointer
 #endif
+
 #ifdef ENABLE_UART5
-volatile long UART5wpointer, UART5rpointer;			// write and read pointer
+//void SerialUART5WriteChar(u8);
+volatile u8 UART5SerialBuffer[SERIAL_BUFFERLENGTH];     // UART5 buffer
+volatile long UART5wpointer, UART5rpointer;             // write and read pointer
 #endif
+
 #ifdef ENABLE_UART6
-volatile long UART6wpointer, UART6rpointer;			// write and read pointer
+//void SerialUART6WriteChar(u8);
+volatile u8 UART6SerialBuffer[SERIAL_BUFFERLENGTH];     // UART6 buffer
+volatile long UART6wpointer, UART6rpointer;             // write and read pointer
 #endif
 
 /*	--------------------------------------------------------------------
@@ -208,7 +222,7 @@ volatile long UART6wpointer, UART6rpointer;			// write and read pointer
 
 void SerialSetDataRate(u8 port, u32 baudrate)
 {
-    u8 speed = UART_ENABLE_STANDARD_SPEED;
+    u8  speed = UART_ENABLE_STANDARD_SPEED;
     u32 max, max1, max2;
     u32 min1, min2;
     u32 pbclock;
@@ -555,7 +569,7 @@ void SerialPinConfigure(u8 port)
 
 /*	--------------------------------------------------------------------
     SerialIntConfigure() : Serial Interrupts Configuration
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     @param		port		1 (UART1), 2 (UART2), 3 (UART3) ...
     @param		baudrate	baud rate
     @return		none
@@ -621,7 +635,7 @@ void SerialIntConfigure(u8 port, u8 priority, u8 subpriority)
 
 /*	--------------------------------------------------------------------
     SerialConfigure()
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     @param		port		1 (UART1) or 2 (UART2) or 3 (UART3) ...
     @param		baudrate	baud rate
     @return		baudrate
@@ -641,7 +655,7 @@ void SerialConfigure(u8 port, u32 config, u32 enable, u32 baudrate)
     SerialUART1WriteChar : write data bits 0-8 on the UART1
     ------------------------------------------------------------------*/
 
-void SerialUART1WriteChar(char c)
+void SerialUART1WriteChar(u8 c)
 {
     while (!U1STAbits.TRMT);			// wait transmitter is ready
     U1TXREG = c;
@@ -651,7 +665,7 @@ void SerialUART1WriteChar(char c)
     SerialUART2WriteChar : write data bits 0-8 on the UART2
     ------------------------------------------------------------------*/
 
-void SerialUART2WriteChar(char c)
+void SerialUART2WriteChar(u8 c)
 {
     while (!U2STAbits.TRMT);			// wait transmission has completed
     U2TXREG = c;
@@ -661,7 +675,7 @@ void SerialUART2WriteChar(char c)
     SerialUART3WriteChar : write data bits 0-8 on the UART3
     ------------------------------------------------------------------*/
 #ifdef ENABLE_UART3
-void SerialUART3WriteChar(char c)
+void SerialUART3WriteChar(u8 c)
 {
     while (!U2ASTAbits.TRMT);			// wait transmission has completed	
     U2ATXREG = c;
@@ -672,7 +686,7 @@ void SerialUART3WriteChar(char c)
     SerialUART4WriteChar : write data bits 0-8 on the UART4
     ------------------------------------------------------------------*/
 #ifdef ENABLE_UART4
-void SerialUART4WriteChar(char c)
+void SerialUART4WriteChar(u8 c)
 {
     while (!U1BSTAbits.TRMT);			// wait transmission has completed	
     U1BTXREG = c;
@@ -683,7 +697,7 @@ void SerialUART4WriteChar(char c)
     SerialUART5WriteChar : write data bits 0-8 on the UART5
     ------------------------------------------------------------------*/
 #ifdef ENABLE_UART5
-void SerialUART5WriteChar(char c)
+void SerialUART5WriteChar(u8 c)
 {
     while (!U3BSTAbits.TRMT);			// wait transmission has completed
     U3BTXREG = c;
@@ -694,7 +708,7 @@ void SerialUART5WriteChar(char c)
     SerialUART6WriteChar : write data bits 0-8 on the UART6
     ------------------------------------------------------------------*/
 #ifdef ENABLE_UART6
-void SerialUART6WriteChar(char c)
+void SerialUART6WriteChar(u8 c)
 {
     while (!U2BSTAbits.TRMT);			// wait transmission has completed
     U2BTXREG = c;
@@ -705,7 +719,7 @@ void SerialUART6WriteChar(char c)
  * Write a char on Serial port
  **********************************************************************/
 
-void SerialPutChar(u8 port, char c)
+void SerialPutChar(u8 port, u8 c)
 {
     switch (port)
     {
@@ -772,54 +786,28 @@ void SerialPrintln(u8 port, char *string)
 #if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 void SerialPrintNumber(u8 port, long value, u8 base)
 {  
-    u8 sign;
-
-    long i;
-    unsigned long v;    // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;       // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;    // pointer on string
-
-    if (value==0)
+    switch (port)
     {
-        SerialPutChar(port, '0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (unsigned long)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
+        case UART1: printNumber(SerialUART1WriteChar, value, base); break;
         
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
+        case UART2: printNumber(SerialUART2WriteChar, value, base); break;
+
+        #ifdef ENABLE_UART3
+        case UART3: printNumber(SerialUART3WriteChar, value, base); break;
+        #endif
+
+        #ifdef ENABLE_UART4
+        case UART4: printNumber(SerialUART4WriteChar, value, base); break;
+        #endif
+
+        #ifdef ENABLE_UART5
+        case UART5: printNumber(SerialUART5WriteChar, value, base); break;
+        #endif
+
+        #ifdef ENABLE_UART6
+        case UART6: printNumber(SerialUART6WriteChar, value, base); break;
+        #endif
     }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    SerialPrint(port, string);
 }
 #endif /* SERIALPRINTNUMBER */
 
@@ -833,40 +821,27 @@ void SerialPrintNumber(u8 port, long value, u8 base)
 #if defined(SERIALPRINTFLOAT)
 void SerialPrintFloat(u8 port, float number, u8 digits)
 { 
-    u8 i, toPrint;
-    u16 int_part;
-    float rounding, remainder;
-
-    // Handle negative numbers
-    if (number < 0.0)
+    switch (port)
     {
-        SerialPutChar(port, '-');
-        number = -number;
-    }
+        case UART1: printFloat(SerialUART1WriteChar, number, digits); break;
+        
+        case UART2: printFloat(SerialUART2WriteChar, number, digits); break;
 
-    // Round correctly so that print(1.999, 2) prints as "2.00"  
-    rounding = 0.5;
-    for (i=0; i<digits; ++i)
-        rounding /= 10.0;
+        #ifdef ENABLE_UART3
+        case UART3: printFloat(SerialUART3WriteChar, number, digits); break;
+        #endif
 
-    number += rounding;
+        #ifdef ENABLE_UART4
+        case UART4: printFloat(SerialUART4WriteChar, number, digits); break;
+        #endif
 
-    // Extract the integer part of the number and print it  
-    int_part = (u16)number;
-    remainder = number - (float)int_part;
-    SerialPrintNumber(port, int_part, 10);
+        #ifdef ENABLE_UART5
+        case UART5: printFloat(SerialUART5WriteChar, number, digits); break;
+        #endif
 
-    // Print the decimal point, but only if there are digits beyond
-    if (digits > 0)
-        SerialPutChar(port, '.'); 
-
-    // Extract digits from the remainder one at a time
-    while (digits-- > 0)
-    {
-        remainder *= 10.0;
-        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-        SerialPrintNumber(port, toPrint, 10);
-        remainder -= toPrint; 
+        #ifdef ENABLE_UART6
+        case UART6: printFloat(SerialUART6WriteChar, number, digits); break;
+        #endif
     }
 }
 #endif /* SERIALPRINTFLOAT */

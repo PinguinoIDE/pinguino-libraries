@@ -4,7 +4,7 @@ I2C2.init I2C2_init#include <i2c2.c>
 I2C2.send I2C2_send#include <i2c2.c>
 I2C2.sendID I2C2_sendID#include <i2c2.c>
 I2C2.get I2C2_get#include <i2c2.c>
-I2C2.write I2C2_writechar#include <i2c2.c>
+I2C2.write I2C2_write#include <i2c2.c>
 I2C2.writechar I2C2_writechar#include <i2c2.c>
 I2C2.read I2C2_readchar#include <i2c2.c>
 I2C2.readchar I2C2_readchar#include <i2c2.c>

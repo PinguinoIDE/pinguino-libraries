@@ -7,12 +7,12 @@
     ╚═╝      ╚════╝ ╚══════╝     ╚═╝     ╚═╝╚══════╝ ╚═════╝╚═════   *
 -------------------------------------------------------Alpha version *
  ******************************************************************
- PCD8544[module].c :
+ PCD8544.c :
  * C library for Monochrome Nokia LCD
  * with PCD8544 controler
  * for pinguino boards
 
-    ->File        : PCD8544[module].c
+    ->File        : PCD8544.c
     ->Revision    : 0.01 Alpha
     ->Last update : March 2014
     ->Description : f8544lcd core code.
@@ -197,6 +197,7 @@ void PCD8544_init(u8 module, ...)
 void PCD8544_refresh(u8 module)
 {
     u8 col, p;
+    u16 t = 0;
      
     PCD8544_select(module);
 
@@ -514,13 +515,179 @@ void PCD8544_drawCircle(u8 module, u8 x, u8 y, u8 radius)
     drawCircle(x, y, radius);
 }
 
+void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color)
+ {
+    u8 i;
+    for (i=x; i<x+w; i++) 
+    {
+        PCD8544_drawFastVLine(i, y, h, color);
+    }
+ }
+
 void PCD8544_fillCircle(u8 module, u8 x, u8 y, u8 radius)
 {
     PCD8544_SPI = module;
     fillCircle(x, y, radius);
 }
 
+/*
+void PCD8544_fillTriangle(u8 module, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color)
+{
+	u8 a, b, y, last;
+	u8 dx01,dy01,dx02,dy02,dx12,sa,sb,dy12; 
+	// Sort coordinates by Y order (y2 >= y1 >= y0)
+	if (y0 > y1)
+	    swap(y0, y1); swap(x0, x1);
+
+	if (y1 > y2)
+    	swap(y2, y1); swap(x2, x1);
+
+	if (y0 > y1)
+    	swap(y0, y1); swap(x0, x1);
+
+	if(y0 == y2)
+	{ // Handle awkward all-on-same-line case as its own thing
+    	a = b = x0;
+    	if(x1 < a)      a = x1;
+    	else if(x1 > b) b = x1;
+    	if(x2 < a)      a = x2;
+    	else if(x2 > b) b = x2;
+    	PCD8544_drawFastHLine(a, y0, b-a+1, color);
+    	return;
+  	}
+
+  
+    dx01 = x1 - x0;
+    dy01 = y1 - y0;
+    dx02 = x2 - x0;
+    dy02 = y2 - y0;
+    dx12 = x2 - x1;
+    dy12 = y2 - y1;
+    sa   = 0;
+    sb   = 0;
+
+  // For upper part of triangle, find scanline crossings for segments
+  // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
+  // is included here (and second loop will be skipped, avoiding a /0
+  // error there), otherwise scanline y1 is skipped here and handled
+  // in the second loop...which also avoids a /0 error here if y0=y1
+  // (flat-topped triangle).
+  if(y1 == y2) last = y1;   // Include y1 scanline
+  else         last = y1-1; // Skip it
+
+  for(y=y0; y<=last; y++) {
+    a   = x0 + sa / dy01;
+    b   = x0 + sb / dy02;
+    sa += dx01;
+    sb += dx02;
+    // longhand:
+    //a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+    //b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+    if(a > b) swap(a,b);
+    PCD8544_drawFastHLine(a, y, b-a+1, color);
+  }
+
+  // For lower part of triangle, find scanline crossings for segments
+  // 0-2 and 1-2.  This loop is skipped if y1=y2.
+  sa = dx12 * (y - y1);
+  sb = dx02 * (y - y0);
+  for(; y<=y2; y++) {
+    a   = x1 + sa / dy12;
+    b   = x0 + sb / dy02;
+    sa += dx12;
+    sb += dx02;
+    // longhand:
+    //a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+    //b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+    if(a > b) swap(a,b);
+    PCD8544_drawFastHLine(a, y, b-a+1, color);
+  }
+}
+*/
 #endif
+
+#ifdef  _PCD8544_USE_BITMAP
+void PCD8544_drawBitmap(u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color)
+{
+    u8 i, j, byteWidth;
+    byteWidth= (w + 7) / 8;
+
+    for(j=0; j<h; j++) 
+      {
+          for(i=0; i<w; i++ ) 
+          {
+                  if((bitmap[(j * byteWidth + i / 8)]) & (128 >> (i & 7))) 
+                  {	
+                    PCD8544_drawPixel(x+i, y+j, color);
+                  }
+          }
+      }
+}
+#endif
+*/
+
+/*
+void PCD8544_drawChar(u8 x, u8 y, u8 c, u8 color,u8 bg, u8 size)
+{
+    u8 i,j,k;
+    u8 line;
+
+    // test also done in drawPixel
+    if((x >= PCD8544.screen.width)       || // Clip right
+        (y >= PCD8544..screen.height)     || // Clip bottom
+        ((x + 6 * size - 1) < 0)   || // Clip left
+        ((y + (size>>3) - 1) < 0))    // Clip top
+        return;
+    
+    if (c<0x20)return;
+    if (c>0x7f)return;
+  
+    for (i=0; i<6; i++ )
+    {
+        //if (i == 5) 
+        //    line = 0x0;
+        //else //line = pgm_read_byte(font+(c*5)+i);
+            line = PCD8544.font.address[ 2 + (c - 32) * 6 + i ];
+
+        for (j = 0; j<8; j++)
+        {
+            if (line & 0x01)
+            {
+                if (size == 1) // default size
+                {
+                    //PCD8544_drawPixel(x+i, y+j, color);
+                    PCD8544_drawPixel(x+i, y+j);
+                }
+                else
+                {
+                    // big size
+                    //PCD8544_fillRect(x+(i*size), y+(j*size), size, size, color);
+                    for (k=(x+(i*size)); k<x+(i*size)+size; k++) 
+                        PCD8544_drawFastVLine(k, y+(j*size), size, color);
+                } 
+            }
+            
+            else if (bg != color)
+            {
+                if (size == 1) // default size
+                {
+                    //PCD8544_drawPixel(x+i, y+j, bg);
+                    PCD8544_drawPixel(x+i, y+j);
+                }
+                else
+                {
+                    // big size
+                    //PCD8544_fillRect(x+(i*size), y+(j*size), size, size, bg);
+                    for (k=(x+(i*size)); k<x+(i*size)+size; k++) 
+                        PCD8544_drawFastVLine(k, y+(j*size), size, bg);
+                }
+            }
+
+            line >>= 1;
+        }
+    }
+}
+*/
 
 #ifdef _PCD8544_USE_SETCURSOR
 void PCD8544_setCursor(u8 module, u8 x, u8 y)

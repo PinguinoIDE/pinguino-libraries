@@ -45,38 +45,38 @@
 #define SPI4    4
 
 // Modes
-#define SPI_SLAVE			0
-#define SPI_MASTER			1
-#define SPI_MASTER8			1
-#define SPI_MASTER16		2
-#define SPI_MASTER32		3
+#define SPI_SLAVE               0
+#define SPI_MASTER              1
+#define SPI_MASTER8             1
+#define SPI_MASTER16            2
+#define SPI_MASTER32            3
 
-#define SPI_LSBFIRST        0
-#define SPI_MSBFIRST        1
+#define SPI_LSBFIRST            0
+#define SPI_MSBFIRST            1
 
 // SPI Sample Phase
-#define SPI_SMPMID          0
-#define SPI_SMPEND          1
+#define SPI_SMPMID              0
+#define SPI_SMPEND              1
 #define SPI_SLEW_RATE_ENABLE    0
 #define SPI_SLEW_RATE_DISABLE   1
 #define SPI_STANDARD_SPEED_MODE 1
 #define SPI_HIGH_SPEED_MODE     0
 
-#define SPI_PBCLOCK_DIV2	2
-#define SPI_PBCLOCK_DIV4	4
-#define SPI_PBCLOCK_DIV8	8
-#define SPI_PBCLOCK_DIV16	16
-#define SPI_PBCLOCK_DIV32	32
-#define SPI_PBCLOCK_DIV64	64
-#define SPI_PBCLOCK_DIV128	128
-#define SPI_PBCLOCK_DIV256	256
-#define SPI_PBCLOCK_DIV512	512
-#define SPI_PBCLOCK_DIV1024	1024
+#define SPI_PBCLOCK_DIV2        2
+#define SPI_PBCLOCK_DIV4        4
+#define SPI_PBCLOCK_DIV8        8
+#define SPI_PBCLOCK_DIV16       16
+#define SPI_PBCLOCK_DIV32       32
+#define SPI_PBCLOCK_DIV64       64
+#define SPI_PBCLOCK_DIV128      128
+#define SPI_PBCLOCK_DIV256      256
+#define SPI_PBCLOCK_DIV512      512
+#define SPI_PBCLOCK_DIV1024     1024
 
-#define SPI_MODE0           0
-#define SPI_MODE1           1
-#define SPI_MODE2           2
-#define SPI_MODE3           3
+#define SPI_MODE0               0
+#define SPI_MODE1               1
+#define SPI_MODE2               2
+#define SPI_MODE3               3
 
 // Typedef
 typedef struct

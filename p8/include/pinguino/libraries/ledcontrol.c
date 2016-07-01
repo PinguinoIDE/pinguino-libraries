@@ -10,6 +10,7 @@
  *    12 Jan. 2016 - Regis Blanchot - fixed display bugs in scroll function
  *    13 Jan. 2016 - Regis Blanchot - added SPI library support
  *    13 Jan. 2016 - Regis Blanchot - added better cascadind devices management (using OP_NOOP)
+ *    24 May  2016 - Regis Blanchot - scroll function returns actual position
  *
  *    Permission is hereby granted, free of charge, to any person
  *    obtaining a copy of this software and associated documentation
@@ -136,7 +137,9 @@ void LedControl_init(u8 module, ...)
         // Set medium intensity
         LedControl_spiTransfer(m, OP_INTENSITY, 8);
         // we go into shutdown-mode on startup
-        LedControl_spiTransfer(m, OP_SHUTDOWN, 0);
+        //LedControl_spiTransfer(m, OP_SHUTDOWN, 0);
+        // we start power on
+        LedControl_spiTransfer(m, OP_SHUTDOWN, 1);
     }
 
     va_end(args);                               // cleans up the list
@@ -422,7 +425,7 @@ void LedControl_printf(const u8 *fmt, ...)
 // Scroll Message
 // d'après : http://breizhmakers.over-blog.com/article-un-peu-d-animation-ou-le-scrolling-a-base-de-max7219-105669349.html
 #if defined(LEDCONTROLSCROLL)
-void LedControl_scroll(const char * str)
+u16 LedControl_scroll(const char * str)
 {
     u8 m;                           // current matrix (0 < m < 8)
     u8 r;                           // current row    (0 < r < 8)
@@ -471,6 +474,7 @@ void LedControl_scroll(const char * str)
     
     // Do we cover the whole scroll area ?
     gScroll = (gScroll + 1) % scrollmax;
+    return gScroll;
 }
 #endif
 

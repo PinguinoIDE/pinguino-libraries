@@ -23,17 +23,29 @@
 #ifndef __LCDLIB_C__
 #define __LCDLIB_C__
 
+#include <typedef.h>		// Pinguino's types (u8, u16, ...) 01 May 2012
 #include <delayms.c>		// Delayms
 #include <delayus.c>		// Delayus
 #include <digitalw.c>   	// digitalwrite
 #include <digitalp.c>   	// pinmode
 #include <const.h>   	    // HIGH, LOW, OUTPUT, ...
 #include <lcdlib.h>
-#ifdef LCDPRINTF
-#include <printFormated.c>
-#include <stdarg.h>
+
+// Printf
+#if defined(LCDPRINTF)
+	#include <printFormated.c>
+	#include <stdarg.h>
 #endif
 
+// PrintFloat
+#if defined(LCDPRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(LCDPRINTNUMBER) || defined(LCDPRINTFLOAT)
+    #include <printNumber.c>
+#endif
 
 /** Positive pulse on E */
 void lcd_pulseEnable(void)
@@ -81,16 +93,10 @@ void lcd_send(u8 value, u8 mode)
 }
 
 /** Write a data character on LCD */
-void lcd_write(u8 value)
-{
-	lcd_send(value, HIGH);
-}
+#define lcd_write(value)	lcd_send(value, HIGH)
 
 /** Write a control command on LCD */
-void lcd_command(u8 value)
-{
-	lcd_send(value, LOW);
-}
+#define lcd_command(value)  lcd_send(value, LOW)
 
 /** Setup line x column on LCD */
 #ifdef LCDSETCURSOR
@@ -312,7 +318,8 @@ void lcd_rightToLeft(void)
 
 /** This will 'right justify' text from the cursor */
 #ifdef LCDAUTOSCROLL
-void lcd_autoscroll(void) {
+void lcd_autoscroll(void)
+{
 	_displaymode |= LCD_ENTRYSHIFTINCREMENT;
 	lcd_command(LCD_ENTRYMODESET | _displaymode);
 }
@@ -320,7 +327,8 @@ void lcd_autoscroll(void) {
 
 /** This will 'left justify' text from the cursor */
 #ifdef LCDNOAUTOSCROLL
-void lcd_noAutoscroll(void) {
+void lcd_noAutoscroll(void)
+{
 	_displaymode &= ~LCD_ENTRYSHIFTINCREMENT;
 	lcd_command(LCD_ENTRYMODESET | _displaymode);
 }

@@ -38,7 +38,7 @@
 #include <macro.h>
 //#include <stdlib.h>       // no longer used (09-11-2012)
 #include <delayms.c>
-#include <oscillator.c>
+//#include <oscillator.c>
 
 // Printf
 #if defined(SERIALPRINTF)
@@ -69,6 +69,8 @@
 
 #define BaudRateDivisor(f, b)   ((f/(4*b))-1)
 
+extern u32 _cpu_clock_;
+
 char rx[RXBUFFERLENGTH];            // serial buffer
 u8 wpointer=1,rpointer=1;           // write and read pointer
 
@@ -79,7 +81,8 @@ u8 wpointer=1,rpointer=1;           // write and read pointer
 
 void Serial_begin(u32 baudrate)
 {
-    u16 spbrg = (u16)BaudRateDivisor(System_getCpuFrequency(), baudrate);
+    //u16 spbrg = (u16)BaudRateDivisor(System_getCpuFrequency(), baudrate);
+    u16 spbrg = (u16)BaudRateDivisor(_cpu_clock_, baudrate);
     
     #if defined(__16F1459)
     
@@ -189,7 +192,7 @@ void Serial_begin(u32 baudrate)
 
     interrupts();                   // Enable global interrupts
     
-    //Delayms(1000);                  // AG : 12-11-2012
+    Delayms(1000);                  // AG : 12-11-2012
 }
 
 /***********************************************************************

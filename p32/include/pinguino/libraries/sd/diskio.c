@@ -7,7 +7,9 @@
                     Alfred Broda <alfredbroda@gmail.com>
                     Mark Harper <markfh@f2s.com>
     FIRST RELEASE:  23 Dec. 2011
-    LAST RELEASE:   20 Jan. 2016
+    --------------------------------------------------------------------
+    Changelog
+    23 Jun. 2016    Régis Blanchot  Cleaned up the code
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -30,38 +32,19 @@
 
 #include <p32xxxx.h>            //#include <compiler.h>
 #include <typedef.h>
+#include <system.c>
 #include <spi.h>                // Pinguino SPI lib.
 #include <spi.c>
 #include <sd/ffconf.h>          // SD lib. config. file
+#include <sd/diskio.h>
 
 #if _FS_TINY
-#include <sd/tff.c>             // Tiny Fat Filesystem
+#include <sd/tff.c>             // Tiny Fat Filesystem (default)
 #else
 #include <sd/pff.c>             // Petit Fat Filesystem
 #endif
 
-#include <sd/diskio.h>
-#include <system.c>             // #include <oscillator.c>
-
-#ifdef SD_DEBUG
-    #define ST7735PRINTNUMBER
-    #define ST7735PRINTCHAR
-    #define ST7735PRINTF
-    #define ST7735PRINT
-    #include <ST7735.c>
-    /*
-    void debugf(const u8 *fmt, ...)
-    {
-        va_list args;
-        va_start(args, format);
-        ST7735_printf(SPI2, fmt, args);
-        va_end(args);
-    }
-    */
-    //#include <__cdc.c>
-    //#include <serial.c>
-#endif
-
+//#include <oscillator.c>
 //#include <delayms.c>
 //#include <delayus.c>
 //#include <digitalw.c>
@@ -71,7 +54,6 @@
 #if defined (PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
     #define RTCCGETTIMEDATE
     #include <rtcc.c>
-    #include <rtcc1.c>
 #endif
 
 //static volatile u16 Timer1, Timer2; /* 1000Hz decrement timer */
@@ -93,13 +75,14 @@ FRESULT disk_mount(u8 module, ...)
 
     va_start(args, module); // args points on the argument after module
 
-    #if defined(SD_DEBUG) && defined(__SERIAL__)
-    Serial_begin(9600);
-    #endif
-    
     // Init the SPI module
     // -----------------------------------------------------------------
     
+    #ifdef __DEBUG__
+    debug("\f");
+    debug("SPI%d init.", module);
+    #endif
+
     if (module == SPISW)
     {
         sda = (u8)va_arg(args, int);             // get the next arg
@@ -122,11 +105,6 @@ FRESULT disk_mount(u8 module, ...)
     // File system objects memory allocation
     // -----------------------------------------------------------------
 
-    // Clean-up the file system object
-    //memset((void *)fs, 0, sizeof(FATFS));
-
-    // Create File system object
-    //&FatFs = { 0 };
     auto_mount(module, NULL, 0);
 }
 
@@ -310,8 +288,8 @@ u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
             // return if CMD55 is not accepted
             if (R1 > 0x01)
             {
-                #ifdef SD_DEBUG
-                //ST7735_printf(SPI2, "ERROR CMD%d=%d\r\n", c, R1);
+                #ifdef __DEBUG__
+                debug("ERROR CMD%d=%d", c, R1);
                 #endif
                 return R1;
             }
@@ -332,10 +310,10 @@ u8 disk_sendcommand(u8 spi, u8 cmd, u32 arg)
     else if ((cmd != CMD0 && cmd != CMD1 && cmd != CMD8 && cmd != CMD41) && R1 != 0x00 && --timeout)
         goto doloop;
 
-    #ifdef SD_DEBUG
-    //ST7735_printf(SPI2, "CMD%d=%d\r\n", c, R1);
+    #ifdef __DEBUG__
+    debug("CMD%d=%d", c, R1);
     #endif
-
+    
     return R1;
 }
 
@@ -351,6 +329,10 @@ u8 disk_initialize(u8 spi, u8 drv)
     u8 R1, n, ocr[4];
     u8 fpb, fsd, div;
     u32 timeout;
+
+    #ifdef __DEBUG__
+    debug("Disk init.");
+    #endif
 
     if (drv) return STA_NOINIT;         // Supports only single drive
     if (Stat & STA_NODISK) return Stat; // No card in the socket
@@ -370,11 +352,14 @@ u8 disk_initialize(u8 spi, u8 drv)
 
     if (disk_sendcommand(spi, GO_IDLE_STATE, 0) != 0x01)
     {
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "Card not ready\r\n");
+        #ifdef __DEBUG__
+        debug("Card not ready");
         #endif
         return STA_NODISK;
     }
+        #ifdef __DEBUG__
+        debug("Card in idle state");
+        #endif
 
     // Send a CMD8 with voltage pattern (only valid with SDv2)
     // -----------------------------------------------------------------
@@ -385,24 +370,29 @@ u8 disk_initialize(u8 spi, u8 drv)
 
     if (disk_sendcommand(spi, SEND_IF_COND, 0x1AA) != 0x01) // CMD8
     {
+        #ifdef __DEBUG__
+        debug("CMD8 not accepted");
+        debug("Trying ACMD41 and CMD1 ...");
+        #endif
+
         if (disk_sendcommand(spi, SD_SEND_OP_COND, 0) == CMD_OK) // ACMD41
         {
             type = CT_SD1;
-            #ifdef SD_DEBUG
-            ST7735_printf(SPI2, "Found SD type 1\r\n");
+            #ifdef __DEBUG__
+            debug("ACMD41 OK, found SD type 1");
             #endif
         }
         else if (disk_sendcommand(spi, SEND_OP_COND, 0) == CMD_OK) // CMD1
         {
             type = CT_MMC;
-            #ifdef SD_DEBUG
-            ST7735_printf(SPI2, "Found MMC\r\n");
+            #ifdef __DEBUG__
+            debug("CMD1 OK, found MMC");
             #endif
         }
         else
         {
-            #ifdef SD_DEBUG
-            ST7735_printf(SPI2, "Unknown Interface\r\n");
+            #ifdef __DEBUG__
+            debug("ACMD41 and CMD1 failed, unknown Interface");
             #endif
             return STA_NOINIT;
         }
@@ -414,38 +404,54 @@ u8 disk_initialize(u8 spi, u8 drv)
     else
     {
    
+        #ifdef __DEBUG__
+        debug("CMD8 accepted");
+        #endif
+
         // Get trailing return value of R7 response
         for (n = 0; n < 4; n++)
             ocr[n] = SPI_read(spi);
 
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "CMD8=0x%X%X\r\n", ocr[2], ocr[3]);
-        //ST7735_printf(SPI2, "R7=0x%02X%02X%02X%02X\r\n", ocr[3], ocr[2], ocr[1], ocr[0]);
+        #ifdef __DEBUG__
+        debug("CMD8=0x%X%X", ocr[2], ocr[3]);
+        debug("R7=0x%02X%02X%02X%02X", ocr[3], ocr[2], ocr[1], ocr[0]);
         #endif
         
         // Check if the voltage pattern has been return
         if (ocr[2] == 0x01 && ocr[3] == 0xAA)
         {
+            #ifdef __DEBUG__
+            debug("Voltage pattern OK");
+            #endif
+
             // Repeat sending ACMD41 + HCS bit until the card responds
             // with an ok value of 0x00
             if (disk_sendcommand(spi, SD_SEND_OP_COND, (u32)1<<30) != CMD_OK)
                 return STA_NOINIT;
             
+            #ifdef __DEBUG__
+            debug("HCS bit OK");
+            #endif
+
             // Send CMD58 and Check CCS bit in the OCR
             if (disk_sendcommand(spi, READ_OCR, 0) == CMD_OK) // CMD58
             {
+                #ifdef __DEBUG__
+                debug("CCS bit OK");
+                #endif
+
                 for (n = 0; n < 4; n++)
                     ocr[n] = SPI_read(spi);
 
                 type = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2; // SDHC or SDv2
 
-                #ifdef SD_DEBUG
-                //ST7735_printf(SPI2, "OCR[0]=0x%X\n\r",ocr[0]);
-                //ST7735_printf(SPI2, "R7=0x%02X%02X%02X%02X\r\n", ocr[3], ocr[2], ocr[1], ocr[0]);
+                #ifdef __DEBUG__
+                debug("OCR[0]=0x%X",ocr[0]);
+                debug("R7=0x%02X%02X%02X%02X", ocr[3], ocr[2], ocr[1], ocr[0]);
                 if (type == CT_SD2)
-                    ST7735_printf(SPI2, "Found SD type 2\r\n");
+                    debug("Found SD type 2");
                 else
-                    ST7735_printf(SPI2, "Found SDHC\r\n");
+                    debug("Found SDHC");
                 #endif
             }
         }
@@ -457,8 +463,8 @@ u8 disk_initialize(u8 spi, u8 drv)
     if (disk_sendcommand(spi, CRC_ON_OFF, 0) != CMD_OK)
         return STA_NOINIT;
 
-    #ifdef SD_DEBUG
-    //ST7735_printf(SPI2, "Turn off the CRC\r\n");
+    #ifdef __DEBUG__
+    debug("Turned off the CRC");
     #endif
 
     // CMD16 sets R/W block length
@@ -473,8 +479,8 @@ u8 disk_initialize(u8 spi, u8 drv)
         if (disk_sendcommand(spi, SET_BLOCK_LEN, 512) != CMD_OK)
             return STA_NOINIT;
 
-    #ifdef SD_DEBUG
-    //ST7735_printf(SPI2, "Set block length to 512\r\n");
+    #ifdef __DEBUG__
+    debug("Set block length to 512");
     #endif
 
     // Set SD status
@@ -497,8 +503,8 @@ u8 disk_initialize(u8 spi, u8 drv)
         SPI_setMode(spi, SPI_MASTER8);
         SPI_setDataMode(spi, SPI_MODE1); // SPI_MODE3
 
-        #ifdef SD_DEBUG
-        //ST7735_printf(SPI2, "SpeedClass=%dMB/s\r\n", type);
+        #ifdef __DEBUG__
+        debug("SpeedClass=%dMB", type);
         #endif
 
         // fpb = FOSC/4 = Max. SPI speed
@@ -519,8 +525,8 @@ u8 disk_initialize(u8 spi, u8 drv)
                     break;
             }
             SPI_setClockDivider(spi, div);
-            #ifdef SD_DEBUG
-            //ST7735_printf(SPI2, "SPI @ %dMHz\r\n", fpb/div);
+            #ifdef __DEBUG__
+            debug("SPI @ %dMHz", fpb/div);
             #endif
         }
         
@@ -528,8 +534,8 @@ u8 disk_initialize(u8 spi, u8 drv)
         else
         {
             SPI_setMode(spi, SPI_PBCLOCK_DIV2);
-            #ifdef SD_DEBUG
-            //ST7735_printf(SPI2, "SPI @ %dMHz\r\n", fpb);
+            #ifdef __DEBUG__
+            debug("SPI @ %dMHz", fpb);
             #endif
         }
         
@@ -562,13 +568,14 @@ u8 disk_status(u8 drv)
 
 static u8 disk_readblock(u8 spi, u8 *buff, u16 count)
 {
-    #ifdef SD_DEBUG
-    //ST7735_printf(SPI2, "Reading Bloc\r\n");
-    #endif
-    
     if (disk_getresponse(spi) != 0xFE)
+    {
+        #ifdef __DEBUG__
+        debug("Reading bloc failed");
+        #endif
         return 0;
-        
+    }
+
     // Receive the data block into buffer
     do
     {
@@ -582,6 +589,9 @@ static u8 disk_readblock(u8 spi, u8 *buff, u16 count)
     SPI_write(spi, 0xFF);
     SPI_write(spi, 0xFF);
 
+    #ifdef __DEBUG__
+    debug("Reading bloc OK");
+    #endif
     return 1;
 }
 
@@ -644,6 +654,10 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     //u8 i, token;
     //u32 timeout = 1000; //IDLE_TIMEOUT;
 
+    #ifdef __DEBUG__
+    debug("Reading sector ...");
+    #endif
+
     if (drv || !count)
         return RES_PARERR;
 
@@ -658,10 +672,13 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     /* Single block read */
     if (count == 1)
     {
+        #ifdef __DEBUG__
+        debug("Reading single bloc");
+        #endif
         //SPI_read(spi);SPI_read(spi);SPI_select(spi);SPI_read(spi);SPI_read(spi);
 
         // Check if command was accepted and valid token received
-        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK)
+        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK) // CMD17
             && disk_readblock(spi, buff, 512))
                 count = 0;
     }
@@ -669,8 +686,11 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     /* Multiple block read */
     else
     {
+        #ifdef __DEBUG__
+        debug("Reading multiple block");
+        #endif
         // check if command was accepted
-        if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)
+        if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)  // CMD18
         {
             do {
                 if (!disk_readblock(spi, buff, 512))
@@ -684,10 +704,13 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     //SPI_deselect(spi);
     //disk_deselect(spi);
     
-    #ifdef SD_DEBUG
-    //ST7735_printf(SPI2, "count=%d\r\n", count);
+    #ifdef __DEBUG__
+    if (count)
+        debug("... failed");
+    else
+        debug("... OK");
     #endif
-
+    
     return (count ? RES_ERROR : RES_OK);
 }
 

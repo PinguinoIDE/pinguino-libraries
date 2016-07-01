@@ -1,9 +1,10 @@
 /*  --------------------------------------------------------------------
-    FILE:			delayms.c
-    PROJECT:		pinguino
-    PURPOSE:		pinguino delays functions
-    PROGRAMER:		jean-pierre mandon
-    FIRST RELEASE:	2008
+    FILE:           delayms.c
+    PROJECT:        pinguino
+    PURPOSE:        pinguino delays functions
+    PROGRAMER:      jean-pierre mandon
+                    regis blanchot
+    FIRST RELEASE:  2008
     --------------------------------------------------------------------
     CHANGELOG:
     * 2013-01-17    rblanchot - delays are now based on SystemGetClock()
@@ -91,7 +92,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
 {
     u16 d1ms, remain;
     u8  dloop1, dloop2;
-    u8  d1, d2, d3;
+    u8  d1, d2;
     
     /**
     31000 Hz < Freq. 8-bit PIC Clock < 64MHz
@@ -112,8 +113,8 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
 
     while(--ms)                                 // 10 cycles
     {
-        d1=dloop1 + 1;                          // 2 cycles (incf+movwf)
-        d2=dloop2 + 1;                          // 2 cycles (incf+movwf)
+        d1 = dloop1 + 1;                        // 2 cycles (incf+movwf)
+        d2 = dloop2 + 1;                        // 2 cycles (incf+movwf)
 
         // first loop : (dloop1*KLOOPD1+KLOOPD2)
         // next loops : (255*KLOOPD1+KLOOPD2)*(dloop2-1)

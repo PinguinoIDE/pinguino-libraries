@@ -16,7 +16,7 @@
 **/
 
 // SPI Module
-#define SPILCD SPI1 
+#define SPILCD 1 
 
 u16 alpha=0;                // rotation angle
 u8 x, y;
@@ -32,7 +32,7 @@ void setup()
 
     // if SPILCD = SPISW (SPI Software)
     //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
-    PCD8544.init(SPILCD, 0, 1); // DC and RST pin
+    PCD8544.init(SPILCD, 0, 2); // DC and RST pin
 
     PCD8544.setContrast(SPILCD, 40); // 0 to 127
     

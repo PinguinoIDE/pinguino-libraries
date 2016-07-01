@@ -77,6 +77,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define DISPLAY_WIDTH  84
 #define DISPLAY_HEIGHT 48
 #define DISPLAY_SIZE   (DISPLAY_WIDTH * DISPLAY_HEIGHT / 8)
+#define DISPLAY_ROWS   ((DISPLAY_HEIGHT / 8) - 1)
 
 /**	--------------------------------------------------------------------
     Display commands
@@ -100,7 +101,7 @@ POSSIBILITY OF SUCH DAMAGE.
 // H = 1
 #define PCD8544_SETTEMP 0x04
 #define PCD8544_SETBIAS 0x10
-#define PCD8544_SETVOP 0x80
+#define PCD8544_SETVOP  0x80
 
 //Colors
 #define BLACK 1

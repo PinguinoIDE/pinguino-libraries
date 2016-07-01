@@ -43,6 +43,6 @@ void loop()
       //BULK.printf("Received : %s\r\n", buffer);
       //BULK.printf("Length = %d bytes\r\n", receivedbyte);
     }
-    
+    delay(500);
     toggle(USERLED);
 }

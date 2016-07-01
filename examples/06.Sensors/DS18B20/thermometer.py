@@ -46,9 +46,9 @@ class Pinguino():
 
 	VENDOR = 0x04D8
 	PRODUCT = 0xFEAA
-	CONFIGURATION = 3
+	CONFIGURATION = 1
 	INTERFACE = 0
-	ENDPOINT_IN = 0x82
+	ENDPOINT_IN = 0x81
 	ENDPOINT_OUT = 0x01
 
 	device = None
@@ -56,21 +56,31 @@ class Pinguino():
 
 	def __init__(self,):
 		for bus in usb.busses():
+			#print bus
 			for dev in bus.devices:
+				#print dev
 				if dev.idVendor == self.VENDOR and dev.idProduct == self.PRODUCT:
 					self.device = dev
+					print "Pinguino found!"
 		return None
 
 	def open(self):
 		if not self.device:
 			print >> sys.stderr, "Unable to find device!"
 			return None
-		try:
-			self.handle = self.device.open()
+
+		self.handle = self.device.open()
+		if self.handle:
+			try:
+				self.handle.releaseInterface()
+				# WINDOWS USERS : COMMENT THE NEXT LINE ------
+				self.handle.detachKernelDriver(self.INTERFACE)
+				# --------------------------------------------
+			except:
+				pass
 			self.handle.setConfiguration(self.CONFIGURATION)
 			self.handle.claimInterface(self.INTERFACE)
-		except usb.USBError, err:
-			print >> sys.stderr, err
+		else:
 			self.handle = None
 		return self.handle
 
@@ -111,7 +121,8 @@ def update():
 			sign = '-'
 		else:
 			sign = ''
-		newtemp = '%s%d%s%d%s%s' % (sign,t[1], '.', t[2]*256+t[3], deg, 'C')
+		f = str(t[2]*256+t[3])
+		newtemp = '%s%d%s%s%s%s' % (sign,t[1], '.', f[0:1], deg, 'C')
 		if newtemp != curtemp:
 			curtemp = newtemp
 			if templine:

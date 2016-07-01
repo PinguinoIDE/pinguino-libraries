@@ -1,10 +1,10 @@
 /*  --------------------------------------------------------------------
-    FILE:				lcdi2c.c
-    PROJECT:			pinguino - http://www.pinguino.cc/
-    PURPOSE:			driving lcd display through i2c pcf8574 i/o expander
-    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	29 jul. 2008
-    LAST RELEASE:	06 apr. 2011
+    FILE:           lcdi2c.c
+    PROJECT:        Pinguino - http://www.pinguino.cc/
+    PURPOSE:        Driving a LCD display through i2c PCF8574 I/O expander
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  29 Jul. 2008
+    LAST RELEASE:   15 Jun. 2011
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -29,45 +29,45 @@
     02 - VDD (+5V)
     03 - Vo (R = 1KOhm à la masse)
     04 - RS
-    05 - RW (reliée à la masse donc RW = 0 = écriture)
+    05 - RW (can be connected to GND so that RW = 0 = write)
     06 - EN
-    07 a 10 - D0 a D3 du LCD doivent rester « en l'air » (non connectées ou à la masse).
-    11 a 16 - D4 a D7 du LCD sont reliées au PIC ou PCF8574
-    15 - LED+ ???
-    16 - LED- ???
-    ------------------------------------------------------------------*/
+    07 a 10 - D0 to D3 connected to GND (4-bit mode).
+    11 a 16 - D4 to D7 connected to PCF8574's pins (see below)
+    15 - LED+ R330
+    16 - LED- GND or Backlight pin in PCF8574
+    --------------------------------------------------------------------------*/
 
 /*  --------------------------------------------------------------------
     PCF8574P
     --------------------------------------------------------------------
 
-    +5V		A0		-|o|-		VDD	+5V
-    +5V		A1		-|	|-		SDA	pull-up 1K8 au +5V
+    +5V		A0		-|o |-		VDD		+5V
+    +5V		A1		-|	|-		SDA		pull-up 1K8 au +5V
     +5V		A2		-|	|-		SCL 	pull-up 1K8 au +5V
     LCD_BL	P0		-|	|-		INT
     LCD_RS	P1		-|	|-		P7		LCD_D7
     LCD_RW	P2		-|	|-		P6		LCD_D6
     LCD_EN	P3		-|	|-		P5		LCD_D5
-    GRND		VSS	-|	|-		P4		LCD_D4
+    GRND	VSS		-|	|-		P4		LCD_D4
 
-    SYMBOL 	PIN	DESCRIPTION						NB
-    A0			1		address input 0				adress = 0 1 0 0 A2 A1 A0 0
-    A1			2		address input 1				A0, A1 et A2 relies au +5V
-    A2			3		address input 2				donc adress = 01001110 = 0x4E
-    P0			4		quasi-bidirectional I/O 0	LCD_BL
-    P1			5		quasi-bidirectional I/O 1	LCD_RS
-    P2			6		quasi-bidirectional I/O 2	LCD_RW
-    P3			7		quasi-bidirectional I/O 3	LCD_EN
+    SYMBOL 	PIN		DESCRIPTION					NB
+    A0		1		address input 0				adress = 0 1 0 0 A2 A1 A0 0
+    A1		2		address input 1				A0, A1 et A2 connected to +5V
+    A2		3		address input 2				then address is 01001110 = 0x4E
+    P0		4		quasi-bidirectional I/O 0	LCD_BL
+    P1		5		quasi-bidirectional I/O 1	LCD_RS
+    P2		6		quasi-bidirectional I/O 2	LCD_RW
+    P3		7		quasi-bidirectional I/O 3	LCD_EN
     VSS		8		supply ground
-    P4			9		quasi-bidirectional I/O 4	LCD_D4
-    P5			10		quasi-bidirectional I/O 5	LCD_D5
-    P6			11		quasi-bidirectional I/O 6	LCD_D6
-    P7			12		quasi-bidirectional I/O 7	LCD_D7
+    P4		9		quasi-bidirectional I/O 4	LCD_D4
+    P5		10		quasi-bidirectional I/O 5	LCD_D5
+    P6		11		quasi-bidirectional I/O 6	LCD_D6
+    P7		12		quasi-bidirectional I/O 7	LCD_D7
     INT		13		interrupt output (active LOW)
-    SCL		14		serial clock line				uC_SCL
-    SDA		15		serial data line				uC_SDA
+    SCL		14		serial clock line			uC_SCL
+    SDA		15		serial data line			uC_SDA
     VDD		16		supply voltage
-    ------------------------------------------------------------------*/
+    --------------------------------------------------------------------------*/
 
 #ifndef __LCDI2C_C
 #define __LCDI2C_C
@@ -98,10 +98,11 @@
     --------------------------------------------------------------------
     â, à, ç, é, î, ô, ù, ê, è, ë, ï, û, €
     usage :
-    1/ réservation de l'emplacement 0 (max. 7) pour la lettre "é" : lcdi2c_newchar(car3, 0);
+    1/ réservation de l'emplacement 0 (max. 7) pour la lettre "é" :
+       lcdi2c_newchar(car3, 0);
     2/ écriture du nouveau caractère sur le LCD : lcdi2c_write(0);
     ------------------------------------------------------------------*/
-/*
+#if 0
     const u8 car0[8]={
         0b00000100,      //â
         0b00001010,
@@ -232,7 +233,8 @@
         0b00001101,
         0b00000000
     };
-*/
+#endif
+
 /*  --------------------------------------------------------------------
     global variables
     ------------------------------------------------------------------*/
@@ -323,7 +325,6 @@ static void lcdi2c_send8(u8 octet, u8 mode)
 void lcdi2c_blight(u8 status)
 {
     gBacklight = status;
-    // x  x  x  x  0  0  0/1  0
     PCF8574_data |= (gBacklight << pos_bl);
     I2C_start();
     I2C_write((PCF8574_address << 1) | I2C_WRITE);
@@ -470,6 +471,7 @@ void lcdi2c_printf(char *fmt, ...)
 /*  --------------------------------------------------------------------
     Définit un caractère personnalisé de 8x8 points.
     --------------------------------------------------------------------
+    d'après Nabil Al-HOSSRI <http://nalhossri.free.fr>
     Le LCD utilisé admet au maximum 8 caractères spéciaux.
     char_code : code du caractère à définir (0 <= char_code <= 7)
     lcdi2c_newchar(car3, 0); Définit le caractère 'é' à l'adresse 0 de la mémoire CG RAM
@@ -498,21 +500,21 @@ void lcdi2c_newchar(const u8 *c, u8 char_code)
 /*
 void lcdi2c_newpattern()
 {
-    lcdi2c_newchar(car0,  ACIRC);			// â
+    lcdi2c_newchar(car0,  ACIRC);		// â
     lcdi2c_newchar(car1,  AGRAVE);		// à
 
     lcdi2c_newchar(car2,  CCEDIL);		// ç
 
     lcdi2c_newchar(car3,  EACUTE);		// é
     lcdi2c_newchar(car4,  EGRAVE);		// è
-    lcdi2c_newchar(car5,  ECIRC);			// ê
+    lcdi2c_newchar(car5,  ECIRC);		// ê
     lcdi2c_newchar(car6,  ETREMA);		// ë
-    lcdi2c_newchar(car7,  EURO);			// €
+    lcdi2c_newchar(car7,  EURO);		// €
 
     //lcdi2c_newchar(car8,  ICIRC);		// î
     //lcdi2c_newchar(car9, ITREMA);		// ï
 
-    //lcdi2c_newchar(car10,  OCIRC);		// ô
+    //lcdi2c_newchar(car10,  OCIRC);	// ô
 
     //lcdi2c_newchar(car11,  UGRAVE);	// ù
     //lcdi2c_newchar(car12, UCIRC);		// û
@@ -537,36 +539,41 @@ void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u
     gLCDHEIGHT = numline - 1;
     PCF8574_address = i2c_address;
     PCF8574_data = 0;
-	posd4_7 = d4_7;
-	pos_en = en;
-	pos_rw = rw;
-	pos_rs = rs;
-	pos_bl = bl;
+    posd4_7 = d4_7;
+    pos_en = en;
+    pos_rw = rw;
+    pos_rs = rs;
+    pos_bl = bl;
+
     if(posd4_7 != 0)
     {
         cmd03=0x30;
         cmd02=0x20;
     }
 
-    I2C_init(I2C_MASTER_MODE, I2C_400KHZ);
+    //I2C_init(I2C1, I2C_MASTER_MODE, I2C_100KHZ);
+    I2C_init(I2C1, I2C_MASTER_MODE, I2C_400KHZ);
+    //I2C_init(I2C1, I2C_MASTER_MODE, I2C_1MHZ);
 
-    //Delayms(15);								// Wait more than 15 ms after VDD rises to 4.5V
-    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
-    //Delayms(5);									// Wait for more than 4.1 ms
-    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
+    Delayms(15);								// Wait more than 15 ms after VDD rises to 4.5V
+    lcdi2c_send4(cmd03, LCD_CMD);			    // 0x30 - Mode 8 bits
+    Delayms(5);									// Wait for more than 4.1 ms
+    lcdi2c_send4(cmd03, LCD_CMD);			    // 0x30 - Mode 8 bits
     //Delayus(100);								// Wait more than 100 μs
-    lcdi2c_send4(cmd03, LCD_CMD);			// 0x30 - Mode 8 bits
+    lcdi2c_send4(cmd03, LCD_CMD);			    // 0x30 - Mode 8 bits
     //Delayus(100);								// Wait more than 100 μs
-    lcdi2c_send4(cmd02, LCD_CMD);			// 0x20 - Mode 4 bits
-    lcdi2c_send8(LCD_SYSTEM_SET_4BITS, LCD_CMD); 	// 0x28 - Mode 4 bits - 2 Lignes - 5x8
-    //Delayus(4);				// Wait more than 40 ns
+    lcdi2c_send4(cmd02, LCD_CMD);			    // 0x20 - Mode 4 bits
+    lcdi2c_send8(LCD_SYSTEM_SET_4BITS, LCD_CMD);// 0x28 - Mode 4 bits - 2 Lignes - 5x8
+    //Delayus(4);                               // Wait more than 40 ns
     lcdi2c_send8(LCD_DISPLAY_ON, LCD_CMD);		// 0x0C - Display ON + Cursor OFF + Blinking OFF
-    //Delayus(4);				// Wait more than 40 ns
-    lcdi2c_send8(LCD_DISPLAY_CLEAR, LCD_CMD);    	// 0x01 - Efface l'affichage + init. DDRAM
-    Delayms(2);					// le temps d'execution de Display Clear > 1.64ms
-    lcdi2c_send8(LCD_ENTRY_MODE_SET, LCD_CMD);   	// 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
-    //Delayus(4);				// Wait more than 40 ns
-    //lcdi2c_newpattern();				// Implante les nouveaux caracteres
+    //Delayus(4);                               // Wait more than 40 ns
+    lcdi2c_send8(LCD_DISPLAY_CLEAR, LCD_CMD);   // 0x01 - Efface l'affichage + init. DDRAM
+    Delayms(2);                                 // Execution time > 1.64ms
+    lcdi2c_send8(LCD_ENTRY_MODE_SET, LCD_CMD);  // 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
+    //Delayus(4);                               // Wait more than 40 ns
+    #if 0
+    lcdi2c_newpattern();						// Set new characters
+    #endif
 }
 
 #endif

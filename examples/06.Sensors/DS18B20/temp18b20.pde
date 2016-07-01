@@ -18,26 +18,31 @@
 	Maybe you will have to add your user name to the dialup group
 	----------------------------------------------------------------------*/
 
-#define ONEWIREBUS	14    // DQ line						
+#define ONEWIREBUS	31   // DQ line						
 
 void setup()
 {
+    pinMode(USERLED, OUTPUT);
     Serial.begin(9600);
+    Serial.println("\f*** Single DS18x20 Demo ***");
+    DS18B20.begin(ONEWIREBUS);
 }
 
 void loop()
 {
-	TEMPERATURE t;
-	
-	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
-	{
-	    if (t.sign)
-              Serial.printChar('-');
-	    //Serial.printf("%d.%dC \r", t.integer, t.fraction);
-	    Serial.printNumber(t.integer, DEC);
-	    Serial.printChar('.');
-	    Serial.printNumber(t.fraction, DEC);
-	    Serial.print("C \r");
-	}
-	delay(1000);
+    TEMPERATURE t;
+ 
+    if (DS18B20.read(ONEWIREBUS, SKIPROM, &t))
+    {
+        if (t.sign)
+            Serial.printChar('-');
+        //Serial.printf("%d.%dC \r", t.integer, t.fraction);
+        Serial.printNumber(t.integer, DEC);
+        Serial.printChar('.');
+        Serial.printNumber(t.fraction, DEC);
+        Serial.print("C \r");
+    }
+    
+    delay(1000);
+    //toggle(USERLED);
 }

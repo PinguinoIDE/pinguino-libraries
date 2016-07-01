@@ -25,7 +25,7 @@
 //#include <fonts/font16x16.h>        // ???
 
 // SPI Module
-#define SPILCD SPI1 
+#define SPILCD 1 
 
 u8 i=0;
 
@@ -37,7 +37,7 @@ void setup()
 
     // if SPILCD = SPISW (SPI Software)
     //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
-    PCD8544.init(SPILCD, 0, 1); // DC and RST pin
+    PCD8544.init(SPILCD, 0, 2); // DC and RST pin
 
     // Change the contrast around to adapt the display for the best viewing!
     PCD8544.setContrast(SPILCD, 40); // 0 to 127

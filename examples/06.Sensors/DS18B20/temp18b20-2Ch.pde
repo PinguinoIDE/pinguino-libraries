@@ -37,12 +37,12 @@ void loop()
  
     // Acquire and read operations on 2 sensors in blocking mode, take about 1200mS
     TimemS0 = millis();
-    if (DS18B20.read(ONEWIREBUS1, SKIPROM, RES12BIT, &t))
+    if (DS18B20.read(ONEWIREBUS1, SKIPROM, &t))
     {
         if (t.sign) Serial.printf("-");
         Serial.printf("CH1 %d.%d°C \r\n", t.integer, t.fraction);
     }
-    if (DS18B20.read(ONEWIREBUS2, SKIPROM, RES12BIT, &t))
+    if (DS18B20.read(ONEWIREBUS2, SKIPROM, &t))
     {
         if (t.sign) Serial.printf("-");
         Serial.printf("CH2 %d.%d°C \r\n", t.integer, t.fraction);
@@ -53,8 +53,8 @@ void loop()
 
     // Acquire and read operations on 2 sensors in non-blocking mode, take about 20mS
     TimemS0 = millis();
-    DS18B20.startMeasure(ONEWIREBUS1, SKIPROM, RES12BIT);
-    DS18B20.startMeasure(ONEWIREBUS2, SKIPROM, RES12BIT);
+    DS18B20.startMeasure(ONEWIREBUS1, SKIPROM);
+    DS18B20.startMeasure(ONEWIREBUS2, SKIPROM);
     TimemS1 = millis() - TimemS0;
     Serial.printf("Time A %d mS \r\n", TimemS1);
  

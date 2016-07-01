@@ -47,7 +47,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <typedef.h>            // Pinguino's type : u8, u8, ..., and bool
 #include <macro.h>              // BitSet, BitClear
-#include <logo/pinguino84x48.h> // Screen buffer pre-filled with Pinguino Logo
+#include <spi.h>                // NUMOFSPI
+
+//#include <logo/pinguino84x48.h> // Screen buffer pre-filled with Pinguino Logo
 
 /**	--------------------------------------------------------------------
     Display interfaces
@@ -147,6 +149,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
     typedef struct
     {
+        u8 dc;
+        u8 cs;
+        u8 sdo;
+        u8 sck;
+        u8 rst;
+    } pin_t;
+
+    typedef struct
+    {
         u8 width;
         u8 height;
         const u8 *address;
@@ -182,9 +193,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
     typedef struct
     {
-        u8 _din, _sclk, _dc, _rst, _cs;
+        pin_t pin;
         u8 orientation;
         u8  textsize;
+        u8  rows;
         rect_t screen;
         color_t bcolor;
         color_t color;
@@ -196,66 +208,65 @@ POSSIBILITY OF SUCH DAMAGE.
     Globals
     ------------------------------------------------------------------*/
 
-lcd_t PCD8544;
-u8 * PCD8544_buffer = logo;  // screen buffer points on logo[]
+u8 PCD8544_SPI;
+
+lcd_t PCD8544[NUMOFSPI];
+//u8 * PCD8544_buffer = logo;  // screen buffer points on logo[]
 
 /**	--------------------------------------------------------------------
     Prototypes
     ------------------------------------------------------------------*/
 
-#if (PCD8544_INTERFACE & PCD8544_SPISW)
-    #if (PCD8544_INTERFACE & PCD8544_PORTB)
-    void PCD8544_init();
-    #else
-    void PCD8544_init(u8 SCLK, u8 DIN, u8 DC, u8 CS, u8 RST);
-    #endif
-#else // PCD8544_SPIHW
-    void PCD8544_init(u8 DC, u8 RST);
-#endif
+void PCD8544_init(u8, ...);
+void PCD8544_command(u8, u8);
+void PCD8544_data(u8, u8);
+void PCD8544_setContrast(u8, u8);
+void PCD8544_clearScreen(u8);
+void PCD8544_refresh(u8);
+void PCD8544_drawPixel(u8, u8, u8);//, u8 color);
+void PCD8544_clearPixel(u8, u8, u8);//, u8 color);
+u8 PCD8544_getPixel(u8, u8, u8);
 
-void PCD8544_command(u8 c);
-void PCD8544_data(u8 c);
-void PCD8544_setContrast(u8 val);
-void PCD8544_clearScreen();
-void PCD8544_refresh();
-void PCD8544_drawPixel(u8 x, u8 y);//, u8 color);
-void PCD8544_clearPixel(u8 x, u8 y);//, u8 color);
-u8 PCD8544_getPixel(u8 x, u8 y);
-
-#ifdef _PCD8544_USE_GRAPHICS
+#ifdef PCD8544GRAPHICS
 //LINE
-void PCD8544_drawLine(u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
-void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color);
-void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color);
+void PCD8544_drawLine(u8, u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
+void PCD8544_drawVLine(u8, u8 x, u8 y, u8 h, u8 color);
+void PCD8544_drawHLine(u8, u8 x, u8 y, u8 w, u8 color);
 //TRIANGLE
-void PCD8544_drawTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
-void PCD8544_fillTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
+void PCD8544_drawTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
+void PCD8544_fillTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
 //RECT
-void PCD8544_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-#define PCD8544_fillScreen(color) PCD8544_fillRect(0, 0,PCD8544.screen.width,PCD8544..screen.height, (color))
+void PCD8544_drawRect(u8, u8 x, u8 y, u8 w, u8 h, u8 color);
+void PCD8544_fillRect(u8, u8 x, u8 y, u8 w, u8 h, u8 color);
+#define PCD8544_fillScreen(m, color) PCD8544_fillRect(m, 0, 0,PCD8544[m].screen.width,PCD8544[m].screen.height, (color))
 //ROUND_RECT
-void PCD8544_drawRoundRect(u8 x0, u8 y0, u8 w, u8 h,u8 radius, u8 color);
-void PCD8544_fillRoundRect(u8 x, u8 y, u8 w,u8 h, u8 r, u8 color);
+void PCD8544_drawRoundRect(u8, u8 x0, u8 y0, u8 w, u8 h,u8 radius, u8 color);
+void PCD8544_fillRoundRect(u8, u8 x, u8 y, u8 w,u8 h, u8 r, u8 color);
 //CIRCLE
-void PCD8544_drawCircle(u8 x0, u8 y0, u8 r0);//, u8 color);
-void PCD8544_drawCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
-void PCD8544_fillCircle(u8 x0, u8 y0, u8 r);//, u8 color);
-void PCD8544_fillCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
+void PCD8544_drawCircle(u8, u8 x0, u8 y0, u8 r0);//, u8 color);
+void PCD8544_drawCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
+void PCD8544_fillCircle(u8, u8 x0, u8 y0, u8 r);//, u8 color);
+void PCD8544_fillCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
 //BITMAP
-void PCD8544_drawBitmap(u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color);
+void PCD8544_drawBitmap(u8, u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color);
+//GRAPHICS
+void drawPixel(u16, u16);
+void setColor(u8, u8, u8);
+void drawVLine(u16, u16, u16);
+void drawHLine(u16, u16, u16);
+extern void drawBitmap(u8, const u8 *, u16, u16);
 #endif
 
-void PCD8544_setCursor(u8 x, u8 y);
+void PCD8544_setCursor(u8, u8 x, u8 y);
 #ifdef  _PCD8544_USE_TEXT
-void PCD8544_setTextColor(u8 c);
-void PCD8544_setTextColor2(u8 c, u8 bg);
-void PCD8544_setTextSize(u8 s);
+void PCD8544_setTextColor(u8, u8 c);
+void PCD8544_setTextColor2(u8, u8 c, u8 bg);
+void PCD8544_setTextSize(u8, u8 s);
 #endif
 
 #ifdef _PCD8544_USE_ORIENTATION
-void PCD8544_setOrientation(u8 r);
-#define PCD8544_getOrientation() (PCD8544.orientation)
+void PCD8544_setOrientation(u8, u8 r);
+#define PCD8544_getOrientation(m) (PCD8544[m].orientation)
 #endif
 
 #ifdef  _PCD8544_USE_INVERT
@@ -263,40 +274,26 @@ void PCD8544_invertDisplay(bool i);
 #endif
 
 #ifdef enablePartialUpdate
-static void PCD8544_updateBoundingBox(u8 xmin, u8 ymin, u8 xmax, u8 ymax);
-#endif
-
-#if !(PCD8544_INTERFACE & PCD8544_SPIHW)
-//Local Shifout implementation
-void PCD8544_shiftOut(u8 c);
+static void PCD8544_updateBoundingBox(u8, u8 xmin, u8 ymin, u8 xmax, u8 ymax);
 #endif
 
 //Print functions
 //#ifdef _PCD8544_USE_TEXT
-void PCD8544_printChar(u8 c);
-void PCD8544_print(u8 *string);
-void PCD8544_println(u8 *string);
-void PCD8544_printf(const u8 *fmt, ...);
-void PCD8544_printNumber(long value, u8 base);
-void PCD8544_printFloat(float number, u8 digits);
+void PCD8544_printChar(u8, u8 c);
+void PCD8544_print(u8, const u8 *string);
+void PCD8544_println(u8, const u8 *string);
+void PCD8544_printf(u8, const u8 *fmt, ...);
+void PCD8544_printNumber(u8, long value, u8 base);
+void PCD8544_printFloat(u8, float number, u8 digits);
 //#endif
 
-#define PCD8544_getFontWidth()  (PCD8544.font.width)
-#define PCD8544_getFontHeight() (PCD8544.font.height)
+#define PCD8544_getFontWidth(m)  (PCD8544[m].font.width)
+#define PCD8544_getFontHeight(m) (PCD8544[m].font.height)
+#define PCD8544_select(m)         SPI_select(m)
+#define PCD8544_deselect(m)       SPI_deselect(m)
 
 #ifdef _PCD8544_USE_TEXT
-#define PCD8544_setTextWrap(w) PCD8544.wrap = (w)
+#define PCD8544_setTextWrap(m, w) PCD8544[m].wrap = (w)
 #endif 
-
-#if (PCD8544_INTERFACE & PCD8544_SPISW)
-    #if (PCD8544_INTERFACE & PCD8544_PORTB)
-        //#define Low(x)      BitSet(LATB, x)
-        //#define High(x)     BitClear(LATB, x)
-        #define Low(x)      do { __asm bcf _LATB,x  __endasm; } while(0)
-        #define High(x)     do { __asm bsf _LATB,x  __endasm; } while(0)
-        //#define Output(x)   do { __asm bcf _TRISB,x __endasm; } while(0)
-        //#define Input(x)    do { __asm bsf _TRISB,x __endasm; } while(0)
-    #endif
-#endif
 
 #endif // __PCD8544H

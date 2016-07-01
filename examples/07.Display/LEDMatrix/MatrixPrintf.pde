@@ -89,5 +89,4 @@ void loop()
 {
     // display the number with printf
     LedControl.printf("%03d", i++);
-
 }

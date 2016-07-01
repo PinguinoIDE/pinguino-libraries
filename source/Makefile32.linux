@@ -22,16 +22,16 @@
 # Directories
 # ----------------------------------------------------------------------
 
-INCDIR		= $(_IDE_P32DIR_)/include
-LKRDIR		= $(_IDE_P32DIR_)/lkr
-OBJDIR		= $(_IDE_USERHOMEDIR_)/source/obj/non-free
+INCDIR	  = $(_IDE_P32DIR_)/include
+LKRDIR	  = $(_IDE_P32DIR_)/lkr
+OBJDIR	  = $(_IDE_USERHOMEDIR_)/source/obj/non-free
 
-INCLUDEDIRS	= -I$(INCDIR)/non-free\
-		  -I$(INCDIR)/pinguino/core\
-		  -I$(INCDIR)/pinguino/libraries\
-		  -I$(LKRDIR)\
-		  -I$(_IDE_PDEDIR_)\
-		  -I$(OBJDIR)
+INCLUDEDIRS = -I$(INCDIR)/non-free\
+			  -I$(INCDIR)/pinguino/core\
+			  -I$(INCDIR)/pinguino/libraries\
+			  -I$(LKRDIR)\
+			  -I$(_IDE_PDEDIR_)\
+			  -I$(OBJDIR)
 
 #-I$(_IDE_SRCDIR_)\
 #
@@ -84,20 +84,22 @@ endif
 # -fdollars-in-identifiers for ISRwrapper.S
 # ----------------------------------------------------------------------
 
-CFLAGS			= -fdollars-in-identifiers $(INCLUDEDIRS)
+CFLAGS	  = -fdollars-in-identifiers $(INCLUDEDIRS)
 
-LDFLAGS			= $(LIBDIRS) $(LIBS)
-
-ELF_FLAGS		= \
+LDFLAGS	 = $(LIBDIRS) $(LIBS)
+              
+ELF_FLAGS   = \
 			  -march=m4k \
 			  -EL -msoft-float -nostdlib -static \
-			  $(_IDE_OPTIMIZATION_) $(MIPS16_INTER) \
+			  $(_IDE_OPTIMIZATION_) -s $(MIPS16_INTER) \
 			  -ffunction-sections \
 			  -fdata-sections \
+			  -Wl,--strip-all \
 			  -Wl,--gc-sections \
 			  -Wl,-L$(OBJDIR) \
-			  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
 			  -Wl,-Map=$(_IDE_SRCDIR_)/output.map \
+			  -Wl,--defsym,_min_heap_size=$(_IDE_HEAP_SIZE_) \
+			  -D __P32GCC__ \
 			  -D __PIC32MX__ \
 			  -D __$(_IDE_PROC_)__ \
 			  -D $(_IDE_BOARD_) \
@@ -128,18 +130,18 @@ copy:
 compile:
 	# ------------------------------------------------------------------
 	# compiling and linking
+	#	$(OBJDIR)/usb/$(CDCLIBRARY)\
+	#	$(OBJDIR)/usb/libadb.a\
 	# ------------------------------------------------------------------
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)/main32.S $(_IDE_SRCDIR_)/main32.c
-	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.pp
+	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -S -o $(_IDE_SRCDIR_)/main32.S $(_IDE_SRCDIR_)/main32.c
+	#$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -E $(_IDE_SRCDIR_)/main32.c > $(_IDE_SRCDIR_)/main32.pp
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) $(MIPS16_OPT) -c -o $(_IDE_SRCDIR_)/main32.o $(_IDE_SRCDIR_)/main32.c
 	$(CC) $(ELF_FLAGS) $(LDFLAGS) $(CFLAGS) -o $(_IDE_SRCDIR_)/main32.elf\
 		$(_IDE_SRCDIR_)/main32.o\
 		$(OBJDIR)/processor.o\
-		$(OBJDIR)/usb/$(CDCLIBRARY)\
-		$(OBJDIR)/usb/libadb.a\
+		$(INCDIR)/non-free/p32xxxx.h\
 		$(LKRDIR)/crt0.S\
 		$(LKRDIR)/ISRwrapper.S\
-		$(INCDIR)/non-free/p32xxxx.h\
 		$(LIBS)
 
 convert:

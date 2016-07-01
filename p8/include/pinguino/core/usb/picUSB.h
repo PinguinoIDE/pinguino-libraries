@@ -100,7 +100,6 @@
 #define ENDPOINT_HALT               0x00
 
 // Buffer Descriptor bit masks (from PIC datasheet)
-#define BDS_COWN                    0x00 // CPU Own Bit
 #define BDS_UOWN                    0x80 // USB Own Bit
 #define BDS_DTS                     0x40 // Data Toggle Synchronization Bit
 #define BDS_KEN                     0x20 // BD Keep Enable Bit
@@ -109,6 +108,7 @@
 #define BDS_BSTALL                  0x04 // Buffer Stall Enable Bit
 #define BDS_BC9                     0x02 // u8 count bit 9
 #define BDS_BC8                     0x01 // u8 count bit 8
+#define BDS_COWN                    0x00 // CPU Own Bit
 
 #define BDS_DAT0                    0x00 //DATA0 packet expected next
 #define BDS_DAT1                    0x40 //DATA1 packet expected next

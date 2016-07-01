@@ -240,7 +240,7 @@ void LedControl_printFloat(float, u8);
 void LedControl_printf(const u8 *, ...);
 #endif
 #if defined(LEDCONTROLSCROLL)
-void LedControl_scroll(const char *);
+u16 LedControl_scroll(const char *);
 #endif
 
 #endif	//LEDCONTROL_H

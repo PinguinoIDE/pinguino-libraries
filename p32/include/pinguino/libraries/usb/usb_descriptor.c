@@ -152,7 +152,7 @@ const u8 usb_config1_descriptor[] = {
             _EP_OUT + CDC_DATA_EP,              // Endpoint address         // _EP02_OUT
             _BULK,                              // Attributes
             CDC_DATA_OUT_EP_SIZE, 0x00,         // Size
-            0,//USB_POLLING_PERIOD,                 // Interval ms
+            USB_POLLING_PERIOD,                 // Interval ms
 
             // Endpoint Descriptor
             sizeof(USB_ENDPOINT_DESCRIPTOR),    // 0x07
@@ -160,7 +160,7 @@ const u8 usb_config1_descriptor[] = {
             _EP_IN + CDC_DATA_EP,               // Endpoint address         // _EP02_IN
             _BULK,                              // Attributes
             CDC_DATA_IN_EP_SIZE, 0x00,          // Size
-            0//USB_POLLING_PERIOD                  // Interval ms
+            USB_POLLING_PERIOD                  // Interval ms
 };
 
 #endif /*__USBCDC__*/

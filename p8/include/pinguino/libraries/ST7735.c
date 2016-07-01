@@ -90,29 +90,20 @@
 void ST7735_sendCommand(u8 module, u8 val)
 {
     ST7735_low(ST7735[module].pin.dc);            // COMMAND = 0
-    //digitalwrite(ST7735[module].pin.dc,0);
-    //LATBbits.LATB7 = 0;
     SPI_write(module, val);
 }
 
 void ST7735_sendData(u8 module, u8 val)
 {
     ST7735_high(ST7735[module].pin.dc);           // DATA = 1
-    //digitalwrite(ST7735[module].pin.dc,1);
-    //LATBbits.LATB7 = 1;
     SPI_write(module, val);
 }
 
 void ST7735_sendCmdData(u8 module, u8 cmd, u8 val)
 {
     ST7735_low(ST7735[module].pin.dc);            // COMMAND = 0
-    //digitalwrite(ST7735[module].pin.dc,0);
-    //LATBbits.LATB7 = 0;
     SPI_write(module, cmd);
-
     ST7735_high(ST7735[module].pin.dc);           // DATA = 1
-    //digitalwrite(ST7735[module].pin.dc,1);
-    //LATBbits.LATB7 = 1;
     SPI_write(module, val);
 }
 
@@ -125,7 +116,6 @@ void ST7735_sendCmdData(u8 module, u8 cmd, u8 val)
         Orientation sets to portrait by default
     ------------------------------------------------------------------*/
 
-//void ST7735_init(u8 module, u8 dc, u8 sda, u8 sck, u8 cs)
 void ST7735_init(int module, ...)
 {
     int sda, sck, cs;
@@ -137,7 +127,6 @@ void ST7735_init(int module, ...)
 
     ST7735[ST7735_SPI].pin.dc = va_arg(args, int); // get the first arg
     pinmode(ST7735[ST7735_SPI].pin.dc, OUTPUT);
-    //TRISBbits.TRISB7 = 0;
 
     // init SPI communication
     if (ST7735_SPI == SPISW)
@@ -155,13 +144,6 @@ void ST7735_init(int module, ...)
         //maximum baud rate possible = FPB = FOSC/4
         SPI_setClockDivider(ST7735_SPI, SPI_CLOCK_DIV4);
         SPI_begin(ST7735_SPI, NULL);
-        /*
-        while (ST7735_SPI == SPI2)
-        {
-            LATCbits.LATC2 ^= 1;
-            Delayms(500);
-        }
-        */
     }
 
     va_end(args);                       // cleans up the list
@@ -187,22 +169,7 @@ void ST7735_init(int module, ...)
     ST7735_sendCommand(ST7735_SPI, ST7735_SLPOUT);   // wake from sleep
     Delayms(150);                                // 120ms at least
     ST7735_sendCmdData(ST7735_SPI, ST7735_COLMOD, 0x05);// set color mode to 16-bit
-
-    #if 0
-    ST7735_sendCommand(ST7735_SPI, ST7735_FRMCTR1);     // frame rate control
-    ST7735_sendData(ST7735_SPI, 0x00);                  // fastest refresh
-    ST7735_sendData(ST7735_SPI, 0x06);                  // 6 lines front porch
-    ST7735_sendData(ST7735_SPI, 0x03);                  // 3 lines backporch
     Delayms(10);
-
-    ST7735_sendCmdData(ST7735_SPI, ST7735_MADCTL, 0xC8);// memory access control (directions)
-
-    ST7735_sendCommand(ST7735_SPI, ST7735_DISSET5);     // display settings #5
-    ST7735_sendData(ST7735_SPI, 0x15);                  // 1 clock cycle nonoverlap, 2 cycle gate rise, 3 cycle oscil. equalize
-    ST7735_sendData(ST7735_SPI, 0x02);                  // fix on VTL
-
-    ST7735_sendCmdData(ST7735_SPI,ST7735_INVCTR, 0x00); // display inversion control
-    #endif
     
     ST7735_sendCmdData(ST7735_SPI, ST7735_MADCTL, ST7735_MADCTL_RGB);  // RGB
     ST7735_sendCommand(ST7735_SPI, ST7735_NORON);    // normal display
@@ -302,7 +269,7 @@ void ST7735_setWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     SPI_write(module,0);
     SPI_write(module,y1);
 
-    ST7735_deselect(module);
+    ST7735_deselect(module);            // Chip deselected
 }
 #endif
 
@@ -408,33 +375,27 @@ void ST7735_clearScreen(u8 module)
     ST7735_select(module);              // Chip select
 
     ST7735_low(ST7735[module].pin.dc);  // COMMAND = 0
-    //LATBbits.LATB7 = 0;
     SPI_write(module,ST7735_CASET);     // set column range (x0,x1)
     
     ST7735_high(ST7735[module].pin.dc); // DATA = 1
-    //LATBbits.LATB7 = 1;
     SPI_write(module,0x00);
     SPI_write(module,0x00);
     SPI_write(module,0x00);
     SPI_write(module,ST7735[module].screen.endx);
     
     ST7735_low(ST7735[module].pin.dc);  // COMMAND = 0
-    //LATBbits.LATB7 = 0;
     SPI_write(module,ST7735_RASET);     // set row range (y0,y1)
     
     ST7735_high(ST7735[module].pin.dc); // DATA = 1
-    //LATBbits.LATB7 = 1;
     SPI_write(module,0x00);
     SPI_write(module,0x00);
     SPI_write(module,0x00);
     SPI_write(module,ST7735[module].screen.endy);
     
     ST7735_low(ST7735[module].pin.dc);  // COMMAND = 0
-    //LATBbits.LATB7 = 0;
     SPI_write(module,ST7735_RAMWR);     // Write to RAM
         
     ST7735_high(ST7735[module].pin.dc); // DATA = 1
-    //LATBbits.LATB7 = 1;
     for (i = 0; i < ST7735_SIZE; i++)
     {
         SPI_write(module, ch);

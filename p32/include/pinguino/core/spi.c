@@ -21,6 +21,7 @@
     14 Apr. 2015 - rblanchot  - added SPI structure to store SPI features 
     01 Oct. 2015 - rblanchot  - added SPI SOFTWARE support
     22 Jan. 2016 - rblanchot  - removed setPin(), extended begin() with vargs
+    20 Jun. 2016 - rblanchot  - fixed SPI_select and SPI_deselect for PIC32_PINGUINO and PIC32_PINGUINO_OTG
      ----------------------------------------------------------------------------
     TODO :
     * SLAVE MODE support
@@ -49,6 +50,7 @@
 #include <spi.h>
 #include <system.c>
 #include <interrupt.c>
+#include <digitalw.c>           // digitalwrite
 
 /**
  *  This function init the SPI module to default values
@@ -83,17 +85,28 @@ void SPI_select(u8 module)
             digitalwrite(SPI[SPISW].cs, LOW);
             break;
 
+        #if !defined(__32MX440F256H__)
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB7 is defined as SS1 pin
             LATBCLR = 1 << 7;
             #endif
             break;
-
+        #endif
+        
         case SPI2:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB9 is defined as SS2 pin
             LATBCLR = 1 << 9;
+
+            #elif  defined(PIC32_PINGUINO)
+            // RB14 is defined as SS2 pin
+            LATBCLR = 1 << 14;
+
+             #elif  defined(PIC32_PINGUINO_OTG)
+            // RB13 is defined as SS2 pin
+            LATBCLR = 1 << 13;
+
             #endif
             break;
     }
@@ -113,17 +126,28 @@ void SPI_deselect(u8 module)
             digitalwrite(SPI[SPISW].cs, HIGH);
             break;
 
+        #if !defined(__32MX440F256H__)
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB7 is defined as SS1 pin
             LATBSET = 1 << 7; // stops device selection
             #endif
             break;
+        #endif
 
         case SPI2:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
             // RB9 is defined as SS1 pin
             LATBSET = 1 << 9; // stops device selection
+
+            #elif  defined(PIC32_PINGUINO)
+            // RB14 is defined as SS2 pin
+            LATBSET = 1 << 14;
+
+             #elif  defined(PIC32_PINGUINO_OTG)
+            // RB13 is defined as SS2 pin
+            LATBSET = 1 << 13;
+
             #endif
             break;
     }

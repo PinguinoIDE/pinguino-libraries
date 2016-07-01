@@ -139,12 +139,11 @@ vector_\_XX\()_ISR_wrapper:
 
         .endm
 
-    /*
+    /*******************************************************************
     ** Create wrappers for ISRs used in specific libraries
-    ** 32MX2xx and 32MX4xx do not have UART3,4,5 AND 6
-    */
+    *******************************************************************/
 
-    /*** TIMERS ***************************************************************/
+    /*** TIMERS *******************************************************/
 
     ISR_wrapper _TIMER_1_VECTOR, Timer1Interrupt
     ISR_wrapper _TIMER_2_VECTOR, Timer2Interrupt
@@ -152,7 +151,7 @@ vector_\_XX\()_ISR_wrapper:
     ISR_wrapper _TIMER_4_VECTOR, Timer4Interrupt
     ISR_wrapper _TIMER_5_VECTOR, Timer5Interrupt
 
-    /*** INTx ***************************************************************/
+    /*** INTx *********************************************************/
 
     ISR_wrapper _EXTERNAL_0_VECTOR, Int0Interrupt
     ISR_wrapper _EXTERNAL_1_VECTOR, Int1Interrupt
@@ -160,12 +159,13 @@ vector_\_XX\()_ISR_wrapper:
     ISR_wrapper _EXTERNAL_3_VECTOR, Int3Interrupt
     ISR_wrapper _EXTERNAL_4_VECTOR, Int4Interrupt
 
-    /*** MISC *****************************************************************/
+    /*** MISC *********************************************************/
 
     ISR_wrapper _RTCC_VECTOR,    RTCCInterrupt
     ISR_wrapper _USB_1_VECTOR,   USBInterrupt
 
-    /*** SERIAL ***************************************************************/
+    /*** SERIAL *******************************************************/
+    /*** 32MX2xx and 32MX4xx do not have UART3,4,5 AND 6 **************/
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
@@ -199,7 +199,7 @@ vector_\_XX\()_ISR_wrapper:
 
     #endif
 
-    /*** I2C ******************************************************************/
+    /*** I2C **********************************************************/
 
     ISR_wrapper _I2C_1_VECTOR,   I2C1Interrupt
     ISR_wrapper _I2C_2_VECTOR,   I2C2Interrupt
@@ -227,7 +227,7 @@ vector_\_XX\()_ISR_wrapper:
 
     #endif
 
-    /*** SPI ******************************************************************/
+    /*** SPI **********************************************************/
 
     #if defined(__32MX795F512L__) || \
         defined(__32MX795F512H__)
@@ -261,4 +261,4 @@ vector_\_XX\()_ISR_wrapper:
 
     #endif
 
-    /**************************************************************************/
+    /******************************************************************/

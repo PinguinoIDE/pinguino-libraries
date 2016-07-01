@@ -1,31 +1,38 @@
-/*	--------------------------------------------------------------------
-FILE:			SSD1306.c
-PROJECT:		pinguino
-PURPOSE:		Drive 0.96" 128x64 Oled display (SSD1306 controller)
-PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-FIRST RELEASE:	17 Oct. 2013
-LAST RELEASE:	25 Mar. 2014
-----------------------------------------------------------------------------
-* Done : 8-BIT 68XX/80XX PARALLEL
-* Todo : 3-/4-WIRE SPI
-* Todo : I2C
-----------------------------------------------------------------------------
-http://mbed.org/users/Byrn/code/SSD1306/file/1d9df877c90a/ssd1306.cpp
-----------------------------------------------------------------------------
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
+/*  --------------------------------------------------------------------
+    FILE:			SSD1306[module].c
+    PROJECT:		pinguino
+    PURPOSE:		Drive 0.96" 128x64 Oled display (SSD1306 controller)
+    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
+    http://mbed.org/users/Byrn/code/SSD1306/file/1d9df877c90a/ssd1306.cpp
+    --------------------------------------------------------------------
+    CHANGELOG
+    17 Oct. 2013 - Régis Blanchot - first release
+    23 Mar. 2014 - Régis Blanchot - added 8-BIT 68XX/80XX PARALLEL mode support
+    24 Mar. 2014 - Régis Blanchot - added 3-/4-WIRE SPI mode support
+    25 Mar. 2014 - Régis Blanchot - added I2C mode support
+    05 Feb. 2016 - Régis Blanchot - replaced print functions
+                                    by call to the print libraries
+    05 Feb. 2016 - Régis Blanchot - added new graphics functions
+    16 Jun. 2016 - Régis Blanchot - updated for 32-bit
+    ------------------------------------------------------------------------
+    TODO:
+    * Manage the 2 size available : SSD1306_128X64 or SSD1306_128X32
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+    ------------------------------------------------------------------*/
 
 /**
 Pin Assignment
@@ -56,358 +63,633 @@ BS2     0       1       1       0       0
 
 #include <SSD1306.h>
 
+
 // Screen buffer
-#if (DISPLAY & SSD1306_128X64)
-    #include <pinguino128x64.h>
-#else
-    #include <pinguino128x32.h>        // to do
-#endif
+//#include <logo/pinguino128x64.h>
+u8 logo[128*8];
 
 // Pinguino standards
 //#include <string.h>
 #include <digitalw.c>
 #include <typedef.h>
+#include <const.h>
 #include <macro.h>
+#include <stdarg.h>
+//#include <delayms.c>
+//#include <delayus.c>
 #include <delay.c>
-#include <string.h>             // memset
+
+#if defined(SSD1306USESPISW) ||defined(SSD1306USESPI1) ||defined(SSD1306USESPI2)
+#include <spi.c>
+#endif
+
+#if defined(SSD1306USEI2C1) || defined(SSD1306USEI2C2)
+#include <i2c.c>
+#define I2C_write I2C_writechar
+#endif
+
+#if defined(SSD1306USEPMP6800) || defined(SSD1306USEPMP8080)
+#include <pmp.c>
+#endif
 
 // Printf
 #ifdef SSD1306PRINTF
-    #include <stdarg.h>
-    #ifdef __PIC32MX__
-        #include <printf.c>
-    #else
-        #include <stdio.c>
-    #endif
+    #include <printFormated.c>
+#endif
+
+// PrintFloat
+#if defined(SSD1306PRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT)
+    #include <printNumber.c>
 #endif
 
 // Graphics Library
-    #include <graphics.c>
-/*
-#if defined(SSD1306DRAWLINE)   || defined(SSD1306DRAWLINE) || \
-    defined(SSD1306DRAWCIRCLE) || defined(SSD1306FILLCIRCLE)
-    #include <graphics.c>
-#endif
-*/
-
-#if   (DISPLAY & SSD1306_SPI3) || (DISPLAY & SSD1306_SPI4)
-    #include <spi.c>
-#elif (DISPLAY & SSD1306_I2C)
-    #include <i2c.c>
-#elif (DISPLAY & SSD1306_6800) || (DISPLAY & SSD1306_8080)
-    #if (DISPLAY & SSD1306_PMP)
-        #include <pmp.c>
+#if defined(SSD1306GRAPHICS) || defined(SSD1306DRAWBITMAP)
+    #ifdef SSD1306DRAWBITMAP
+    #define DRAWBITMAP
     #endif
+    #include <graphics.c>
 #endif
 
 ///	--------------------------------------------------------------------
 /// Globals
 ///	--------------------------------------------------------------------
 
+u8 *SSD1306_buffer = logo;
 //*SSD1306_bufferptr = SSD1306_buffer;
+u8 SSD1306_MOD;
+
+#if defined(SSD1306USESPISW)
+u8 SSD1306_SPI_SDA, SSD1306_SPI_SCK, SSD1306_SPI_CS;
+#endif
+
+#if defined(SSD1306USESPISW) ||defined(SSD1306USESPI1) ||defined(SSD1306USESPI2)
+u8 SSD1306_SPI_DC[3]
+#endif
+
+#if defined(SSD1306USEI2C1) || defined(SSD1306USEI2C2)
+u8 SSD1306_I2C_ADDR[2];
+#endif
+
+#if defined(SSD1306USEPMP6800) || defined(SSD1306USEPMP8080)
+u8 SSD1306_PMP_RES[2], SSD1306_PMP_DC[2];
+#endif
+
+//u8 RW, E, RD;
+//u8 d0, d1, d2, d3, d4, d5, d6, d7;
 
 ///	--------------------------------------------------------------------
 /// Core functions
 ///	--------------------------------------------------------------------
 
-/**
+void SSD1306_sendCommand(u8 module, u8 val)
+{
+    //switch (module)
+    {
+        /**
+        The parallel 8080-series interface consists of :
+        * 8 bi-directional data pins (DB[7:0])
+        * RD#, WR#, DC# and CS#.
+        A low  in DC# indicates COMMAND read/write
+        A high in DC# indicates DATA read/write.
+        A rising edge of RD# input serves as a data READ latch signal while CS# is kept LOW.
+        A rising edge of WR# input serves as a data/command WRITE latch signal while CS# is kept LOW.
+        **/
+
+        #ifdef SSD1306USEPMP6800
+        //case SSD1306_PMP6800:
+            low(SSD1306_PMP_DC[0]); // COMMAND
+            PMP_setAddress(0);
+            PMP_write(val);
+        //    break;
+        #endif
+
+        /**
         The parallel 6800-series interface consists of :
         * 8 bi-directional data pins (D[7:0])
         * R/W#, D/C#, E and CS#.
         A LOW in R/W# indicates WRITE operation
-        A HIGH in R/W# indicates READ operation.
+        A high in R/W# indicates READ operation.
         A LOW in D/C# indicates COMMAND read/write
-        A HIGH in D/C# indicates DATA read/write.
+        A high in D/C# indicates DATA read/write.
         The E input serves as data latch signal while CS# is LOW.
         Data is latched at the falling edge of E signal.
+        **/
 
-        The parallel 8080-series interface consists of :
-        * 8 bi-directional data pins (DB[7:0])
-        * RD#, WR#, DC# and CS#.
-        A LOW  in DC# indicates COMMAND read/write
-        A HIGH in DC# indicates DATA read/write.
-        A rising edge of RD# input serves as a data READ latch signal while CS# is kept LOW.
-        A rising edge of WR# input serves as a data/command WRITE latch signal while CS# is kept LOW.
-**/
+        #ifdef SSD1306USEPMP8080
+        //case SSD1306_PMP8080:
+            low(SSD1306_PMP_DC[1]); // COMMAND
+            PMP_setAddress(0);
+            PMP_write(val);
+        //    break;
+        #endif
 
-void SSD1306_sendCommand(u8 val)
-{
-    #if (DISPLAY & SSD1306_PMP)
-
-	    #if ((DISPLAY & SSD1306_6800) || (DISPLAY & SSD1306_8080))
-
-            PMP_wait();             // wait for PMP to be available
+        /*
+        case PMP6800:
+            PMP_wait();         // wait for PMP to be available
             PMADDR = 0;
-            PMDIN  = val;
+            PMDIN = val;
 
+            low(PMCS);          // Chip select
+            low(PMWR);          // WRITE
+            low(DC);            // COMMAND
+
+            high(PMWR);
+            DATA = val;         // WR should stay low at least 60ns
+            low(PMWR);          // A rising edge of WR enables Write mode
+
+            high(PMCS);         // Chip deselected
+            break;
+
+        case PMP8080:
+            PMP_wait();         // wait for PMP to be available
+            PMADDR = 0;
+            PMDIN = val;
+
+            low(PMCS);          // Chip select
+            low(DC);            // COMMAND read/write
+
+            low(PMWR);
+            DATA = val;         // WR should stay low at least 60ns
+            high(PMWR);         // A rising edge of WR enables Write mode
+
+            high(PMCS);         // Chip deselected
+            break;
+        */
+        
+        #ifdef SSD1306USEI2C1
+        //case SSD1306_I2C1:
+            I2C_start(I2C1);
+            //if (I2C_write(I2C1, SSD1306_I2C_ADDR[0] | I2C_WRITE))
+            //{
+                I2C_write(I2C1, SSD1306_I2C_ADDR[0] | I2C_WRITE);
+                I2C_write(I2C1, SSD1306_CMD_STREAM); // Co = 0, D/C = 0
+                I2C_write(I2C1, val);
+            //}
+            I2C_stop(I2C1);
+        //    break;
         #endif
 
-	#else
-
-        #if (DISPLAY & SSD1306_8080)
-
-		    Low(CS);            // Chip select
-		    Low(DC);            // COMMAND read/write
-
-		    Low(WR);
-		    DATA = val;         // WR should stay low at least 60ns
-		    High(WR);           // A rising edge of WR enables Write mode
-
-		    High(CS);           // Chip deselected
-
-        #elif (DISPLAY & SSD1306_6800)
-
-		    Low(CS);            // Chip select
-		    Low(WR);            // WRITE
-		    Low(DC);            // COMMAND
-
-		    High(E);
-		    DATA = val;         // WR should stay low at least 60ns
-		    Low(E);             // A rising edge of WR enables Write mode
-
-		    High(CS);           // Chip deselected
-
+        #ifdef SSD1306USEI2C2
+        //case SSD1306_I2C2:
+            I2C_start(I2C2);
+            if (I2C_write(I2C2, SSD1306_I2C_ADDR[1] | I2C_WRITE))
+            {
+                I2C_write(I2C2, SSD1306_CMD_STREAM); // Co = 0, D/C = 0
+                I2C_write(I2C2, val);
+            }
+            I2C_stop(I2C2);
+        //    break;
         #endif
 
-    #endif
+        #ifdef SSD1306USESPISW
+        //case SSD1306_SPISW:
+            SPI_select(SPISW);
+            low(SSD1306_SPI_DC[SPISW]); // COMMAND read/write
+            SPI_write(SPISW, val);
+            SPI_deselect(SPISW);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USESPI1
+        //case SSD1306_SPI1:
+            SPI_select(SPI1);
+            low(SSD1306_SPI_DC[SPI1]);  // COMMAND read/write
+            SPI_write(SPI1, val);
+            SPI_deselect(SPI1);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USESPI2
+        //case SSD1306_SPI2:
+            SPI_select(SPI2);
+            low(SSD1306_SPI_DC[SPI2]);  // COMMAND read/write
+            SPI_write(SPI2, val);
+            SPI_deselect(SPI2);
+        //    break;
+        #endif
+    }
 }
 
-void SSD1306_sendData(u8 val)
+void SSD1306_sendData(u8 module, u8 val)
 {
-    #if (DISPLAY & SSD1306_PMP)
-
-        #if ((DISPLAY & SSD1306_6800) || (DISPLAY & SSD1306_8080))
-
-            PMP_wait();             // wait for PMP to be available
-            PMADDR = DC;
-            PMDIN  = val;
-
+    //switch (module)
+    {
+        #ifdef SSD1306USEPMP6800
+        //case SSD1306_PMP6800:
+            high(SSD1306_PMP_DC[0]);    // DATA
+            PMP_setAddress(0);
+            PMP_write(val);
+        //    break;
         #endif
 
-    #else
+        #ifdef SSD1306USEPMP8080
+        //case SSD1306_PMP8080:
+            high(SSD1306_PMP_DC[1]);    // DATA
+            PMP_setAddress(0);
+            PMP_write(val);
+        //    break;
+        #endif
+        
+        /*
+        case PMP6800:
+            PMP_wait();         // wait for PMP to be available
+            PMADDR = 0;
+            PMDIN = val;
 
-		#if (DISPLAY & SSD1306_8080)
+            low(CS);            // Chip select
+            high(DC);           // DATA read/write
 
-		    Low(CS);            // Chip select
-		    High(DC);           // DATA read/write
-
-		    Low(WR);
-		    DATA = val;         // WR should stay low at least 60ns
-		    High(WR);           // A rising edge of WR enables Write mode
-
-		    High(CS);           // Chip deselected
-
-		#elif (DISPLAY & SSD1306_6800)
-
-		    Low(CS);            // Chip select
-		    Low(WR);            // WRITE
-		    High(DC);           // DATA
-
-		    High(E);
+            low(WR);
             DATA = val;         // WR should stay low at least 60ns
-		    Low(E);             // A rising edge of WR enables Write mode
+            high(WR);           // A rising edge of WR enables Write mode
 
-		    High(CS);           // Chip deselected
+            high(CS);           // Chip deselected
+            break;
+            
+        case PMP8080:
+            PMP_wait();         // wait for PMP to be available
+            PMADDR = 0;
+            PMDIN = val;
 
+            low(CS);            // Chip select
+            low(WR);            // WRITE
+            high(DC);           // DATA
+
+            high(E);
+            DATA = val;         // WR should stay low at least 60ns
+            low(E);             // A rising edge of WR enables Write mode
+
+            high(CS);           // Chip deselected
+            break;
+        */
+        
+        #ifdef SSD1306USEI2C1
+        //case SSD1306_I2C1:
+            I2C_start(I2C1);
+            //if (I2C_write(I2C1, SSD1306_I2C_ADDR[0] | I2C_WRITE))
+            //{
+                I2C_write(I2C1, SSD1306_I2C_ADDR[0] | I2C_WRITE);
+                I2C_write(I2C1, SSD1306_DATA_STREAM); // Co = 0, D/C = 1
+                I2C_write(I2C1, val);
+            //}
+            I2C_stop(I2C1);
+        //    break;
         #endif
 
-    #endif
+        #ifdef SSD1306USEI2C2
+        //case SSD1306_I2C2:
+            I2C_start(I2C2);
+            if (I2C_write(I2C2, SSD1306_I2C_ADDR[1] | I2C_WRITE))
+            {
+                I2C_write(I2C2, SSD1306_DATA_STREAM); // Co = 0, D/C = 1
+                I2C_write(I2C2, val);
+            }
+            I2C_stop(I2C2);
+        //    break;
+        #endif
+        
+        #ifdef SSD1306USESPISW
+        //case SSD1306_SPISW:
+            SPI_select(SPISW);
+            high(SSD1306_SPI_DC[SPISW]);           // DATA read/write
+            SPI_write(SPISW, val);
+            SPI_deselect(SPISW);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USESPI1
+        //case SSD1306_SPI1:
+            SPI_select(SPI1);
+            high(SSD1306_SPI_DC[SPI1]);           // DATA read/write
+            SPI_write(SPI1, val);
+            SPI_deselect(SPI1);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USESPI2
+        //case SSD1306_SPI2:
+            SPI_select(SPI2);
+            high(SSD1306_SPI_DC[SPI2]);           // DATA read/write
+            SPI_write(SPI2, val);
+            SPI_deselect(SPI2);
+        //    break;
+        #endif
+    }
 }
 
 ///	--------------------------------------------------------------------
 /// Basic functions (TODO : replace functions with #define) 
 ///	--------------------------------------------------------------------
 
-void SSD1306_displayOff()
+void SSD1306_displayOff(u8 module)
 {
-    SSD1306_sendCommand(0xAE);
+    SSD1306_sendCommand(module, 0xAE);
 }
 
-void SSD1306_displayOn()
+void SSD1306_displayOn(u8 module)
 {
-    SSD1306_sendCommand(0xAF);
+    SSD1306_sendCommand(module, 0xAF);
 }
 
-void SSD1306_sleep()
+void SSD1306_sleep(u8 module)
 {
-    SSD1306_sendCommand(0xAE);
+    SSD1306_sendCommand(module, 0xAE);
 }
 
-void SSD1306_wake()
+void SSD1306_wake(u8 module)
 {
-    SSD1306_sendCommand(0xAF);
+    SSD1306_sendCommand(module, 0xAF);
 }
 
-void SSD1306_setInverse(u8 value)
+void SSD1306_setInverse(u8 module, u8 value)
 {
-    SSD1306_sendCommand(value ? 0xA7 : 0xA6);
+    SSD1306_sendCommand(module, value ? 0xA7 : 0xA6);
 }
 
-void SSD1306_setDisplayOffset(u8 value)
+void SSD1306_setDisplayOffset(u8 module, u8 value)
 {
-    SSD1306_sendCommand(0xD3);
-    SSD1306_sendCommand(value & 0x3F); 
+    SSD1306_sendCommand(module, 0xD3);
+    SSD1306_sendCommand(module, value & 0x3F); 
 }
 
-void SSD1306_setContrast(u8 value) 
+void SSD1306_setContrast(u8 module, u8 value) 
 {
-    SSD1306_sendCommand(0x81);
-    SSD1306_sendCommand(value);
+    SSD1306_sendCommand(module, 0x81);
+    SSD1306_sendCommand(module, value);
 }
 
-void SSD1306_setDisplayStartLine(u8 value)
+void SSD1306_setDisplayStartLine(u8 module, u8 value)
 {
-    SSD1306_sendCommand(0x40 | value);
+    SSD1306_sendCommand(module, 0x40 | value);
 }
 
-void SSD1306_setSegmentRemap(u8 value)
+void SSD1306_setSegmentRemap(u8 module, u8 value)
 {
-    SSD1306_sendCommand(value ? 0xA1 : 0xA0);
+    SSD1306_sendCommand(module, value ? 0xA1 : 0xA0);
 }
 
-void SSD1306_setMultiplexRatio(u8 value)
+void SSD1306_setMultiplexRatio(u8 module, u8 value)
 {
-    SSD1306_sendCommand(0xA8);
-    SSD1306_sendCommand(value & 0x3F);
+    SSD1306_sendCommand(module, 0xA8);
+    SSD1306_sendCommand(module, value & 0x3F);
 }
 
-void SSD1306_setComOutputScanDirection(u8 value)
+void SSD1306_setComOutputScanDirection(u8 module, u8 value)
 {
-    SSD1306_sendCommand(value ? 0xC8 : 0xC0);
+    SSD1306_sendCommand(module, value ? 0xC8 : 0xC0);
 }
 
-void SSD1306_setComPinsHardwareConfiguration(u8 sequential, u8 lr_remap)
+void SSD1306_setComPinsHardwareConfiguration(u8 module, u8 sequential, u8 lr_remap)
 {
-    SSD1306_sendCommand(0xDA);
-    SSD1306_sendCommand(0x02 | ((sequential & 1) << 4) | ((lr_remap & 1) << 5));
+    SSD1306_sendCommand(module, 0xDA);
+    SSD1306_sendCommand(module, 0x02 | ((sequential & 1) << 4) | ((lr_remap & 1) << 5));
 }
 
-void SSD1306_pamSetStartAddress(u8 address)
+void SSD1306_pamSetStartAddress(u8 module, u8 address)
 {
-    // "Set Lower Column Start Address for Page Addressing Mode"
-    SSD1306_sendCommand(address & 0x0F);
+    // "Set lower Column Start Address for Page Addressing Mode"
+    SSD1306_sendCommand(module, address & 0x0F);
 
-    // "Set Higher Column Start Address for Page Addressing Mode"
-    SSD1306_sendCommand((address << 4) & 0x0F);
+    // "Set higher Column Start Address for Page Addressing Mode"
+    SSD1306_sendCommand(module, (address << 4) & 0x0F);
 }
 
-void SSD1306_setMemoryAddressingMode(u8 mode)
+void SSD1306_setMemoryAddressingMode(u8 module, u8 mode)
 {
-    SSD1306_sendCommand(0x20);
-    SSD1306_sendCommand(mode & 0x3);
+    SSD1306_sendCommand(module, 0x20);
+    SSD1306_sendCommand(module, mode & 0x3);
 }
 
-void SSD1306_hvSetColumnAddress(u8 start, u8 end)
+void SSD1306_hvSetColumnAddress(u8 module, u8 start, u8 end)
 {
-    SSD1306_sendCommand(0x21);
-    SSD1306_sendCommand(start & DISPLAY_WIDTH_MASK);
-    SSD1306_sendCommand(end & DISPLAY_WIDTH_MASK);
+    SSD1306_sendCommand(module, 0x21);
+    SSD1306_sendCommand(module, start & DISPLAY_WIDTH_MASK);
+    SSD1306_sendCommand(module, end & DISPLAY_WIDTH_MASK);
 }
 
-void SSD1306_hvSetPageAddress(u8 start, u8 end)
+void SSD1306_hvSetPageAddress(u8 module, u8 start, u8 end)
 {
-    SSD1306_sendCommand(0x22);
-    SSD1306_sendCommand(start & DISPLAY_ROW_MASK);
-    SSD1306_sendCommand(end & DISPLAY_ROW_MASK);
+    SSD1306_sendCommand(module, 0x22);
+    SSD1306_sendCommand(module, start & DISPLAY_ROW_MASK);
+    SSD1306_sendCommand(module, end & DISPLAY_ROW_MASK);
 }
 
-void SSD1306_pamSetPageStart(u8 address)
+void SSD1306_pamSetPageStart(u8 module, u8 address)
 {
-    SSD1306_sendCommand(0xB0 | (address & DISPLAY_ROW_MASK));
+    SSD1306_sendCommand(module, 0xB0 | (address & DISPLAY_ROW_MASK));
 }
 
-void SSD1306_setDisplayClockRatioAndFrequency(u8 ratio, u8 frequency)
+void SSD1306_setDisplayClockRatioAndFrequency(u8 module, u8 ratio, u8 frequency)
 {
-    SSD1306_sendCommand(0xD5);
-    SSD1306_sendCommand((ratio & 0x0F) | ((frequency & 0x0F) << 4));
+    SSD1306_sendCommand(module, 0xD5);
+    SSD1306_sendCommand(module, (ratio & 0x0F) | ((frequency & 0x0F) << 4));
 }
 
-void SSD1306_setPrechargePeriod(u8 phase1, u8 phase2)
+void SSD1306_setPrechargePeriod(u8 module, u8 phase1, u8 phase2)
 {
-    SSD1306_sendCommand(0xD9);
-    SSD1306_sendCommand((phase1 & 0x0F) | ((phase2 & 0x0F ) << 4));
+    SSD1306_sendCommand(module, 0xD9);
+    SSD1306_sendCommand(module, (phase1 & 0x0F) | ((phase2 & 0x0F ) << 4));
 }
 
-void SSD1306_setVcomhDeselectLevel(u8 level)
+void SSD1306_setVcomhDeselectLevel(u8 module, u8 level)
 {
-    SSD1306_sendCommand(0xDB);
-    SSD1306_sendCommand((level & 0x03) << 4);
+    SSD1306_sendCommand(module, 0xDB);
+    SSD1306_sendCommand(module, (level & 0x03) << 4);
 }
 
-void SSD1306_nop()
+void SSD1306_nop(u8 module)
 {
-    SSD1306_sendCommand(0xE3);
+    SSD1306_sendCommand(module, 0xE3);
 }
 
-void SSD1306_setChargePumpEnable(u8 enable)
+void SSD1306_setChargePumpEnable(u8 module, u8 enable)
 {
-    SSD1306_sendCommand(0x8D);
-    SSD1306_sendCommand(enable ? 0x14 : 0x10);
+    SSD1306_sendCommand(module, 0x8D);
+    SSD1306_sendCommand(module, enable ? 0x14 : 0x10);
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     DESCRIPTION:
         Initialize the graphical display
     PARAMETERS:
     RETURNS:
     REMARKS:
-        Orientation set to portrait by default
-------------------------------------------------------------------*/
+    --------------------------------------------------------------------
+    if MODULE = PMP6800
+            OLED CS#    connected to GND
+            OLED RES#   connected to any GPIO (res)
+            OLED D/C#   connected to Pinguino PMA[0:15] (dc)
+            OLED W/R#   connected to Pinguino PMRD/PMWR
+            OLED E/RD#  connected to GND
+            OLED D[7:0] connected to Pinguino PMD[7:0]
+            SSD1306.init(PMP6800, rst, dc);
+            
+    if MODULE = PMP8080
+            OLED CS#    connected to GND
+            OLED RES#   connected to any GPIO (res)
+            OLED D/C#   connected to Pinguino PMA1
+            OLED W/R#   connected to Pinguino PMWR
+            OLED E/RD#  connected to GND
+            OLED D[7:0] connected to Pinguino PMD[7:0]
+            SSD1306.init(PMP6800, rst);
+            
+    if MODULE = PORTB
+            OLED CS#    connected to GND
+            OLED RES#   connected to any GPIO
+            OLED D/C#   connected to any GPIO
+            OLED W/R#   connected to any GPIO
+            OLED E/RD#  connected to GND
+            OLED D[7:0] connected to Pinguino D[0:7]
+            
+    if MODULE = PORTD 
+            OLED CS#    connected to GND
+            OLED RES#   connected to any GPIO (D0)
+            OLED D/C#   connected to any GPIO (D1)
+            OLED W/R#   connected to any GPIO (D2)
+            OLED E/RD#  connected to GND
+            OLED D[7:0] connected to Pinguino D[31:24]
+            
+    if MODULE = I2C
+            SSD1306.init(I2C, address);
+    
+    if MODULE = SPISW
+            SSD1306.init(SPISW, rst, dc, sda, sck, cs);
+    
+    if MODULE = SPIx (SPI1, SPI2, ...)
+            SSD1306.init(SPI1, rst, dc);
+    ------------------------------------------------------------------*/
 
-void SSD1306_init()
+void SSD1306_init(u8 module, ...)
 {
-    #if   (DISPLAY & SSD1306_6800) || (DISPLAY & SSD1306_8080)
+    va_list args;
+    
+    SSD1306_MOD = module;
+    
+    va_start(args, module); // args points on the argument after module
 
-        #if   (DISPLAY & SSD1306_PMP)
+    // init SPI communication
 
-            High(RST);
-            Output(RST);
-
-            #if   (DISPLAY & SSD1306_6800)
+    //switch (module)
+    {
+        #ifdef SSD1306USEPMP6800
+        //case SSD1306_PMP6800:
+            SSD1306_PMP_RES[0] = va_arg(args, u8);
+            SSD1306_PMP_DC[0] = va_arg(args, u8);
+            
+            high(SSD1306_PMP_RES[0]);
+            pinmode(SSD1306_PMP_RES[0], OUTPUT);// output
             PMP_setMode(PMP_MODE_MASTER1);      // Master mode 1 : PMCS1, PMRD/PMWR, PMENB 
-            #elif (DISPLAY & SSD1306_8080)
-            PMP_setMode(PMP_MODE_MASTER2);      // Master mode 2 : PMCS1, PMRD, PMWR
-            #endif
+            PMP_setControl(PMRD);               // PMRD-PMWR as WR
             PMP_setWidth(PMP_MODE_8BIT);        // PMD<7:0>
             PMP_setMux(PMP_MUX_OFF);            // PMA and PMD on separate lines
             PMP_setPolarity(PMP_ACTIVE_LOW);
-            PMP_setAddress(PMA1);               // PMA1 as DC
+            PMP_setAddress(SSD1306_PMP_DC[0]);  // DC
             PMP_autoIncrement(0);
-            PMP_setControl(PMRD);              // PMRD as WR
             PMP_setWaitStates(4, 16, 4);        // WR strobe must be at least 60ns
             PMP_init();
+        //    break;
+        #endif
 
-        #else
+        #ifdef SSD1306USEPMP8080
+        //case SSD1306_PMP8080:
+            SSD1306_PMP_RES[1] = va_arg(args, u8);
+            SSD1306_PMP_DC[1] = va_arg(args, u8);
+            
+            high(SSD1306_PMP_RES[1]);
+            pinmode(SSD1306_PMP_RES[1], OUTPUT);// output
+            PMP_setMode(PMP_MODE_MASTER2);      // Master mode 2 : PMCS1, PMRD, PMWR
+            PMP_setControl(PMWR);               // PMWR as WR
+            PMP_setWidth(PMP_MODE_8BIT);        // PMD<7:0>
+            PMP_setMux(PMP_MUX_OFF);            // PMA and PMD on separate lines
+            PMP_setPolarity(PMP_ACTIVE_LOW);
+            PMP_setAddress(SSD1306_PMP_DC[1]);  // DC
+            PMP_autoIncrement(0);
+            PMP_setWaitStates(4, 16, 4);        // WR strobe must be at least 60ns
+            PMP_init();
+        //    break;
+        #endif
+
+        #ifdef SSD1306USESPISW
+        //case SSD1306_SPISW:
+            SSD1306_SPI_SDA = va_arg(args, u8);         // get the next arg
+            SSD1306_SPI_SCK = va_arg(args, u8);         // get the next arg
+            SSD1306_SPI_CS  = va_arg(args, u8);         // get the next arg
+            SSD1306_SPI_DC[SPISW] = va_arg(args, u8);   // get the last arg
+            SPI_setBitOrder(SPISW, SPI_MSBFIRST);
+            SPI_begin(SPISW, SSD1306_SPI_SDA, SSD1306_SPI_SCK, SSD1306_SPI_CS);
+        //    break;
+        #endif
+            
+        #ifdef SSD1306USESPI1
+        //case SSD1306_SPI1:
+            SSD1306_SPI_DC[SPI1] = va_arg(args, u8);
+            SPI_setMode(SPI1, SPI_MASTER);
+            SPI_setDataMode(SPI1, SPI_MODE1);
+            //maximum baud rate possible = FPB = FOSC/4
+            SPI_setClockDivider(SPI1, SPI_CLOCK_DIV4);
+            SPI_begin(SPI1);
+        //    break;
+        #endif
+        
+        #ifdef SSD1306USESPI2
+        //case SSD1306_SPI2:
+            SSD1306_SPI_DC[SPI2] = va_arg(args, u8);
+            SPI_setMode(SPI2, SPI_MASTER);
+            SPI_setDataMode(SPI2, SPI_MODE1);
+            //maximum baud rate possible = FPB = FOSC/4
+            SPI_setClockDivider(SPI2, SPI_CLOCK_DIV4);
+            SPI_begin(SPI2);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USEI2C1
+        //case SSD1306_I2C1:
+            SSD1306_I2C_ADDR[0] = va_arg(args, u32);
+            I2C_init(I2C1, I2C_MASTER_MODE, I2C_400KHZ);
+        //    break;
+        #endif
+
+        #ifdef SSD1306USEI2C2
+        //case SSD1306_I2C2:
+            SSD1306_I2C_ADDR[1] = va_arg(args, u8);
+            I2C_init(I2C2, I2C_MASTER_MODE, I2C_100KHZ);
+        //    break;
+        #endif
+
+        /*
+        case PORTB6800 :
+        case PORTD6800 :
+        default:
+            //void SSD1306_init(u8 res, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
+            #define DATA		LATD    // RB0 to RB7
+            #define dDATA		TRISD
 
             dDATA = 0x00;           // output
             dCMD  = 0x00;           // output
             DATA  = 0x00;
-            CMD   = 0xFF;           // every pin HIGH
-
-        #endif
-
-    #elif (DISPLAY & SSD1306_SPI3) || (DISPLAY & SSD1306_SPI4)
-
-        // TODO
-
-    #elif (DISPLAY & SSD1306_I2C)
-
-        // TODO
-
-    #endif
-
+            CMD   = 0xFF;           // every pin high
+            break;
+        */
+    }
+    va_end(args);           // cleans up the list
+    
     // default Screen Values
 
-    //SSD1306.orientation   = PORTRAIT;
-    SSD1306.cursor.x      = 0;
-    SSD1306.cursor.y      = 0;
-    SSD1306.cursor.page   = 0;
-    SSD1306.screen.startx = 0;
-    SSD1306.screen.starty = 0;
-    SSD1306.screen.endx   = DISPLAY_WIDTH  - 1;
-    SSD1306.screen.endy   = DISPLAY_HEIGHT - 1;
-    SSD1306.screen.width  = DISPLAY_WIDTH;
-    SSD1306.screen.height = DISPLAY_HEIGHT;
+    //SSD1306[module].orientation   = PORTRAIT;
+    SSD1306[module].cursor.x      = 0;
+    SSD1306[module].cursor.y      = 0;
+    SSD1306[module].cursor.page   = 0;
+    SSD1306[module].screen.startx = 0;
+    SSD1306[module].screen.starty = 0;
+    SSD1306[module].screen.endx   = DISPLAY_WIDTH  - 1;
+    SSD1306[module].screen.endy   = DISPLAY_HEIGHT - 1;
+    SSD1306[module].screen.width  = DISPLAY_WIDTH;
+    SSD1306[module].screen.height = DISPLAY_HEIGHT;
 
     /** reset device
     When RES input is low, the chip is initialized with the following status:
@@ -423,174 +705,187 @@ void SSD1306_init()
         9. Normal display mode (Equivalent to A4h command)
     **/
 
-    Low(RST);                   // initialized the chip
-    Delayus(50);                // for at least 3us
-    High(RST);
+    // Reset
+    #ifdef SSD1306USEPMP6800
+    low(SSD1306_PMP_RES[0]);        // initialized the chip
+    Delayus(50);                    // for at least 3us
+    high(SSD1306_PMP_RES[0]);
+    #endif
 
-    SSD1306_displayOn();
-    Delayms(100);               // wait for SEG/COM to be ON
-    SSD1306_displayOff();
+    #ifdef SSD1306USEPMP8080
+    low(SSD1306_PMP_RES[1]);        // initialized the chip
+    Delayus(50);                    // for at least 3us
+    high(SSD1306_PMP_RES[1]);
+    #endif
 
-    SSD1306_setDisplayClockRatioAndFrequency(0, 8);
-    SSD1306_setMultiplexRatio(0x3F); // 1/64 duty
-    SSD1306_setPrechargePeriod(0xF, 0x01);
-    SSD1306_setDisplayOffset(0);    
-    SSD1306_setDisplayStartLine(0);  
-    SSD1306_setChargePumpEnable(1);    
-    SSD1306_setMemoryAddressingMode(0); // horizontal addressing mode; across then down
-    SSD1306_setSegmentRemap(1);
-    SSD1306_setComOutputScanDirection(1);
-    SSD1306_setComPinsHardwareConfiguration(1, 0);
-    SSD1306_setContrast(0xFF);
-    SSD1306_setVcomhDeselectLevel(1);
+    //SSD1306_displayOn(module);
+    //Delayms(100);                   // wait for SEG/COM to be ON
+    //SSD1306_displayOff(module);
 
-    SSD1306_wake();
-    SSD1306_setInverse(0);
+    SSD1306_setMultiplexRatio(module, 0x3F); // 1/64 duty
+    SSD1306_setDisplayOffset(module, 0);    
+    SSD1306_setDisplayStartLine(module, 0);  
+    SSD1306_setSegmentRemap(module, 1);
+    SSD1306_setComOutputScanDirection(module, 1);
+    SSD1306_setComPinsHardwareConfiguration(module, 1, 0);
+    SSD1306_setContrast(module, 0x7F);
+    SSD1306_sendCommand(module, SSD1306_DISPLAYALLON_RESUME);
+    SSD1306_sendCommand(module, SSD1306_NORMALDISPLAY);
+    SSD1306_setDisplayClockRatioAndFrequency(module, 0, 8);
+    SSD1306_setChargePumpEnable(module, 1);    
+    SSD1306_displayOn(module);
 
-    SSD1306_hvSetColumnAddress(0, 127);
-    SSD1306_hvSetPageAddress(0, 7);
+    /*
+    SSD1306_setPrechargePeriod(module, 0x0F, 0x01);
+    SSD1306_setMemoryAddressingMode(module, 0); // horizontal addressing mode; across then down
+    SSD1306_setVcomhDeselectLevel(module, 1);
 
-    SSD1306_pamSetStartAddress(0);
-    SSD1306_pamSetPageStart(0);
+    SSD1306_wake(module);
+    SSD1306_setInverse(module, 0);
 
-    // SSD1306_setPrechargePeriod(2, 2);
+    SSD1306_hvSetColumnAddress(module, 0, 127);
+    SSD1306_hvSetPageAddress(module, 0, 7);
+
+    SSD1306_pamSetStartAddress(module, 0);
+    SSD1306_pamSetPageStart(module, 0);
+
+    SSD1306_setPrechargePeriod(module, 2, 2);
+    */
 }
 
 ///	--------------------------------------------------------------------
 /// Update the display
 ///	--------------------------------------------------------------------
 
-void SSD1306_refresh()
+void SSD1306_refresh(u8 module)
 {
     u16 i;
 
-    SSD1306_hvSetColumnAddress(0, DISPLAY_WIDTH-1);
-    SSD1306_hvSetPageAddress(0, DISPLAY_ROWS-1);
+    SSD1306_hvSetColumnAddress(module, 0, DISPLAY_WIDTH-1);
+    SSD1306_hvSetPageAddress(module, 0, DISPLAY_ROWS-1);
 
     for (i = 0; i < DISPLAY_SIZE; i++)
-        SSD1306_sendData(SSD1306_buffer[i]);
+        SSD1306_sendData(module, SSD1306_buffer[i]);
 }
 
 ///	--------------------------------------------------------------------
 /// Clear the display
 ///	--------------------------------------------------------------------
 
-void SSD1306_clearScreen(void)
+void SSD1306_clearScreen(u8 module)
 {
     u16 i;
-/*
+
     for (i = 0; i < DISPLAY_SIZE; i++)
         SSD1306_buffer[i] = 0;
-*/
-    memset(SSD1306_buffer, 0, DISPLAY_SIZE);
-
-    SSD1306.cursor.x    = 0;
-    SSD1306.cursor.y    = 0;
-    SSD1306.cursor.page = 0;
+        
+    SSD1306[module].cursor.x    = 0;
+    SSD1306[module].cursor.y    = 0;
+    SSD1306[module].cursor.page = 0;
 }
 
 ///	--------------------------------------------------------------------
 /// Scroll functions
 ///	--------------------------------------------------------------------
 
-void SSD1306_startHorizontalScroll(u8 direction, u8 start, u8 end, u16 interval) 
+void SSD1306_startHorizontalScroll(u8 module, u8 direction, u8 start, u8 end, u16 interval) 
 {
     // Before issuing this command the horizontal scroll must be deactivated (2Eh).
     // Otherwise, RAM content may be corrupted.
     // RB : this datasheet recommandation doesn't work
-    //SSD1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
+    //SSD1306_sendCommand(module, SSD1306_DEACTIVATE_SCROLL);
 
-    SSD1306_sendCommand(direction);// ? 0x27 : 0x26);
+    SSD1306_sendCommand(module, direction);// ? 0x27 : 0x26);
     // Dummy byte (???)
-    SSD1306_sendCommand(0x00);
+    SSD1306_sendCommand(module, 0x00);
     // Start page
-    SSD1306_sendCommand(start & DISPLAY_ROW_MASK);
+    SSD1306_sendCommand(module, start & DISPLAY_ROW_MASK);
 
     // Time interval between each scroll step
     switch (interval)
     {
-        case   2: SSD1306_sendCommand(0x07); break; // 111b
-        case   3: SSD1306_sendCommand(0x04); break; // 100b
-        case   4: SSD1306_sendCommand(0x05); break; // 101b
-        case   5: SSD1306_sendCommand(0x00); break; // 000b
-        case  25: SSD1306_sendCommand(0x06); break; // 110b
-        case  64: SSD1306_sendCommand(0x01); break; // 001b
-        case 128: SSD1306_sendCommand(0x02); break; // 010b
-        case 256: SSD1306_sendCommand(0x03); break; // 011b
-        default:  SSD1306_sendCommand(0x07); break; // default to 2 frame interval
+        case   2: SSD1306_sendCommand(module, 0x07); break; // 111b
+        case   3: SSD1306_sendCommand(module, 0x04); break; // 100b
+        case   4: SSD1306_sendCommand(module, 0x05); break; // 101b
+        case   5: SSD1306_sendCommand(module, 0x00); break; // 000b
+        case  25: SSD1306_sendCommand(module, 0x06); break; // 110b
+        case  64: SSD1306_sendCommand(module, 0x01); break; // 001b
+        case 128: SSD1306_sendCommand(module, 0x02); break; // 010b
+        case 256: SSD1306_sendCommand(module, 0x03); break; // 011b
+        default:  SSD1306_sendCommand(module, 0x07); break; // default to 2 frame interval
     }
     
     // End page
-    //SSD1306_sendCommand(0x00);
-    SSD1306_sendCommand(end & DISPLAY_ROW_MASK);
+    //SSD1306_sendCommand(module, 0x00);
+    SSD1306_sendCommand(module, end & DISPLAY_ROW_MASK);
 
     // ???
-    SSD1306_sendCommand(0x00);
-    SSD1306_sendCommand(0xFF);
+    SSD1306_sendCommand(module, 0x00);
+    SSD1306_sendCommand(module, 0xFF);
 
     // activate scroll
-    SSD1306_sendCommand(SSD1306_ACTIVATE_SCROLL);
+    SSD1306_sendCommand(module, SSD1306_ACTIVATE_SCROLL);
 }
 
-void SSD1306_startVerticalAndHorizontalScroll(u8 direction, u8 start, u8 end, u16 interval, u8 vertical_offset)
+void SSD1306_startVerticalAndHorizontalScroll(u8 module, u8 direction, u8 start, u8 end, u16 interval, u8 vertical_offset)
 {
     // Before issuing this command the horizontal scroll must be deactivated (2Eh).
     // Otherwise, RAM content may be corrupted.
     // RB : this datasheet recommandation doesn't work
-    //SSD1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
+    //SSD1306_sendCommand(module, SSD1306_DEACTIVATE_SCROLL);
 
-    SSD1306_sendCommand(direction); // ? 0x2A : 0x29);
+    SSD1306_sendCommand(module, direction); // ? 0x2A : 0x29);
     // Dummy byte (???)
-    SSD1306_sendCommand(0x00);
+    SSD1306_sendCommand(module, 0x00);
     // Start page
-    SSD1306_sendCommand(start & DISPLAY_ROW_MASK);
+    SSD1306_sendCommand(module, start & DISPLAY_ROW_MASK);
 
     // Time interval between each scroll step
     switch (interval)
     {
-        case   2: SSD1306_sendCommand(0x07); break; // 111b
-        case   3: SSD1306_sendCommand(0x04); break; // 100b
-        case   4: SSD1306_sendCommand(0x05); break; // 101b
-        case   5: SSD1306_sendCommand(0x00); break; // 000b
-        case  25: SSD1306_sendCommand(0x06); break; // 110b
-        case  64: SSD1306_sendCommand(0x01); break; // 001b
-        case 128: SSD1306_sendCommand(0x02); break; // 010b
-        case 256: SSD1306_sendCommand(0x03); break; // 011b
-        default:  SSD1306_sendCommand(0x07); break; // default to 2 frame interval
+        case   2: SSD1306_sendCommand(module, 0x07); break; // 111b
+        case   3: SSD1306_sendCommand(module, 0x04); break; // 100b
+        case   4: SSD1306_sendCommand(module, 0x05); break; // 101b
+        case   5: SSD1306_sendCommand(module, 0x00); break; // 000b
+        case  25: SSD1306_sendCommand(module, 0x06); break; // 110b
+        case  64: SSD1306_sendCommand(module, 0x01); break; // 001b
+        case 128: SSD1306_sendCommand(module, 0x02); break; // 010b
+        case 256: SSD1306_sendCommand(module, 0x03); break; // 011b
+        default:  SSD1306_sendCommand(module, 0x07); break; // default to 2 frame interval
     }
 
     // End page
-    SSD1306_sendCommand(end & DISPLAY_ROW_MASK);
+    SSD1306_sendCommand(module, end & DISPLAY_ROW_MASK);
 
-    SSD1306_sendCommand(vertical_offset);    
+    SSD1306_sendCommand(module, vertical_offset);    
 
     // activate scroll
-    SSD1306_sendCommand(SSD1306_ACTIVATE_SCROLL);
+    SSD1306_sendCommand(module, SSD1306_ACTIVATE_SCROLL);
 }
 
-void SSD1306_stopScroll()
+void SSD1306_stopScroll(u8 module)
 {
     // all scroll configurations are removed from the display when executing this command.
-    SSD1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
+    SSD1306_sendCommand(module, SSD1306_DEACTIVATE_SCROLL);
 }
 
 // Right handed 1-row scroll
 // The display is 16 rows tall.
-void SSD1306_scrollRight()
+void SSD1306_scrollRight(u8 module)
 {
-    SSD1306_startHorizontalScroll(SSD1306_RIGHT_HORIZONTAL_SCROLL, 0, 7, 2);
+    SSD1306_startHorizontalScroll(module, SSD1306_RIGHT_HORIZONTAL_SCROLL, 0, 7, 2);
 }
 
 // Left handed 1-row scroll
 // The display is 16 rows tall
-void SSD1306_scrollLeft()
+void SSD1306_scrollLeft(u8 module)
 {
-    SSD1306_startHorizontalScroll(SSD1306_LEFT_HORIZONTAL_SCROLL, 0, 7, 2);
+    SSD1306_startHorizontalScroll(module, SSD1306_LEFT_HORIZONTAL_SCROLL, 0, 7, 2);
 }
 
 // Up handed 1-row scroll
 // The display is 16 rows tall.
-void SSD1306_scrollUp()
+void SSD1306_scrollUp(u8 module)
 {
     u8 x, y;
 
@@ -602,81 +897,85 @@ void SSD1306_scrollUp()
         }
     }
 
-    // memset ?
     for (x = 0; x < 128; x++)
     {
         SSD1306_buffer[x + 128 * 7] = 0;
     }    
 
-    SSD1306.cursor.y--;
+    SSD1306[module].cursor.y--;
 }
 
 // Down handed 1-row scroll
 // The display is 16 rows tall
-void SSD1306_scrollDown()
+void SSD1306_scrollDown(u8 module)
 {
-    SSD1306_startVerticalAndHorizontalScroll(SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL, 0, 64, 0, 1);
+    SSD1306_startVerticalAndHorizontalScroll(module, SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL, 0, 64, 0, 1);
 }
 
 ///	--------------------------------------------------------------------
 /// Print functions
 ///	--------------------------------------------------------------------
 
-void SSD1306_setFont(const u8 *font)
+void SSD1306_setFont(u8 module, const u8 *font)
 {
-    SSD1306.font.address = font;
-    //SSD1306.font.width   = SSD1306_getFontWidth()+1;
-    //SSD1306.font.height  = SSD1306_getFontHeight();
-    SSD1306.font.width   = font[0];
-    SSD1306.font.height  = font[1];
+    SSD1306[module].font.address = font;
+    //SSD1306[module].font.width   = SSD1306_getFontWidth()+1;
+    //SSD1306[module].font.height  = SSD1306_getFontHeight();
+    SSD1306[module].font.width   = font[0];
+    SSD1306[module].font.height  = font[1];
 }
 
 /*	--------------------------------------------------------------------
     DESCRIPTION:
-        write a char at (SSD1306.cursor.x, SSD1306.cursor.y)
+        write a char at (SSD1306[module].cursor.x, SSD1306[module].cursor.y)
     PARAMETERS:
         * c ascii code of the character to print
     RETURNS:
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-void SSD1306_printChar(u8 c)
+void SSD1306_printChar2(u8 c)
+{
+    SSD1306_printChar(SSD1306_MOD, c);
+}
+
+void SSD1306_printChar(u8 module, u8 c)
 {
     u8  b;
 
-    while (SSD1306.cursor.x >= (DISPLAY_WIDTH / SSD1306.font.width))
+    while (SSD1306[module].cursor.x >= (DISPLAY_WIDTH / SSD1306[module].font.width))
     {
-        SSD1306.cursor.x -= (DISPLAY_WIDTH / SSD1306.font.width);
-        SSD1306.cursor.y++;            
+        SSD1306[module].cursor.x -= (DISPLAY_WIDTH / SSD1306[module].font.width);
+        SSD1306[module].cursor.y++;            
     }
 
-    while (SSD1306.cursor.y > 7)
+    while (SSD1306[module].cursor.y > 7) // replace by SSD1306[module].font.height ???
     {
-        SSD1306_scrollUp();            
+        SSD1306_scrollUp(module);            
     }
 
     switch (c)
     {
         case '\n':
-            SSD1306.cursor.y++;
+            SSD1306[module].cursor.y++;
             break;
             
         case '\r':
-            SSD1306.cursor.x = 0;
+            SSD1306[module].cursor.x = 0;
             break;
             
         case '\t':
-            SSD1306.cursor.x = (SSD1306.cursor.x + 4) % 4;
+            SSD1306[module].cursor.x = (SSD1306[module].cursor.x + 4) % 4;
             break;
             
         default:
-            for (b = 0; b < SSD1306.font.width; b++)
+            for (b = 0; b < SSD1306[module].font.width; b++)
             {
-                SSD1306_buffer[SSD1306.cursor.x * SSD1306.font.width + SSD1306.cursor.y * 128 + b] = 
-                    SSD1306.font.address[2 + (c - 32) * SSD1306.font.width + b];
+                SSD1306_buffer[SSD1306[module].cursor.x * SSD1306[module].font.width + SSD1306[module].cursor.y * 128 + b] = 
+                    SSD1306[module].font.address[2 + (c - 32) * SSD1306[module].font.width + b];
             }
         
-        SSD1306.cursor.x++;
+        SSD1306[module].cursor.x++;
     }            
 }
 
@@ -687,125 +986,65 @@ void SSD1306_printChar(u8 c)
         *fmt pointer on a formated string
     RETURNS:
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #if defined(SSD1306PRINT)       || defined(SSD1306PRINTLN)    || \
-    defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT)
-void SSD1306_print(u8 *string)
+    defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT) || \
+    defined(SSD1306PRINTCENTER)
+void SSD1306_print(u8 module, u8 *string)
 {
     while (*string != 0)
-        SSD1306_printChar(*string++);
+        SSD1306_printChar(module, *string++);
 }
 #endif
 
 #if defined(SSD1306PRINTLN)
-void SSD1306_println(u8 *string)
+void SSD1306_println(u8 module, u8 *string)
 {
-    SSD1306_print(string);
-    SSD1306_print("\n\r");
+    SSD1306_print(module, string);
+    SSD1306_print(module, "\n\r");
+}
+#endif
+
+#if defined(SSD1306PRINTCENTER)
+void SSD1306_printCenter(u8 module, const u8 *string)
+{
+    u8 strlen, nbspace;
+    const u8 *p;
+
+    for (p = string; *p; ++p);
+    strlen = p - string;
+
+    nbspace = (SSD1306[module].screen.width / SSD1306[module].font.width - strlen) / 2;
+    
+    // write spaces before
+    while(nbspace--)
+        SSD1306_printChar(module, 32);
+
+    // write string
+    SSD1306_print(module, string);
+    SSD1306_print(module, (u8*)"\n\r");
 }
 #endif
 
 #if defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT)
-void SSD1306_printNumber(long value, u8 base)
+void SSD1306_printNumber(u8 module, long value, u8 base)
 {  
-    u8 sign;
-    u8 length;
-
-    long i;
-    unsigned long v;    // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;       // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;    // pointer on string
-
-    if (value==0)
-    {
-        SSD1306_printChar('0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (unsigned long)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
-        
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
-    }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    length = sign + tp - tmp + 1;
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    SSD1306_print(string);
+    SSD1306_MOD = module;
+    printNumber(SSD1306_printChar2, value, base);
 }
 #endif
 
 #if defined(SSD1306PRINTFLOAT)
-void SSD1306_printFloat(float number, u8 digits)
+void SSD1306_printFloat(u8 module, float number, u8 digits)
 { 
-	u8 i, toPrint;
-	u16 int_part;
-	float rounding, remainder;
-
-	// Handle negative numbers
-	if (number < 0.0)
-	{
-		SSD1306_printChar('-');
-		number = -number;
-	}
-
-	// Round correctly so that print(1.999, 2) prints as "2.00"  
-	rounding = 0.5;
-	for (i=0; i<digits; ++i)
-		rounding /= 10.0;
-
-	number += rounding;
-
-	// Extract the integer part of the number and print it  
-	int_part = (u16)number;
-	remainder = number - (float)int_part;
-	SSD1306_printNumber(int_part, 10);
-
-	// Print the decimal point, but only if there are digits beyond
-	if (digits > 0)
-		SSD1306_printChar('.'); 
-
-	// Extract digits from the remainder one at a time
-	while (digits-- > 0)
-	{
-		remainder *= 10.0;
-		toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-		SSD1306_printNumber(toPrint, 10);
-		remainder -= toPrint; 
-	}
+    SSD1306_MOD = module;
+    printFloat(SSD1306_printChar2, number, digits);
 }
 #endif
 
-#if defined(SSD1306PRINTF)
-void SSD1306_printf(const u8 *fmt, ...)
+#ifdef SSD1306PRINTF
+void SSD1306_printf(u8 module, const u8 *fmt, ...)
 {
     static u8 buffer[25];
     u8 *c=(char*)&buffer;
@@ -816,7 +1055,7 @@ void SSD1306_printf(const u8 *fmt, ...)
     va_end(args);
 
     while (*c != 0)
-        SSD1306_printChar(*c++);
+        SSD1306_printChar(module, *c++);
 }
 #endif
 
@@ -834,17 +1073,18 @@ void SSD1306_printf(const u8 *fmt, ...)
     REMARKS:
     TODO:
         check x and y
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-void SSD1306_setCursor(u8 x, u8 y)
+void SSD1306_setCursor(u8 module, u8 x, u8 y)
 {
     if ( x >= DISPLAY_WIDTH || y >= (DISPLAY_HEIGHT) ) return;
 
-    SSD1306.cursor.x = x;
-    SSD1306.cursor.y = y;
-    SSD1306.cursor.page = x & DISPLAY_ROW_MASK;  // current page
+    SSD1306[module].cursor.x = x;
+    SSD1306[module].cursor.y = y;
+    SSD1306[module].cursor.page = x & DISPLAY_ROW_MASK;  // current page
 }
 
+#ifdef SSD1306GRAPHICS
 /*	--------------------------------------------------------------------
     DESCRIPTION:
         Draws a pixel with current color.
@@ -852,17 +1092,16 @@ void SSD1306_setCursor(u8 x, u8 y)
         x,y coord.
     RETURNS:
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-void SSD1306_drawPixel(u8 x, u8 y)
+void SSD1306_drawPixel(u8 module, u8 x, u8 y)
 {
     if ( x >= DISPLAY_WIDTH || y >= (DISPLAY_HEIGHT) ) return;
 
-    SSD1306_buffer[x + (y>>DISPLAY_ROW_BITS) * DISPLAY_WIDTH] |= 1 << (y % DISPLAY_ROWS);
-    //SSD1306_buffer[x + (y / DISPLAY_ROWS) * DISPLAY_WIDTH] |= 1 << (y % DISPLAY_ROWS);
+    SSD1306_buffer[x + (y / DISPLAY_ROWS) * DISPLAY_WIDTH] |= 1 << (y % DISPLAY_ROWS);
 }
 
-void SSD1306_clearPixel(u8 x, u8 y)
+void SSD1306_clearPixel(u8 module, u8 x, u8 y)
 {
     if (x >= DISPLAY_WIDTH || y >= (DISPLAY_HEIGHT) ) return;
     
@@ -877,9 +1116,9 @@ void SSD1306_clearPixel(u8 x, u8 y)
     RETURNS:
         color
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
-u8 SSD1306_getColor(u8 x, u8 y)
+u8 SSD1306_getColor(u8 module, u8 x, u8 y)
 {
     u8 column,temp,bit_mask;//page;
     unsigned int page;
@@ -908,38 +1147,85 @@ u8 SSD1306_getColor(u8 x, u8 y)
     }
 }
 
+/*
+void SSD1306_drawBitmap(u16 x, u16 y, u16 w, u16 h, u16* bitmap)
+{
+}
+*/
+
 /*	--------------------------------------------------------------------
     DESCRIPTION:
         Graphic routines based on drawPixel in graphics.c
     PARAMETERS:
     RETURNS:
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 void drawPixel(u16 x, u16 y)
 {
-    SSD1306_drawPixel(x, y);
+    SSD1306_drawPixel(SSD1306_MOD, x, y);
 }
 
-void SSD1306_drawCircle(u16 x, u16 y, u16 radius)
+void drawHLine(u16 x, u16 y, u16 w)
 {
-    drawCircle(x, y, radius);
+    SSD1306_drawHLine(SSD1306_MOD, x, y, w);
 }
 
-void SSD1306_fillCircle(u16 x, u16 y, u16 radius)
+void drawVLine(u16 x, u16 y, u16 h)
 {
-    fillCircle(x, y, radius);
+    SSD1306_drawVLine(SSD1306_MOD, x, y, h);
 }
 
-void SSD1306_drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
+void SSD1306_drawLine(u8 module, u16 x0, u16 y0, u16 x1, u16 y1)
 {
+    SSD1306_MOD = module;
     drawLine(x0, y0, x1, y1);
 }
 
-/*
-void SSD1306_drawBitmap(u16 x, u16 y, u16 w, u16 h, u16* bitmap)
+void SSD1306_drawRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
 {
+    SSD1306_MOD = module;
+    drawRect(x1, y1, x2, y2);
 }
-*/
+
+void SSD1306_drawRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    SSD1306_MOD = module;
+    drawRoundRect(x1, y1, x2, y2);
+}
+
+void SSD1306_drawCircle(u8 module, u16 x, u16 y, u16 radius)
+{
+    SSD1306_MOD = module;
+    drawCircle(x, y, radius);
+}
+
+void SSD1306_fillCircle(u8 module, u16 x, u16 y, u16 radius)
+{
+    SSD1306_MOD = module;
+    fillCircle(x, y, radius);
+}
+
+void SSD1306_fillRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    SSD1306_MOD = module;
+    fillRect(x1, y1, x2, y2);
+}
+
+void SSD1306_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
+{
+    SSD1306_MOD = module;
+    fillRoundRect(x1, y1, x2, y2);
+}
+
+#ifdef ST7735DRAWBITMAP
+void SSD1306_drawBitmap(u8 module1, u8 module2, const u8* filename, u16 x, u16 y)
+{
+    SSD1306_MOD = module1;
+    drawBitmap(module2, filename, x, y);
+}
+#endif
+
+#endif // SSD1306GRAPHICS
 
 #endif /* __SSD1306_C */

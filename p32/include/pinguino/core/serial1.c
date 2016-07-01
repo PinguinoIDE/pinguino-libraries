@@ -28,10 +28,9 @@
 #ifndef __SERIAL1__
 #define __SERIAL1__
 
-#include <stdarg.h>
-#include <printf.c>
-#include <serial.c>
 #include <typedef.h>
+#include <stdarg.h>
+#include <serial.c>
 
 void serial1init(u32 speed)
 {
@@ -41,6 +40,18 @@ void serial1init(u32 speed)
         SerialConfigure(UART1, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
     #endif
 }
+
+#if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
+    defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+void serial1print(char *string)
+{
+    #ifdef PIC32_PINGUINO_220
+        SerialPrint(UART2, string);
+    #else
+        SerialPrint(UART1, string);
+    #endif
+}
+#endif
 
 #ifdef SERIALPRINTLN
 void serial1println(u8 *string)
@@ -89,62 +100,6 @@ void serial1printf(char *fmt, ...)
     va_end(args);
 }
 #endif /* SERIALPRINTF */
-
-/*******************************************************************************
-    And For Compatibility Reasons ....
-    16-08-2011: fixed bug in print - Régis Blanchot & Tiew Weng Khai
-    29-10-2011: fixed uncompatible arg. *s - Régis Blanchot
-*******************************************************************************/
-
-#ifdef SERIALPRINT
-
-#ifdef SERIALPRINTF
-void serial1print(char *fmt,...)
-{
-    //	unsigned char *s;
-    unsigned char s;
-    va_list args;					// list of arguments
-
-    va_start(args, fmt);			// initialize the list
-    // s = va_start(args, fmt);
-    s = (unsigned char) va_arg(args, int);		// get the first variable arg.
-
-    //switch (*s)
-    switch (s)
-    {
-        case DEC:
-            serial1printf("%d",fmt);
-            break;
-        case HEX:
-            serial1printf("%x",fmt);
-            break;
-        case BYTE:
-            serial1printf("%d",fmt);
-            break;
-        case OCT:
-            serial1printf("%o",fmt);
-            break;
-        case BIN:
-            serial1printf("%b",fmt);
-            break;           
-        default:
-            serial1printf(fmt);
-            break;
-    }
-}
-#else
-void serial1print(u8 * string)
-{
-    #ifdef PIC32_PINGUINO_220
-    SerialPrint(UART2, string);
-    #else
-    SerialPrint(UART1, string);
-    #endif
-}
-#endif /* SERIALPRINTF */
-
-#endif /* SERIALPRINT */
-
 
 void serial1write(char c)
 {

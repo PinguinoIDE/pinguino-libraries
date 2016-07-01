@@ -50,23 +50,23 @@
 	LCD_EN	P3		-|	|-		P5		LCD_D5
 	GRND	VSS 	-|	|-		P4		LCD_D4
 
-	SYMBOL 	PIN	    DESCRIPTION					NB
-	A0		1		address input 0				adress = 0 1 0 0 A2 A1 A0 0
-	A1		2		address input 1				A0, A1 et A2 relies au +5V
-	A2		3		address input 2				donc adress = 01001110 = 0x4E
-	P0		4		quasi-bidirectional I/O 0	LCD_BL
-	P1		5		quasi-bidirectional I/O 1	LCD_RS
-	P2		6		quasi-bidirectional I/O 2	LCD_RW
-	P3		7		quasi-bidirectional I/O 3	LCD_EN
-	VSS		8		supply ground
-	P4		9		quasi-bidirectional I/O 4	LCD_D4
-	P5		10		quasi-bidirectional I/O 5	LCD_D5
-	P6		11		quasi-bidirectional I/O 6	LCD_D6
-	P7		12		quasi-bidirectional I/O 7	LCD_D7
-	INT		13		interrupt output (active LOW)
-	SCL		14		serial clock line			uC_SCL
-	SDA		15		serial data line			uC_SDA
-	VDD		16		supply voltage
+	SYMBOL 	PIN	DESCRIPTION					NB
+	A0		1	address input 0				adress = 0 1 0 0 A2 A1 A0 0
+	A1		2	address input 1				A0, A1 et A2 connected to +5V
+	A2		3	address input 2				then address is 01001110 = 0x4E
+	P0		4	quasi-bidirectional I/O 0	LCD_BL
+	P1		5	quasi-bidirectional I/O 1	LCD_RS
+	P2		6	quasi-bidirectional I/O 2	LCD_RW
+	P3		7	quasi-bidirectional I/O 3	LCD_EN
+	VSS		8	supply ground
+	P4		9	quasi-bidirectional I/O 4	LCD_D4
+	P5		10	quasi-bidirectional I/O 5	LCD_D5
+	P6		11	quasi-bidirectional I/O 6	LCD_D6
+	P7		12	quasi-bidirectional I/O 7	LCD_D7
+	INT		13	interrupt output (active LOW)
+	SCL		14	serial clock line			uC_SCL
+	SDA		15	serial data line			uC_SDA
+	VDD		16	supply voltage
 	--------------------------------------------------------------------------*/
 
 #ifndef __LCDI2C_H
@@ -75,10 +75,21 @@
 #include <typedef.h>
 #include <delayms.c>
 
-#define LCD_WRITE		        0
-#define LCD_READ		        1
-#define LCD_DATA		        1
-#define LCD_CMD		            0
+#define LCD_MASK				0b11110000		// we only use D7 to D4
+
+#define LCD_BL                  PCF8574_data.bits.P0	// P0
+#define LCD_RS                  PCF8574_data.bits.P1	// P1
+#define LCD_RW                  PCF8574_data.bits.P2	// P2
+#define LCD_EN                  PCF8574_data.bits.P3	// P3
+#define LCD_D4                  PCF8574_data.bits.P4	// P4
+#define LCD_D5                  PCF8574_data.bits.P5	// P5
+#define LCD_D6                  PCF8574_data.bits.P6	// P6
+#define LCD_D7                  PCF8574_data.bits.P7	// P7
+
+#define LCD_WRITE				0
+#define LCD_READ				1
+#define LCD_DATA				1
+#define LCD_CMD					0
 
 #define LCD_DISPLAY_CLEAR		0b00000001 	// 0x01
 #define LCD_CURSOR_HOME			0b00000010 	// 0x02
@@ -135,16 +146,18 @@
 #define LCD_RIGHT				102
 #define LCD_LEFT				103
 
-#define DEGREE					0b11011111 	// Code ASCII pour le symbole degre
-#define SIGMA					0b11100101 	// Code ASCII pour le symbole sigma
-#define MICRO					0b11100100 	// Code ASCII pour le symbole micro
-#define INFINITE				0b11110011 	// Code ASCII pour le symbole infini
-#define SPACE					0x20		// Code ASCII pour un espace
+#define DEGRE					0b11011111 	// ASCII for degree
+#define SIGMA					0b11100101 	// ASCII for sigma
+#define MICRO					0b11100100 	// ASCII for micro
+#define INFINI					0b11110011 	// ASCII for infinite
+#define ESPACE					0x20		// ASCII for space
 
+/*
 #define HEXADECIMAL				16
 #define DECIMAL					10
 #define OCTAL					8
 #define BINAIRE					2
+*/
 
 #define ACIRC					0		// â
 #define AGRAVE					1		// à
@@ -264,4 +277,4 @@ void lcdi2c_newchar(const u8 *, u8);
 #define lcdi2c_noDisplay()          lcdi2c_send8(LCD_DISPLAYOFF, LCD_CMD)
 #endif
 
-#endif
+#endif // __LCDI2C_H

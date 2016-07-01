@@ -27,12 +27,9 @@
 #ifndef __SERIAL2__
 #define __SERIAL2__
 
-#include <stdarg.h>
-#ifdef SERIALPRINTF
-#include <printf.c>
-#endif
-#include <serial.c>
 #include <typedef.h>
+#include <stdarg.h>
+#include <serial.c>
 
 void serial2init(u32 speed)
 {

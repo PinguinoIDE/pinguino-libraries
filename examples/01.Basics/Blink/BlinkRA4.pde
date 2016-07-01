@@ -11,5 +11,5 @@ void setup()
 void loop()
 {
     LATAbits.LATA4 ^= 1;
-    delay(50);
+    delay(500);
 }

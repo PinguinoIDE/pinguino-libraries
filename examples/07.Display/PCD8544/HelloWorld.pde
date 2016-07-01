@@ -25,7 +25,7 @@
 //#include <fonts/font16x16.h>        // ???
 
 /* Pin configuration */
-#define SPILCD SPI1 
+#define SPILCD 1 
 
 void setup()
 {
@@ -35,10 +35,10 @@ void setup()
 
     // if SPILCD = SPISW (SPI Software)
     //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
-    PCD8544.init(SPILCD, 0, 1); // DC and RST pin
+    PCD8544.init(SPILCD, 0, 2); // DC and RST pin
  
     PCD8544.setContrast(SPILCD, 40); // Change the contrast (0 to 127)
-    //PCD8544.setFont(SPILCD, font6x8);
+    PCD8544.setFont(SPILCD, font6x8);
     PCD8544.setTextColor(SPILCD, BLACK);
     PCD8544.setTextSize(SPILCD, 1);
     PCD8544.refresh(SPILCD);          // show Pinguino splashscreen
@@ -46,7 +46,7 @@ void setup()
 
     PCD8544.clearScreen(SPILCD);      // Clear screen buffer
     PCD8544.setCursor(SPILCD, 1, 2);
-    //PCD8544.print(SPILCD, "Hello World!");
+    PCD8544.print(SPILCD, "Hello World!");
     PCD8544.refresh(SPILCD);
 }
 

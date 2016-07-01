@@ -1,15 +1,13 @@
 /*  --------------------------------------------------------------------
-    FILE:               isrwrapper.c
-    PROJECT:            pinguino 32
-    PURPOSE:            weak definition of isr routines
-    PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:      05 Feb. 2015
-    LAST RELEASE:       05 Feb. 2015
+    FILE:           isrwrapper.c
+    PROJECT:        pinguino 32
+    PURPOSE:        weak definition of isr routines
+    PROGRAMERS:     Regis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  05 Feb. 2015
     --------------------------------------------------------------------
     CHANGELOG:
     --------------------------------------------------------------------
     NOTE: P32MX795 share some vectors : 
-
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -244,7 +242,7 @@
     void RTCCInterrupt(void) { Nop(); }
     #endif // __RTCC__
 
-    #if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) || 
+    #if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) ||
     void USBInterrupt(void) { Nop(); }
     #endif
 

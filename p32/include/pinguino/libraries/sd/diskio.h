@@ -14,7 +14,6 @@
 #include <sd/pff.h>             // Petit Fat Filesystem
 #endif
 
-
 // Results of Disk Functions 
 typedef enum
 {

@@ -14,6 +14,26 @@
                                     to acquire and read temperature in non-blocking mode
     27 Mar 2014 Brikker             added reading until CRC is found valid
     28 May 2014 Régis Blanchot      fixed OneWireRead / OneWireWrite in 1wire.c
+    
+    18 Oct 2015 Brikker             Added CRC calc in DS18B20ReadRom()
+                                    Added a global var SCRATCHPAD[9] in order to have the scratchpad available in main program; only for debug
+                                    Various changes on DS18B20Read() function: 
+                                        Removed DS18B20Configure() to fix resolution problem
+                                        Fix resolution problem on temp. calculation
+                                        Added Timeout to avoid infinite loop.
+                                    Added DS18S20Read() function.
+                                    DS18B20Configure():
+                                        fix prototype: s8 TH, s8 TL -> DS18B20Configure(u8 pin, u8 rom, s8 TH, s8 TL, u8 config) 
+                                        check TH and TL in range
+                                        Store TH, TL and config on non-volatile memory with command COPY_SCRATCHPAD
+                                    Added DS18B20GetTemperatureByIndex() function
+                                    Added DS18B20DeviceCount() function.
+                                    Added DS18B20Begin() function.
+    15 Mai 2016 Régis Blanchot      DS18B20Find returns # of devices found
+                                    Added various #define in 1wire.pdl to spare memory
+                                    Mixed Moreno and Brikker solutions
+                                    Added DS18B20Begin() in 1wire.pdl
+                                    Turned some functions to macro
     --------------------------------------------------------------------
     TODO : 
     --------------------------------------------------------------------
@@ -53,12 +73,15 @@
     ---------- GLOBAL VARIABLES
     ------------------------------------------------------------------*/
 
-    u8 DS18B20Rom[6][8];	// table of found ROM codes
-    u8 ROM[8];				// ROM Bit
-    u8 lastDiscrep = 0;		// last discrepancy
-    u8 doneFlag = 0;		// Done flag
-    u8 numROMs;
-    u8 dowcrc;
+    #define MAX_SENSORS_NUM 10
+
+    u8 DS18B20Rom[MAX_SENSORS_NUM][8];// table of found ROM codes
+    u8 ROM[8];				        // ROM Bit
+    u8 SCRATCHPAD[9];               // Scratchpad
+    u8 lastDiscrep = 0;		        // Last discrepancy
+    u8 doneFlag = 0;		        // Done flag
+    u8 numROMs;                     // Number of devices found
+    u8 dowcrc;                      // CRC
     
     /*
     const u8 dscrc_table[] = {
@@ -81,7 +104,6 @@
     */
     
     /// DS18B20 ROM COMMANDS
-
     #define SEARCHROM			0xF0	//
     #define READROM				0x33	//
     #define MATCHROM			0x55	//
@@ -89,7 +111,6 @@
     #define ALARM_SEARCH		0xEC	//
 
     /// DS18B20 FUNCTION COMMANDS
-
     #define CONVERT_T			0x44	// Initiates temperature conversion
     #define WRITE_SCRATCHPAD	0x4E	// Writes data into scratchpad bytes 2, 3, and 4 (TH, TL and configuration registers)
     #define READ_SCRATCHPAD		0xBE	// Reads the entire scratchpad including the CRC byte
@@ -97,148 +118,166 @@
     #define RECALL_E2			0xB8	// Recalls TH, TL, and configuration register data from EEPROM to the scratchpad
     #define READ_POWER_SUPPLY	0xB4	// Signals DS18B20 power supply mode to the master
 
-    /// MODES
-
-    #define RES12BIT			1		// 12-bit resolution (slowest mode)
-    #define RES11BIT			2		// 11-bit resolution
-    #define RES10BIT			3		// 10-bit resolution
-    #define  RES9BIT			4		//  9-bit resolution (quickest mode)
+    /// RESOLUTIONS / MODES
+    #define RES9BIT             0x1F    // 9 bit
+    #define RES10BIT            0x3F    // 10 bit
+    #define RES11BIT            0x5F    // 11 bit
+    #define RES12BIT            0x7F    // 12 bit
+    
+    /// DS18x20 FAMILY CODE
+    #define FAMILY_CODE_DS18B20 0x28
+    #define FAMILY_CODE_DS18S20 0x10
+    #define FAMILY_CODE_DS1822  0x22
 
     /// PROTOTYPES
-
-    u8 DS18B20Read(u8, u8, u8, DS18B20_Temperature *);
+    u8 DS18B20Select(u8, u8);
+    u8 DS18B20StartMeasure(u8, u8);
+    u8 DS18B20ReadMeasure(u8, u8, DS18B20_Temperature *);
+    u8 DS18B20Read(u8, u8, DS18B20_Temperature *);
     u8 DS18B20MatchRom(u8, u8);
-    void DS18B20ReadRom(u8, u8 *);
+    u8 DS18B20ReadRom(u8, u8 *);
     u8 DS18B20Configure(u8, u8, u8, u8, u8);
-    void DS18B20Find(u8);
+    u8 DS18B20Find(u8);
     u8 DS18B20GetFirst(u8);
     u8 DS18B20GetNext(u8);
-    u8 DS18B20_crc(u8);
-    u8 DS18B20StartMeasure(u8 pin, u8 rom, u8 resolution);
-    u8 DS18B20ReadMeasure(u8 pin, u8 rom, DS18B20_Temperature * t);
+    //u8 DS18B20_crc(u8);
+    void DS18B20_crc(u8);
+
+    // Wait while the 1-wire bus is busy ( ie bus is low)
+    #define DS18B20Wait(bus)        while (!OneWireReadByte(bus))
+    // Skip ROM check, address all devices
+    #define DS18B20Skip(bus)        OneWireWriteByte(bus, SKIPROM)
+    // Returns the number of devices available on the bus
+    #define DS18B20DeviceCount()    (numROMs)
+
+/*	--------------------------------------------------------------------
+    ---------- DS18B20Select()
+    --------------------------------------------------------------------
+    * Description:	talk to a particular device or address them all
+    * Arguments:	pin = pin number where one wire bus is connected.
+                    rom = index of the sensor or SKIPROM
+    ------------------------------------------------------------------*/
+
+    u8 DS18B20Select(u8 bus, u8 rom)
+    {
+        if (OneWireReset(bus)) return FALSE;
+
+        // Skip ROM, address all devices
+        if (rom == SKIPROM)
+            DS18B20Skip(bus);
+
+        // Talk to a particular device
+        else
+            if (!DS18B20MatchRom(bus, rom)) return FALSE;
+
+        return TRUE;
+    }
+
+/*	--------------------------------------------------------------------
+    ---------- DS18B20StartMeasure()
+    --------------------------------------------------------------------
+    * Description:	reads the ds18x20 device on the 1-wire bus and
+					starts the temperature acquisition
+    * Arguments:	bus = pin number where one wire bus is connected.
+                    rom = index of the sensor or SKIPROM
+    ------------------------------------------------------------------*/
+
+    u8 DS18B20StartMeasure(u8 bus, u8 rom)
+    {
+        if (!DS18B20Select(bus, rom))
+            return false;
+        OneWireWriteByte(bus, CONVERT_T);		// Start temperature conversion
+        return true;
+    }
+
+/*	--------------------------------------------------------------------
+    ---------- DS18B20ReadMeasure()
+    --------------------------------------------------------------------
+    * Description:	reads the ds18x20 device on the 1-wire bus
+    * Arguments:	bus = pin number where one wire bus is connected.
+                    rom = index of the sensor or SKIPROM
+                    t = temperature pointer
+	* Return:		the temperature previously acquired
+    ------------------------------------------------------------------*/
+
+    u8 DS18B20ReadMeasure(u8 bus, u8 rom, DS18B20_Temperature * t)
+    {
+        u8 	c;
+        u8 	temp_lsb, temp_msb;
+        u16	temp;
+
+        if (!DS18B20Select(bus, rom))
+            return false;
+
+        OneWireWriteByte(bus, READ_SCRATCHPAD);         // Read scratchpad
+
+        for (c = 0; c < 8; c++) 
+        {
+            SCRATCHPAD[c] = OneWireReadByte(bus);  			// Receive 8 bytes from DS18B20
+            DS18B20_crc(SCRATCHPAD[c]);
+        }
+        SCRATCHPAD[8] = OneWireReadByte(bus);				// Receive the 9th byte [CRC] from DS18B20
+        
+        if (dowcrc == SCRATCHPAD[8]) 					// Compare calculated CRC with the 9th byte received
+        {
+            temp_lsb = SCRATCHPAD[0];                   // byte 0 of scratchpad : temperature lsb
+            temp_msb = SCRATCHPAD[1];                   // byte 1 of scratchpad : temperature msb
+
+            // Calculation
+            // -----------------------------------------------------
+            //	Temperature Register Format
+            //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
+            //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
+            //			BIT15	BIT14	BIT13	BIT12	BIT11	BIT10	BIT9	BIT8
+            //	MS BYTE S		S		S		S		S		2^6		2^5 	2^4
+            //	S = SIGN
+
+            temp = temp_msb;				
+            temp = (temp << 8) + temp_lsb;	// combine msb & lsb into 16 bit variable
+            
+            if (temp_msb & 0b11111000)		// test if sign is set, i.e. negative
+            {		
+                t->sign = 1;
+                temp = (temp ^ 0xFFFF) + 1;	// 2's complement conversion
+            }
+            else
+            {
+                t->sign = 0;
+            }
+
+            t->integer = (temp >> 4) & 0x7F;	// fractional part is removed, leaving only integer part
+
+            t->fraction = (temp & 0x0F) * 625;
+            t->fraction /= 100;					// two digits after decimal 
+
+            return true;    					// Flag for good CRC: this will exit the while statement
+        }
+        return false;
+    }
 
 /*	--------------------------------------------------------------------
     ---------- DS18B20Read()
     --------------------------------------------------------------------
     * Description:	reads the ds18x20 device on the 1-wire bus and returns the temperature
-    * Arguments:	pin = pin number where one wire bus is connected.
+    * Arguments:	bus = pin number where one wire bus is connected.
                     rom = index of the sensor or SKIPROM
                     resolution = 9 to 12 bit resolution
                     t = temperature pointer
     ------------------------------------------------------------------*/
 
-    u8 DS18B20Read(u8 pin, u8 rom, u8 resolution, DS18B20_Temperature * t)
+    u8 DS18B20Read(u8 bus, u8 rom, DS18B20_Temperature * t)
     {
-        u8 	res, busy = LOW;
-        u8 	temp_lsb, temp_msb;
-        u8  c, crc_flag = 0;
-        u8	buffer[];
-        u16	temp;
-
-        switch (resolution)
-        {
-            case RES12BIT:	res = 0b01100000;	break;	// 12-bit resolution
-            case RES11BIT:	res = 0b01000000;	break;	// 11-bit resolution
-            case RES10BIT:	res = 0b00100000;	break;	// 10-bit resolution
-            case  RES9BIT:	res = 0b00000000;	break;	//  9-bit resolution
-            default:		res = 0b00000000;	break;	//  9-bit resolution
-            /// NB: The power-up default of these bits is R0 = 1 and R1 = 1 (12-bit resolution)
-        }
-        
-        if (!DS18B20Configure(pin, rom, 0, 0, res)) return false; // no alarm
-
         // read temperature until crc is valid
-        while (crc_flag == 0)
+        do
         {
-
-            if (OneWireReset(pin)) return false;
-
-            if (rom == SKIPROM)
-            {
-                // Skip ROM, address all devices
-                OneWireWrite(pin, SKIPROM);
-            }
-            else
-            {
-                // Talk to a particular device
-                if (!DS18B20MatchRom(pin, rom)) return false;
-            }
-
-            OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
-
-            while (busy == LOW)					// Wait while busy ( = bus is low)
-                busy = OneWireRead(pin);
-
-            if (OneWireReset(pin)) return false;
-
-            if (rom == SKIPROM)
-            {
-                // Skip ROM, address all devices
-                OneWireWrite(pin, SKIPROM);
-            }
-            else
-            {
-                // Talk to a particular device
-                if (!DS18B20MatchRom(pin, rom)) return false;
-            }
-
-            OneWireWrite(pin, READ_SCRATCHPAD);         // Read scratchpad
-
-            for (c = 0; c < 8; c++) 
-            {
-                buffer[c] = OneWireRead(pin);  			// Receive 8 bytes from DS18B20
-                DS18B20_crc(buffer[c]);
-            }
-            buffer[8] = OneWireRead(pin);				// Receive the 9th byte [CRC] from DS18B20
-            
-            if (dowcrc == buffer[8]) 					// Compare calculated CRC with the 9th byte received
-            {
-                temp_lsb = buffer[0];                   // byte 0 of scratchpad : temperature lsb
-                temp_msb = buffer[1];                   // byte 1 of scratchpad : temperature msb
-                //temp_lsb = OneWireRead(pin);          // byte 0 of scratchpad : temperature lsb
-                //temp_msb = OneWireRead(pin);          // byte 1 of scratchpad : temperature msb
-
-                //if (OneWireReset(pin)) return false;
-
-                // Calculation
-                // -----------------------------------------------------
-                //	Temperature Register Format
-                //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
-                //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
-                //			BIT15	BIT14	BIT13	BIT12	BIT11	BIT10	BIT9	BIT8
-                //	MS BYTE S		S		S		S		S		2^6		2^5 	2^4
-                //	S = SIGN
-
-                temp = temp_msb;				
-                temp = (temp << 8) + temp_lsb;	// combine msb & lsb into 16 bit variable
-                
-                if (temp_msb & 0b11111000)		// test if sign is set, i.e. negative
-                {		
-                    t->sign = 1;
-                    temp = (temp ^ 0xFFFF) + 1;	// 2's complement conversion
-                }
-                else
-                {
-                    t->sign = 0;
-                }
-
-                t->integer = (temp >> 4) & 0x7F;	// fractional part is removed, leaving only integer part
-
-                /*	
-                t->fraction = 0;					// fractional part
-                if (BitRead(temp, 0)) t->fraction +=  625;
-                if (BitRead(temp, 1)) t->fraction += 1250;
-                if (BitRead(temp, 2)) t->fraction += 2500;
-                if (BitRead(temp, 3)) t->fraction += 5000;
-                */
-
-                t->fraction = (temp & 0x0F) * 625;
-                t->fraction /= 100;					// two digits after decimal 
-
-                crc_flag = 1;    					// Flag for good CRC: this will exit the while statement
-            }
             dowcrc = 0;
+
+            if (!DS18B20StartMeasure(bus, rom))
+                return false;
+                
+            DS18B20Wait(bus);
         }
+        while(!DS18B20ReadMeasure(bus, rom, t));
 
         return true;
     }
@@ -248,38 +287,51 @@
     --------------------------------------------------------------------
     * Description: writes configuration data to the DS18x20 device
     * Arguments:
-                    pin = pin number where one wire bus is connected.
+                    bus = pin number where one wire bus is connected.
                     rom = index of the sensor
-                    TH = Alarm Trigger High
-                    TL = Alarm Trigger Low
-                    config = configuration
+                    TH = Alarm Trigger High [-55,+125]
+                    TL = Alarm Trigger Low  [-55,+125]
+                    config = configuration : RES12BIT, RES10BIT, ...
     * Data must be transmitted least significant bit first
     ------------------------------------------------------------------*/
 
-    u8 DS18B20Configure(u8 pin, u8 rom, u8 TH, u8 TL, u8 config)
+    #if defined(DS18B20CONFIGURE)
+    u8 DS18B20Configure(u8 bus, u8 rom, u8 TL, u8 TH, u8 config)
     {
-        if (OneWireReset(pin)) return false;
-        if (rom == SKIPROM)
-        {
-            // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
-        }
-        else
-        {
-            // Talk to a particular device
-            DS18B20MatchRom(pin, rom);
-        }
-        OneWireWrite(pin, WRITE_SCRATCHPAD);	// Allows the master to write 3 bytes of data to the scratchpad
-        OneWireWrite(pin, TH);				// The first data byte is written into the TH register (byte 2 of the scratchpad)
-        OneWireWrite(pin, TL);				// The second byte is written into the TL register (byte 3)
-        OneWireWrite(pin, config);			// The third byte is written into the configuration register (byte 4)
+        // make sure the alarm temperature is within the device's range
+        if (TH > 125) TH = 125;
+        else if (TH < -55) TH = -55;
+        
+        if (TL > 125) TL = 125;
+        else if (TL < -55) TL = -55;
+
+        // Write 3 bytes of data to the scratchpad
+        if (!DS18B20Select(bus, rom))
+            return false;
+        OneWireWriteByte(bus, WRITE_SCRATCHPAD);
+        // The first data byte is written into the TH register (byte 2 of the scratchpad)
+        OneWireWriteByte(bus, TH);
+        // The second byte is written into the TL register (byte 3)
+        OneWireWriteByte(bus, TL);
+        // The third byte is written into the configuration register (byte 4)
+        OneWireWriteByte(bus, config);
+
+        // Store data into EEprom
+        if (!DS18B20Select(bus, rom))
+            return false;
+        OneWireWriteByte(bus, COPY_SCRATCHPAD);
+
+        // Wait while busy
+        DS18B20Wait(bus);
+        
         return true;
     }
-
+    #endif
+    
 /*	--------------------------------------------------------------------
     ---------- Address a specific slave device on a multidrop or single-drop bus
     --------------------------------------------------------------------
-    * Arguments:	pin = pin number where one wire bus is connected.
+    * Arguments:	bus = pin number where one wire bus is connected.
                     rom = index of the sensor
     * Description:	reads and returns a byte of data from the device.
     --------------------------------------------------------------------
@@ -290,20 +342,20 @@
     will wait for a reset pulse.
     ------------------------------------------------------------------*/
 
-    u8 DS18B20MatchRom(u8 pin, u8 rom)
+    u8 DS18B20MatchRom(u8 bus, u8 rom)
     {
         u8 i;
-        if (OneWireReset(pin)) return false;
-        OneWireWrite(pin, MATCHROM);	// Match Rom
+        if (OneWireReset(bus)) return false;
+        OneWireWriteByte(bus, MATCHROM);	// Match Rom
         for (i = 0; i < 8; i++)			// Send the Address ROM Code.
-            OneWireWrite(pin, DS18B20Rom[rom][i]);
+            OneWireWriteByte(bus, DS18B20Rom[rom][i]);
         return true;
     }
 
 /*	--------------------------------------------------------------------
     ---------- Reads the ROM Code from a device (when there is only one)
     --------------------------------------------------------------------
-    * Arguments:	pin = pin number where one wire bus is connected.
+    * Arguments:	bus = pin number where one wire bus is connected.
                     romcode = identification code of device.
     * Description: reads and returns a byte of data from the device.
     --------------------------------------------------------------------
@@ -313,45 +365,45 @@
     a data collision will occur when all the slaves attempt to respond at the same time.
     ------------------------------------------------------------------*/
 
-    void DS18B20ReadRom(u8 pin, u8 *romcode)
+    u8 DS18B20ReadRom(u8 bus, u8 *romcode)
     {
         u8 i;
-        if (!OneWireReset(pin))
-        {
-            OneWireWrite(pin, READROM);
-            for (i = 0; i < 8; i++)		// Reads the ROM Code from a device
-                romcode[i] = OneWireRead(pin);
-        }
+
+        // Detects presence of devices
+        if (OneWireReset(bus)) return false;
+        // Reads the ROM Code from a device
+        OneWireWriteByte(bus, READROM);
+        for (i = 0; i < 8; i++)
+            romcode[i] = OneWireReadByte(bus);
+        return true;
     }
 
 /*	--------------------------------------------------------------------
     ---------- Find Devices on the one-wire bus
     --------------------------------------------------------------------
-    * Arguments: pin number where one wire bus is connected.
     * Description: detects devices and print their rom code.
+    * Arguments: pin number where one wire bus is connected.
+    * Return : false or number of devices found
     ------------------------------------------------------------------*/
 
-    void DS18B20Find(u8 pin)
+    u8 DS18B20Find(u8 bus)
     {
         u8 m;
 
-        if (!OneWireReset(pin))	// Detects presence of devices
-        {
-            if (DS18B20GetFirst(pin))	// Begins when at least one part is found
-            {
-                numROMs=0;
-                do {
-                    numROMs++;
-                    // serialprint("Device #");
-                    for(m = 0; m < 8; m++)
-                    {
-                        // Identifies ROM number on found device
-                        DS18B20Rom[numROMs][m] = ROM[m];
-                    }
-                //Continues until no additional devices are found
-                } while (DS18B20GetNext(pin)&&(numROMs<10));
-            }
-        }
+        // Detects presence of devices
+        if (OneWireReset(bus)) return false;
+        // Begins when at least one part is found
+        if (!DS18B20GetFirst(bus)) return false;
+        numROMs=0;
+        // Continues until no additional devices are found
+        do {
+            numROMs++;
+            // serialprint("Device #");
+            // Identifies ROM number on found device
+            for(m = 0; m < 8; m++)
+                DS18B20Rom[numROMs][m] = ROM[m];
+        } while (DS18B20GetNext(bus)&&(numROMs<MAX_SENSORS_NUM));
+        return numROMs;
     }
 
 /*	--------------------------------------------------------------------
@@ -362,11 +414,11 @@
     find the first device on the 1-wire bus.
     ------------------------------------------------------------------*/
 
-    u8 DS18B20GetFirst(u8 pin)
+    u8 DS18B20GetFirst(u8 bus)
     {
         lastDiscrep = 0;			// reset the rom search last discrepancy global
         doneFlag = false;
-        return DS18B20GetNext(pin);	// call Next and return its return value
+        return DS18B20GetNext(bus);	// call Next and return its return value
     }
 
 /*	--------------------------------------------------------------------
@@ -377,39 +429,40 @@
     there are no more devices on the 1-wire then false is returned.
     ------------------------------------------------------------------*/
 
-    u8 DS18B20GetNext(u8 pin)
+    u8 DS18B20GetNext(u8 bus)
     {
-        u8 m = 1;					// ROM Bit index
-        u8 n = 0;					// ROM Byte index
-        u8 k = 1;					// bit mask
+        u8 m = 1;                   // ROM Bit index
+        u8 n = 0;                   // ROM Byte index
+        u8 k = 1;                   // bit mask
         u8 x = 0;
-        u8 discrepMarker = 0;				// discrepancy marker
-        u8 g;						// Output bit
-        u8 nxt;						// return value
+        u8 discrepMarker = 0;       // discrepancy marker
+        u8 g;                       // Output bit
+        u8 nxt;                     // return value
         int flag;
 
-        nxt = false;					// set the next flag to false
-        dowcrc = 0;					// reset the dowcrc
+        nxt = false;                // set the next flag to false
+        dowcrc = 0;                 // reset the dowcrc
 
-        flag = OneWireReset(pin);			// reset the 1-wire
-        if(flag||doneFlag)				// no parts -> return false
+        flag = OneWireReset(bus);   // reset the 1-wire
+        if(flag||doneFlag)          // no parts -> return false
         {
-            lastDiscrep = 0;			// reset the search
+            lastDiscrep = 0;        // reset the search
             return false;
         }
+        
         // send SearchROM command for all eight bytes
-        OneWireWrite(pin, SEARCHROM);
+        OneWireWriteByte(bus, SEARCHROM);
         do {
             x = 0;
-            if(OneWireReadBit(pin) == 1) x = 2;
+            if(OneWireReadBit(bus) == 1) x = 2;
             //myDelay_10us(12);
-            if(OneWireReadBit(pin) == 1 ) x |= 1;
+            if(OneWireReadBit(bus) == 1 ) x |= 1;
             if(x == 3)
                 break;
             else
             {
-                if(x > 0)				// all devices coupled have 0 or 1
-                    g = x >> 1;			// bit write value for search
+                if(x > 0)           // all devices coupled have 0 or 1
+                    g = x >> 1;     // bit write value for search
                 else
                 {
                     // if this discrepancy is before the last
@@ -417,7 +470,7 @@
                     // the same as last time
                     if(m < lastDiscrep)
                         g = ( (ROM[n] & k) > 0);
-                    else			// if equal to last pick 1
+                    else            // if equal to last pick 1
                         g = (m == lastDiscrep);	// if not then pick 0
                         // if 0 was picked then record position with mask k
                         if (g == 0) discrepMarker = m;
@@ -426,24 +479,24 @@
                     ROM[n] |= k;
                 else
                     ROM[n] &= ~k;
-                OneWireWriteBit(pin, g);		// ROM search write
-                m++;								// increment bit counter m
-                k = k << 1;							// and shift the bit mask k
-                if(k == 0)							// if the mask is 0 then go to new ROM
-                {									// byte n and reset mask
-                    DS18B20_crc(ROM[n]);			// accumulate the CRC
+                OneWireWriteBit(bus, g);// ROM search write
+                m++;                // increment bit counter m
+                k = k << 1;         // and shift the bit mask k
+                if(k == 0)          // if the mask is 0 then go to new ROM
+                {                   // byte n and reset mask
+                    DS18B20_crc(ROM[n]);// accumulate the CRC
                     n++;
                     k++;
                 }
             }
-        } while (n < 8);							// loop until through all ROM bytes 0-7
-        if(m < 65 || dowcrc)						// if search was unsuccessful then
-            lastDiscrep=0;							// reset the last discrepancy to 0
-        else										// search was successful, so set lastDiscrep, lastOne, nxt
+        } while (n < 8);            // loop until through all ROM bytes 0-7
+        if(m < 65 || dowcrc)        // if search was unsuccessful then
+            lastDiscrep=0;          // reset the last discrepancy to 0
+        else                        // search was successful, so set lastDiscrep, lastOne, nxt
         {
             lastDiscrep = discrepMarker;
             doneFlag = (lastDiscrep == 0);
-            nxt = true;								// indicates search is not complete yet, more parts remain
+            nxt = true;             // indicates search is not complete yet, more parts remain
         }
         return nxt;
     }
@@ -491,7 +544,7 @@
         return dowcrc;
     ------------------------------------------------------------------*/
 
-    u8 DS18B20_crc(u8 x)
+    void DS18B20_crc(u8 x)
     {
         u8 i = (x ^ dowcrc) & 0xff;
 
@@ -505,128 +558,6 @@
         if (i & 0x20) dowcrc ^= 0x23;
         if (i & 0x40) dowcrc ^= 0x46;
         if (i & 0x80) dowcrc ^= 0x8c;
-
-        return dowcrc;
-    }
-
-/*	--------------------------------------------------------------------
-    ---------- DS18B20StartMeasure()
-    --------------------------------------------------------------------
-    * Description:	reads the ds18x20 device on the 1-wire bus and
-					starts the temperature acquisition
-    * Arguments:	pin = pin number where one wire bus is connected.
-                    rom = index of the sensor or SKIPROM
-                    resolution = 9 to 12 bit resolution
-                    t = temperature pointer
-    ------------------------------------------------------------------*/
-
-    u8 DS18B20StartMeasure(u8 pin, u8 rom, u8 resolution)
-    {
-        u8 	res, busy = LOW;
-        u8 	temp_lsb, temp_msb;
-        u16	temp;
-
-        switch (resolution)
-        {
-            case RES12BIT:	res = 0b01100000;	break;	// 12-bit resolution
-            case RES11BIT:	res = 0b01000000;	break;	// 11-bit resolution
-            case RES10BIT:	res = 0b00100000;	break;	// 10-bit resolution
-            case  RES9BIT:	res = 0b00000000;	break;	//  9-bit resolution
-            default:		res = 0b00000000;	break;	//  9-bit resolution
-            /// NB: The power-up default of these bits is R0 = 1 and R1 = 1 (12-bit resolution)
-        }
-        
-        if (!DS18B20Configure(pin, rom, 0, 0, res)) return FALSE; // no alarm
-
-        if (OneWireReset(pin)) return FALSE;
-
-        if (rom == SKIPROM)
-        {
-            // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
-        }
-        else
-        {
-            // Talk to a particular device
-            if (!DS18B20MatchRom(pin, rom)) return FALSE;
-        }
-
-        OneWireWrite(pin, CONVERT_T);		// Start temperature conversion
-        return TRUE;
-    }
-
-/*	--------------------------------------------------------------------
-    ---------- DS18B20ReadMeasure()
-    --------------------------------------------------------------------
-    * Description:	reads the ds18x20 device on the 1-wire bus
-    * Arguments:	pin = pin number where one wire bus is connected.
-                    rom = index of the sensor or SKIPROM
-                    t = temperature pointer
-	* Return:		the temperature previously acquired
-    ------------------------------------------------------------------*/
-
-    u8 DS18B20ReadMeasure(u8 pin, u8 rom, DS18B20_Temperature * t)
-    {
-        u8 	res, busy = LOW;
-        u8 	temp_lsb, temp_msb;
-        u16	temp;
-
-        if (OneWireReset(pin)) return FALSE;
-
-        if (rom == SKIPROM)
-        {
-            // Skip ROM, address all devices
-            OneWireWrite(pin, SKIPROM);
-        }
-        else
-        {
-            // Talk to a particular device
-            if (!DS18B20MatchRom(pin, rom)) return FALSE;
-        }
-
-        OneWireWrite(pin, READ_SCRATCHPAD);// Read scratchpad
-
-        temp_lsb = OneWireRead(pin);		// byte 0 of scratchpad : temperature lsb
-        temp_msb = OneWireRead(pin);		// byte 1 of scratchpad : temperature msb
-
-        if (OneWireReset(pin)) return FALSE;
-
-        // Calculation
-        // -------------------------------------------------------------
-        //	Temperature Register Format
-        //			BIT7	BIT6	BIT5	BIT4	BIT3	BIT2	BIT1	BIT0
-        //	LS BYTE 2^3		2^2		2^1		2^0		2^-1	2^-2	2^-3	2^-4
-        //			BIT15	BIT14	BIT13	BIT12	BIT11	BIT10	BIT9	BIT8
-        //	MS BYTE S		S		S		S		S		2^6		2^5 	2^4
-        //	S = SIGN
-
-        temp = temp_msb;				
-        temp = (temp << 8) + temp_lsb;	// combine msb & lsb into 16 bit variable
-        
-        if (temp_msb & 0b11111000)		// test if sign is set, i.e. negative
-        {		
-            t->sign = 1;
-            temp = (temp ^ 0xFFFF) + 1;	// 2's complement conversion
-        }
-        else
-        {
-            t->sign = 0;
-        }
-
-        t->integer = (temp >> 4) & 0x7F;	// fractional part is removed, leaving only integer part
-
-/*	
-        t->fraction = 0;					// fractional part
-        if (BitRead(temp, 0)) t->fraction +=  625;
-        if (BitRead(temp, 1)) t->fraction += 1250;
-        if (BitRead(temp, 2)) t->fraction += 2500;
-        if (BitRead(temp, 3)) t->fraction += 5000;
-*/
-        t->fraction = (temp & 0x0F) * 625;
-        t->fraction /= 100;					// two digits after decimal 
-
-        return TRUE;
     }
 
 #endif /* __DS18B20_C */
-

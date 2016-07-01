@@ -3,7 +3,7 @@ I2C.slave I2C1_slave#include <i2c1.c>
 I2C.init I2C1_init#include <i2c1.c>
 I2C.send I2C1_send#include <i2c1.c>
 I2C.get I2C1_get#include <i2c1.c>
-I2C.write I2C1_writechar#include <i2c1.c>
+I2C.write I2C1_write#include <i2c1.c>
 I2C.writechar I2C1_writechar#include <i2c1.c>
 I2C.read I2C1_readchar#include <i2c1.c>
 I2C.readchar I2C1_readchar#include <i2c1.c>

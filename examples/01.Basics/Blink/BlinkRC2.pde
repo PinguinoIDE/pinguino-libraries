@@ -11,5 +11,5 @@ void setup()
 void loop()
 {
     LATCbits.LATC2 ^= 1;
-    delay(50);
+    delay(500);
 }
