@@ -13,8 +13,10 @@
                   print, printNumber and printFloat
     10 Mar 2014 - Regis Blanchot (rblanchot@gmail.com) fixed :
                   printNumber, getKey and getString
-                  printFloat still to do
-                  init optimized
+    18 Feb 2016 - Regis Blanchot (rblanchot@gmail.com) :
+                  * use of printFormated.c, printFloat.c and printNumber.c
+                  * optimized CDCsend, CDCRead, 
+                  * added 16F1549 support (still not working, codesize too large)
     ------------------------------------------------------------------*/
 
 #ifndef __USBCDC__

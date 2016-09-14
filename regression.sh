@@ -10,7 +10,8 @@
 #   CHANGELOG:
 #   09 Nov. 2012 - RB - first release
 #   26 Jan. 2016 - RB - updated to use with Pinguino IDE v12
-#   03 Jan. 2016 - RB - multi-file, multi-compiler tests
+#   03 Jan. 2016 - RB - added multi-file and multi-compiler (8-bit only)
+#   12 Sep. 2016 - RB - added 32-bit support
 #   --------------------------------------------------------------------
 #   This is free software; you can redistribute it and/or
 #   modify it under the terms of the GNU Lesser General Public
@@ -33,8 +34,9 @@ HOMEDIR=`pwd`
 LOGDIR="log"
 PINGUINO="../pinguino-ide/pinguino/pinguino_cmd.py"
 
-COM8LIST=("--xc8" "--sdcc")
-CPU8LIST=("-p1459" "-c1708" "-p2455" "-p4455" "-p2550" "-p4550" "-p25k50" "-p45k50" "-p26j50" "-p46j50" "-p27j53" "-p47j53")
+CMP8LIST=("--xc8" "--sdcc")
+BRD8LIST=("-p1459" "-c1708" "-p13k50" "-p14k50" "-p2455" "-p4455" "-p2550" "-p4550" "-p25k50" "-p45k50" "-p26j50" "-p46j50" "-p27j53" "-p47j53")
+BRD32LIST=('-p220' '-p250' '-p270' '--olimex220' '--olimex440' '--olimex440OTG' '--olimex440Micro' '--olimexT795' '--emperor460' '--emperor795' '--ubw460' '--ubw795')
 
 # colors
 #RED='\e[31;1m>'
@@ -80,19 +82,37 @@ fi
 find ${TARGET} -type f -name *.pde | while read FILE ; do
     FNAME=$(basename "${FILE}" .pde)
     printf "%s\n" "$GREEN Compiling $FNAME ..."
-    for cpu in "${CPU8LIST[@]}"; do
-        printf "%-20s" "$YELLOW $cpu"
-        for cc in "${COM8LIST[@]}"; do
-            OUTPUT=`python $PINGUINO $cc $cpu -f $FILE 2> ${LOGDIR}/${FNAME}.log`
+
+    # 8-bit
+    for board in "${BRD8LIST[@]}"; do
+        printf "%-20s" "$YELLOW $board"
+        for compiler in "${CMP8LIST[@]}"; do
+            OUTPUT=`python $PINGUINO $compiler $board -f $FILE 2> ${LOGDIR}/${FNAME}.log`
             END=${OUTPUT:(-2)}
             if [ "$END" != "OK" ]; then
-                printf "%s\t" "$RED $cc"
+                printf "%s\t" "$RED $compiler"
                 #echo ${OUTPUT} >> "${LOGDIR}/${FNAME}.log"
                 #echo -e '\t' $YELLOW "See ${LOGDIR}/${FNAME}.log" $TERM
             else
-                printf "%s\t" "$GREEN $cc"
+                printf "%s\t" "$GREEN $compiler"
             fi
         done
         printf "$NORMAL\n"
     done
+
+    # 32-bit
+    for board in "${BRD32LIST[@]}"; do
+        printf "%-20s" "$YELLOW $board"
+        OUTPUT=`python $PINGUINO $board -f $FILE 2> ${LOGDIR}/${FNAME}.log`
+        END=${OUTPUT:(-2)}
+        if [ "$END" != "OK" ]; then
+            printf "%s\t" "$RED gcc-p32"
+            #echo ${OUTPUT} >> "${LOGDIR}/${FNAME}.log"
+            #echo -e '\t' $YELLOW "See ${LOGDIR}/${FNAME}.log" $TERM
+        else
+            printf "%s\t" "$GREEN gcc-p32"
+        fi
+        printf "$NORMAL\n"
+    done
+
 done

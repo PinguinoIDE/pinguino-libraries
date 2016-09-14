@@ -138,7 +138,8 @@ typedef union __attribute__ ((packed))__BDT
 #define ConvertToPhysicalAddress(va)       ( (u32) (va) & 0x1FFFFFFF )
 
 #else
-static inline void *ConvertToPhysicalAddress (volatile void *addr)
+//static inline void *ConvertToPhysicalAddress (volatile void *addr)
+static inline u32 ConvertToPhysicalAddress (volatile void *addr)
 {
     u32 virt = (u32) addr;
     u32 phys;
@@ -161,7 +162,8 @@ static inline void *ConvertToPhysicalAddress (volatile void *addr)
         // kuseg
         phys = virt + 0x40000000;
     }
-    return (void*) phys;
+    //return (void*) phys;
+    return phys;
 }
 #endif
 

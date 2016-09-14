@@ -287,6 +287,7 @@ extern LINE_CODING cdc_line_coding;
 /*
  * Public Prototypes
  */
+
 void usb_check_cdc_request(void);
 void cdc_init_endpoint(void);
 //u8 cdc_consume(void (*func) (u32));

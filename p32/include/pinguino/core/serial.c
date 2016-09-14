@@ -1,10 +1,10 @@
 /*	--------------------------------------------------------------------
     FILE:			serial.c
     PROJECT:		pinguino
-    PURPOSE:		
+    PURPOSE:		Serial communication
     PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	10 nov. 2010
     --------------------------------------------------------------------
+    10 Nov. 2010 R. Blanchot - First release
     13 Feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h
     21 Set. 2011 Marcus Fazzi added support for UART3
     23 Set. 2011 Marcus Fazzi added support for UART4,5 AND 6
@@ -647,7 +647,7 @@ void SerialConfigure(u8 port, u32 config, u32 enable, u32 baudrate)
     SerialSetDataRate(port, baudrate);		// UxBRG
     SerialSetLineControl(port, config);		// UxMODE
     SerialEnable(port, enable);				// UxSTA
-    SerialIntConfigure(port, INT_PRIORITY_3, INT_SUBPRIORITY_3);
+    SerialIntConfigure(port, INT_PRIORITY_7, INT_SUBPRIORITY_3);
     SerialFlush(port);
 }
 

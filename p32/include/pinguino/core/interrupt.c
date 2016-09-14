@@ -1,18 +1,18 @@
 /*  --------------------------------------------------------------------
-    FILE:				interrupt.c
-    PROJECT:			pinguino 32
-    PURPOSE:			interrupts management
-    PROGRAMER:			regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:		16 Nov. 2010
-    LAST RELEASE:		16 Jan. 2015
+    FILE:       interrupt.c
+    PROJECT:    pinguino 32
+    PURPOSE:    interrupts management
+    PROGRAMER:  regis blanchot <rblanchot@gmail.com>
     --------------------------------------------------------------------
     CHANGELOG:
+    16 Nov. 2010 : Régis first release
     ???          : Marcus Fazzi <anunakin@gmail.com> added UART3/4/5/6 for PIC32MX795 support
-    05 jul. 2012 : Gagabi Added support for GENERIC 32 bits boards in intconfiguresystem()
+    05 Jul. 2012 : Gagabi Added support for GENERIC 32 bits boards in intconfiguresystem()
     10 May  2014 : Joël fixed wrong interrupt vector number for MX1xx and MX2xx family
     16 May  2014 : Régis replaced BitSet and BitClear macro with register set and clear instructions
     14 Jan  2015 : Régis splited interrupt.c in interrupt.c and interrupt.h
     16 Jan  2015 : Régis updated IntConfigureSystem()
+    04 Jul  2016 : Régis changed switch to if statement in IntConfigureSystem()
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -944,17 +944,16 @@ void MIPS32 IntConfigureSystem(u8 mode)
     temp &= 0xFFBFFFFD;         // Clear BEV and EXL
     _CP0_SET_STATUS(temp);      // Update Status
 
-    switch (mode)
+    // Set the CP0 registers for multi-vector interrupt
+    if (mode == INT_SYSTEM_CONFIG_MULT_VECTOR)
     {
-        case INT_SYSTEM_CONFIG_MULT_VECTOR:
-            // Set the CP0 registers for multi-vector interrupt
-            INTCONSET = 0x1000; // Set MVEC bit (bit 12 : 1<<12=0x1000)
-            break;
-            
-        case INT_SYSTEM_CONFIG_SINGLE_VECTOR:
-            // Set the CP0 registers for single-vector interrupt
-            INTCONCLR = 0x1000; // Clear MVEC bit (bit 12 : 1<<12=0x1000)
-            break;
+        INTCONSET = 0x1000; // Set MVEC bit (bit 12 : 1<<12=0x1000)
+    }
+    
+    // Set the CP0 registers for single-vector interrupt
+    else // INT_SYSTEM_CONFIG_SINGLE_VECTOR
+    {
+        INTCONCLR = 0x1000; // Clear MVEC bit (bit 12 : 1<<12=0x1000)
     }
 
     /// Enable all interrupts

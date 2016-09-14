@@ -73,8 +73,8 @@ void usb_device_init(void)
     u8 i;
     u32 phyaddrusbbuf = ConvertToPhysicalAddress(&usb_buffer);
 
-    #ifdef __DEBUG__
-    //debug("usb_device_init()");
+    #if 0 //def __DEBUG__
+    debug("usb_device_init()");
     #endif
 
     // Clear all of the BDT entries
@@ -150,12 +150,14 @@ void usb_device_init(void)
     while (U1IR & _U1IR_TRNIF_MASK)
     {
         U1IR |= _U1IR_TRNIF_MASK;   // clear TRNIF to advance the U1STAT FIFO
+        /*
         nop();                      // wait for six instruction cycles ...
         nop();
         nop();
         nop();
         nop();
         nop();                      // ...to allow a pending TRNIF to appear
+        */
     }
 
     // Disable all USB interrupts except VBUS voltage
@@ -303,8 +305,8 @@ void usb_device_tasks(void)
 #endif
 {
     #ifdef __DEBUG__
-    /*
     debug( "usb_device_tasks()");
+    /*
     debug( "U1IE=0b%08b", U1IE);
     debug( "U1IR=0b%08b", U1IR);
     */
@@ -480,8 +482,11 @@ void usb_device_tasks(void)
             usb_device_state = DEFAULT_STATE;
 
             // Interrupt bit must be cleared by writing a '1'
-            //U1IR = _U1IR_URSTIF_MASK;
-            //return;
+            U1IR |= _U1IR_URSTIF_MASK;
+            #ifdef __DEBUG__
+            debug("*** BREAKPOINT ***");
+            #endif
+            return;
         }
     }
 
@@ -540,6 +545,8 @@ void usb_device_tasks(void)
             #endif
 
             // Pointless to continue servicing if the device is in suspend mode.
+            // Interrupt bit must be cleared by writing a '1'
+            U1IR |= _U1IR_IDLEIF_MASK;
             return;
         }
     }
@@ -685,6 +692,7 @@ void usb_device_tasks(void)
             // Interrupt bit must be cleared by writing a '1'
             // Clearing this bit will cause the STAT FIFO to advance
             U1IR |= _U1IR_TRNIF_MASK;
+            return;
         }
     }
 }
@@ -723,7 +731,7 @@ void usb_device_tasks(void)
 
 void usb_ctrl_trf_setup_handler(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_trf_setup_handler");
     #endif
 
@@ -786,7 +794,7 @@ void usb_ctrl_trf_setup_handler(void)
  
 void usb_ctrl_trf_out_handler(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_trf_out_handler");
     #endif
 
@@ -811,7 +819,7 @@ void usb_ctrl_trf_in_handler(void)
 {
     u8 lastDTS;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_trf_in_handler");
     #endif
 
@@ -865,7 +873,7 @@ void usb_ctrl_trf_in_handler(void)
 
 void usb_prepare_for_next_setup_trf(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_prepare_for_next_setup_trf");
     #endif
     
@@ -924,7 +932,7 @@ void usb_prepare_for_next_setup_trf(void)
 
 void usb_check_std_request(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_check_std_request");
     debug("Request = %d", usb_setup_pkt.bRequest);
     #endif
@@ -1074,7 +1082,7 @@ void usb_std_feature_req_handler(void)
     BDT_ENTRY* p;
     u8* pUEP;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_std_feature_req_handler");
     #endif
     
@@ -1150,7 +1158,7 @@ void usb_std_feature_req_handler(void)
 
 void usb_std_get_dsc_handler(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_std_get_dsc_handler");
     #endif
 
@@ -1214,7 +1222,7 @@ void usb_std_get_dsc_handler(void)
 #if 1
 void usb_std_get_status_handler(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_std_get_status_handler");
     #endif
 
@@ -1279,7 +1287,7 @@ void usb_std_get_status_handler(void)
  
 void usb_ctrl_ep_service_complete(void)
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_ep_service_complete");
     #endif
 
@@ -1392,7 +1400,7 @@ void usb_ctrl_trf_tx_service(void)
     u8 byteToSend;
     u8 *dst;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_trf_tx_service");
     #endif
 
@@ -1454,7 +1462,7 @@ void usb_ctrl_trf_rx_service(void)
 {
     u8 byteToRead, i;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_ctrl_trf_rx_service");
     #endif
 
@@ -1510,7 +1518,7 @@ void usb_std_set_cfg_handler(void)
 {
     u8 i;
     
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_std_set_cfg_handler");
     #endif
 
@@ -1600,7 +1608,7 @@ void usb_configure_endpoint(u8 ep, u8 dir)
 {
     volatile BDT_ENTRY* handle;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_configure_endpoint");
     #endif
 
@@ -1651,7 +1659,7 @@ void usb_enable_endpoint(u8 ep, u8 options)
     // Set the options to the appropriate endpoint control register
     u8* p;
     
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_enable_endpoint");
     #endif
 
@@ -1726,7 +1734,7 @@ USB_HANDLE usb_transfer_one_packet (u8 ep, u8 dir, u8* data, u8 len)
 {
     USB_HANDLE handle;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_transfer_one_packet");
     #endif
     

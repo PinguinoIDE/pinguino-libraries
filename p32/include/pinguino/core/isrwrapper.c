@@ -148,15 +148,19 @@
     #if !defined(INT0INT)
     void Int0Interrupt(void) { Nop(); }
     #endif
+    
     #if !defined(INT1INT)
     void Int1Interrupt(void) { Nop(); }
     #endif
+    
     #if !defined(INT2INT)
     void Int2Interrupt(void) { Nop(); }
     #endif
+    
     #if !defined(INT3INT)
     void Int3Interrupt(void) { Nop(); }
     #endif
+    
     #if !defined(INT4INT)
     void Int4Interrupt(void) { Nop(); }
     #endif

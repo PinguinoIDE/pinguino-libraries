@@ -4,10 +4,9 @@
     PURPOSE:            usb cdc module based on the Microchip USB stack
     PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
                         Jean-Pierre Mandon <jp.mandon@gmail.com>
-    FIRST RELEASE:      16 Nov. 2010
     --------------------------------------------------------------------
     CHANGELOG:
-
+    --------------------------------------------------------------------
     16 Nov. 2010 - 1.0 - Jean-Pierre Mandon - first release
             2011 - 1.1 - Régis Blanchot     - added printf, println, print, write, getKey, getString
     25 Feb. 2012 - 1.2 - Jean-Pierre Mandon - added support for 32MX220F032
@@ -53,8 +52,8 @@
  ** Config. ************************************************************
  **********************************************************************/
 //#define __USBCDCPOLLING__
-#define __ALLOW_RESUME__
-#define __ALLOW_SUSPEND__
+//#define __ALLOW_RESUME__
+//#define __ALLOW_SUSPEND__
 //#define __ALLOW_DEBUG__
 /**********************************************************************/
 
@@ -117,10 +116,8 @@
 #define _CDCBUFFERLENGTH_ 64
 #endif
 
-extern USBVOLATILE u8  usb_device_state;
+extern USBVOLATILE u8 usb_device_state;
 extern u32 cdc_bps;
-
-void CDC_begin(u32);
 
 /***********************************************************************
  * USB CDC init routine
@@ -303,7 +300,7 @@ u8 CDC_getkey(void)
 u8 * CDC_getstring(void)
 {
     u8 c, i = 0;
-    static u8 buffer[_CDCBUFFERLENGTH_];	// Needs static buffer at least.
+    static u8 buffer[_CDCBUFFERLENGTH_];// Needs static buffer at least.
     
     do {
         c = CDC_getkey();

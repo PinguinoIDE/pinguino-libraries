@@ -2,7 +2,7 @@
  * This file contains all of functions, macros, definitions, variables,
  * datatypes, etc. that are required for usage with the CDC function
  * driver. This file should be included in projects that use the CDC
- * \function driver.
+ * function driver.
  *
  * The software supplied herewith by Microchip Technology Incorporated
  * (the 'Company') for its PIC® Microcontroller is intended and
@@ -41,6 +41,9 @@ USB_HANDLE data_in;
 
 CONTROL_SIGNAL_BITMAP control_signal_bitmap;
 
+// *** MUST BE VOLATILE ***
+//USBVOLATILE u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+//USBVOLATILE u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
 volatile u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
 volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
 
@@ -61,11 +64,11 @@ u8 dummy_encapsulated_cmd_response[DUMMY_LENGTH];
  
 void usb_check_cdc_request()
 {
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("usb_check_cdc_request");
     #endif
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("Recipient=%d", usb_setup_pkt.Recipient);
     #endif
 
@@ -73,7 +76,7 @@ void usb_check_cdc_request()
     if (usb_setup_pkt.Recipient != RCPT_INTF)
         return;
 
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("Request type=%d", usb_setup_pkt.RequestType);
     #endif
 
@@ -185,10 +188,10 @@ void cdc_init_endpoint()
      * BYTEs will only be known right before the data is sent.
      */
      
-    //usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
-    //usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP | USB_OUT_ENABLED);
-    usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED);
-    usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED | USB_HANDSHAKE_ENABLED);
+    usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
+    usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP | USB_OUT_ENABLED);
+    //usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED);
+    //usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED | USB_HANDSHAKE_ENABLED);
 
     data_out = usb_rx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
     data_in  = 0;
@@ -202,6 +205,7 @@ void cdc_init_endpoint()
 u8 cdc_consume (void (*func) (u32))
 {
     u8 len;
+    u32 n;
 
     if (! data_out || usb_handle_busy(data_out))
         return 0;
@@ -210,14 +214,12 @@ u8 cdc_consume (void (*func) (u32))
     len = usb_handle_get_length(data_out);
     if (func != 0)
     {
-        u32 n;
         for (n=0; n<len; n++)
-            func (cdc_data_rx[n]);
+            func(cdc_data_rx[n]);
     }
 
     // Prepare dual-ram buffer for next OUT transaction
-    data_out = usb_rx_one_packet (CDC_DATA_EP,
-            (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+    data_out = usb_rx_one_packet (CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
 
     return len;
 }
@@ -269,8 +271,7 @@ u8 cdc_gets(char *buffer)
         for (cdc_rx_len = 0; cdc_rx_len < len; cdc_rx_len++)
             buffer[cdc_rx_len] = cdc_data_rx[cdc_rx_len];
         
-        data_out = usb_rx_one_packet (CDC_DATA_EP,
-                (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+        data_out = usb_rx_one_packet (CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
     }
 
     return len;
@@ -303,7 +304,7 @@ void cdc_tx_service()
 {
     u8 byte_to_send, i;
     
-    #ifdef __DEBUG__
+    #if 0 //def __DEBUG__
     debug("cdc_tx_service()");
     #endif
 
@@ -342,7 +343,7 @@ void cdc_tx_service()
         // Lastly, determine if a zero length packet state is necessary.
         if (cdc_tx_len == 0)
         {
-            if(byte_to_send == CDC_DATA_IN_EP_SIZE)
+            if (byte_to_send == CDC_DATA_IN_EP_SIZE)
                 cdc_trf_state = CDC_TX_BUSY_ZLP;
             else
                 cdc_trf_state = CDC_TX_COMPLETING;
