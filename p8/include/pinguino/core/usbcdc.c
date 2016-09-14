@@ -1,5 +1,5 @@
 /*	--------------------------------------------------------------------
-    FILE:         __cdc.c
+    FILE:         usbcdc.c
     PROJECT:      pinguino
     PURPOSE:      USB CDC routines for use with pinguino board, 
     PROGRAMER:    Jean-Pierre Mandon 2010
@@ -17,6 +17,9 @@
                   * use of printFormated.c, printFloat.c and printNumber.c
                   * optimized CDCsend, CDCRead, 
                   * added 16F1549 support (still not working, codesize too large)
+    14 Sep 2016 -  Regis Blanchot (rblanchot@gmail.com) changed :
+                  * void CDCsend(u8 len) in void CDCsend(u8 *buffer, u8 len)
+                  * void CDC.read() in void CDC.read(u8* buffer)
     ------------------------------------------------------------------*/
 
 #ifndef __USBCDC__
@@ -127,13 +130,14 @@ void CDCbegin(u32 baudrate)
 }
 
 /***********************************************************************
- * USB CDC send routine (private)
+ * USB CDC send routine
  * added by Regis Blanchot 18/02/2016
  * send len bytes of the CDCTxBuffer on CDC port
  **********************************************************************/
 
-static void CDCsend(u8 len)
+void CDCsend(u8 *buffer, u8 len)
 {
+    u8 i;
     u16 t=0xFF;
 
     if (deviceState != CONFIGURED) return;
@@ -144,6 +148,10 @@ static void CDCsend(u8 len)
     {
         if (len > USB_CDC_IN_EP_SIZE)
             len = USB_CDC_IN_EP_SIZE;
+        
+        //*CDCTxBuffer = *buffer;
+        for (i=0; i<=sizeof(CDCTxBuffer); i++)
+            CDCTxBuffer[i] = buffer[i];
         
         //EP_IN_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCTxBuffer); 
         // Set counter to num bytes ready for send
@@ -160,18 +168,22 @@ static void CDCsend(u8 len)
 }
 
 /***********************************************************************
- * USB CDC read routine (private)
+ * USB CDC read routine
  * added by Regis Blanchot 18/02/2016
  * read CDC port and fill CDCRxBuffer 
  **********************************************************************/
 
-#if defined(CDCGETKEY) || defined(CDCGETSTRING)
-static void CDCread()
+#if defined(CDCREAD) || defined(CDCGETKEY) || defined(CDCGETSTRING)
+void CDCread(u8* buffer)
 {
+    u8 i;
+    
     if (deviceState != CONFIGURED) return;
     
+    // Only Process if we own the buffer ( aka not own by SIE)
     if (!CONTROL_LINE) return;
     
+    // Only process if a serial device is connected
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
         //EP_OUT_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
@@ -183,6 +195,11 @@ static void CDCread()
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
         // reset Buffer to original state
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
+    
+        // return the bytes read
+        //*buffer = *CDCRxBuffer;
+        for (i=0; i<=sizeof(CDCTxBuffer); i++)
+            buffer[i] = CDCTxBuffer[i];
     }
 }
 #endif
@@ -195,11 +212,8 @@ static void CDCread()
 
 void CDCprintChar(u8 c)
 {
-    CDCTxBuffer[0] = c;
-    CDCsend(1);
+    CDCsend(&c, 1);
 }
-
-//#define CDCprintChar(c)     printChar(c)
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)
@@ -210,18 +224,7 @@ void CDCprintChar(u8 c)
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
 void CDCprint(const char *string)
 {
-    //CDCputs(string, strlen(string));
-    u8 len=0;
-    char *s = &CDCTxBuffer[0];
-
-    while (*string)
-    {
-        *s++ = *string++;
-        len++;
-    }
- 
-    // Send "len" bytes of CDCTxBuffer
-    CDCsend(len);
+    CDCsend(string, strlen(string));
 }
 #endif
 
@@ -246,7 +249,7 @@ void CDCprintln(const char *string)
     *s++ = '\r';
     *s++ = '\n';
     
-    CDCsend(len+2);
+    CDCsend(CDCTxBuffer, len+2);
 }
 #endif
 
@@ -293,7 +296,7 @@ void CDCprintf(const u8 *fmt, ...)
     va_start(args, fmt);
     
     len = psprintf2(&CDCTxBuffer[0], fmt, args);
-    CDCsend(len);
+    CDCsend(CDCTxBuffer, len);
 
     va_end(args);
 }
@@ -309,11 +312,14 @@ void CDCprintf(const u8 *fmt, ...)
 u8 CDCgetkey(void)
 {
     u8 c;
+    u8* buffer;
     
-    CDCRxBuffer[0]=0;
+    //CDCRxBuffer[0]=0;
+    buffer[0]=0;
     do {
-        CDCread();
-        c = CDCRxBuffer[0];
+        CDCread(buffer);
+        //c = CDCRxBuffer[0];
+        c = buffer[0];
     } while (!c);
     
     return c;
