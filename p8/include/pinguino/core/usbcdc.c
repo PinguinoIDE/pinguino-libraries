@@ -17,9 +17,10 @@
                   * use of printFormated.c, printFloat.c and printNumber.c
                   * optimized CDCsend, CDCRead, 
                   * added 16F1549 support (still not working, codesize too large)
+                  * changed cdc_init() to CDC_begin(u32 baudrate)
     14 Sep 2016 -  Regis Blanchot (rblanchot@gmail.com) changed :
-                  * void CDCsend(u8 len) in void CDCsend(u8 *buffer, u8 len)
-                  * void CDC.read() in void CDC.read(u8* buffer)
+                  * void CDCwrite(u8 len) in u8 CDCwrite(u8 *buffer, u8 len)
+                  * void CDC.read() in u8 CDC.read(u8* buffer, u8 len)
     ------------------------------------------------------------------*/
 
 #ifndef __USBCDC__
@@ -36,6 +37,8 @@
 //#include <usb/usb_config.c>
 //#include <usb/picUSB.h>
 #include <usb/picUSB.c>
+
+#include <string.h>
 
 //#ifdef boot2
 //    #include <delayms.c>
@@ -130,27 +133,27 @@ void CDCbegin(u32 baudrate)
 }
 
 /***********************************************************************
- * USB CDC send routine
- * added by Regis Blanchot 18/02/2016
+ * USB CDC write routine (CDC.write)
  * send len bytes of the CDCTxBuffer on CDC port
+ * returns number of bytes written
+ * THIS FUNCTION IS CALLED BY ALMOST ALL THE OTHERS
  **********************************************************************/
 
-void CDCsend(u8 *buffer, u8 len)
+u8 CDCwrite(u8 *buffer, u8 len)
 {
     u8 i;
-    u16 t=0xFF;
+    u8 t=0xFF;
 
-    if (deviceState != CONFIGURED) return;
+    if (deviceState != CONFIGURED) return 0;
 
-    if (!CONTROL_LINE) return;
+    if (!CONTROL_LINE) return 0;
 
     if (!EP_IN_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
         if (len > USB_CDC_IN_EP_SIZE)
             len = USB_CDC_IN_EP_SIZE;
         
-        //*CDCTxBuffer = *buffer;
-        for (i=0; i<=sizeof(CDCTxBuffer); i++)
+        for (i=0; i<len; i++)
             CDCTxBuffer[i] = buffer[i];
         
         //EP_IN_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCTxBuffer); 
@@ -165,23 +168,25 @@ void CDCsend(u8 *buffer, u8 len)
     }
     
     while(t--);
+    
+    return i;
 }
 
 /***********************************************************************
- * USB CDC read routine
- * added by Regis Blanchot 18/02/2016
- * read CDC port and fill CDCRxBuffer 
+ * USB CDC read routine (CDC.read)
+ * read CDC port and fill CDCRxBuffer
+ * returns number of bytes read
  **********************************************************************/
 
 #if defined(CDCREAD) || defined(CDCGETKEY) || defined(CDCGETSTRING)
-void CDCread(u8* buffer)
+u8 CDCread(u8* buffer, u8 len)
 {
-    u8 i;
+    u8 i=0;
     
-    if (deviceState != CONFIGURED) return;
+    if (deviceState != CONFIGURED) return 0;
     
     // Only Process if we own the buffer ( aka not own by SIE)
-    if (!CONTROL_LINE) return;
+    if (!CONTROL_LINE) return 0;
     
     // Only process if a serial device is connected
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
@@ -189,6 +194,7 @@ void CDCread(u8* buffer)
         //EP_OUT_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
         // Set counter to num bytes ready for read
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
+        //EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = len;
         // clear BDT Stat bits beside DTS
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
         // toggle DTS
@@ -197,40 +203,47 @@ void CDCread(u8* buffer)
         EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
     
         // return the bytes read
-        //*buffer = *CDCRxBuffer;
-        for (i=0; i<=sizeof(CDCTxBuffer); i++)
-            buffer[i] = CDCTxBuffer[i];
+        //for (i=0; i<=sizeof(CDCRxBuffer); i++)
+        //if (&buffer != &CDCRxBuffer)
+        for (i=0; i<len; i++)
+            buffer[i] = CDCRxBuffer[i];
     }
+        
+    return i;
 }
 #endif
 
 /***********************************************************************
- * USB CDCprintChar routine (CDC.printChar or CDC.write)
- * added by regis blanchot 14/06/2011
+ * USB CDCprintChar routine (CDC.printChar)
  * write 1 char on CDC port
+ * CAUTION : THIS IS A CALLBACK FUNCTION AND CAN NOT BE A MACRO
  **********************************************************************/
 
+#if defined(CDCPRINTCHAR) || defined(CDCPRINTNUMBER) || \
+    defined(CDCPRINTFLOAT) || defined(CDCGETSTRING)
 void CDCprintChar(u8 c)
 {
-    CDCsend(&c, 1);
+    CDCwrite(&c, 1);
 }
+#endif
 
 /***********************************************************************
  * USB CDC print routine (CDC.print)
- * added by regis blanchot 04/03/2014
  * write a string on CDC port
  **********************************************************************/
 
 #if defined(CDCPRINT) || defined(CDCPRINTLN)
+#define CDCprint(string)    CDCwrite(string, strlen(string))
+/*
 void CDCprint(const char *string)
 {
-    CDCsend(string, strlen(string));
+    CDCwrite(string, strlen(string));
 }
+*/
 #endif
 
 /***********************************************************************
  * USB CDC print routine (CDC.println)
- * added by regis blanchot 04/03/2014
  * write a string followed by a carriage return character (ASCII 13, or '\r')
  * and a newline character (ASCII 10, or '\n') on CDC port
  **********************************************************************/
@@ -249,41 +262,43 @@ void CDCprintln(const char *string)
     *s++ = '\r';
     *s++ = '\n';
     
-    CDCsend(CDCTxBuffer, len+2);
+    CDCwrite(CDCTxBuffer, len+2);
 }
 #endif
 
 /***********************************************************************
  * USB CDC printNumber routine (CDC.printNumber)
- * added by regis blanchot 14/06/2011
  * write a number on CDC port
  * base : see const.h (DEC, BIN, HEXA, OCTO, ...)
  **********************************************************************/
 
 #if defined(CDCPRINTNUMBER) || defined(CDCPRINTFLOAT)
+#define CDCprintNumber(value, base)    printNumber(CDCprintChar, value, base)
+/*
 void CDCprintNumber(long value, u8 base)
 {  
     printNumber(CDCprintChar, value, base);
 }
+*/
 #endif
 
 /***********************************************************************
  * USB CDC printFloat routine (CDC.printFloat)
- * added by regis blanchot 14/06/2011
- * write a float number on CDC port
- * base : see const.h (DEC, BIN, HEXA, OCTO, ...)
+ * write a float number with n digits on CDC port
  **********************************************************************/
 
 #if defined(CDCPRINTFLOAT)
+#define CDCprintFloat(number, digits)    printFloat(CDCprintChar, number, digits)
+/*
 void CDCprintFloat(float number, u8 digits)
 { 
     printFloat(CDCprintChar, number, digits);
 }
+*/
 #endif
 
 /***********************************************************************
  * USB CDC printf routine (CDC.printf)
- * added by regis blanchot 14/06/2011
  * write a formated string on CDC port
  **********************************************************************/
 
@@ -294,61 +309,50 @@ void CDCprintf(const u8 *fmt, ...)
     va_list	args;
 
     va_start(args, fmt);
-    
-    len = psprintf2(&CDCTxBuffer[0], fmt, args);
-    CDCsend(CDCTxBuffer, len);
-
+    len = psprintf2(CDCTxBuffer, fmt, args);
+    CDCwrite(CDCTxBuffer, len);
     va_end(args);
 }
 #endif
 
 /***********************************************************************
  * USB CDC getKey routine (CDC.getKey)
- * added by regis blanchot 14/06/2011
  * wait and return a char from CDC port
  **********************************************************************/
 
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
 u8 CDCgetkey(void)
 {
-    u8 c;
-    u8* buffer;
-    
-    //CDCRxBuffer[0]=0;
-    buffer[0]=0;
+    CDCRxBuffer[0] = 0;
     do {
-        CDCread(buffer);
-        //c = CDCRxBuffer[0];
-        c = buffer[0];
-    } while (!c);
+        CDCread(CDCRxBuffer, 1);
+    } while (CDCRxBuffer[0] == 0);
     
-    return c;
+    return CDCRxBuffer[0];
 }
 #endif
 
 /***********************************************************************
  * USB CDC getString routine (CDC.getString)
- * added by regis blanchot 14/06/2011
  * wait and return a string from CDC port
  **********************************************************************/
 
 #if defined(CDCGETSTRING)
 void CDCgetstring(u8 *buffer)
 {
-    u8 c;
+    u8 c, i=0;
     
     do {
         c = CDCgetkey();
-        CDCprintChar(c);
-        *buffer++ = c;
+        if (CDCwrite(&c, 1) == 1)
+            buffer[i++] = c;
     } while (c != '\r');
-    *buffer = 0;
+    buffer[i-1] = 0;            // EOL
 }
 #endif
 
 /***********************************************************************
  * USB CDC interrupt routine
- * added by regis blanchot 05/02/2013
  * called from main.c
  **********************************************************************/
  

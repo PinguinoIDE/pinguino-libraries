@@ -156,16 +156,17 @@ unsigned long _cpu_clock_ = 48000000;
     {
         PCONbits.nPOR = 1;          // POR and BOR flags must be cleared by
         PCONbits.nBOR = 1;          // software to allow a new detection
-        //PCON |= 0b10010011;     // set all reset flag
-                                    // enable priority levels on interrupts
+        //PCON |= 0b10010011;         // set all reset flag
     }
 
     #else
 
     if (RCONbits.NOT_POR == 0)
     {
-        RCON |= 0b10010011;         // set all reset flag
-                                    // enable priority levels on interrupts
+        RCONbits.NOT_POR = 1;       // POR and BOR flags must be cleared by
+        RCONbits.NOT_BOR = 1;       // software to allow a new detection
+        RCONbits.IPEN    = 1;       // enable priority levels on interrupts
+        //RCON |= 0b10010011;         // set all reset flag
     }
 
     #endif

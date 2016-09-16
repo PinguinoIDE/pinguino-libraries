@@ -1,5 +1,4 @@
 CDC.begin CDCbegin#include <usbcdc.c>#define CDCBEGIN
-CDC.write CDCprintChar#include <usbcdc.c>#define CDCWRITE
 CDC.printChar CDCprintChar#include <usbcdc.c>#define CDCPRINTCHAR
 CDC.print CDCprint#include <usbcdc.c>#define CDCPRINT
 CDC.println CDCprintln#include <usbcdc.c>#define CDCPRINTLN
@@ -7,7 +6,7 @@ CDC.printNumber CDCprintNumber#include <usbcdc.c>#define CDCPRINTNUMBER
 CDC.printFloat CDCprintFloat#include <usbcdc.c>#define CDCPRINTFLOAT
 CDC.printf CDCprintf#include <usbcdc.c>#define CDCPRINTF
 CDC.read CDCread#include <usbcdc.c>#define CDCREAD
-CDC.send CDCsend#include <usbcdc.c>#define CDCSEND
+CDC.write CDCwrite#include <usbcdc.c>#define CDCSEND
 CDC.getKey CDCgetkey#include <usbcdc.c>#define CDCGETKEY
 CDC.getString CDCgetstring#include <usbcdc.c>#define CDCGETSTRING
 BULK.read BULK_read#include <usbbulk.c>
