@@ -14,7 +14,7 @@
     NB : 1-wire bus (DQ line) must have 4K7 pull-up resistor (connected to +5V)
 */
 
-#define ONEWIREBUS	31    // 1-wire bus is on pin 31
+#define ONEWIREBUS	0    // 1-wire bus is on pin 31
                           // can be on any other pin 
 
 void setup()
@@ -27,7 +27,8 @@ void loop()
     TEMPERATURE t;
 
     toggle(USERLED);
-    DS18B20.read(ONEWIREBUS, SKIPROM, &t);
+    //DS18x20.readFahrenheit(ONEWIREBUS, SKIPROM, &t);
+    DS18x20.readCelsius(ONEWIREBUS, SKIPROM, &t);
     USB.send(&t, 4);
     delay(1000);
 }

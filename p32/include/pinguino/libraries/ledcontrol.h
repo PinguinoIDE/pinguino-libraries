@@ -58,9 +58,24 @@
     defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT) || \
     defined(LEDCONTROLPRINTF)      || defined(LEDCONTROLSCROLL)
     #include <fonts/font8x8.h>
-    // (*font) is eq. to font[]
-    // we don't need the first 2 values
-    //u8 (*font)[8] = &font8x8[2];
+    const u8 *font_address;
+    u8 font_width;
+    u8 font_height;
+    u8 font_firstchar;
+    u8 font_charcount;
+    /*
+    #define FONT_HEIGHT             0
+    #define FONT_WIDTH              1
+    #define FONT_OFFSET             2
+    */
+    #define FONT_LENGTH             0
+    #define FONT_FIXED_WIDTH        2
+    #define FONT_WIDTH              2
+    #define FONT_HEIGHT             3
+    #define FONT_FIRST_CHAR         4
+    #define FONT_CHAR_COUNT         5
+    #define FONT_WIDTH_TABLE        6
+    #define FONT_OFFSET             6
 #endif
 
 // 7-Segment Displays
@@ -234,6 +249,7 @@ void LedControl_setDigit(u8, u8, u8, boolean);
 void LedControl_setChar(u8, u8, char, boolean);
 #endif
 
+void LedControl_setFont(const u8*);
 void LedControl_printChar(u8);
 void LedControl_print(const char *);
 #if defined(LEDCONTROLPRINTNUMBER)
@@ -246,10 +262,7 @@ void LedControl_printFloat(float, u8);
 void LedControl_printf(const u8 *, ...);
 #endif
 #if defined(LEDCONTROLSCROLL)
-void LedControl_scroll(const char *);
+u16 LedControl_scroll(const char *);
 #endif
 
 #endif	//LEDCONTROL_H
-
-
-

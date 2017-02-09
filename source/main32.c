@@ -101,13 +101,17 @@ int main()
     CDC_begin(115200);
     #endif
 
+    #ifdef __USBBULK__
+    BULK_begin();
+    #endif
+
 /** USER'S SKETCH *****************************************************/
 
     setup();
 
     while (1)
     {
-        #if defined(__USBCDC__) && defined(__USBCDCPOLLING__)
+        #if defined(__USBPOLLING__)
         usb_device_tasks();
         #endif
  

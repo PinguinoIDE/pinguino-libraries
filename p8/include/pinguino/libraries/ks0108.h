@@ -1,176 +1,221 @@
-/*
- * Copyright:      Fabian Maximilian Thiele  mailto:me@apetech.de
- * Author:         Fabian Maximilian Thiele
- * Pinguino Port:  Marcus Fazzi mailto:anunakin@vivaphp.net
- * known Problems: none
- * Version:        1.6.2
- * Description:    Graphic Library for KS0108- (and compatible) based LCDs
- * 
- * The port for pinguino, was based on the original version with some modifications 
- * based on version 1.1 and 2.0 of GLCD library for Arduino.
- */
+/*  --------------------------------------------------------------------
+    FILE:           ks0108.h
+    PROJECT:        Pinguino
+    PURPOSE:        Pinguino's Graphic LCD functions
+    PROGRAMER:      Régis Blanchot
+    FIRST RELEASE:  2016-10-17
+    --------------------------------------------------------------------
+    CHANGELOG:
+    * 2016-10-17    Régis Blanchot - Added use of Print libraries
+    * 2016-11-24    Régis Blanchot - Complete re-write
+    * 2016-12-05    Régis Blanchot - moved font indices to const.h
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-// #pragma std_sdcc99
-// #pragma std_c99
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-// Uncomment for slow drawing
-// #define DEBUG
-
-//Try it if you have a fast display, not my case, dont know if it works!
-// #define FAST_DISPLAY
-
-/**
- * Fonts for displat Text
- * If you get error: multiple sections using address 0x6500 
- * on load more then one truetype font,  try modify font.h file to load at another address, AT YOUR RISC!
- * "The whole range of flash memory 0 to 8000H . Be careful, bootloader is from 0 to 2000H and user program is from 2000H to ??
- *   So for security, i use flash starting at 6000H, with this configuration you can store 8192 bytes."
- *
- *   Fixed Fonts starts at 0x6000
- *   True Type Fonts at 0x6500
- *   Bitmaps at 0x7600
-*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    ------------------------------------------------------------------*/
 
 #ifndef	KS0108_H
 #define KS0108_H
 
-#define DISPLAY_WIDTH 128
-#define DISPLAY_HEIGHT 64
+#include <const.h>
+
+//#define KS0108_DEBUG            // Serial Output
+//#define KS0108_FAST             // Use of PORTx as Data Port
+
+#ifdef KS0108_FAST
+    #define KS0108_TRIS         TRISB
+    #define KS0108_LAT          LATB
+    #define KS0108_PORT         PORTB
+#endif
+
+#define KS0108_DISPLAY_WIDTH    128
+#define KS0108_DISPLAY_HEIGHT   64
+#define KS0108_TABSIZE          4
 
 //Panel controller chips
-#define CHIP_WIDTH     64  // pixels per chip 
+#define KS0108_CHIP_WIDTH       64  // pixels per chip 
 
-//Ports
-#ifdef SETDATAD
-#define LCD_DATA_IN			PORTD		// Data Input Register, same as output, or (PORTD or LATD ?)
-#define LCD_DATA_OUT		PORTD		// Data Output Register
-#define LCD_DATA_DIR		TRISD		// Data Direction Register for Data Port
-
-//Data on PORTB
-#else
-#define LCD_DATA_IN			PORTB		// Data Input Register, same as output, or (PORTB or LATB ?)
-#define LCD_DATA_OUT		PORTB		// Data Output Register
-#define LCD_DATA_DIR		TRISB		// Data Direction Register for Data Port
-#endif
-
-// Command port bits PORTA/C relative positions
-// Look at digital.c
-// GLCD RESET Pin works better if connected to Pinguino reset, between 10K resistor and pinguino reset button
-//Use PORTA
-#ifdef SETPORTA
-#define LCD_CMD_PORT		PORTA		// Command Output Register
-#define LCD_CMD_DIR			TRISA		// Data Direction Register for Command Port
-#define D_I			0x01	//13 D/I or RS Bit Number
-#define R_W			0x02	//14 R/W Bit Number
-#define EN			0x04	//15 EN Bit Number
-#define CSEL1		0x08	//16 CS1 Bit Number
-#define CSEL2		0x20	//17 CS2 Bit Number
-
-//Use PORTC for Commands (Default)
-#else 
-#define LCD_CMD_PORT		PORTC		// Command Output Register
-#define LCD_CMD_DIR			TRISC		// Data Direction Register for Command Port
-#define D_I			0x040	//pin 8 D/I or RS Bit
-#define R_W			0x080	//pin 9 R/W Bit
-#define EN			0x01	//pin 10 EN Bit
-#define CSEL1		0x02	//pin 11 CS1 Bit
-#define CSEL2		0x04	//pin 12 CS2 Bit
-#endif
 // Chips
-#define CHIP1       0x00
-#define CHIP2       0x01
+#define KS0108_CHIP1            0x00
+#define KS0108_CHIP2            0x01
 
 // Commands
-#define LCD_ON				0x3F
-#define LCD_OFF				0x3E
-#define LCD_SET_ADD			0x40
-#define LCD_SET_PAGE		0xB8
-#define LCD_DISP_START		0xC0
-#define LCD_BUSY_FLAG		0x80
+#define KS0108_ON               0x3F
+#define KS0108_OFF              0x3E
+#define KS0108_SET_ADD          0x40
+#define KS0108_SET_Y            0x40
+#define KS0108_SET_PAGE         0xB8
+#define KS0108_SET_X            0xB8
+#define KS0108_DISP_START       0xC0
+#define KS0108_START_LINE       0xC0
+#define KS0108_BUSY_FLAG        0x80
+
+// Orientations
+#define PORTRAIT                1
+#define LANDSCAPE               0
 
 // Colors
-#define BLACK				0xFF
-#define WHITE				0x00
+#define KS0108_BLACK            0x00
+#define KS0108_WHITE            0xFF
 
 // useful user contants
-#define NON_INVERTED 0
-#define INVERTED     1
+#define KS0108_NON_INVERTED     0
+#define KS0108_INVERTED         1
 
-// Font Indices
-#define FONT_LENGTH			0
-#define FONT_FIXED_WIDTH	2
-#define FONT_HEIGHT			3
-#define FONT_FIRST_CHAR		4
-#define FONT_CHAR_COUNT		5
-#define FONT_WIDTH_TABLE	6
+// Font Indices : 05-12-2016 : RB - moved to const.h
+/*
+#define FONT_LENGTH             0
+#define FONT_FIXED_WIDTH        2
+#define FONT_WIDTH              2
+#define FONT_HEIGHT             3
+#define FONT_FIRST_CHAR         4
+#define FONT_CHAR_COUNT         5
+#define FONT_WIDTH_TABLE        6
+#define FONT_OFFSET             6
+*/
 
-#if (DISPLAY_WIDTH / CHIP_WIDTH  == 2) 
+/*
+#if (KS0108_DISPLAY_WIDTH / KS0108_CHIP_WIDTH  == 2) 
    u8 chipSelect[] = {1,2};        // this is for 128 pixel displays
-#elif (DISPLAY_WIDTH / CHIP_WIDTH  == 3)
+#elif (KS0108_DISPLAY_WIDTH / KS0108_CHIP_WIDTH  == 3)
    //byte chipSelect[] = {0, 1, 2};  // this is for 192 pixel displays
    u8 chipSelect[] = {0, 2, 1};  // this is for 192 pixel displays on sanguino only
 #endif
+*/
 
-typedef struct {
-	u8 x;
-	u8 y;
-	u8 page;
-} lcdCoord;
+/**	--------------------------------------------------------------------
+    Typedef.
+    ------------------------------------------------------------------*/
 
-//
-// Function Prototypes
-//
+    typedef struct
+    {
+        u8 x;
+        u8 y;
+    } coord_t;
+
+    typedef struct
+    {
+        u8 cs1;
+        u8 cs2;
+        u8 rs;
+        u8 rw;
+        u8 en;
+        u8 d[8];
+        u8 rst;
+    } pin_t;
+
+    typedef struct
+    {
+        const u8 *address;
+        //u16 size;
+        u8 width;
+        u8 height;
+        u8 firstChar;
+        u8 charCount;
+    } font_t;
+
+    typedef struct
+    {
+        u8 startx;
+        u8 starty;
+        u8 endx;
+        u8 endy;
+        u8 width;
+        u8 height;
+        u8 invert;
+        u8 bcolor;
+        u8 color;
+    } rect_t;
+
+    typedef union
+    {
+        u16 w;
+        struct
+        {
+            u8 l8;
+            u8 h8;
+        };
+    } word_t;
+
+    typedef struct
+    {
+        pin_t pin;
+        rect_t screen;
+        coord_t pixel;
+        font_t font;
+    } lcd_t;
+
+/**	--------------------------------------------------------------------
+    Globals
+    ------------------------------------------------------------------*/
+
+lcd_t KS0108;
+
+/**	--------------------------------------------------------------------
+    Prototypes
+    ------------------------------------------------------------------*/
+
+void GLCD_enable();
+void GLCD_send(u8);
+u8   GLCD_get();
+void GLCD_selectChip(u8);
+void GLCD_writeCommand(u8);
+void GLCD_writeData(u8);
+u8   GLCD_readData(u8, u8);
+void GLCD_setStartLine(u8);
+void GLCD_goto(u8, u8);
+
+void GLCD_init(u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8);
+//void GLCD_home();
+void GLCD_displayOn();
+void GLCD_displayOff();
+void GLCD_setCursor(u8, u8);
+void GLCD_clearScreen();
+void GLCD_invertDisplay();
+void GLCD_normalDisplay();
+
+// Print Functions
+void GLCD_setFont(const u8*);
+u8   GLCD_charWidth(u8);
+u16  GLCD_stringWidth(u8*);
+void GLCD_scrollUp();
+void GLCD_printChar(u8 c);
+void GLCD_print(const u8*);
+void GLCD_println(const u8*);
+void GLCD_printCenter(const u8 *);
+void GLCD_printNumber(long, u8);
+void GLCD_printFloat(float , u8);
+void GLCD_printf(const u8 *, ...);
 
 // Graphic Functions
-void DrawLine(u8 x1, u8 y1, u8 x2, u8 y2, u8 color);
-void DrawRect(u8 x, u8 y, u8 width, u8 height, u8 color);
-void DrawRoundRect(u8 x, u8 y, u8 width, u8 height, u8 radius, u8 color);
-void FillRect(u8 x, u8 y, u8 width, u8 height, u8 color);
-void InvertRect(u8 x, u8 y, u8 width, u8 height);
-void SetInverted(u8 invert);
-void SetDot(u8 x, u8 y, u8 color);
+void GLCD_drawPixel(u8, u8);
+void GLCD_drawLine(u8, u8, u8, u8);
+void GLCD_drawRect(u8, u8, u8, u8);
+void GLCD_drawRoundRect(u8, u8, u8, u8);
+void GLCD_fillRect(u8, u8, u8, u8);
+void GLCD_drawCircle(u8, u8, u8);
+void GLCD_fillCircle(u8, u8, u8);
+void GLCD_drawBitmap(const u8 *, u8, u8);
 
-void ClearPage(u8 page, u8 color);
-void ClearScreen(u8 color);
+/**	--------------------------------------------------------------------
+    Macros
+    ------------------------------------------------------------------*/
 
-#define DrawVertLine(x, y, length, color) FillRect(x, y, 0, length, color)
-#define DrawHoriLine(x, y, length, color) FillRect(x, y, length, 0, color)
-#define DrawCircle(xCenter, yCenter, radius, color) DrawRoundRect(xCenter-radius, yCenter-radius, 2*radius, 2*radius, radius, color)
-#define ClearScreenX() FillRect(0, 0, (DISPLAY_WIDTH-1), (DISPLAY_HEIGHT-1), WHITE)
-#define ClearSysTextLine(_line) FillRect(0, (line*8), (DISPLAY_WIDTH-1), ((line*8)+ 7), WHITE )
+//#define ClearScreenX() FillRect(0, 0, (DISPLAY_WIDTH-1), (DISPLAY_HEIGHT-1), WHITE)
+//#define ClearSysTextLine(_line) FillRect(0, (line*8), (DISPLAY_WIDTH-1), ((line*8)+ 7), WHITE )
 
-//Pinguino, for now, not needs more ports like arduino project
-//Fastest Displays use Macros 
-/*#ifdef FAST_DISPLAY
-#define fastWriteHigh(_pin_) (PORTA=PORTA | _pin_)
-#define fastWriteLow(_pin_) (PORTA=PORTA & (0XFF-_pin_))
-#else*/
-//Slow Display use functions
-void fastWriteHigh(u8 pin);
-void fastWriteLow(u8 pin);
-//#endif
-
-// Font Functions
-u8 ReadFontData(const u8* ptr);		//Standard Read Callback
-void SelectFont(const char* font, u8 color);
-void PrintNumber(long n);
-#ifdef USEFLOAT
-void PrintFloat(float number, u8 digits);
-#endif
-int PutChar(char c);
-void Puts(char* str);
-u8 CharWidth(char c);
-unsigned int StringWidth(char* str);
-
-// Control Functions
-void CursorTo( u8 x, u8 y);
-void GotoXY(u8 x, u8 y);
-void Init(u8 invert);
-void Enable(void);
-u8 DoReadData(u8 first);
-u8 ReadData(void);
-void WriteCommand(u8 cmd, u8 chip);
-void WriteData(u8 data);
-void DrawBitmap(const u8 * bitmap, u8 x, u8 y, u8 color);
+#define GLCD_getFontWidth()   (KS0108.font.width)
+#define GLCD_getFontHeight()  (KS0108.font.height)
 
 #endif /* KS0108_H */

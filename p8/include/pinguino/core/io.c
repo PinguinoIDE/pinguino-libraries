@@ -1,18 +1,18 @@
 /*	----------------------------------------------------------------------------
-    FILE:			io.c
-    PROJECT:		pinguino
-    PURPOSE:		Peripheral Remappage and IOs Configuration
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	20 Jun. 2012
-    LAST RELEASE:	28 Feb 2013
+    FILE:           io.c
+    PROJECT:        pinguino
+    PURPOSE:        Peripheral Remappage and IOs Configuration
+    PROGRAMER:      Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  20 Jun. 2012
+    LAST RELEASE:   28 Feb 2013
     ----------------------------------------------------------------------------
     CHANGELOG:
     23 Nov. 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
     07 Dec. 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
     05 Oct. 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
-                                   with EECON2 = 0x55; EECON2 = 0xAA;]
+                                    with EECON2 = 0x55; EECON2 = 0xAA;]
     28 Feb. 2013 - Régis Blanchot - renamed functions
-                                   added IO_init()
+                                    added IO_init()
     01 Oct. 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
     09 Sep. 2015 - Régis Blanchot - added PIC16F1459 support
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
@@ -47,10 +47,11 @@ void IO_init(void)
     
     // Set everything low
 
-    #if defined(__16F1459) || defined(__16F1708)
-    //LATA  = 0x00;
-    //LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
-    //LATC  = 0x00;
+    #if defined(__16F1459) || defined(__16F1708) || \
+        defined(__18f13k50) || defined(__18f14k50)
+    LATA  = 0x00;
+    LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
+    LATC  = 0x00;
     #else
     LATA  = 0x00;
     LATB  = 0x00;
@@ -90,7 +91,8 @@ void IO_init(void)
         #endif
     #endif
     
-    #if defined(__16F1459) || defined(__16F1708)
+    #if defined(__16F1459) || defined(__16F1708) || \
+        defined(__18f13k50) || defined(__18f14k50)
     TRISC = 0x00;
     #else
     TRISCbits.TRISC0 = 0x00;
@@ -125,8 +127,14 @@ void IO_digital(void)
     #if defined(__18f2455) || defined(__18f4455) || \
         defined(__18f2550) || defined(__18f4550)
 
-        ADCON1 = 0x0F;				// AN0 to AN12 Digital I/O
-        CMCON = 0x07;               // Comparators as Digital I/O
+        ADCON1 = 0x0F;              // AN0 to AN12 Digital I/O
+        CMCON  = 0x07;              // Comparators as Digital I/O
+
+    #elif defined(__18f13k50) || defined(__18f14k50)
+
+        // Initialize all Analog pins as Digital I/O
+        ANSEL  = 0;                 // AN3 to AN7  Digital I/O
+        ANSELH = 0;                 // AN8 to AN11 Digital I/O
 
     #elif defined(__16F1459)  || defined(__16F1708)  || \
           defined(__18f25k50) || defined(__18f45k50)
@@ -143,8 +151,8 @@ void IO_digital(void)
     #elif defined(__18f26j50) || defined(__18f46j50)
 
         // Initialize all Analog pins as Digital I/O
-        ANCON0 = 0xFF;				// AN0 to AN7  Digital I/O
-        ANCON1 = 0x1F;				// AN8 to AN12 Digital I/O
+        ANCON0 = 0xFF;              // AN0 to AN7  Digital I/O
+        ANCON1 = 0x1F;              // AN8 to AN12 Digital I/O
 
         // Turn off all comparators 
         CM1CON = 0x00;
@@ -154,8 +162,8 @@ void IO_digital(void)
     #elif defined(__18f27j53) || defined(__18f47j53)
 
         // Initialize all Analog pins as Digital I/O
-        ANCON0 = 0xFF;				// AN0 to AN7  Digital I/O
-        ANCON1 = 0x1F;				// AN8 to AN12 Digital I/O
+        ANCON0 = 0xFF;              // AN0 to AN7  Digital I/O
+        ANCON1 = 0x1F;              // AN8 to AN12 Digital I/O
 
     #endif
 }

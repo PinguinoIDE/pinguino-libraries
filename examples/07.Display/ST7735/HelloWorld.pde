@@ -32,6 +32,10 @@
 
 // Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
+//#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
+//#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
+#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
 #define SPIMODULE SPI2
 
@@ -45,20 +49,28 @@ void setup()
     // if module used is SPISW (SPI Software)
     //ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
     ST7735.init(SPIMODULE, 7); // DC
-    ST7735.setFont(SPIMODULE, font6x8);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
-    ST7735.setColor(SPIMODULE, ST7735_YELLOW);
     ST7735.setOrientation(SPIMODULE, 90);
     ST7735.clearScreen(SPIMODULE);
+
+    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setColor(SPIMODULE, ST7735_YELLOW);
+    ST7735.setCursor(SPIMODULE, 0, 0);
+    ST7735.printCenter(SPIMODULE, "Hello World");
+
+    ST7735.setFont(SPIMODULE, ArialBold14);
+    ST7735.setColor(SPIMODULE, ST7735_GREEN);
+    ST7735.setCursor(SPIMODULE, 0, 2);
+    ST7735.printCenter(SPIMODULE, "Hello World");
+
+    ST7735.setFont(SPIMODULE, VerdanaBold28);
+    ST7735.setColor(SPIMODULE, ST7735_RED);
+    ST7735.setCursor(SPIMODULE, 0, 2);
+    ST7735.printCenter(SPIMODULE, "Hello World");
 }   
 
 void loop()
 {
-    //ST7735.printf(SPIMODULE, "%03d Hello World!\r\n", i++);
-    ST7735.setCursor(SPIMODULE, 0, 0);
-    ST7735.printNumber(SPIMODULE, i++, DEC);
-    ST7735.setCursor(SPIMODULE, 0, 7);
-    ST7735.printCenter(SPIMODULE, " Hello World!   \r");
     toggle(USERLED);
     delay(1000);
 }

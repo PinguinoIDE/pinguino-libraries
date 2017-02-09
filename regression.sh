@@ -29,13 +29,13 @@
 #   --------------------------------------------------------------------
 
 # delete command
-RM="rm -rf"
-HOMEDIR=`pwd`
-LOGDIR="log"
-PINGUINO="../pinguino-ide/pinguino/pinguino_cmd.py"
+RM='rm -rf'
+#HOMEDIR=`pwd`
+#LOGDIR='log'
+PINGUINO='../pinguino-ide/pinguino/pinguino_cmd.py'
 
-CMP8LIST=("--xc8" "--sdcc")
-BRD8LIST=("-p1459" "-c1708" "-p13k50" "-p14k50" "-p2455" "-p4455" "-p2550" "-p4550" "-p25k50" "-p45k50" "-p26j50" "-p46j50" "-p27j53" "-p47j53")
+CMP8LIST=('--xc8' '--sdcc')
+BRD8LIST=('-p1459' '-c1708' '-p13k50' '-p14k50' '-p2455' '-p4455' '-p2550' '-p4550' '-p25k50' '-p45k50' '-p26j50' '-p46j50' '-p27j53' '-p47j53')
 BRD32LIST=('-p220' '-p250' '-p270' '--olimex220' '--olimex440' '--olimex440OTG' '--olimex440Micro' '--olimexT795' '--emperor460' '--emperor795' '--ubw460' '--ubw795')
 
 # colors
@@ -61,58 +61,65 @@ UNDERLINE=$(tput smul)
 
 # test arguments
 if [ "$1" == "" ]; then
-    printf "%s\r\n" "$RED WARNING : missing argument"
-    printf "%s\r\n" "$RED Usage : ./regression.sh /directory"
-    printf "%s\r\n" "$YELLOW We use examples per default"
-    TARGET="examples"
+    printf '%s\r\n' '$RED WARNING : missing argument'
+    printf '%s\r\n' '$RED Usage : ./regression.sh /directory'
+    printf '%s\r\n' '$YELLOW We use examples per default'
+    TARGET='examples'
 else
     TARGET="$1"
 fi
 
 
 # create an empty log dir.
-if [ -d $LOGDIR ]; then
-    ${RM} ${LOGDIR}/*
-else
-    mkdir -p ${LOGDIR}
-fi
+#if [ -d $LOGDIR ]; then
+#    ${RM} ${LOGDIR}/*
+#else
+#    mkdir -p ${LOGDIR}
+#fi
+${RM} regression.log
 
 # FILE  : .pde file name with path
 # FNAME : .pde file name without path
+# redirection  2> ${LOGDIR}/${FNAME}.log
 find ${TARGET} -type f -name *.pde | while read FILE ; do
     FNAME=$(basename "${FILE}" .pde)
-    printf "%s\n" "$GREEN Compiling $FNAME ..."
+    printf '%s\n' "$GREEN Compiling $FNAME ..."
+    printf '%s\n' "Compiling $FNAME ..." >> regression.log
 
     # 8-bit
     for board in "${BRD8LIST[@]}"; do
-        printf "%-20s" "$YELLOW $board"
+        printf '%-40s' "$YELLOW $board"
+        printf '%-40s' "$board" >> regression.log
         for compiler in "${CMP8LIST[@]}"; do
-            OUTPUT=`python $PINGUINO $compiler $board -f $FILE 2> ${LOGDIR}/${FNAME}.log`
+            OUTPUT=`python $PINGUINO $compiler $board -f $FILE`
             END=${OUTPUT:(-2)}
             if [ "$END" != "OK" ]; then
-                printf "%s\t" "$RED $compiler"
-                #echo ${OUTPUT} >> "${LOGDIR}/${FNAME}.log"
-                #echo -e '\t' $YELLOW "See ${LOGDIR}/${FNAME}.log" $TERM
+                printf '%s\t' "$RED $compiler"
+                printf '%s=fa\t' "$compiler" >> regression.log
             else
-                printf "%s\t" "$GREEN $compiler"
+                printf '%s\t' "$GREEN $compiler"
+                printf '%s=ok\t' "$compiler" >> regression.log
             fi
         done
         printf "$NORMAL\n"
+        printf '\n' >> regression.log
     done
 
     # 32-bit
     for board in "${BRD32LIST[@]}"; do
-        printf "%-20s" "$YELLOW $board"
-        OUTPUT=`python $PINGUINO $board -f $FILE 2> ${LOGDIR}/${FNAME}.log`
+        printf '%-40s' "$YELLOW $board"
+        printf '%-40s' "$board" >> regression.log
+        OUTPUT=`python $PINGUINO $board -f $FILE`
         END=${OUTPUT:(-2)}
         if [ "$END" != "OK" ]; then
-            printf "%s\t" "$RED gcc-p32"
-            #echo ${OUTPUT} >> "${LOGDIR}/${FNAME}.log"
-            #echo -e '\t' $YELLOW "See ${LOGDIR}/${FNAME}.log" $TERM
+            printf '%s\t' "$RED --p32"
+            printf '%s=fa\t' "--p32" >> regression.log
         else
-            printf "%s\t" "$GREEN gcc-p32"
+            printf '%s\t' "$GREEN --p32"
+            printf '%s=ok\t' "--p32" >> regression.log
         fi
         printf "$NORMAL\n"
+        printf '\n' >> regression.log
     done
 
 done

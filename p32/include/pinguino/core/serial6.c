@@ -40,6 +40,11 @@ void serial6init(u32 speed)
     SerialConfigure(UART6, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
 }
 
+void serial6printchar(u8 c)
+{
+    SerialPutChar(UART6, c);
+}
+
 void serial6printf(char *fmt, ...)		
 {
     va_list args;
@@ -122,4 +127,3 @@ BOOL serial6clearrxerror(void)
 }
 
 #endif /* __SERIAL6__ */
-

@@ -41,6 +41,15 @@ void serial1init(u32 speed)
     #endif
 }
 
+void serial1printchar(u8 c)
+{
+    #ifdef PIC32_PINGUINO_220
+        SerialPutChar(UART2, c);
+    #else
+        SerialPutChar(UART1, c);
+    #endif
+}
+
 #if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 void serial1print(char *string)
@@ -165,4 +174,3 @@ BOOL serial1clearrxerror(void)
 }
 
 #endif /* __SERIAL1__ */
-

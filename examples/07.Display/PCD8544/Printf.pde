@@ -25,7 +25,7 @@
 //#include <fonts/font16x16.h>        // ???
 
 // SPI Module
-#define SPILCD 1 
+#define SPILCD 2
 
 u8 i=0;
 
@@ -37,7 +37,9 @@ void setup()
 
     // if SPILCD = SPISW (SPI Software)
     //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
-    PCD8544.init(SPILCD, 0, 2); // DC and RST pin
+    //PCD8544.init(SPILCD, 0, 1); // DC and RST pin 47J53
+    //PCD8544.init(SPILCD, 0, 2); // DC and RST pin 32MX2x0 SPI1
+    PCD8544.init(SPILCD, 5, 6); // DC and RST pin 32MX2x0 SPI2
 
     // Change the contrast around to adapt the display for the best viewing!
     PCD8544.setContrast(SPILCD, 40); // 0 to 127
@@ -51,8 +53,15 @@ void setup()
 void loop()
 {
     //PCD8544.clearScreen();
-    PCD8544.printf(SPILCD, "i=%03d\r\n", i++);
+    
+    PCD8544.printf(SPILCD, "i=%03d\r\n", i);
+    // which is almost equivalent to :
+    //PCD8544.print(SPILCD, "i=");
+    //PCD8544.printNumber(SPILCD, i, DEC);
+    //PCD8544.print(SPILCD, "\r\n");
+    
     PCD8544.refresh(SPILCD);
     toggle(USERLED);
     delay(500);
+    i++;
 }

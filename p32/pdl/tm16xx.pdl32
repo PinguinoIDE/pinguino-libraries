@@ -1,0 +1,24 @@
+TM16XX.init TM16XX_init#include <TM16XX.c>
+TM16XX.setupDisplay TM16XX_setupDisplay#include <TM16XX.c>
+TM16XX.setDisplayDigit TM16XX_setDisplayDigit#include <TM16XX.c>
+TM16XX.setDisplayToError TM16XX_setDisplayToError#include <TM16XX.c>
+TM16XX.clearDisplayDigit TM16XX_clearDisplayDigit#include <TM16XX.c>
+TM16XX.setDisplay TM16XX_setDisplay#include <TM16XX.c>
+TM16XX.clearDisplay TM16XX_clearDisplay#include <TM16XX.c>
+TM16XX.setDisplayToString TM16XX_setDisplayToString#include <TM16XX.c>
+TM16XX.sendChar TM16XX_sendChar#include <TM16XX.c>
+TM16XX.sendCommand TM16XX_sendCommand#include <TM16XX.c>
+TM16XX.sendData TM16XX_sendData#include <TM16XX.c>
+TM16XX.send TM16XX_send#include <TM16XX.c>
+TM16XX.receive TM16XX_receive#include <TM16XX.c>
+
+TM1638.init TM1638_init#include <TM1638.c>
+TM1638.sendChar TM1638_sendChar#include <TM1638.c>
+TM1638.displayToDecNumberAt TM1638_DisplayToDecNumberAt#include <TM1638.c>
+TM1638.setDisplayToHexNumber TM1638_setDisplayToHexNumber#include <TM1638.c>
+TM1638.setDisplayToDecNumber TM1638_setDisplayToDecNumber#include <TM1638.c>
+TM1638.setDisplayToSignedDecNumber TM1638_setDisplayToSignedDecNumber#include <TM1638.c>
+TM1638.setDisplayToBinNumber TM1638_setDisplayToBinNumber#include <TM1638.c>
+TM1638.setLED TM1638_setLED#include <TM1638.c>
+TM1638.setLEDs TM1638_setLEDs#include <TM1638.c>
+TM1638.getButtons TM1638_getButtons#include <TM1638.c>

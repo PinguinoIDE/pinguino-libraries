@@ -1,4 +1,5 @@
 servo.attach ServoAttach#include <servos.c>
+servo.attached ServoAttached#include <servos.c>
 servo.detach ServoDetach#include <servos.c>
 servo.write ServoWrite#include <servos.c>
 servo.read ServoRead#include <servos.c>

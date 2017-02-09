@@ -34,11 +34,6 @@
 **/
 
 #include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
 
 u8 xo, yo;
 u8 old=0;

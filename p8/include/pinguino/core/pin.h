@@ -10,6 +10,7 @@
     26 Jun. 2014 - Régis Blanchot - added Pinguino 45K50
     09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -36,32 +37,12 @@
     #define USERLED     0   // ???
     
 /**********************************************************************/
-#elif defined(PINGUINO1459)
+#elif defined(PINGUINO1459) || defined(PINGUINO13K50) || defined(PINGUINO14K50) 
 /**********************************************************************/
 
-    #define A5          0
-    #define A4          1
-    #define A3          2
-    #define C5          3
-    #define C4          4
-    #define C3          5
-    #define C6          6
-    #define C7          7
-    #define B7          8
-
-    #define A0          9
-    #define A1          10
-    // VUSB3V3 unused   11
-    #define C0          12
-    #define C1          13
-    #define C2          14
-    #define B4          15
-    #define B5          16
-    #define B6          17
-
-    #define PWM1        3
-    #define PWM2        6
-    #define USERLED     14
+    #define USERLED     2       // RC2
+    #define PWM1        5       // RC5
+    #define PWM2        6       // RC6
 
 /**********************************************************************/
 #elif defined(__18f4685)		// Added by Andrej Golac
@@ -440,62 +421,62 @@
 
     //#error "*** BREAKPOINT ***"
 
-    #define B0          0
+    //#define B0          0
 
-    #define B1          1
-    #define RTC        1  // RB1
+    //#define B1          1
+    #define RTC         1  // RB1
 
-    #define B2          2
-    #define B3          3
+    //#define B2          2
+    //#define B3          3
 
-    #define B4          4
+    //#define B4          4
     #define PWM1        4  // RB4
 
-    #define B5          5
+    //#define B5          5
     #define PWM2        5  // RB5
 
-    #define B6          6
+    //#define B6          6
     #define PWM3        6  // RB6
 
-    #define B7          7
+    //#define B7          7
     #define PWM4        7  // RB7
 
-    #define A0          8
-    #define A1          9
-    #define A2          10
-    #define A3          11
-    #define A4          12
-    #define A5          13
-    #define A6          14
-    #define A7          15
+    //#define A0          8
+    //#define A1          9
+    //#define A2          10
+    //#define A3          11
+    //#define A4          12
+    //#define A5          13
+    //#define A6          14
+    //#define A7          15
 
-    #define C0          16
+    //#define C0          16
 
-    #define C1          17
+    //#define C1          17
     #define PWM5        17 // RC1
 
-    #define C2          18
+    //#define C2          18
     #define LED1        18 // RC2
     #define USERLED     18 // RC2
 
-    #define C3          19
-    #define C4          20
-    #define C5          21
+    //#define C3          19
+    //#define C4          20
+    //#define C5          21
 
-    #define C6          22
+    //#define C6          22
     #define PWM6        22 // RC6
 
-    #define C7          23
+    //#define C7          23
     #define PWM7        23 // RC7
 
-    #define D0          24
+    //#define D0          24
     //#define D1          25
-    #define D2          26
-    #define D3          27
-    #define D4          28
-    #define D5          29
-    #define D6          30
-    #define D7          31
+    //#define D2          26
+    //#define D3          27
+    //#define D4          28
+    //#define D5          29
+    //#define D6          30
+    //#define D7          31
     /*
     #define PMD0        24
     #define PMD1        25
@@ -515,4 +496,3 @@
 #endif
 
 #endif /* __PIN_H */
-

@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //#include <logo/pinguino84x48.h> // Screen buffer pre-filled with Pinguino Logo
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Display interfaces
     ------------------------------------------------------------------*/
 
@@ -73,7 +73,7 @@ POSSIBILITY OF SUCH DAMAGE.
     #define PCD8544_GND         7  // LCD GROUND 
 #endif
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Display sizes
     ------------------------------------------------------------------*/
 
@@ -82,7 +82,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define DISPLAY_SIZE   (DISPLAY_WIDTH * DISPLAY_HEIGHT / 8)
 #define DISPLAY_ROWS   ((DISPLAY_HEIGHT / 8) - 1)
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
 
@@ -119,7 +119,7 @@ POSSIBILITY OF SUCH DAMAGE.
     #define _PCD8544_USE_RECT
 #endif
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Typedef.
     ------------------------------------------------------------------*/
 
@@ -204,7 +204,7 @@ POSSIBILITY OF SUCH DAMAGE.
         font_t font;
     } lcd_t;
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Globals
     ------------------------------------------------------------------*/
 
@@ -223,37 +223,37 @@ void PCD8544_data(u8, u8);
 void PCD8544_setContrast(u8, u8);
 void PCD8544_clearScreen(u8);
 void PCD8544_refresh(u8);
-void PCD8544_drawPixel(u8, u8, u8);//, u8 color);
-void PCD8544_clearPixel(u8, u8, u8);//, u8 color);
+void PCD8544_drawPixel(u8, u8, u8);
+void PCD8544_clearPixel(u8, u8, u8);
 u8 PCD8544_getPixel(u8, u8, u8);
 
 #ifdef PCD8544GRAPHICS
 //LINE
-void PCD8544_drawLine(u8, u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
-void PCD8544_drawVLine(u8, u8 x, u8 y, u8 h, u8 color);
-void PCD8544_drawHLine(u8, u8 x, u8 y, u8 w, u8 color);
+void PCD8544_drawLine(u8, u8 x0, u8 y0, u8 x1, u8 y1);
+//void PCD8544_drawVLine(u8, u8 x, u8 y, u8 h);
+//void PCD8544_drawHLine(u8, u8 x, u8 y, u8 w);
 //TRIANGLE
-void PCD8544_drawTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
-void PCD8544_fillTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
+void PCD8544_drawTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2);
+void PCD8544_fillTriangle(u8, u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2);
 //RECT
-void PCD8544_drawRect(u8, u8 x, u8 y, u8 w, u8 h, u8 color);
-void PCD8544_fillRect(u8, u8 x, u8 y, u8 w, u8 h, u8 color);
-#define PCD8544_fillScreen(m, color) PCD8544_fillRect(m, 0, 0,PCD8544[m].screen.width,PCD8544[m].screen.height, (color))
+void PCD8544_drawRect(u8, u8 x, u8 y, u8 w, u8 h);
+void PCD8544_fillRect(u8, u8 x, u8 y, u8 w, u8 h);
+#define PCD8544_fillScreen(m) PCD8544_fillRect(m, 0, 0,PCD8544[m].screen.width,PCD8544[m].screen.height)
 //ROUND_RECT
-void PCD8544_drawRoundRect(u8, u8 x0, u8 y0, u8 w, u8 h,u8 radius, u8 color);
-void PCD8544_fillRoundRect(u8, u8 x, u8 y, u8 w,u8 h, u8 r, u8 color);
+void PCD8544_drawRoundRect(u8, u8 x0, u8 y0, u8 w, u8 h,u8 radius);
+void PCD8544_fillRoundRect(u8, u8 x, u8 y, u8 w,u8 h, u8 r);
 //CIRCLE
-void PCD8544_drawCircle(u8, u8 x0, u8 y0, u8 r0);//, u8 color);
-void PCD8544_drawCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
-void PCD8544_fillCircle(u8, u8 x0, u8 y0, u8 r);//, u8 color);
-void PCD8544_fillCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
+void PCD8544_drawCircle(u8, u8 x0, u8 y0, u8 r0);
+void PCD8544_drawCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername);
+void PCD8544_fillCircle(u8, u8 x0, u8 y0, u8 r);
+void PCD8544_fillCircleHelper(u8, u8 x0, u8 y0, u8 r, u8 cornername,u8 delta);
 //BITMAP
-void PCD8544_drawBitmap(u8, u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color);
+void PCD8544_drawBitmap(u8, u8 x, u8 y, const u8 *bitmap,u8 w, u8 h);
 //GRAPHICS
 void drawPixel(u16, u16);
 void setColor(u8, u8, u8);
-void drawVLine(u16, u16, u16);
-void drawHLine(u16, u16, u16);
+//void drawVLine(u16, u16, u16);
+//void drawHLine(u16, u16, u16);
 extern void drawBitmap(u8, const u8 *, u16, u16);
 #endif
 

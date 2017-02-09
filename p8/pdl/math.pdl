@@ -1,0 +1,63 @@
+min min#include <macro.h>
+max max#include <macro.h>
+abs abs#include <mathlib.c>
+constrain constrain#include <macro.h>
+map map#include <mathlib.c>
+powf powf#include <math.h>
+sqrtf sqrtf#include <math.h>
+absf fabsf#include <math.h>
+sinf sinf#include <math.h>
+cosf cosf#include <math.h>
+tanf tanf#include <math.h>
+sinr sinr#include <trigo.c>#define SINR
+cosr cosr#include <trigo.c>#define COSR
+sin100 sin100#include <trigo.c>#define SIN100
+cos100 cos100#include <trigo.c>#define COS100
+randomSeed srand#include <stdlib.h>
+random random#include <mathlib.c>
+fpow fastpow2#include <fastmath.c>#define FASTEXP
+fpow2 fasterpow2#include <fastmath.c>#define FASTEXP
+fexp fastexp#include <fastmath.c>#define FASTEXP
+fexp2 fasterexp#include <fastmath.c>#define FASTEXP
+flog fastlog#include <fastmath.c>#define FASTLOG
+flog fastlog2#include <fastmath.c>#define FASTLOG
+flog2 fasterlog#include <fastmath.c>#define FASTLOG
+flog2 fasterlog2#include <fastmath.c>#define FASTLOG
+fln fastln#include <fastmath.c>#define FASTLOG
+fln2 fasterln#include <fastmath.c>#define FASTLOG
+ferfc fasterfc#include <fastmath.c>#define FASTERF
+ferfc2 fastererfc#include <fastmath.c>#define FASTERF
+ferf fasterf#include <fastmath.c>#define FASTERF
+ferf2 fastererf#include <fastmath.c>#define FASTERF
+finverse fastinverseerf#include <fastmath.c>#define FASTERF
+finverse2 fasterinverseerf#include <fastmath.c>#define FASTERF
+flgamma fastlgamma#include <fastmath.c>#define FASTGAMMA
+flgamma2 fasterlgamma#include <fastmath.c>#define FASTGAMMA
+fdigamma fastdigamma#include <fastmath.c>#define FASTGAMMA
+fdigamma2 fasterdigamma#include <fastmath.c>#define FASTGAMMA
+fsinh fastsinh#include <fastmath.c>#define FASTHYPERBOLIC
+fsinh2 fastersinh#include <fastmath.c>#define FASTHYPERBOLIC
+fcosh fastcosh#include <fastmath.c>#define FASTHYPERBOLIC
+fcosh2 fastercosh#include <fastmath.c>#define FASTHYPERBOLIC
+ftanh fasttanh#include <fastmath.c>#define FASTHYPERBOLIC
+ftanh2 fastertanh#include <fastmath.c>#define FASTHYPERBOLIC
+flambert fastlambertw#include <fastmath.c>#define FASTLAMBERT_W
+flambert2 fasterlambertw#include <fastmath.c>#define FASTLAMBERT_W
+flambertexp fastlambertwexpx#include <fastmath.c>#define FASTLAMBERT_W
+flambertexp fasterlambertwexpx#include <fastmath.c>#define FASTLAMBERT_W
+fpow fastpow#include <fastmath.c>#define FASTPOW
+fpow2 fasterpow#include <fastmath.c>#define FASTPOW
+fsigmoid fastsigmoid#include <fastmath.c>#define FASTSIGMOID
+fsigmoid2 fastersigmoid#include <fastmath.c>#define FASTSIGMOID
+fsin fastsin#include <fastmath.c>#define FASTTRIG
+fsin2 fastersin#include <fastmath.c>#define FASTTRIG
+fsinfull fastsinfull#include <fastmath.c>#define FASTTRIG
+fsinfull2 fastersinfull#include <fastmath.c>#define FASTTRIG
+fcos fastcos#include <fastmath.c>#define FASTTRIG
+fcos2 fastercos#include <fastmath.c>#define FASTTRIG
+fcosfull fastcosfull#include <fastmath.c>#define FASTTRIG
+fcosfull2 fastercosfull#include <fastmath.c>#define FASTTRIG
+ftan fasttan#include <fastmath.c>#define FASTTRIG
+ftan2 fastertan#include <fastmath.c>#define FASTTRIG
+ftanfull fasttanfull#include <fastmath.c>#define FASTTRIG
+ftanfull2 fastertanfull#include <fastmath.c>#define FASTTRIG

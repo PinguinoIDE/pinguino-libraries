@@ -10,11 +10,11 @@
 #define __MACRO_H
 
     /// ASM
+    #include <mips.h>
+    #define interrupts()        EnableInterrupt()
+    #define noInterrupts()      DisableInterrupt()
+    #define isInterrupts()      (true)
 
-    //Already defined
-    //#define interrupts()	asm volatile("ei")
-    //#define noInterrupts()	asm volatile("di")
-    
     //Already defined ???
     #define nop()               asm volatile("nop")
 
@@ -31,11 +31,13 @@
     /// BITWISE OPERATION
 
     #define Bit(b)              (1 << (b))
+    #define BitTest(b, n)       (((b) & (1 << (n)))!=0)
     #define BitRead(b, n)       (((b) >> (n)) & 1 )
     #define BitSet(b, n)        ((b) |= (1 << (n)))
     #define BitClear(b, n)      ((b) &= ~(1 << (n)))	//(b &= !(1 << n))
-    #define BitTest(b, n)       (((b) & (1 << (n)))!=0)
+    #define BitInv(v, n)        ((v) ^= (1 << (n)))
     #define BitWrite(b, n, v)   (v ? bitSet(b, n) : bitClear(b, n))
+    #define Not(n)              (255 - (n))
 
     /// MATH
 
@@ -44,11 +46,10 @@
     //RB 03-10-2014 : moved to math.c to avoid conflict with stdlib.h
     //#define abs(x) ((x)>0?(x):-(x))
     #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
-    #define round(x)     ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
-    #define radians(deg) ((deg)*DEG_TO_RAD)
-    #define degrees(rad) ((rad)*RAD_TO_DEG)
-    #define sq(x) ((x)*(x))
-    #define swap(i, j) {int t = i; i = j; j = t;}
+    #define round(x)        ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
+    #define radians(deg)    ((deg)*DEG_TO_RAD)
+    #define degrees(rad)    ((rad)*RAD_TO_DEG)
+    #define sq(x)           ((x)*(x))
+    #define swap(i, j)      {int t = i; i = j; j = t;}
 
 #endif	/* __MACRO_H */
-

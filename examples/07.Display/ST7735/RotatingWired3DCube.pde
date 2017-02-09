@@ -17,20 +17,20 @@
         
         Wiring :
         
-        ST7735    PINGUINO
-        ---------------------------------------
+        ST7735    PINGUINO               47J53    32MX250
+        -------------------------------------------------
         LED       VSS (backlight on)
-        SCK       SCK
-        SDA       SDO
+        SCK       SCK                    2        0
+        SDA       SDO                    1        4
         A0 (DC)   user defined
         RESET     VSS
-        CS        SS
+        CS        SS                     0        3
         GND       GND
         VSS       VSS (+5V or +3.3V)
 **/
 
 // Load one or more fonts and active them with ST7735.setFont()
-#include <fonts/font6x8.h>
+#include <fonts/fixednums5x7.h>
 
 #define SPIMODULE    SPI2
 #define NBPOINTS     8
@@ -57,9 +57,8 @@ u16 Xoff, Yoff, Zoff;       // position de l'observateur
 void Rotation()
 {
     u8 i;
-    //float a[3];
 
-    // Calcul de la matrice de rotation 3*3
+    // 3*3 Rotation Matrix calculation
 
     matrice[0][0] = (cosr(Za) * cosr(Ya)); 
     matrice[1][0] = (sinr(Za) * cosr(Ya)); 
@@ -73,7 +72,7 @@ void Rotation()
     matrice[1][2] = (sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa)); 
     matrice[2][2] = (cosr(Xa) * cosr(Ya)); 
 
-    // Rotation des sommets de l'objet
+    // Rotation of each object's vertex
 
     for (i = 0; i < NBPOINTS; i++)
     {
@@ -115,13 +114,10 @@ void initCube()
     Sommet[5].x = -SIZE;  Sommet[5].y = -SIZE;  Sommet[5].z =  SIZE;
     Sommet[6].x = -SIZE;  Sommet[6].y =  SIZE;  Sommet[6].z =  SIZE;
     Sommet[7].x =  SIZE;  Sommet[7].y =  SIZE;  Sommet[7].z =  SIZE;
-
-    //for (i = 0; i < NBPOINTS; i++)
-    //    Sommet[i].xy = - Sommet[i].x * Sommet[i].y;
 }
 
 ///
-/// Trace un segment
+/// Draw an edge
 ///
 
 void ligne(u8 a, u8 b)
@@ -131,7 +127,7 @@ void ligne(u8 a, u8 b)
 }
 
 ///
-/// Trace le cube
+/// Draw the object
 ///
 
 void drawCube()
@@ -158,10 +154,10 @@ void setup()
     //System.setCpuFrequency(60000000);
     //System.setPeripheralFrequency(60000000);
     
-    //ST7735.init(SPIMODULE, 7);// DC
-    ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
+    ST7735.init(SPIMODULE, 7);// Hard. SPI : DC
+    //ST7735.init(SPIMODULE, 7, 1, 2, 0); // Soft. SPI : DC, SDA, SCK, CS
 
-    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setFont(SPIMODULE, fixednums5x7);
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLUE);
     ST7735.setColor(SPIMODULE, ST7735_WHITE);
     ST7735.setOrientation(SPIMODULE, 90);
@@ -187,6 +183,11 @@ void loop()
     
     while (millis() < timeEnd)
     {
+        // update angles
+        Xa = (Xa + 1) % 360;
+        Ya = (Ya + 3) % 360;
+        Za = (Za + 1) % 360;
+        
         // calculations
         Rotation();
         Projection();
@@ -200,22 +201,9 @@ void loop()
             ST7735[SPIMODULE].screen.height - ST7735[SPIMODULE].font.height);
         drawCube();
 
-        // update angles
-        Xa = (Xa + 1) % 360;
-        Ya = (Ya + 3) % 360;
-        Za = (Za + 1) % 360;
-        
         // one frame done !
         fps++;
     }
     
-    //ST7735.printf(SPIMODULE, "%u fps (max. %u)", fps, maxfps);
     ST7735.printNumber(SPIMODULE, fps, DEC);
-    if (fps > maxfps)
-    {
-        maxfps = fps;
-        ST7735.print(SPIMODULE, " fps (max.");
-        ST7735.printNumber(SPIMODULE, maxfps, DEC);
-        ST7735.print(SPIMODULE, ")");
-    }
 }

@@ -1,36 +1,18 @@
-/*	----------------------------------------------------------------------------
-    FILE:			graphics.c
-    PROJECT:		pinguino
-    PURPOSE:		graphic routines for all TFT or OLED displays
-    PROGRAMER:		Henning Karlsen http://www.henningkarlsen.com
-                    Marcus Fazzi
-                    Regis Blanchot
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    FILE:       graphics.c
+    PROJECT:    pinguino
+    PURPOSE:    graphic routines for all GLCD, TFT or OLED displays
+    PROGRAMER:  Regis Blanchot
+    --------------------------------------------------------------------
     CHANGELOG : 
 
-    Jul  10 2010  - initial release
-    Aug  11 2010  - Fixed a small bug with the color green.
-                    Thanks to Thomas finding and fixing the bug.
-    Aug  13 2010  - Added the possibility to use the display in
-                    Landscape mode. Also added a larger font by
-                    request.
-    Sep  30 2010  - Added Arduino Mega compatibility.
-                    Fixed a bug with CENTER and RIGHT in LANDSCAPE mode.
-                    Fixed a bug in printNumI and printNumF when the 
-                    number to be printed was 0.
-    Oct  14 2010  - Added drawBitmap() with its associated tool
-    Nov  24 2010  - Added Arduino Mega2560 compatibility
-                    Added support for rotating text and bitmaps
-    Jan  18 2011  - Fixed an error in the requirements
-    Jan  30 2011  - Added loadBitmap()
-                    Optimized drawBitmap() when not using rotation
-    Mar  04 2011  - Port to Pinguino 32X, By Marcus Fazzi
-    Mar  08 2011  - Fixed a bug in printNumF when the number to be printed
-                    was (-)0.something
-    Fev  29 2012  - Added support to OLIMEX Boards.
-                    There is a problem with D2 pin (PIC32 pin52 ?). using A6.
-	Jan  29 2016  - Added DrawBitmap
-    ----------------------------------------------------------------------------
+    Jul 10 2010 - RB - initial release
+    Jan 29 2016 - RB - added drawBitmap (from SD)
+    Nov 15 2016 - RB - added drawTriangle, fillTriangle
+                       added drawVBarGraph, drawHBarGraph
+    --------------------------------------------------------------------
+    TODO :
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -51,7 +33,12 @@
 
 #include <typedef.h>    // u8, u16, ..
 #include <macro.h>      // swap
+
+#ifndef __PIC32MX__
 #include <mathlib.c>    // abs
+#else
+#include <math.c>       // abs
+#endif
 
 #ifdef DRAWBITMAP
     #define SDOPEN
@@ -68,63 +55,17 @@
 
 //#define _abs_(a) (((a)> 0) ? (a) : -(a))
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     Prototypes
     ------------------------------------------------------------------*/
 
 // Specific to each display
 extern void drawPixel(u16, u16);
-extern void drawVLine(u16, u16, u16);
-extern void drawHLine(u16, u16, u16);
 extern void setColor(u8, u8, u8);
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     Fonctions
     ------------------------------------------------------------------*/
-
-void drawCircle(u16 x, u16 y, u16 radius)
-{
-    s16 f = 1 - radius;
-    s16 ddF_x = 1;
-    s16 ddF_y = -2 * radius;
-    s16 x1 = 0;
-    s16 y1 = radius;
-
-    drawPixel(x, y + radius);
-    drawPixel(x, y - radius);
-    drawPixel(x + radius, y);
-    drawPixel(x - radius, y);
-
-    while(x1 < y1)
-    {
-        if(f >= 0) 
-        {
-            y1--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x1++;
-        ddF_x += 2;
-        f += ddF_x;    
-        drawPixel(x + x1, y + y1);
-        drawPixel(x - x1, y + y1);
-        drawPixel(x + x1, y - y1);
-        drawPixel(x - x1, y - y1);
-        drawPixel(x + y1, y + x1);
-        drawPixel(x - y1, y + x1);
-        drawPixel(x + y1, y - x1);
-        drawPixel(x - y1, y - x1);
-    }
-}
-
-void fillCircle(u16 x, u16 y, u16 radius)
-{
-    s16 x1, y1;
-    for(y1=-radius; y1<=radius; y1++) 
-        for(x1=-radius; x1<=radius; x1++) 
-            if(x1*x1+y1*y1 <= radius*radius) 
-                drawPixel(x+x1, y+y1); 
-}
 
 void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 {
@@ -177,6 +118,76 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
             y += ystep;
             error -= deltax;
         }
+    }
+}
+
+void drawVLine(u16 x, u16 y, u16 h)
+{
+    drawLine(x, y, x, y+h-1);
+}
+
+void drawHLine(u16 x, u16 y, u16 w)
+{
+    drawLine(x, y, x+w-1, y);
+}
+
+void drawTriangle(u8 x1, u8 y1, u8 x2, u8 y2, u8 x3, u8 y3)
+{
+    drawLine(x1, y1, x2, y2);
+    drawLine(x2, y2, x3, y3);
+    drawLine(x3, y3, x1, y1);
+}
+
+/*
+ * Code adapted from the code on a blog by Fahad Uddin
+ * (He has approved it's use in this library, under GPL licensing)
+ * Designation: Computer Information and Systems Engineer
+ * Email: engg_fahd@hotmail.com
+ * http://mycsnippets.blogspot.com/2010/12/program-to-fill-triangle-in-c-language.html
+ * 
+ * Note: This code requires floating point. If floating point is not used
+ * the calculations are not precise enough to create the proper line lengths to
+ * fully fill the tiangular area.
+ * --- bperrybap
+ */
+
+void fillTriangle(u8 x1, u8 y1, u8 x2, u8 y2, u8 x3, u8 y3)
+{
+    u8 sl,sx1,sx2;
+    double m1,m2,m3;
+
+    if(y2>y3)
+    {
+        swap(x2,x3);
+        swap(y2,y3);
+    }
+
+    if(y1>y2)
+    {
+        swap(x1,x2);
+        swap(y1,y2);
+    }
+
+    m1=(double)(x1-x2)/(y1-y2);
+    m2=(double)(x2-x3)/(y2-y3);
+    m3=(double)(x3-x1)/(y3-y1);
+
+    for(sl=y1;sl<=y2;sl++)
+    {
+        sx1= m1*(sl-y1)+x1;
+        sx2= m3*(sl-y1)+x1;
+        if(sx1>sx2)
+            swap(sx1,sx2);
+        drawLine(sx1, sl, sx2, sl);
+    }
+    
+    for(sl=y2;sl<=y3;sl++)
+    {
+        sx1= m2*(sl-y3)+x3;
+        sx2= m3*(sl-y1)+x1;
+        if(sx1>sx2)
+            swap(sx1,sx2);
+        drawLine(sx1, sl, sx2, sl);
     }
 }
 
@@ -305,6 +316,213 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
                 drawHLine(x1, y2-i, x2-x1);
             }
         }
+    }
+}
+
+void drawCircle(u16 x, u16 y, u16 radius)
+{
+    s16 f = 1 - radius;
+    s16 ddF_x = 1;
+    s16 ddF_y = -2 * radius;
+    s16 x1 = 0;
+    s16 y1 = radius;
+
+    drawPixel(x, y + radius);
+    drawPixel(x, y - radius);
+    drawPixel(x + radius, y);
+    drawPixel(x - radius, y);
+
+    while(x1 < y1)
+    {
+        if(f >= 0) 
+        {
+            y1--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x1++;
+        ddF_x += 2;
+        f += ddF_x;    
+        drawPixel(x + x1, y + y1);
+        drawPixel(x - x1, y + y1);
+        drawPixel(x + x1, y - y1);
+        drawPixel(x - x1, y - y1);
+        drawPixel(x + y1, y + x1);
+        drawPixel(x - y1, y + x1);
+        drawPixel(x + y1, y - x1);
+        drawPixel(x - y1, y - x1);
+    }
+}
+
+void fillCircle(u16 x, u16 y, u16 radius)
+{
+    s16 x1, y1;
+    for (y1 = -radius; y1 <= radius; y1++) 
+        for (x1 = -radius; x1 <= radius; x1++) 
+            if (x1 * x1 + y1 * y1 <= radius * radius) 
+                drawPixel(x + x1, y + y1);
+}
+
+void drawHBarGraph(u8 x, u8 y, int width, int height, u8 border, int minval, int maxval, int curval)
+{
+    u16 busypix;   // pixels in "busy" part
+    u8 gulx, guly; // bargraph upper left corner coordinates
+    u8 glrx, glry; // bargraph lower right corner coordinates
+    u8 i;
+    
+    /*
+     * set up border and graph coordinates
+     * x,y will be adjusted to upper left corner of border
+     * gulx,guly will be set to upper left corner of graph (sans border)
+     * glrx,glry will be set to lower right corner of graph (sans border)
+     */
+
+    if(height < 0)
+    {
+        glry = y - border;
+        y = y + height + 1;
+        guly = y + border;
+    }
+    else
+    {
+        // y is ok
+        guly = y + border;
+        glry = y + height -1 - border;
+    }
+
+    if(width < 0)
+    {
+        glrx = x - border;
+        x = x + width +1;
+        gulx = x + border;
+    }
+    else
+    {
+        // x is ok
+        gulx = x + border;
+        glrx = x + width - 1 - border;
+    }
+
+    /*
+     * Draw border pixels
+     */
+
+    if(border)
+    {
+        for(i = 0; i < border; i++)
+            drawRect(x+i, y+i, abs(width)-2*i, abs(height)-2*i);
+    }
+
+    /*
+     * Draw "busy" and "not busy" bargraph pixels
+     */
+
+    busypix = map(curval, minval, maxval, 0, abs(width) -2*border);
+
+    if(width < 0)
+    {
+        // bar advances to left
+        if(busypix)
+            drawRect(glrx-busypix+1, guly, glrx, glry);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly, glrx-busypix, glry);//, PIXEL_OFF);
+    }
+    else
+    {
+        // bar advances to right
+        if(busypix)
+            drawRect(gulx, guly, gulx+busypix-1, glry);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx+busypix+1, guly, glrx, glry);//, PIXEL_OFF);
+    }
+}
+
+/**
+ * Draw a Vertical BarGraph
+ *
+ * @param x X coordinate of the corner of the bargraph
+ * @param y Y coordinate of the corner of the bargraph
+ * @param width Width in pixels of bargraph, including border pixels
+ * @param height Height in pixels of bargraph, including border pixels
+ * @param border Border pixels around bargraph (use zero for no border)
+ * @param minval Minimum value of the bargraph
+ * @param maxval Maximum value of the bargraph
+ * @param curval Current value of the bargraph
+ */
+
+void drawVBarGraph(u8 x, u8 y, int width, int height, u8 border, int minval, int maxval, int curval)
+{
+    u16 busypix; // pixels in "busy" part
+    u8 gulx, guly; // bargraph upper left corner coordinates
+    u8 glrx, glry; // bargraph lower right corner coordinates
+    u8 i;
+    
+    /*
+     * set up border and graph coordinates
+     * x,y will be adjusted to upper left corner of border
+     * gulx,guly will be set to upper left corner of bargraph (sans border)
+     * glrx,glry will be set to lower right corner of bargraph (sans border)
+     */
+
+    if(height < 0)
+    {
+        glry = y - border;
+        y = y + height + 1;
+        guly = y + border;
+    }
+    else
+    {
+        // y is ok
+        guly = y + border;
+        glry = y + height -1 - border;
+    }
+
+    if(width < 0)
+    {
+        glrx = x - border;
+        x = x + width +1;
+        gulx = x + border;
+    }
+    else
+    {
+        // x is ok
+        gulx = x + border;
+        glrx = x + width - 1 - border;
+    }
+
+    /*
+     * Draw border pixels
+     */
+
+    if(border)
+    {
+        for(i = 0; i < border; i++)
+        {
+            drawRect(x+i, y+i, abs(width)-2*i, abs(height)-2*i);
+        }
+    }
+
+    /*
+     * Draw "busy" and "not busy" bargraph pixels
+     */
+
+    busypix = map(curval, minval, maxval, 0, abs(height) -2*border);
+
+    if(height < 0)
+    {
+        // bar advances up
+        if(busypix)
+            drawRect(gulx, glry-busypix+1, glrx, glry); //, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly, glrx, glry-busypix); //, PIXEL_OFF);
+    }
+    else
+    {
+        // bar advances down
+        if(busypix)
+            drawRect(gulx, guly, glrx, guly+busypix-1);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly+busypix+1, glrx, glry);//, PIXEL_OFF);
     }
 }
 

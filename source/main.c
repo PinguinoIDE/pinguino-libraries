@@ -22,6 +22,8 @@
     12 Dec. 2015 - Régis Blanchot - added __DELAYMS__ flag
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     12 Apr. 2016 - Régis Blanchot - removed __DELAYMS__ flag
+    13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
+    14 Oct. 2016 - Régis Blanchot - updated _cpu_clock_ value when ICSP is used
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -38,11 +40,15 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
     ------------------------------------------------------------------*/
 
-unsigned long _cpu_clock_ = 48000000;
-
 ////////////////////////////////////////////////////////////////////////
 #include "define.h"
 ////////////////////////////////////////////////////////////////////////
+
+#ifdef CRYSTAL
+unsigned long _cpu_clock_ = CRYSTAL;
+#else
+unsigned long _cpu_clock_ = 48000000;
+#endif
 
 #include <compiler.h>       // SDCC / XC8 compatibility
 #include <typedef.h>        // u8, u16, u32 and other types definition
@@ -91,10 +97,10 @@ unsigned long _cpu_clock_ = 48000000;
         #error "********************************"
     #endif
     
-    #warning "********************************"
-    #warning "* Bootloader out of date       *"
-    #warning "* Please update.               *"
-    #warning "********************************"
+    #warning   "********************************"
+    #warning   "* Bootloader out of date       *"
+    #warning   "* Please update.               *"
+    #warning   "********************************"
 
     // 2013-07-31 - A. Gentric - fix usb.c
     //#include <common_types.h>
@@ -123,8 +129,8 @@ unsigned long _cpu_clock_ = 48000000;
     #if !defined(__XC8__)
         // runtime start code
         //#include "crt0.c"     // minimal  init.
-        //#include "crt0i.c"    // variables init.
-        #include "crt0iz.c"     // variables init. + clear
+        #include "crt0i.c"    // variables init.
+        //#include "crt0iz.c"     // variables init. + clear
     #endif
 
     // Application entry point called from bootloader v4.x
@@ -137,7 +143,8 @@ unsigned long _cpu_clock_ = 48000000;
 /// ----------------------------------------------------------------
 
 {
-    #if defined(__18f25k50) || defined(__18f45k50) || \
+    #if defined(__18f13k50) || defined(__18f14k50) || \
+        defined(__18f25k50) || defined(__18f45k50) || \
         defined(__18f26j50) || defined(__18f46j50) || \
         defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
@@ -150,26 +157,34 @@ unsigned long _cpu_clock_ = 48000000;
     /// If we start from a Power-on reset, clear reset bits
     /// ----------------------------------------------------------------
 
+/**********************************************************************/
     #if defined(_PIC14E) //__16F1459
+/**********************************************************************/
 
     if (PCONbits.nPOR == 0)
     {
         PCONbits.nPOR = 1;          // POR and BOR flags must be cleared by
         PCONbits.nBOR = 1;          // software to allow a new detection
-        //PCON |= 0b10010011;         // set all reset flag
     }
 
+/**********************************************************************/
     #else
+/**********************************************************************/
+
+    RCONbits.IPEN = 1;              // Enables priority levels on
+                                    // interrupts (cf. vectors.c/.h)
+                                    // MUST BE SET OR INTERRUPT WON'T WORK !
+                                    // NB: MCLR clears this bit
 
     if (RCONbits.NOT_POR == 0)
     {
         RCONbits.NOT_POR = 1;       // POR and BOR flags must be cleared by
         RCONbits.NOT_BOR = 1;       // software to allow a new detection
-        RCONbits.IPEN    = 1;       // enable priority levels on interrupts
-        //RCON |= 0b10010011;         // set all reset flag
     }
 
+/**********************************************************************/
     #endif
+/**********************************************************************/
 
     /// ----------------------------------------------------------------
     /// Disables all interrupt
@@ -188,7 +203,9 @@ unsigned long _cpu_clock_ = 48000000;
     /// Perform a loop for some processors until their frequency is stable
     /// ----------------------------------------------------------------
 
+/**********************************************************************/
     #if defined(__16F1708)
+/**********************************************************************/
 
         // Whatever the configuration we start with INTOSC
         OSCCON = 0b11111010;        // SPLLEN   : 1 = 4x PLL is enabled (see config.h)
@@ -203,7 +220,9 @@ unsigned long _cpu_clock_ = 48000000;
         // before attempting to set the USBEN bit.
         while (!OSCSTATbits.PLLR);
 
+/**********************************************************************/
     #elif defined(__16F1459)
+/**********************************************************************/
 
         // Whatever the configuration we start with INTOSC
         OSCCON = 0b11111100;        // SPLLEN   : 1 = PLL is enabled (see config.h)
@@ -211,7 +230,7 @@ unsigned long _cpu_clock_ = 48000000;
                                     // IRCF     : 1111 = HFINTOSC (16 MHz)
                                     // SCS      : 00 = use clock determined by IRCF
 
-        #if defined(__USB__) || defined(__USBCDC__) || defined(__USBBULK)
+        #if defined(__USB__) || defined(__USBCDC__) || defined(__USBBULK__)
         ACTCON = 0x90;              // Enable active clock tuning with USB
         #endif
         // Wait HFINTOSC frequency is stable (HFIOFS=1) 
@@ -221,8 +240,28 @@ unsigned long _cpu_clock_ = 48000000;
         // before attempting to set the USBEN bit.
         while (!OSCSTATbits.PLLRDY);
 
+/**********************************************************************/
+    #elif defined(__18f13k50) || defined(__18f14k50)
+/**********************************************************************/
+
+        OSCCONbits.SCS  = 0;        // 00 = Primary clock determined by CONFIG1H[FOSC<3:0>]
+        //OSCCON2bits.PRI_SD = 1;     // 1 = Oscillator drive circuit on
+
+        #if (CRYSTAL == 48)
+
+        OSCTUNEbits.SPLLEN = 0;     // SPLLEN   : 0 = 4x PLL is disabled (see config.h)
+
+        #else                       // 12 MHZ (4x12=48Mhz)
+
+        OSCTUNEbits.SPLLEN = 1;     // SPLLEN   : 1 = 4x PLL is enabled (see config.h)
+        while (pll_startup_counter--);
+
+        #endif
+
+/**********************************************************************/
     #elif defined(__18f2455) || defined(__18f4455) || \
           defined(__18f2550) || defined(__18f4550)
+/**********************************************************************/
 
         // If Internal Oscillator is used
         if (OSCCONbits.SCS > 0x01)
@@ -231,7 +270,9 @@ unsigned long _cpu_clock_ = 48000000;
 
         // PLL is enabled by Config. Bits
 
+/**********************************************************************/
     #elif defined(__18f25k50) || defined(__18f45k50)
+/**********************************************************************/
     
         // If Internal Oscillator is used
         if (OSCCONbits.SCS > 0x01)
@@ -243,7 +284,9 @@ unsigned long _cpu_clock_ = 48000000;
         OSCTUNEbits.SPLLMULT = 1;   // 1=3xPLL, 0=4xPLL
         while (pll_startup_counter--);
 
+/**********************************************************************/
     #elif defined(__18f26j50) || defined(__18f46j50)
+/**********************************************************************/
     
         // If Internal Oscillator is used
         // if (OSCCONbits.SCS > 0x02)
@@ -253,8 +296,10 @@ unsigned long _cpu_clock_ = 48000000;
         OSCTUNEbits.PLLEN = 1;
         while (pll_startup_counter--);
 
+/**********************************************************************/
     #elif defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
+/**********************************************************************/
 
         // If Internal Oscillator is used
         if (OSCCONbits.SCS > 0x02)
@@ -301,7 +346,7 @@ unsigned long _cpu_clock_ = 48000000;
     CDCbegin(115200);
     #endif    
 
-    #ifdef __USBBULK
+    #ifdef __USBBULK__
     bulk_init();
     #endif
 
@@ -328,7 +373,7 @@ unsigned long _cpu_clock_ = 48000000;
     #ifdef __WATCHDOG__
     watchdog_init();
     #endif
-    
+
 ////////////////////////////////////////////////////////////////////////
     setup();
 ////////////////////////////////////////////////////////////////////////
@@ -352,13 +397,21 @@ unsigned long _cpu_clock_ = 48000000;
         loop();
 ////////////////////////////////////////////////////////////////////////
     }
+
+    // Returning from main will lock up.
+    #if defined(__XC8__)
+    #asm
+    lockup:
+    bra lockup
+    #endasm
+    #endif
 }
 
 /// ----------------------------------------------------------------
 /// Interrupt 
 /// ----------------------------------------------------------------
 
-#if  defined(__USBCDC__)    || defined(__USBBULK)   || defined(__USB__)     || \
+#if  defined(__USBCDC__)    || defined(__USBBULK__)   || defined(__USB__)     || \
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
      defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
@@ -379,7 +432,7 @@ unsigned long _cpu_clock_ = 48000000;
             CDC_interrupt();
             #endif
             
-            #if defined(__USBBULK)
+            #if defined(__USBBULK__)
             bulk_interrupt();
             #endif
 
@@ -480,7 +533,7 @@ unsigned long _cpu_clock_ = 48000000;
             CDC_interrupt();
             #endif
             
-            #ifdef __USBBULK
+            #ifdef __USBBULK__
             bulk_interrupt();
             #endif
 
@@ -511,6 +564,10 @@ unsigned long _cpu_clock_ = 48000000;
             #ifdef __PS2KEYB__
             keyboard_interrupt();
             #endif
+
+            //#ifdef __KEYPAD__
+            //keypad_interrupt();
+            //#endif
 
             #ifdef __DCF77__
             dcf77_interrupt();

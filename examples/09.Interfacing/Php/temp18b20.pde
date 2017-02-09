@@ -27,11 +27,19 @@ void setup()
 void loop()
 {
 	TEMPERATURE t;
-	
-	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
+        /*	
+	if (DS18x20.readFahrenheit(ONEWIREBUS, SKIPROM, &t));
 	{
 		if (t.sign) CDC.printf("-");
-		CDC.printf("%d.%d°C \r", t.integer, t.fraction);
+		CDC.printf("%3d.%2d degF \r\n", t.integer, t.fraction);
 	}
+        */
+
+	if (DS18B20.readCelsius(ONEWIREBUS, SKIPROM, &t))
+	{
+		if (t.sign) CDC.printf("-");
+		CDC.printf("%d.%d degC \r", t.integer, t.fraction);
+	}
+
 	delay(5000);
 }

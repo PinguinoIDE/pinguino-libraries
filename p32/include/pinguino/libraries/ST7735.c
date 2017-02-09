@@ -1,22 +1,23 @@
 /*	--------------------------------------------------------------------
-    FILE:			ST7735.c
-    PROJECT:		pinguino
-    PURPOSE:		Drive 1.8" 128x160 TFT display
-    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	11 Dec. 2014
-    LAST RELEASE:	29 Jan. 2016
+    FILE:           ST7735.c
+    PROJECT:        Pinguino
+    PURPOSE:        Drive 1.8" 128x160 TFT display
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
+    LAST RELEASE:   29 Jan. 2016
     ------------------------------------------------------------------------
     http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
     ------------------------------------------------------------------------
     CHANGELOG
-    * 01 Oct. 2015  RB  fixed ST7735_setOrientation()
-    * 03 Oct. 2015  RB  added new function ST7735_printCenter()
-    * 27 Jan. 2016  RB  replaced ST7735_WIDTH and ST7735_HEIGHT with
-                        ST7735[module].screen.width and ST7735[module].screen.height
+    * 11 Dec. 2014 - Regis Blanchot - first release
+    * 01 Oct. 2015 - Regis Blanchot - fixed ST7735_setOrientation()
+    * 03 Oct. 2015 - Regis Blanchot - added new function ST7735_printCenter()
+    * 27 Jan. 2016 - Regis Blanchot - replaced ST7735_WIDTH and ST7735_HEIGHT with
+                                      ST7735[module].screen.width and ST7735[module].screen.height
+    * 08 Dec. 2016 - Regis Blanchot - added variable width fonts support
     ------------------------------------------------------------------------
     TODO
     * scroll functions
-	* in SPI_begin() 'u8' is promoted to 'int' when passed through '...'
+    * in SPI_begin() 'u8' is promoted to 'int' when passed through '...'
     ------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -50,14 +51,22 @@
 #ifndef __ST7735_C
 #define __ST7735_C
 
+#ifndef __PIC32MX__
+#include <compiler.h>
+#endif
 #include <typedef.h>
 #include <macro.h>
 #include <stdarg.h>
-#include <spi.h>
 #include <ST7735.h>
-#include <digitalw.c>
-#include <delay.c>
+#include <spi.h>
 #include <spi.c>
+#include <digitalw.c>
+#ifndef __PIC32MX__
+#include <digitalp.c>
+#include <delayms.c>
+#else
+#include <delay.c>
+#endif
 
 // Printf
 #ifdef ST7735PRINTF
@@ -115,33 +124,39 @@ void ST7735_sendCmdData(u8 module, u8 cmd, u8 val)
         Orientation sets to portrait by default
     ------------------------------------------------------------------*/
 
-void ST7735_init(u8 module, ...)
+void ST7735_init(int module, ...)
 {
-    u8 sda, sck, cs;
+    int sdo, sck, cs;
     va_list args;
     
     ST7735_SPI = module;
     
     va_start(args, module); // args points on the argument after module
 
-    ST7735[ST7735_SPI].pin.dc = (u8)va_arg(args, int); // get the first arg
+    ST7735[ST7735_SPI].pin.dc = va_arg(args, int); // get the first arg
     pinmode(ST7735[ST7735_SPI].pin.dc, OUTPUT);
 
     // init SPI communication
     if (ST7735_SPI == SPISW)
     {
-        sda = (u8)va_arg(args, int);         // get the next arg
-        sck = (u8)va_arg(args, int);         // get the next arg
-        cs  = (u8)va_arg(args, int);         // get the last arg
+        sdo = va_arg(args, int);         // get the next arg
+        sck = va_arg(args, int);         // get the next arg
+        cs  = va_arg(args, int);         // get the last arg
         SPI_setBitOrder(ST7735_SPI, SPI_MSBFIRST);
-        SPI_begin(ST7735_SPI, sda, sck, cs);
+        SPI_begin(ST7735_SPI, sdo, sck, cs);
     }
     else
     {
-        SPI_setMode(ST7735_SPI, SPI_MASTER8);
+        SPI_setMode(ST7735_SPI, SPI_MASTER);
         SPI_setDataMode(ST7735_SPI, SPI_MODE1);
+        #ifndef __PIC32MX__
+        //maximum baud rate possible = FPB = FOSC/4
+        SPI_setClockDivider(ST7735_SPI, SPI_CLOCK_DIV4);
+        #else
         //maximum baud rate possible = FPB/2
         SPI_setClockDivider(ST7735_SPI, SPI_PBCLOCK_DIV2);
+        #endif
+        //SPI_begin(ST7735_SPI, NULL);
         SPI_begin(ST7735_SPI);
     }
 
@@ -149,9 +164,9 @@ void ST7735_init(u8 module, ...)
     
     // default Screen Values
 
-    ST7735[ST7735_SPI].cursor.x      = 0;
-    ST7735[ST7735_SPI].cursor.y      = 0;
-    ST7735[ST7735_SPI].cursor.page   = 0;
+    ST7735[ST7735_SPI].pixel.x      = 0;
+    ST7735[ST7735_SPI].pixel.y      = 0;
+    ST7735[ST7735_SPI].pixel.page   = 0;
     ST7735[ST7735_SPI].screen.startx = 0;
     ST7735[ST7735_SPI].screen.starty = 0;
     ST7735[ST7735_SPI].screen.endx   = ST7735_WIDTH  - 1;
@@ -236,8 +251,8 @@ void ST7735_setOrientation(u8 module, s16 degrees)
     ST7735_sendCmdData(module,ST7735_MADCTL, arg);
     ST7735_deselect(module);            // Chip deselected
     
-    ST7735[module].cursor.xmax  = ST7735[module].screen.width / ST7735[module].font.width;
-    ST7735[module].cursor.ymax  = ST7735[module].screen.height / ST7735[module].font.height;
+    //ST7735[module].cursor.xmax  = ST7735[module].screen.width / ST7735[module].font.width;
+    //ST7735[module].cursor.ymax  = ST7735[module].screen.height / ST7735[module].font.height;
 }
 #endif
 
@@ -403,8 +418,8 @@ void ST7735_clearScreen(u8 module)
 
     ST7735_deselect(module);            // Chip deselect
 
-    ST7735[module].cursor.x    = 0;     // home
-    ST7735[module].cursor.y    = 0;
+    ST7735[module].pixel.x    = 0;     // home
+    ST7735[module].pixel.y    = 0;
 }
 #endif
 
@@ -454,8 +469,8 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 
     ST7735_deselect(module);
 
-    ST7735[module].cursor.x = 0;
-    ST7735[module].cursor.y = 0;
+    ST7735[module].pixel.x = 0;
+    ST7735[module].pixel.y = 0;
 }
 #endif
 
@@ -467,21 +482,21 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 
 void ST7735_setFont(u8 module, const u8 *font)
 {
-    ST7735[module].font.address = font;
-    ST7735[module].font.width   = font[0];
-    ST7735[module].font.height  = font[1];
-    ST7735[module].cursor.xmax  = ST7735[module].screen.width  / ST7735[module].font.width;
-    ST7735[module].cursor.ymax  = ST7735[module].screen.height / ST7735[module].font.height;
+    ST7735[module].font.address   = font;
+    ST7735[module].font.width     = font[FONT_WIDTH];
+    ST7735[module].font.height    = font[FONT_HEIGHT];
+    ST7735[module].font.firstChar = font[FONT_FIRST_CHAR];
+    ST7735[module].font.charCount = font[FONT_CHAR_COUNT];
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     DESCRIPTION:
-        write a char at (ST7735[module].cursor.x, ST7735[module].cursor.y)
+        write a char at current position
     PARAMETERS:
         * c ascii code of the character to print
     RETURNS:
     REMARKS:
-------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 void ST7735_printChar2(u8 c)
 {
@@ -490,40 +505,102 @@ void ST7735_printChar2(u8 c)
 
 void ST7735_printChar(u8 module, u8 c)
 {
-    u8 h, w, b;
-    u8 tx, ty;
+    u8  x, y;
+    u8  i, j, k, h;
+    u8  dat, page, tab;
+    u8  width = 0;
+    u8  bytes = (ST7735[module].font.height + 7) / 8;
+    u16 index = 0;
 
-    if (c > 0x7F)
-        c = 0x20;
-
-    while (ST7735[module].cursor.x >= ST7735[module].cursor.xmax)
+    if ((ST7735[module].pixel.x + ST7735[module].font.width) > ST7735[module].screen.width)
     {
-        ST7735[module].cursor.x = 0;
-        ST7735[module].cursor.y++;            
+        ST7735[module].pixel.x = 0;
+        ST7735[module].pixel.y = ST7735[module].pixel.y + bytes*8; //ST7735[module].font.height;
     }
 
-    while (ST7735[module].cursor.y > ST7735[module].cursor.ymax)
+    if ((ST7735[module].pixel.y + ST7735[module].font.height) > ST7735[module].screen.height)
     {
-        ST7735[module].cursor.y = 0;
-        //ST7735_scrollUp();
-        //ST7735_clearScreen(module);
+        ST7735[module].pixel.y = 0;
+        //ST7735_scrollUp(module);            
     }
 
     switch (c)
     {
         case '\n':
-            ST7735[module].cursor.y++;
+            ST7735[module].pixel.y = ST7735[module].pixel.y + bytes*8; //ST7735[module].font.height;
             break;
             
         case '\r':
-            ST7735[module].cursor.x = 0;
+            ST7735[module].pixel.x = 0;
             break;
             
         case '\t':
-            ST7735[module].cursor.x += (ST7735[module].cursor.x + ST7735_TABSIZE) % ST7735_TABSIZE;
+            tab = ST7735_TABSIZE * ST7735[module].font.width;
+            ST7735[module].pixel.x += (ST7735[module].pixel.x + tab) % tab;
             break;
             
         default:
+            if (c < ST7735[module].font.firstChar || c >= (ST7735[module].font.firstChar + ST7735[module].font.charCount))
+                c = ' ';
+            c = c - ST7735[module].font.firstChar;
+
+            // fixed width font
+            if (ST7735[module].font.address[FONT_LENGTH]==0 && ST7735[module].font.address[FONT_LENGTH+1]==0)
+            {
+                width = ST7735[module].font.width; 
+                index = FONT_OFFSET + c * bytes * width;
+            }
+
+            // variable width font
+            else
+            {
+                width = ST7735[module].font.address[FONT_WIDTH_TABLE + c];
+                for (i=0; i<c; i++)
+                    index += ST7735[module].font.address[FONT_WIDTH_TABLE + i];
+                index = FONT_WIDTH_TABLE + ST7735[module].font.charCount + index * bytes;
+            }
+
+            // save the coordinates
+            x = ST7735[module].pixel.x;
+            y = ST7735[module].pixel.y;
+
+            // draw the character
+            for (i=0; i<bytes; i++)
+            {
+                page = i * width;
+                for (j=0; j<width; j++)
+                {
+                    dat = ST7735[module].font.address[index + page + j];
+                    // if char. takes place on more than 1 line (8 bits)
+                    if (ST7735[module].font.height > 8)
+                    {
+                        k = ((i+1)<<3);
+                        if (ST7735[module].font.height < k)
+                            dat >>= k - ST7735[module].font.height;
+                    }
+                    // Write the byte
+                    for (h = 0; h < 8; h++)
+                    {
+                        if (dat & 1)
+                            ST7735_drawPixel(module,  x + j, y + h);
+                        else
+                            ST7735_clearPixel(module, x + j, y + h);
+                        dat >>= 1;
+                    }
+                }
+
+                // 1px gap between chars
+                for (h = 0; h < 8; h++)
+                    ST7735_clearPixel(module, x + width, y + h);
+
+                // Next part of the current char will be one line under
+                y += 8;
+            }
+            // Next char location
+            ST7735[module].pixel.x = x + width + 1;
+            break;
+
+            /*
             tx = ST7735[module].cursor.x * ST7735[module].font.width;
             ty = ST7735[module].cursor.y * ST7735[module].font.height;
             for (h = 0; h < (ST7735[module].font.height-2); h++)
@@ -539,6 +616,7 @@ void ST7735_printChar(u8 module, u8 c)
                 }
             }
             ST7735[module].cursor.x++;
+            */
     }
 }
 
@@ -572,22 +650,36 @@ void ST7735_println(u8 module, const u8 *string)
 #if defined(ST7735PRINTCENTER)
 void ST7735_printCenter(u8 module, const u8 *string)
 {
-    u8 strlen, nbspace;
-    const u8 *p;
-
-    for (p = string; *p; ++p);
-    strlen = p - string;
-
-    nbspace = (ST7735[module].screen.width / ST7735[module].font.width - strlen) / 2;
+    ST7735[module].pixel.x = (ST7735[module].screen.width - ST7735_stringWidth(module, string)) / 2;
     
-    // write spaces before
-    while(nbspace--)
-        ST7735_printChar(module, 32);
-
     // write string
     while (*string != 0)
         ST7735_printChar(module, *string++);
 }
+
+u8 ST7735_charWidth(u8 module, u8 c)
+{
+    // fixed width font
+    if (ST7735[module].font.address[FONT_LENGTH]==0 && ST7735[module].font.address[FONT_LENGTH+1]==0)
+        return (ST7735[module].font.width + 1); 
+
+    // variable width font
+    if (c < ST7735[module].font.firstChar || c > (ST7735[module].font.firstChar + ST7735[module].font.charCount))
+        c = ' ';
+    c = c - ST7735[module].font.firstChar;
+    return (ST7735[module].font.address[FONT_WIDTH_TABLE + c] + 1);
+}
+
+u16 ST7735_stringWidth(u8 module, const u8* str)
+{
+    u16 width = 0;
+
+    while(*str != 0)
+        width += ST7735_charWidth(module, *str++);
+
+    return width;
+}
+
 #endif
 
 #if defined(ST7735PRINTNUMBER) || defined(ST7735PRINTFLOAT)
@@ -642,9 +734,8 @@ void ST7735_setCursor(u8 module, u8 x, u8 y)
     if (x >= ST7735[module].screen.width)  return;
     if (y >= ST7735[module].screen.height) return;
 
-    ST7735[module].cursor.x = x;
-    ST7735[module].cursor.y = y;
-}
+    ST7735[module].pixel.x = x * (ST7735[module].font.width+1);
+    ST7735[module].pixel.y = y * (ST7735[module].font.height+1);}
 
 /*	--------------------------------------------------------------------
     DESCRIPTION:
@@ -725,97 +816,6 @@ void ST7735_clearPixel(u8 module, u8 x, u8 y)
     ST7735_deselect(module);                  // Chip deselected
 }
 
-#if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
-
-void ST7735_drawVLine(u8 module, u16 x, u16 y, u16 h)
-{
-    u8 ch = ST7735[module].color.c >> 8;
-    u8 cl = ST7735[module].color.c & 0xFF;
-
-    if (x >= ST7735[module].screen.width)  return;
-    if (y >= ST7735[module].screen.height) return;
-
-    if ((y+h-1) >= ST7735[module].screen.height)
-        h = ST7735[module].screen.height - y;
-        
-    ST7735_select(module);                   // Chip select
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    SPI_write(module,0x00);
-    SPI_write(module,x);
-    SPI_write(module,0x00);
-    SPI_write(module,x);
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    SPI_write(module,0x00);
-    SPI_write(module,y);
-    SPI_write(module,0x00);
-    SPI_write(module,y+h-1);
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMWR);
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    while (h--)
-    {
-        SPI_write(module,ch);
-        SPI_write(module,cl);
-    }
-    
-    ST7735_deselect(module);            // Chip deselected
-}
-
-void ST7735_drawHLine(u8 module, u16 x, u16 y, u16 w)
-{
-    u8 ch = ST7735[module].color.c >> 8;
-    u8 cl = ST7735[module].color.c & 0xFF;
-
-    if (x >= ST7735[module].screen.width)  return;
-    if (y >= ST7735[module].screen.height) return;
-
-    if ((x+w-1) >= ST7735[module].screen.width)
-        w = ST7735[module].screen.width - x;
-        
-    ST7735_select(module);             // Chip select
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_CASET);    // set column range (x0,x1)
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    SPI_write(module,0x00);
-    SPI_write(module,x);
-    SPI_write(module,0x00);
-    SPI_write(module,x+w-1);
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RASET);    // set row range (y0,y1)
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    SPI_write(module,0x00);
-    SPI_write(module,y);
-    SPI_write(module,0x00);
-    SPI_write(module,y);
-    
-    ST7735_low(ST7735[module].pin.dc);             // COMMAND = 0
-    SPI_write(module,ST7735_RAMWR);
-    
-    ST7735_high(ST7735[module].pin.dc);            // DATA = 1
-    while (w--)
-    {
-        SPI_write(module,ch);
-        SPI_write(module,cl);
-    }
-    
-    ST7735_deselect(module);            // Chip deselected
-}
-#endif
-
 /*	--------------------------------------------------------------------
     DESCRIPTION:
         Graphic routines based on drawPixel in graphics.c
@@ -848,16 +848,6 @@ void setColor(u8 r, u8 g, u8 b)
     c = (r<<11) + (g<<5) + b;
     */
     ST7735_setColor(ST7735_SPI, ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
-}
-
-void drawHLine(u16 x, u16 y, u16 w)
-{
-    ST7735_drawHLine(ST7735_SPI, x, y, w);
-}
-
-void drawVLine(u16 x, u16 y, u16 h)
-{
-    ST7735_drawVLine(ST7735_SPI, x, y, h);
 }
 
 void ST7735_drawLine(u8 module, u16 x0, u16 y0, u16 x1, u16 y1)

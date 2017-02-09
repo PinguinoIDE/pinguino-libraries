@@ -30,26 +30,31 @@
 **/
 
 // Load one or more fonts and active them with ST7735.setFont()
-#include <fonts/font6x8.h>
+//#include <fonts/font6x8.h>
+//#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
+//#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
+//#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
 #define SPITFT SPI2
 
-float f=0.00;
+u8 i;
 
 void setup()
 {
     pinMode(USERLED, OUTPUT);
     ST7735.init(SPITFT, 7);
-    ST7735.setFont(SPITFT, font6x8);
+    ST7735.setFont(SPITFT, VerdanaBold28);
     ST7735.setBackgroundColor(SPITFT, ST7735_BLACK);
     ST7735.setColor(SPITFT, ST7735_GREEN);
+    ST7735.setOrientation(SPITFT, 90);
     ST7735.clearScreen(SPITFT);
 }
 
 void loop()
 {
-    ST7735.printf(SPITFT, "f=%.3f\r\n",f);
-    f = f + 0.01;
+    ST7735.setCursor(SPITFT, 4, 2);
+    ST7735.printf(SPITFT, "i=%03u", i++);
     toggle(USERLED);
-    delay(100);
+    //delay(1000);
 }

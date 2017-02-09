@@ -1,18 +1,19 @@
-/*	----------------------------------------------------------------------------
-    FILE:			1wire.c
-    PROJECT:		pinguino
-    PURPOSE:		One wire Interface Functions
-    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	28 Sep. 2010
+/*  ----------------------------------------------------------------------------
+    FILE:           1wire.c
+    PROJECT:        Pinguino
+    PURPOSE:        One wire Interface Functions
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  28 Sept. 2010
+    LAST RELEASE:   14 jan. 2011
     ----------------------------------------------------------------------------
+    CHANGELOG:
+    28 Sep 2010 Régis Blanchot      first release based on Maxim AN162 and Microchip AN1199
     28 May 2014 Régis Blanchot      fixed OneWireRead  -> OneWireReadByte
                                     fixed OneWireWrite -> OneWireWriteByte
     12 Oct 2015 Luca (aka Brikker)	disabled interrupts in OneWireReset, OneWireReadBit,
                                     and OneWireWriteBit functions
     23 Mai 2016 Régis Blanchot	    disabled/enabled interrupts when necessary
                                     used Maxim's official timings
-    ----------------------------------------------------------------------------
-    this file is based on Maxim AN162 and Microchip AN1199
     ----------------------------------------------------------------------------
     TODO :
     ----------------------------------------------------------------------------
@@ -36,10 +37,16 @@
 
     #include <typedef.h>
     #include <macro.h>              // interrupt(), noInterrupt(), ...
+
+    #ifndef __PIC32MX__
     #include <delayus.c>            // Delayus
     #include <digitalp.c>           // pinmode
-    #include <digitalw.c>           // digitalwrite
     #include <digitalr.c>           // digitalread
+    #include <digitalw.c>           // digitalwrite
+    #else
+    #include <delay.c>              // Delayus
+    #include <digitalw.c>           // digitalwrite
+    #endif
 
     // Standard 1-Wire timing
     // https://www.maximintegrated.com/en/app-notes/index.mvp/id/126
@@ -66,7 +73,7 @@
     u8 OneWireReadByte(u8);
     void OneWireWriteByte(u8, u8);
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Force the DQ line to a logic low
     --------------------------------------------------------------------------*/
 
@@ -78,7 +85,7 @@
         if (t) Delayus(t);          \
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Force the DQ line into a high impedance state
     --------------------------------------------------------------------------*/
 
@@ -104,7 +111,7 @@
         return b;               // return value of DQ line
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Initiates the one wire bus
     ----------------------------------------------------------------------------
     Performs a reset on the one-wire bus and returns the presence detect.
@@ -126,7 +133,7 @@
         return dq;
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Read a bit from the one-wire bus and return it.
     --------------------------------------------------------------------------*/
 
@@ -145,7 +152,7 @@
         return dq;                  // return value of DQ line
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Read a byte from the one-wire bus and return it.
     --------------------------------------------------------------------------*/
 
@@ -162,7 +169,7 @@
         return val;
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Writes a bit to the one-wire bus, passed in bitval.
     --------------------------------------------------------------------------*/
 
@@ -184,7 +191,7 @@
         if (status) interrupts();
     }
 
-/*	----------------------------------------------------------------------------
+/*  ----------------------------------------------------------------------------
     ---------- Writes a byte to the one-wire bus.
     --------------------------------------------------------------------------*/
 

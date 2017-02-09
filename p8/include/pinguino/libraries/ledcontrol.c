@@ -45,13 +45,42 @@
 #include <stdarg.h>
 #include <spi.h>
 #include <spi.c>
-//#include <digitalw.c>       // digitalwrite
-//#include <digitalp.c>       // pinmode
+
+/*
+#ifndef __PIC32MX__
+#include <digitalw.c>       // digitalwrite
+#include <digitalp.c>       // pinmode
 #include <delayms.c>
+#else
+#include <digitalw.c>
+#include <delay.c>
+#endif
+*/
+
+// max
+/*
+#ifndef __PIC32MX__
+#ifndef __XC8__
+#if defined(LEDCONTROLSCROLL)
+    #include <mathlib.c>
+#endif
+#endif
+#endif
+*/
 
 // Printf
 #ifdef LEDCONTROLPRINTF
     #include <printFormated.c>
+#endif
+
+// PrintFloat
+#if defined(LEDCONTROLPRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT)
+    #include <printNumber.c>
 #endif
 
 void LedControl_spiTransfer(u8 matrix, u8 opcode, u8 data)
@@ -86,7 +115,8 @@ void LedControl_spiTransfer(u8 matrix, u8 opcode, u8 data)
 
 void LedControl_init(u8 module, ...)
 {
-    u8 m, sda, sck, cs;
+    u8 m;
+    int sdo, sck, cs;
     va_list args;
     
     LEDCONTROL_SPI = module;
@@ -97,11 +127,11 @@ void LedControl_init(u8 module, ...)
 
     if (LEDCONTROL_SPI == SPISW)
     {
-        sda = va_arg(args, u8);                 // get the next arg
-        sck = va_arg(args, u8);                 // get the next arg
-        cs  = va_arg(args, u8);                 // get the next arg
+        sdo = va_arg(args, int);                 // get the next arg
+        sck = va_arg(args, int);                 // get the next arg
+        cs  = va_arg(args, int);                 // get the next arg
         SPI_setBitOrder(LEDCONTROL_SPI, SPI_MSBFIRST);
-        SPI_begin(LEDCONTROL_SPI, sda, sck, cs);
+        SPI_begin(LEDCONTROL_SPI, sdo, sck, cs);
     }
     else
     {
@@ -113,7 +143,7 @@ void LedControl_init(u8 module, ...)
         SPI_begin(LEDCONTROL_SPI);
     }
 
-    gLastDevice = va_arg(args, u8) - 1;         // get the last arg
+    gLastDevice = va_arg(args, int) - 1;         // get the last arg
     if (gLastDevice > 7)
         gLastDevice = 7;
 
@@ -143,6 +173,12 @@ void LedControl_init(u8 module, ...)
     }
 
     va_end(args);                               // cleans up the list
+
+    #if defined(LEDCONTROLPRINTCHAR)   || defined(LEDCONTROLPRINT)      || \
+        defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT) || \
+        defined(LEDCONTROLPRINTF)      || defined(LEDCONTROLSCROLL)
+    LedControl_setFont(font8x8);
+    #endif
 }
 
 //#define LedControl_getDeviceCount() (gLastDevice)
@@ -228,27 +264,27 @@ void LedControl_setLed(u8 matrix, u8 row, u8 column, boolean state)
     LedControl_spiTransfer(matrix, row+1, status[offset]);
 }
 
-void LedControl_setColumn(u8 matrix, u8 col, u8 value)
+void LedControl_setRow(u8 matrix, u8 row, u8 value)
 {
-    u8 row;
+    u8 col;
 
     //if (matrix >= gLastDevice)
     //    return;
 
-    for (row=0; row<8; row++)
-        LedControl_setLed(matrix, row, col & 7, (value >> row) & 0x01);
+    for (col=0; col<8; col++)
+        LedControl_setLed(matrix, col, row & 7, (value >> col) & 0x01);
 }
 
-void LedControl_setRow(u8 matrix, u8 row, u8 value)
+void LedControl_setColumn(u8 matrix, u8 col, u8 value)
 {
     u8 offset;
     
     //if (matrix >= gLastDevice)
     //    return;
 
-    offset = (matrix << 3) + (row & 7);
+    offset = (matrix << 3) + (col & 7);
     status[offset] = value;
-    LedControl_spiTransfer(matrix, row+1, value);
+    LedControl_spiTransfer(matrix, col+1, value);
 }
 
 #if defined(LEDCONTROLSETDIGIT) || defined(LEDCONTROLSETCHAR)
@@ -275,18 +311,29 @@ void LedControl_setDigit(u8 matrix, u8 digit, u8 value, boolean dp)
 
 #if defined(LEDCONTROLPRINTCHAR)   || defined(LEDCONTROLPRINT)      || \
     defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT) || \
-    defined(LEDCONTROLPRINTF)
+    defined(LEDCONTROLPRINTF)      || defined(LEDCONTROLSCROLL)
+
+void LedControl_setFont(const u8* font)
+{
+    font_address   = font;
+    font_width     = font[FONT_WIDTH];
+    font_height    = font[FONT_HEIGHT];
+    font_firstchar = font[FONT_FIRST_CHAR];
+    font_charcount = font[FONT_CHAR_COUNT];
+}
 
 void LedControl_printChar(u8 charIndex)
 {
     u8 col;
     
-    charIndex = charIndex & 0x7f - 0x20;
+    //charIndex = charIndex & 0x7f - 0x20;
+    charIndex = charIndex & font_charcount - font_firstchar;
 
     // display char on the active matrix
-    for (col=0; col<=7; col++)
-        LedControl_setColumn(gActiveDevice, 7-col, font8x8[2+charIndex*8+col]);
-        //LedControl_setColumn(gActiveDevice, 7-col, font[charIndex][col]);
+    for (col=0; col<font_width; col++)
+        LedControl_setRow(gActiveDevice, 7-col, font_address[FONT_OFFSET+charIndex*font_width+col]);
+        //LedControl_setColumn(gActiveDevice, col, font_address[FONT_OFFSET+charIndex*font_width+col]);
+        //LedControl_setColumn(gActiveDevice, 7-col, font_address[FONT_OFFSET+charIndex*8+col]);
 
     // point to the next matrix
     if (gActiveDevice++ >= gLastDevice)
@@ -309,98 +356,14 @@ void LedControl_print(const char * str)
 #if defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT)
 void LedControl_printNumber(s32 value, u8 base)
 {  
-    u8 sign;
-    u8 length;
-
-    s32 i;
-    u32 v;                      // absolute value
-
-    u8 tmp[12];
-    u8 *tp = tmp;               // pointer on tmp
-
-    u8 string[12];
-    u8 *sp = string;            // pointer on string
-
-    if (value == 0)
-    {
-        LedControl_printChar('0');
-        return;
-    }
-    
-    sign = ( (base == 10) && (value < 0) );
-
-    if (sign)
-        v = -value;
-    else
-        v = (u32)value;
-
-    //while (v || tp == tmp)
-    while (v)
-    {
-        i = v % base;
-        v = v / base;
-        
-        if (i < 10)
-            *tp++ = i + '0';
-        else
-            *tp++ = i + 'A' - 10;
-    }
-
-    // start of string
-    if (sign)
-        *sp++ = '-';
-
-    length = sign + tp - tmp + 1;
-
-    // backwards writing 
-    while (tp > tmp)
-        *sp++ = *--tp;
-
-    // end of string
-    *sp = 0;
-
-    LedControl_print(string);
+    printNumber(LedControl_printChar, value, base);
 }
 #endif
 
 #if defined(LEDCONTROLPRINTFLOAT)
 void LedControl_printFloat(float number, u8 digits)
 { 
-    u8 i, toPrint;
-    u16 int_part;
-    float rounding, remainder;
-
-    // Handle negative numbers
-    if (number < 0.0)
-    {
-        LedControl_printChar('-');
-        number = -number;
-    }
-
-    // Round correctly so that print(1.999, 2) prints as "2.00"  
-    rounding = 0.5;
-    for (i=0; i<digits; ++i)
-        rounding /= 10.0;
-
-    number += rounding;
-
-    // Extract the integer part of the number and print it  
-    int_part = (u16)number;
-    remainder = number - (float)int_part;
-    LedControl_printNumber(int_part, 10);
-
-    // Print the decimal point, but only if there are digits beyond
-    if (digits) // > 0)
-        LedControl_printChar('.'); 
-
-    // Extract digits from the remainder one at a time
-    while (digits--) // > 0)
-    {
-        remainder *= 10.0;
-        toPrint = (unsigned int)remainder; //Integer part without use of math.h lib, I think better! (Fazzi)
-        LedControl_printNumber(toPrint, 10);
-        remainder -= toPrint; 
-    }
+    printFloat(LedControl_printChar, number, digits);
 }
 #endif
 
@@ -423,9 +386,9 @@ void LedControl_printf(const u8 *fmt, ...)
 #endif
 
 // Scroll Message
-// d'après : http://breizhmakers.over-blog.com/article-un-peu-d-animation-ou-le-scrolling-a-base-de-max7219-105669349.html
+// from : http://breizhmakers.over-blog.com/article-un-peu-d-animation-ou-le-scrolling-a-base-de-max7219-105669349.html
 #if defined(LEDCONTROLSCROLL)
-u16 LedControl_scroll(const char * str)
+u16 LedControl_scroll(const char * string)
 {
     u8 m;                           // current matrix (0 < m < 8)
     u8 r;                           // current row    (0 < r < 8)
@@ -433,9 +396,18 @@ u16 LedControl_scroll(const char * str)
     u8 charIndex;                   // current char index in the font tab
     u8 curchar = gScroll / 8;       // current char to display (first matrix)
     u8 offset = gScroll & 7;        // pixel to scroll (0 < offset < 8)
-    u8 len = strlen(str) - 1;       // number of char (from 0)
+    //u8 len = strlen(str) - 1;       // number of char (from 0)
+    u8 len;
+    u8 str[64];
     u16 scrollmax = 8 * max(gLastDevice+1, len+1);
-    
+
+    // fill the string with leading spaces, one for each matrix
+    for (m = 0; m <= gLastDevice; m++)
+        str[m] = ' ';
+    str[m] = '\0';
+    strcat(str, string);
+    len = strlen(str) - 1;
+
     // for every matrix connected
     for (m = 0; m <= gLastDevice; m++)
     {
@@ -445,10 +417,11 @@ u16 LedControl_scroll(const char * str)
             if (curchar > len)
                 charIndex = 0;
             else
-                charIndex = str[curchar] & 0x7F - 0x20;
+                //charIndex = str[curchar] & 0x7F - 0x20;
+                charIndex = str[curchar] & font_charcount - font_firstchar;
             // shift the current char by offset
             //row[r] = font[charIndex][r] >> offset;
-            row[r] = font8x8[2+charIndex*8+r] >> offset;
+            row[r] = font_address[FONT_OFFSET+charIndex*8+r] >> offset;
 
             // add the next char shifted by (8 - offset)
             // only if offset is not null
@@ -458,19 +431,19 @@ u16 LedControl_scroll(const char * str)
             if ((curchar+1) > len)
                 charIndex = 0;
             else
-                charIndex = str[curchar + 1] & 0x7F - 0x20;
+                charIndex = str[curchar + 1] & font_charcount - font_firstchar;
             //row[r] |= font[charIndex][r] << (8-offset);
-            row[r] |= font8x8[2+charIndex*8+r] << (8-offset);
+            row[r] |= font_address[FONT_OFFSET+charIndex*8+r] << (8-offset);
         }
 
         // Display the new matrix
         for (r = 0; r < 8; r++)
-            LedControl_setColumn(m, 7 - r, row[r]);     
+            LedControl_setRow(m, 7 - r, row[r]);     
 
         curchar++;
     }
 
-    Delayms(5);
+    //Delayms(5);
     
     // Do we cover the whole scroll area ?
     gScroll = (gScroll + 1) % scrollmax;

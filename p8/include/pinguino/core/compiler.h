@@ -26,6 +26,8 @@
 
     #ifdef __XC8__
 
+        #pragma warning disable 1496 // disable warnings when using va_arg and va_start arithmetic 
+
         #include <xc.h>
 
         #ifdef __18F13K50

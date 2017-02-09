@@ -15,18 +15,12 @@ void loop()
     CDC.print("First Name ? ");
     CDC.getString(firstname);
     CDC.print("\r\n");
+    //CDC.printf(">[%s]\r\n", firstname);
 
     CDC.print("Last Name ? ");
-    CDC.getString(&lastname);
+    CDC.getString(lastname);
     CDC.print("\r\n");
+    //CDC.printf(">[%s]\r\n", lastname);
     
-    CDC.printf("Printf : Hello %s %s !\r\n", &firstname, &lastname);
-
-	/*
-    CDC.print("Print  : Hello ");
-    CDC.print(firstname);
-    CDC.printf(" ");
-    CDC.print(&lastname);
-    CDC.print(" !\r\n");
-	*/
+    CDC.printf("Hello %s %s !\r\n", firstname, lastname);
 }

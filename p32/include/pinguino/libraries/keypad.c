@@ -1,169 +1,194 @@
+/*  --------------------------------------------------------------------
+    FILE:           keypad.c
+    PROJECT:        pinguino
+    PURPOSE:        matrix keypad management
+    PROGRAMER:      Fabio Malagas <fabio.malagas@gmail.com>
+    --------------------------------------------------------------------
+    CHANGELOG :
+    10 Apr. 2013 - Fabio Malagas  - first release
+    03 Feb. 2016 - Régis Blanchot - adpated and fixed for 8-bit
+    02 Nov. 2016 - Régis Blanchot - fixed the whole lib. according 
+                                    https://electrosome.com/matrix-keypad-pic-microcontroller/
+    --------------------------------------------------------------------
+    TODO :
+    * Keypad_isPressed(char keyChar)
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+    ------------------------------------------------------------------*/
+
+#ifndef _KEYPAD_C_
+#define _KEYPAD_C_
+#define __KEYPAD__
+
+#include <typedef.h>
+#include <const.h>
+
+#ifndef __PIC32MX__
+#include <digitalp.c>
+#include <digitalr.c>
+#endif
 #include <digitalw.c>
+
+#include <keypad.h>
+#define  __MILLIS__
 #include <millis.c>
-#include "keypad.h"
 
+/*  --------------------------------------------------------------------
+    ---------- Global variables
+    ------------------------------------------------------------------*/
 
+Keypad keypad;
 
+/*  --------------------------------------------------------------------
+    ---------- getStatus
+    --------------------------------------------------------------------
+    Description : returns the keypad status
+    ------------------------------------------------------------------*/
 
+#define Keypad_getStatus()  (keypad.status)
 
-//--------------------
-// Consts and Defines
-//--------------------
-//const char NO_KEY = '\0';
-//#define KEY_RELEASED NO_KEY
+/*  --------------------------------------------------------------------
+    ---------- setStatus
+    --------------------------------------------------------------------
+    Description : returns the keypad status
+    ------------------------------------------------------------------*/
 
-// this is a macro that converts 2D arrays to pointers:
-//#define makeKeymap(x) ((char *)x)
+#define Keypad_setStatus(s) keypad.status = (KeypadStatus)s
 
+/*  --------------------------------------------------------------------
+    ---------- setDebounceTime
+    ------------------------------------------------------------------*/
 
-/*
+#define Keypad_setDebounceTime(t)   keypad.debounceTime = (u16)t
 
-	22-01-2013
-	- Correction applied for simultaneous pressed keys on the same row
+/*  --------------------------------------------------------------------
+    ---------- setHoldTime
+    ------------------------------------------------------------------*/
 
+#define Keypad_setHoldTime(t)   keypad.holdTime = (u16)t
 
-*/
+/*  --------------------------------------------------------------------
+    ---------- getKey
+    ------------------------------------------------------------------*/
 
-//-------------------
-// Library variables 
-//-------------------
-uchar keypad_rows;
-uchar keypad_columns;
+//#define Keypad_getKey()         (keypad.lastKey)
 
-char *userKeymap;
+/*  --------------------------------------------------------------------
+    ---------- init
+    --------------------------------------------------------------------
+    Description : Initialization
+    Parameters :  keypadmap - pointer on a custom keymap
+                  rowp - pointer on row pins
+                  colp - pointer on column pins
+                  rows, cols - keypad size
+    Returns :     none
+    ------------------------------------------------------------------*/
 
-unsigned char *rowPins;
-unsigned char *columnPins;
+void Keypad_init(u8 *map, u8 *rowp, u8 *colp, u8 rows, u8 cols)
+{
+    u8 p;
 
-KeypadState state;
-char currentKey;
-unsigned long lastUpdate;
-unsigned int debounceTime;
-unsigned int holdTime;
+    keypad.map = map;
+    keypad.rowPins = rowp;
+    keypad.columnPins = colp;
 
+    keypad.rows = rows;
+    keypad.columns = cols;
 
-//-----------------
-// Funtions
-//-----------------
+    keypad.lastKey = NO_KEY;
+    keypad.debounceTime = 50;
+    keypad.holdTime = 1000;
+    keypad.lastUpdate = 0;
+    keypad.status = IDLE;
 
+    // all column connections are made High Impedance (INPUT)
+    for (p = 0; p < keypad.columns; p++)
+    {
+        pinmode(keypad.columnPins[p], INPUT);
+        digitalwrite(keypad.columnPins[p], LOW);
+    }
 
-KeypadState Keypad_getState(){
-	return state;
-}
-
-void Keypad_setDebounceTime(unsigned int debounce){
-	debounceTime = debounce;
-}
-void Keypad_setHoldTime(unsigned int hold){
-	holdTime = hold;
-}
-
-//void Keypad_addEventListener(void (*listener)(char)){
-//	keypadEventListener = listener;
-//}
-
-
-//private function
-void Keypad_transitionTo(KeypadState newState){
-	if (state!=newState){
-		state = newState;
-//		if (keypadEventListener!=NULL){ 
-//			keypadEventListener(currentKey);
-//		}
-	}
-}
-
-//private function
-void Keypad_initializePins(){
-
-	unsigned char c,r;
-
-	for (r=0; r<keypad_rows; r++){
-        for (c=0; c<keypad_columns; c++){
-			pinmode(columnPins[c],OUTPUT);
-			digitalwrite(columnPins[c],HIGH);
-        }
-		//configure row pin modes and states
-		pinmode(rowPins[r],INPUT);
-		digitalwrite(rowPins[r],HIGH);
+    // all row connections are output pins
+    for (p = 0; p < keypad.rows; p++)
+    {
+        pinmode(keypad.rowPins[p], OUTPUT);
+        digitalwrite(keypad.rowPins[p], HIGH);
     }
 }
 
-// Initialization of Allows custom keymap. pin configuration and keypad size
-void Keypad_init(char *keypadmap, uchar *rowp, uchar *colp, uchar rows, uchar cols){
+/*  --------------------------------------------------------------------
+    ---------- getKey
+    --------------------------------------------------------------------
+    Description : 1/ Apply a logic LOW signal to each Column (output).
+                  2/ Scan each row (input).
+                  If any of the column's key is pressed, the Logic LOW
+                  signal from the column will pass to that row.
+                  Through we can detect the key.
+    Returns :     the keykode of the pressed key
+                  or NO_KEY if no key is pressed
+    ------------------------------------------------------------------*/
 
-        userKeymap = keypadmap;
-	rowPins = rowp;
-	columnPins = colp;
-	keypad_rows = rows;
-	keypad_columns = cols;         
+char Keypad_getKey()
+{
+    u8 c,r;
+    u8 currentKey;
 
-	lastUpdate = 0;
-	debounceTime = 50;
-	holdTime = 1000;
-//	keypadEventListener = 0;
-	currentKey = NO_KEY;
-	state = IDLE;
-	
-	Keypad_initializePins();
+    for (c = 0; c < keypad.columns; c++)
+    {
+        // Select the current column.
+        pinmode(keypad.columnPins[c], OUTPUT);
+        
+        // Scan all the rows of this column
+        for (r = 0; r < keypad.rows; r++)
+        {
+            currentKey = keypad.map[c + r * keypad.columns];
+            
+            // Check the last button pressed.
+            // Has it been released or is it still pressed ?
+            if (keypad.lastKey == currentKey)
+            {
+                if ((millis() - keypad.lastUpdate) >= keypad.debounceTime && digitalread(keypad.rowPins[r]) == HIGH)
+                {
+                    keypad.status = RELEASED;
+                    keypad.lastKey = NO_KEY;
+                }
+
+                if ((millis() - keypad.lastUpdate) >= keypad.holdTime && digitalread(keypad.rowPins[r]) == LOW)
+                {
+                    keypad.status = HOLD;
+                    pinmode(keypad.columnPins[c], INPUT);
+                    return currentKey;
+                }
+            }
+
+            // New button pressed ?
+            else if ((millis() - keypad.lastUpdate) >= keypad.debounceTime && digitalread(keypad.rowPins[r]) == LOW)
+            {
+                keypad.status = PRESSED;
+                keypad.lastKey = currentKey;
+                keypad.lastUpdate = millis();
+                pinmode(keypad.columnPins[c], INPUT);
+                return currentKey;
+            }
+        }
+
+        // De-select the current column.
+        pinmode(keypad.columnPins[c], INPUT);
+    }
+
+    return NO_KEY;
 }
 
-
-// Returns the keykode of the pressed key, or NO_KEY if no key is pressed
-char Keypad_getKey(){
-    
-    char key = NO_KEY; // Assume that no key is pressed, this is the default return for getKey()
-    unsigned char c,r;    
-
-	
-
-
-    for (c=0; c<keypad_columns; c++){
-		digitalwrite(columnPins[c],LOW);	// Activate the current column.
-		for (r=0; r<keypad_rows; r++){	// Scan all the rows for a key press.
-			//  The user pressed a button for more then debounceTime microseconds.
-			if (currentKey == userKeymap[c+(r*keypad_columns)]){
-				// Button hold
-				if (((millis()-lastUpdate) >= holdTime) && digitalread(rowPins[r]) == LOW){
-					Keypad_transitionTo(HOLD);
-				}
-				// Button release
-				if (((millis()-lastUpdate) >= debounceTime) && digitalread(rowPins[r]) == HIGH){
-					Keypad_transitionTo(RELEASED);
-					currentKey = NO_KEY;
-				}
-			} 
-			// Button pressed event.  The user pressed a button.
-			else if (((millis()-lastUpdate) >= debounceTime) && digitalread(rowPins[r]) == LOW){
-				digitalwrite(columnPins[c],HIGH);	// De-activate the current column.
-				key = userKeymap[c+(r*keypad_columns)];
-				lastUpdate = millis();
-				goto EVALUATE_KEY; 			// Save resources and do not attempt to parse two keys at a time
-			} 
-		}
-		digitalwrite(columnPins[c],HIGH);	// De-activate the current column.
-	}
-	
-	EVALUATE_KEY:
- 	//if (key != NO_KEY && key != currentKey ){ //Error: keeps repeating keys in the same column
-
-	if (key != NO_KEY && key != currentKey && state!=PRESSED){ //Correction for simultaneous pressed keys on the same row
-
-		
-		// if(state ==HOLD && key != currentKey) //try to disable several keys pressed at the same time
-		// 	return NO_KEY;
-		 
-
-	
-		currentKey = key;
-		Keypad_transitionTo(PRESSED);
-		
-		
-		
-		return currentKey;
-	} 
-	
-	else{
-		return NO_KEY;
-	}
-}
+#endif // _KEYPAD_C_

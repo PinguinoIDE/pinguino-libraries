@@ -18,8 +18,10 @@ absf fabsf#include <math.h>
 sinf sinf#include <math.h>
 cosf cosf#include <math.h>
 tanf tanf#include <math.h>
-sinr sinr#include <trigo.c>
-cosr cosr#include <trigo.c>
+sinr sinr#include <trigo.c>#define SINR
+cosr cosr#include <trigo.c>#define COSR
+sin100 sin100#include <trigo.c>#define SIN100
+cos100 cos100#include <trigo.c>#define COS100
 min min#include <macro.h>
 max max#include <macro.h>
 abs abs#include <math.c>

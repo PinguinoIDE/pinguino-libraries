@@ -3,14 +3,10 @@
     PROJECT:        pinguino
     PURPOSE:        PIC32 Parallel Master Port functions
     PROGRAMER:      Regis Blanchot
-    FIRST RELEASE:  07 Apr. 2012
-    LAST RELEASE:   20 Mar. 2014
     ----------------------------------------------------------------------------
     CHANGELOG : 
-
-    Apr  07 2012  - Regis Blanchot - initial release
+    Apr  07 2012  - Regis Blanchot - first release
     Mar  20 2014  - Regis Blanchot - complete rewrite
-
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -47,13 +43,13 @@
 #define PMP_MODE_INC_ADDR           0b01
 #define PMP_MODE_INC_OFF            0b00
 
-#define	PMP_MODE_8BIT               0		// PMP<15:8> not controlled by the PMP module
+#define	PMP_MODE_8BIT               0       // PMP<15:8> not controlled by the PMP module
 #define	PMP_MODE_16BIT              1
 
-#define PMP_MODE_MASTER1            0b11	// Read & Write on same pin
-#define PMP_MODE_MASTER2            0b10	// Read & Write on separate pins
-#define PMP_MODE_ESLAVE             0b01	// Enhanced
-#define PMP_MODE_SLAVE              0b00	// Legacy
+#define PMP_MODE_MASTER1            0b11    // Read & Write on same pin
+#define PMP_MODE_MASTER2            0b10    // Read & Write on separate pins
+#define PMP_MODE_ESLAVE             0b01    // Enhanced
+#define PMP_MODE_SLAVE              0b00    // Legacy
 
 #define PMP_MUX_16X8                0b10    // 16-bit address multiplexed on PMD<7:0>
 #define PMP_MUX_8X8                 0b01    //  8-bit address multiplexed on PMD<7:0>

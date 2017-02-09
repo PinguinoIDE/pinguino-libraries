@@ -53,8 +53,10 @@ void printNumber(funcout printChar, s32 value, u8 base)
         v = -value;
     }
     else
+    {
         v = (u32)value;
-
+    }
+    
     while (v)
     {
         i = v % base;

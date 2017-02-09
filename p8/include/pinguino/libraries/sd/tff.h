@@ -14,8 +14,8 @@
 /
 /---------------------------------------------------------------------------*/
 
-#ifndef _FATFS
-#define _FATFS
+#ifndef _TFF_H
+#define _TFF_H
 
 #include <typedef.h>
 #include <sd/ffconf.h>
@@ -122,10 +122,9 @@ u8 move_window(u8, dword);
 /*-----------------------------------------------------*/
 /* Tiny-FatFs module application interface             */
 
-FRESULT f_mount (u8, FATFS*);						/* Mount/Unmount a logical drive */
-//FRESULT f_mount (u8);						            /* Mount/Unmount a logical drive */
-FRESULT f_open (u8, FIL*, const char*, u8);			/* Open or create a file */
-FRESULT f_read (u8, FIL*, void*, word, word*);			/* Read data from a file */
+FRESULT f_mount (u8);                                   /* Mount/Unmount a logical drive */
+FRESULT f_open (u8, FIL*, const char*, u8);	            /* Open or create a file */
+FRESULT f_read (u8, FIL*, void*, word, word*);          /* Read data from a file */
 u16 f_read16(u8, FIL*);
 u32 f_read32(u8, FIL*);
 FRESULT f_write (u8, FIL*, const void*, word, word*);	/* Write data to a file */
@@ -147,10 +146,10 @@ FRESULT f_forward (u8, FIL*, word(*)(const u8*,word), word, word*);	/* Forward d
 #if _USE_STRFUNC
 #define feof(fp) ((fp)->fptr == (fp)->fsize)
 #define EOF -1
-int fputc (u8, int, FIL*);								/* Put a character to the file */
-int fputs (u8, const char*, FIL*);						/* Put a string to the file */
-int fprintf (u8, FIL*, const char*, ...);				/* Put a formatted string to the file */
-char* fgets (u8, FIL*, char*, int);						/* Get a string from the file */
+int f_putc (u8, int, FIL*);								/* Put a character to the file */
+int f_puts (u8, const char*, FIL*);						/* Put a string to the file */
+int f_printf (u8, FIL*, const char*, ...);				/* Put a formatted string to the file */
+char* f_gets (u8, FIL*, char*, int);						/* Get a string from the file */
 #endif
 
 u8 isDirectory(FILINFO *);
@@ -269,4 +268,4 @@ extern dword get_fattime (void);
 #error Do not forget to set _MCU_ENDIAN properly!
 #endif
 
-#endif /* _FATFS */
+#endif /* _TFF_H */

@@ -1,15 +1,16 @@
-/*	--------------------------------------------------------------------
-    FILE:			printFormated.c
-    PROJECT:		pinguino - http://www.pinguino.cc/
-    PURPOSE:		alternative printf and sprintf functions
-    PROGRAMERS:		regis blanchot <rblanchot@gmail.com>
-                    mark harper <markfh@f2s.com>
+/*  --------------------------------------------------------------------
+    FILE:          printFormated.c
+    PROJECT:       Pinguino - http://www.pinguino.cc/
+    PURPOSE:       Alternative printf and sprintf functions
+    PROGRAMERS:	   Regis Blanchot <rblanchot@gmail.com>
+                   Mark Harper <markfh@f2s.com>
     --------------------------------------------------------------------
     TODO : thousands separator
     --------------------------------------------------------------------
     CHANGELOG
-    10 Nov 2010 - Régis Blanchot - first release
-    08 Feb 2016 - Régis Blanchot - excluded float support (%f) for the 16F1459
+    10 Nov. 2010 - Régis Blanchot - first release
+    08 Feb. 2016 - Régis Blanchot - excluded float support (%f) for the 16F1459
+    28 Nov. 2016 - Régis Blanchot - updated to have the same file for P8 and P32
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -29,16 +30,21 @@
 #ifndef __PRINTF_C
 #define __PRINTF_C
 
-#include <stdarg.h>
-#include <typedef.h>
+#include <stdarg.h>             // variable args support
+#include <typedef.h>            // u8, u16, u32, funcout, ...
+#include <const.h>              // BIN, DEC, HEX, ...
 
 #define PRINTF_BUF_LEN  12      // should be enough for 32 bits
 #define PAD_RIGHT       1
 #define PAD_ZERO        2
+#define SIGNED          1
+#define UNSIGNED        0
+#define UPPERCASE       'A'
+#define LOWERCASE       'a'
 
-funcout pputchar;        // void pputchar(u8)
+funcout pputchar;               // void pputchar(u8)
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     pprintc = pinguino print char
     ------------------------------------------------------------------*/
 
@@ -55,25 +61,37 @@ void pprintc(u8 **str, u8 c)
     }
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     pprints = pinguino print string
+    --------------------------------------------------------------------
+    out     : pointer on output string or function (if null)
+    string  : pointer on string to output
+    width   : number of Zeros or Spaces
+    pad     : PAD_RIGHT or PAD_ZERO
+    return  : string's length
     ------------------------------------------------------------------*/
 
-int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
+u8 pprints(u8 **out, const u8 *string, u8 width, u8 pad)
 {
-    register u8 pc = 0;
+    u8 pc = 0;
     u8 padchar = ' ';
     u8 len = 0;
     const u8 *ptr;
 
+    // string length calculation
+    for (ptr = string; *ptr; ++ptr)
+        ++len;
+
     if (width > 0)
     {
-        for (ptr = string; *ptr; ++ptr)
-            ++len;
         if (len >= width)
+        {
+            len = width;
             width = 0;
+        }
         else
             width -= len;
+            
         if (pad & PAD_ZERO) padchar = '0';
     }
     
@@ -86,7 +104,7 @@ int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
         }
     }
     
-    for ( ; *string ; ++string)
+    for ( ; *string && len--; ++string)
     {
         pprintc(out, *string);
         ++pc;
@@ -101,18 +119,19 @@ int pprints(u8 **out, const u8 *string, u8 width, u8 pad)
     return pc;
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     pprinti = pinguino print 32-bit signed or unsigned integer
-    i:			32-bit number to convert into string
-    base:		1 byte, 2 binary, 8 octal, 10 decimal, 16 hexadecimal
-    sign:		0 unsigned, 1 signed
-    width:		justify
-    pad:		PAD_RIGHT or PAD_ZERO
-    letterbase:	'a' or 'A' (lower or upper case)
-    return:		string's length
+    --------------------------------------------------------------------
+    i          : 32-bit number to convert into string
+    base       : 1 byte, 2 binary, 8 octal, 10 decimal, 16 hexadecimal
+    sign       : 0 unsigned, 1 signed
+    width      : number of Zeros or Spaces
+    pad        : PAD_RIGHT or PAD_ZERO
+    lettercase : LOWERCASE or UPPERCASE
+    return     : string's length
     ------------------------------------------------------------------*/
 
-u8 pprinti(u8 **out, u32 i, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8 letterbase)
+u8 pprinti(u8 **out, u32 i, u8 islong, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8 lettercase)
 {
     u8 buffer[PRINTF_BUF_LEN];
     u8 *string;
@@ -127,11 +146,27 @@ u8 pprinti(u8 **out, u32 i, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8
     }
 
     // Do we have a negative decimal number ?
+    if  ( (sign) && (base == 10) )          // decimal signed number ?
+    {
+        if ( (islong) && ((s32)i < 0) )     // negative 32-bit ?
+        {
+            neg = 1;
+            uns32 = - (s32)i;
+        }
+        if ( (!islong) && ((s16)i < 0) )    // negative 16-bit ?
+        {
+            neg = 1;
+            uns32 = - (s16)i;
+        }
+    }
+    
+    /* Old P32 sequence
     if ( (sign) && (base == 10) && ( (s32)i < 0 ) )
     {
         neg = 1;
         uns32 = - (s32)i;
     }
+    */
 
     // we start at the end
     string = buffer + PRINTF_BUF_LEN - 1;
@@ -141,7 +176,7 @@ u8 pprinti(u8 **out, u32 i, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8
     {
         t = uns32 % base;
         if ( t >= 10 )
-            t += letterbase - '0' - 10;
+            t += lettercase - '0' - 10;
         *--string = t + '0';
         uns32 /= base;
     }
@@ -163,22 +198,35 @@ u8 pprinti(u8 **out, u32 i, u8 base, u8 sign, u8 width, u8 pad, u8 separator, u8
     return pc + pprints(out, string, width, pad);
 }
 
-/*	--------------------------------------------------------------------
+#if !defined(__16F1459)
+/*  --------------------------------------------------------------------
     pprintfl = pinguino print float
     --------------------------------------------------------------------
     The IEEE 754 standard specifies a binary32 (float) as having:
         Sign bit: 1 bit
         Exponent width: 8 bits
         Significand precision: 24 bits (23 explicitly stored)
+    --------------------------------------------------------------------
+    out        : pointer to output function
+    value      : floating point value
+    width      : number of Zeros or Spaces
+    pad        : PAD_RIGHT or PAD_ZERO
+    separator  : thousands separator (1=ON, 0=OFF)
+    precision  : number of digits after comma (from 0 to 6)
+    return     : string's length
     ------------------------------------------------------------------*/
 
+#ifndef __PIC32MX__
+u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 precision)
+#else
 u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision)
+#endif
 {
     union
     {
-        float	f;
-        //s32		l;
-        int 	l;
+        float f;
+        s32   l;
+        //int   l; // PIC32MX
     } helper;
     
     u32 mantissa;
@@ -190,7 +238,11 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
     u8 count = 0, m, t;
     u8 length = PRINTF_BUF_LEN - 1;
 
+    #ifndef __PIC32MX__
+    helper.f = value;
+    #else
     helper.f = (float)value;
+    #endif
 
     // add negative sign if applicable
     if (helper.l < 0)
@@ -277,24 +329,24 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
         // the string is more easily written backwards
         while (int_part)
         {
-            t = int_part % 10;		// decimal base
+            t = int_part % 10;      // decimal base
             *s++ = t + '0';
             int_part /= 10;
-            m++;					// string's length counter
+            m++;                    // string's length counter
             length--;
         }
         // now the string is written in the right direction
         while (m--)
         {
             *string++ = *--s;
-/*	--- TODO -----------------------------------------------------------
+            /*----- TODO separator -------------------------------------
             if ( separator && (m % 3 == 0) )
             {
                 pprintc(out, ' ');
                 ++count;
                 --width;
             }
-    ------------------------------------------------------------------*/
+            ----------------------------------------------------------*/
         }
     }
     
@@ -330,57 +382,81 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
     return count + pprints(out, buffer, width, pad);
 }
 
-/*	--------------------------------------------------------------------
+#endif // !defined(16F1459)
+
+/*  --------------------------------------------------------------------
     pprint = pinguino print
+    --------------------------------------------------------------------
+    out     : pointer on output string or function (if null)
+    format  : pointer on string with % tags
+    args    : list of variable arguments
     ------------------------------------------------------------------*/
 
 u8 pprint(u8 **out, const u8 *format, va_list args)
 {
-    u8 width, pad;
-    register u8 pc = 0;
-    u8 precision = 2; // default value is 2 digits fractional part
-    u8 separator = 0; // no thousands separator
+    u8 pc = 0;
+    u8 width, pad, islong;
+    u8 precision = 2;               // default value is 2 digits fractional part
+    u8 separator = 0;               // no thousands separator
     u8 scr[2];
+    u32 val;
 
     for (; *format != 0; ++format)
     {
+        val = 0;
+        #ifndef __PIC32MX__
+        islong = 0;                 // default is 16-bit
+        #else
+        islong = 1;                 // default is 32-bit
+        #endif
+    
         if (*format == '%')
         {
-            width = pad = 0;		// default is left justify, no zero padded
-            ++format;				// get the next format identifier
+            width = pad = 0;        // default is left justify, no zero padded
+            ++format;               // get the next format identifier
 
-            if (*format == '\0')	// end of line
+            // end of line
+            if (*format == '\0')
                 break;
 
-            if (*format == '%')		// error
+            // error
+            if (*format == '%')
                 goto abort;
 
-            if (*format == '-')		// right justify
+            // right justify
+            if (*format == '-')
             {
                 ++format;
                 pad = PAD_RIGHT;
             }
 
-            while (*format == '0')	// field is padded with 0's instead of blanks
+            // field is padded with 0's instead of blanks
+            if (*format == '0')
             {
                 ++format;
                 pad |= PAD_ZERO;
             }
-                                    // how many 0 ?
+            
+            // how many digits ?
             for ( ; *format >= '0' && *format <= '9'; ++format)
             {
                 width *= 10;
                 width += *format - '0';
             }
 
-/* TODO
-            if (*format == '\'')	// thousands separator
+            /*---- TODO thousands separator ----------------------------
+            if (*format == '\'')
             {
                 separator = 1;
                 ++format;
             }
-*/
-            if (*format == '.')		// float precision
+            ----------------------------------------------------------*/
+
+            /*--------------------------------------------------------*/
+            #if !defined(__16F1459)
+
+            // float precision
+            if (*format == '.')
             {
                 ++format;
                 precision = 0;
@@ -392,13 +468,22 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
                 }
             }
             
-            if (*format == 'f') 	// float
+            // float
+            if (*format == 'f')
             {
+                #ifndef __PIC32MX__
+                pc += pprintfl(out, va_arg(args, float), width, pad, separator, precision);
+                #else
                 pc += pprintfl(out, va_arg(args, double), width, pad, separator, precision);
+                #endif
                 continue;
             }
+            
+            #endif // !defined(__16F1459)
+            /*--------------------------------------------------------*/
 
-            if (*format == 's')		// string
+            // string
+            if (*format == 's')
             {
                 //RB20150131
                 //u8 *s = va_arg(args, u8*);
@@ -410,51 +495,76 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
                     pc += pprints(out, (const u8 *)"(null)", width, pad);
                 continue;
             }
-
-            if (*format == 'l')		// long support (only for 8-bit compatibility)
+            
+            // long support
+            if (*format == 'l')
             {
                 ++format;
+                islong = 1;
             }
 
-            if (*format == 'u')		// decimal (10) unsigned (0) integer
+            // decimal (10) unsigned (0) integer
+            if (*format == 'u')
             {
-                pc += pprinti(out, va_arg(args, u32), 10, 0, width, pad, separator, 'a');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, DEC, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
 
-            if (*format == 'd' || *format == 'i') // decimal (10) signed (1) integer
+            // decimal (10) signed (1) integer
+            if (*format == 'd' || *format == 'i')
             {
-                pc += pprinti(out, va_arg(args, u32), 10, 1, width, pad, separator, 'a');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, DEC, SIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
 
-            if (*format == 'x' || *format == 'p')	// unsigned (0) lower ('a') hexa (16) or pointer
+            // unsigned (0) lower (LOWERCASE) hexa (16) or pointer
+            if (*format == 'x' || *format == 'p')
             {
-                pc += pprinti(out, va_arg(args, u32), 16, 0, width, pad, separator, 'a');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, HEX, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
 
-            if (*format == 'X' || *format == 'P')	// unsigned (0) upper ('A') hexa (16) or pointer
+            // unsigned (0) upper (UPPERCASE) hexa (16) or pointer
+            if (*format == 'X' || *format == 'P')
             {
-                pc += pprinti(out, va_arg(args, u32), 16, 0, width, pad, separator, 'A');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, HEX, UNSIGNED, width, pad, separator, UPPERCASE);
                 continue;
             }
 
-            if (*format == 'b')		// binary
+            // binary
+            if (*format == 'b')
             {
-                pc += pprinti(out, va_arg(args, u32), 2, 0, width, pad, separator, 'a');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, BIN, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
 
-            if (*format == 'o')		// octal
+            /*--------------------------------------------------------*/
+            #if !defined(__16F1459)
+
+            // octal
+            if (*format == 'o')
             {
-                pc += pprinti(out, va_arg(args, u32), 8, 0, width, pad, separator, 'a');
+                val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
+                pc += pprinti(out, val, islong, OCT, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
-
-            if (*format == 'c') 	// ascii
+            
+            #endif
+            /*--------------------------------------------------------*/
+            
+            // ASCII
+            if (*format == 'c')
             {
+                #ifndef __PIC32MX__
+                scr[0] = va_arg(args, u16);
+                #else
                 scr[0] = (u8)va_arg(args, u32);
+                #endif
                 scr[1] = '\0';
                 pc += pprints(out, scr, width, pad);
                 continue;
@@ -473,31 +583,47 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
     return pc;
 }
 
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     pprintf = pinguino print formatted
+    --------------------------------------------------------------------
+    func    : pointer on output function
+    format  : pointer on string with % tags
+    args    : list of variable arguments
+    return  : string's length
     ------------------------------------------------------------------*/
 
 //int pprintf(funcout func, const char *format, ...)
 u8 pprintf(funcout func, const u8 *format, va_list args)
 {
-    //va_list args;
-    
     pputchar = func;
-    //va_start( args, format );
     return pprint(0, format, args);
 }
 
-/*	--------------------------------------------------------------------
-    psprintf = pinguino print formatted data to string
+/*  --------------------------------------------------------------------
+    psprintf2 = pinguino print formatted data to string
+    --------------------------------------------------------------------
+    out     : pointer on output string or function (if null)
+    format  : pointer on string with % tags
+    args    : list of variable arguments
+    return  : string's length
+    Note    : this function is called from CDC.printf only
     ------------------------------------------------------------------*/
 
-// to work with CDC.printf
 u8 psprintf2(u8 *out, const u8 *format, va_list args)
 {
     return pprint(&out, format, args);
 }
 
-// to work with Sprintf
+/*  --------------------------------------------------------------------
+    psprintf = pinguino print formatted data to string
+    --------------------------------------------------------------------
+    out     : pointer on output string or function (if null)
+    format  : pointer on string with % tags
+    args    : list of variable arguments
+    return  : string's length
+    Note    : Pinguino Sprintf function
+    ------------------------------------------------------------------*/
+
 u8 psprintf(u8 *out, const u8 *format, ...)
 {
     u8 r;

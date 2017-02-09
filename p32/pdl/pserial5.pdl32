@@ -1,6 +1,7 @@
 Serial5.init serial5init#include <serial5.c>#define ENABLE_UART5
 Serial5.begin serial5init#include <serial5.c>#define ENABLE_UART5
 Serial5.write serial5write#include <serial5.c>
+Serial5.printChar serial5printchar#include <serial5.c>
 Serial5.print serial5print#include <serial5.c>#define SERIALPRINT
 Serial5.println serial5println#include <serial5.c>#define SERIALPRINTLN
 Serial5.printNumber serial5printNumber#include <serial5.c>#define SERIALPRINTNUMBER
@@ -12,4 +13,3 @@ Serial5.available serial5available#include <serial5.c>
 Serial5.read serial5read#include <serial5.c>
 Serial5.flush serial5flush#include <serial5.c>
 Serial5.ClearRxError serial5clearrxerror#include <serial5.c>
-

@@ -40,6 +40,11 @@ void serial5init(u32 speed)
     SerialConfigure(UART5, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
 }
 
+void serial5printchar(u8 c)
+{
+    SerialPutChar(UART5, c);
+}
+
 void serial5printf(char *fmt, ...)		
 {
     va_list args;
@@ -122,4 +127,3 @@ BOOL serial5clearrxerror(void)
 }
 
 #endif /* __SERIAL5__ */
-

@@ -1,19 +1,18 @@
 /*	----------------------------------------------------------------------------
     FILE:           spi.c
     PROJECT:        pinguino
-    PURPOSE:        Include all functions to handle SPI communication
+    PURPOSE:        Functions to handle SPI communication
                     Master and Slave
-    PROGRAMER:      Régis Blanchot
-    FIRST RELEASE:  03 Apr. 2010
-    LAST RELEASE:   01 Oct. 2015
     ----------------------------------------------------------------------------
     CHANGELOG
+    03 Apr. 2010 - Régis Blanchot - first release
     01 Oct. 2015 - Régis Blanchot - added SPI2 support
     30 Nov. 2015 - Régis Blanchot - added PIC16F1459 support
     22 Jan. 2016 - Régis Blanchot - removed setPin(), extended begin() with vargs
+    25 Jan. 2017 - Régis Blanchot - prepared SPI Sofware Data-In support (SDI)
     ----------------------------------------------------------------------------
     TODO
-    * 
+    * SPI Sofware Data-In support (SDI)
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -39,11 +38,12 @@
 
 #include <stdarg.h>
 #include <compiler.h>
-#include <const.h>
+#include <const.h>              // SPISW, SPI1, SPI2
 #include <spi.h>
-#include <delayms.c>
+//#include <delayms.c>
 #include <digitalp.c>
 #include <digitalw.c>
+//#include <digitalr.c>
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -172,10 +172,12 @@ void SPI_begin(int module, ...)
     
     if (module == SPISW)
     {
-            _spi[SPISW].sda = va_arg(args, int); // get the first arg
+            _spi[SPISW].sdo = va_arg(args, int); // get the first arg
+            //_spi[SPISW].sdi = va_arg(args, int); // get the first arg
             _spi[SPISW].sck = va_arg(args, int);
             _spi[SPISW].cs  = va_arg(args, int);
-            pinmode(_spi[SPISW].sda, OUTPUT);
+            pinmode(_spi[SPISW].sdo, OUTPUT);
+            //pinmode(_spi[SPISW].sdo, INPUT);
             pinmode(_spi[SPISW].sck, OUTPUT);
             pinmode(_spi[SPISW].cs,  OUTPUT);
             //TRISBbits.TRISB1 = 0;
@@ -194,7 +196,7 @@ void SPI_begin(int module, ...)
         {
             case SPI_MODE0:             // SPI bus mode 0,0
               SSPCON1bits.CKP = 0;      // clock idle state low
-              SSPSTATbits.CKE = 0;      // data transmitted on falling edge
+              SSPSTATbits.CKE = 0;      // data transmitted on rising edge
               break;
               
             case SPI_MODE1:             // default SPI bus mode 0,1
@@ -257,21 +259,24 @@ void SPI_begin(int module, ...)
         switch(_spi[SPI2].mode)
         {
             case SPI_MODE0:             // SPI bus mode 0,0
-              SSP2CON1bits.CKP = 0;     // clock idle state low
-              SSP2STATbits.CKE = 0;     // data transmitted on falling edge
-              break;    
+                SSP2CON1bits.CKP = 0;   // clock idle state low
+                SSP2STATbits.CKE = 0;   // data transmitted on falling edge
+                break;
+              
             case SPI_MODE1:             // default SPI bus mode 0,1
-              SSP2CON1bits.CKP = 0;     // clock idle state low
-              SSP2STATbits.CKE = 1;     // data transmitted on falling edge
-              break;
+                SSP2CON1bits.CKP = 0;   // clock idle state low
+                SSP2STATbits.CKE = 1;   // data transmitted on falling edge
+                break;
+              
             case SPI_MODE2:             // SPI bus mode 1,0
-              SSP2CON1bits.CKP = 1;     // clock idle state high
-              SSP2STATbits.CKE = 0;     // data transmitted on rising edge
-              break;
+                SSP2CON1bits.CKP = 1;   // clock idle state high
+                SSP2STATbits.CKE = 0;   // data transmitted on rising edge
+                break;
+              
             case SPI_MODE3:             // SPI bus mode 1,1
-              SSP2CON1bits.CKP = 1;     // clock idle state high
-              SSP2STATbits.CKE = 1;     // data transmitted on falling edge
-              break;
+                SSP2CON1bits.CKP = 1;   // clock idle state high
+                SSP2STATbits.CKE = 1;   // data transmitted on falling edge
+                break;
         }
 
         SDI2PIN = INPUT;                // define SDI pin as input
@@ -335,7 +340,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SSPCON1 = 0;
             // 3.  Clear the receive buffer.
-            rData=SSP1BUF;
+            rData = SSP1BUF;
             break;
         
         #if defined(__18f26j50)|| defined(__18f46j50) || \
@@ -351,7 +356,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SSP2CON1 = 0;
             // 3.  Clear the receive buffer.
-            rData=SSP2BUF;
+            rData = SSP2BUF;
             break;
             
         #endif
@@ -436,33 +441,40 @@ u8 SPI_write(u8 module, u8 dataout)
                 else
                     bitMask = (0x01 << i);
                 // Pinguino pins <0:7> are always multiplexed with PORTB
-                if (_spi[SPISW].sda < 8 && _spi[SPISW].sck < 8)
+                if (_spi[SPISW].sdo < 8 && _spi[SPISW].sck < 8)
                 {
-                    (dataout & bitMask) ? BitSet(LATB, _spi[SPISW].sda) : BitClear(LATB, _spi[SPISW].sda);
+                    (dataout & bitMask) ? BitSet(LATB, _spi[SPISW].sdo) : BitClear(LATB, _spi[SPISW].sdo);
                     BitSet(LATB, _spi[SPISW].sck);
                     BitClear(LATB, _spi[SPISW].sck);
                 }
                 else
                 {
-                    digitalwrite(_spi[SPISW].sda, (dataout & bitMask) ? 1:0);
+                    digitalwrite(_spi[SPISW].sdo, (dataout & bitMask) ? 1:0);
                     digitalwrite(_spi[SPISW].sck, 1);
                     digitalwrite(_spi[SPISW].sck, 0);
                 }
             }
             return dataout;
-        
+            //return digitalread(_spi[SPISW].sdi);
+
         case SPI1:
             clear = SSP1BUF;                // clears buffer
             SSP1INTFLAG = 0;                // enables SPI1 interrupt
-            SSPCON1bits.WCOL = 0;           // must be cleared in software
-            SSP1BUF = dataout;              // send data
+            do                              // RB: 18-10-2016
+            { 
+                SSPCON1bits.WCOL = 0;       // must be cleared in software
+                SSP1BUF = dataout;          // send data
+            }
+            while (SSPCON1bits.WCOL);       // we're still transmitting the previous data
+            while (!SSP1INTFLAG);           // wait for transfer is complete
 
+            /*
             if (SSPCON1bits.WCOL)           // still transmitting the previous data 
                 return -1;                  // abort transmission
             else
                 while (!SSP1INTFLAG);       // wait for transfer is complete
-
-            return SSP1BUF;
+            */
+            return SSP1BUF;                 // Return the Data received
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)

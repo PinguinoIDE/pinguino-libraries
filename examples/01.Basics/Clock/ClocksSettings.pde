@@ -37,6 +37,6 @@ void loop()
 
     //peripheralFrequency = System.getPeripheralFrequency();
     //CDC.printf("Peripheral: %d MHz\r\n", peripheralFrequency / 1000 / 1000);
-    
+    CDC.printf("\r\n");
     delay(1000);
 }

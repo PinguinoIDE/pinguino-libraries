@@ -19,7 +19,8 @@
     ->Author      : Thomas Missonier (sourcezax@users.sourceforge.net). 
 ------------------------------------------------------------------------
     CHANGELOG:
-    04 Feb. 2016 - Régis Blanchot - added SPI library support 
+    04 Feb. 2016 - Régis Blanchot - added SPI library support
+    22 Oct. 2016 - Régis Blanchot - fixed graphics functions
 ------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -53,10 +54,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <const.h>              // false, true, ...
 #include <macro.h>              // BitSet, BitClear, ...
 #include <typedef.h>            // u8, u16, ...
-#include <delay.c>              // Delayms, Delayus
 #include <string.h>             // memset
 #include <spi.c>                // SPI harware and software functions
+
+#ifndef __PIC32MX__
+#include <delayms.c>            // Delayms, Delayus
 #include <digitalw.c>           // digitalwrite
+#include <digitalp.c>           // pinmode
+#else
+#include <delay.c>              // Delayms, Delayus
+#include <digitalw.c>           // digitalwrite
+#endif
 
 // Printf
 #if defined(PCD8544PRINTF)
@@ -90,7 +98,20 @@ static volatile u8 * PCD8544_buffer = logo;  // screen buffer points on logo[]
 // DC = LOW => CMD
 void PCD8544_command(u8 module, u8 c)
 {
-    digitalwrite(PCD8544[module].pin.dc, LOW);
+    u8 dc = PCD8544[module].pin.dc;
+    if (dc < 8)
+    {
+        #if defined(PINGUINO1459) || defined(PINGUINO13K50) || defined(PINGUINO14K50)
+        BitClear(LATC, dc);
+        #else
+        BitClear(LATB, dc);
+        #endif
+    }
+    else
+    {
+        digitalwrite(dc, LOW);
+    }
+    
     SPI_write(module, c);
 }
  
@@ -130,23 +151,23 @@ void PCD8544_init(u8 module, ...)
     
     va_start(args, module); // args points on the argument after module
 
-    PCD8544[module].pin.dc = va_arg(args, u32); // get the first arg
+    PCD8544[module].pin.dc = va_arg(args, int); // get the first arg
     pinmode(PCD8544[module].pin.dc, OUTPUT);
     
-    PCD8544[module].pin.rst = va_arg(args, u32); // get the first arg
+    PCD8544[module].pin.rst = va_arg(args, int); // get the first arg
     pinmode(PCD8544[module].pin.rst, OUTPUT);
     // toggle RST low to reset
     digitalwrite(PCD8544[module].pin.rst, LOW);
-    Delayms(30);
+    Delayms(30);//30ms
     digitalwrite(PCD8544[module].pin.rst, HIGH);
     
     // init SPI communication
 
     if (module == SPISW)
     {
-        sda = va_arg(args, u32);         // get the next arg
-        sck = va_arg(args, u32);         // get the next arg
-        cs  = va_arg(args, u32);         // get the last arg
+        sda = va_arg(args, int);         // get the next arg
+        sck = va_arg(args, int);         // get the next arg
+        cs  = va_arg(args, int);         // get the last arg
         SPI_setBitOrder(module, SPI_MSBFIRST);
         SPI_begin(module, sda, sck, cs);
     }
@@ -154,8 +175,12 @@ void PCD8544_init(u8 module, ...)
     {
         SPI_setMode(PCD8544_SPI, SPI_MASTER);
         SPI_setDataMode(PCD8544_SPI, SPI_MODE0);
-        //maximum baud rate possible = FPB = FOSC/?
-        SPI_setClockDivider(PCD8544_SPI, SPI_PBCLOCK_DIV64); // DIV64
+        //maximum baud rate possible
+        #ifndef __PIC32MX__
+        SPI_setClockDivider(PCD8544_SPI, SPI_CLOCK_DIV16);
+        #else
+        SPI_setClockDivider(PCD8544_SPI, SPI_PBCLOCK_DIV4);
+        #endif
         SPI_begin(PCD8544_SPI);
     }
     va_end(args);           // cleans up the list
@@ -230,12 +255,13 @@ void PCD8544_refresh(u8 module)
 
 void PCD8544_clearScreen(u8 module)
 {   
-    //memset(PCD8544_buffer, 0, DISPLAY_SIZE);
-
+    /*
     u16 i;
 
     for (i = 0; i < DISPLAY_SIZE; i++)
         PCD8544_buffer[i] = 0;
+    */
+    memset(PCD8544_buffer, 0, DISPLAY_SIZE);
 
     #ifdef enablePartialUpdate
     PCD8544_updateBoundingBox(0, 0, PCD8544[module].screen.width-1, PCD8544[module].screen.height-1);
@@ -323,12 +349,10 @@ void PCD8544_setFont(u8 module, const u8 *font)
     defined(PCD8544PRINTNUMBER) || defined(PCD8544PRINTFLOAT) || \
     defined(PCD8544PRINTLN)     || defined(PCD8544PRINTF)
 
-/*    
 void printChar(u8 c)
 {
     PCD8544_printChar(PCD8544_SPI, c);
 }
-*/
 
 void PCD8544_printChar(u8 module, u8 c)
 {
@@ -410,10 +434,10 @@ void PCD8544_printCenter(u8 module, const u8 *string)
 #endif
 
 #if defined(PCD8544PRINTNUMBER) || defined(PCD8544PRINTFLOAT)
-void PCD8544_printNumber(u8 module, long value, u8 base)
+void PCD8544_printNumber(u8 module, s32 value, u8 base)
 {  
     PCD8544_SPI = module;
-    printNumber(PCD8544_printChar, value, base);
+    printNumber(printChar, value, base);
 }
 #endif
 
@@ -421,7 +445,7 @@ void PCD8544_printNumber(u8 module, long value, u8 base)
 void PCD8544_printFloat(u8 module, float number, u8 digits)
 { 
     PCD8544_SPI = module;
-    printFloat(PCD8544_printChar, number, digits);
+    printFloat(printChar, number, digits);
 }
 #endif
 
@@ -469,10 +493,12 @@ void PCD8544_drawPixel(u8 module, u8 x, u8 y)//, u8 color)
 } 
 
 // defined as extern void drawPixel(u16 x, u16 y); in graphics.c
+// *********************************************************************
 void drawPixel(u16 x, u16 y)
 {
     PCD8544_drawPixel(PCD8544_SPI, (u8)x, (u8)y);
 }
+// *********************************************************************
 
 void PCD8544_drawLine(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 {
@@ -480,17 +506,31 @@ void PCD8544_drawLine(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
     drawLine(x0, y0, x1, y1);
 }
 
+/*
+void PCD8544_drawVLine(u8 module, u8 x, u8 y, u8 h)
+{
+    PCD8544_SPI = module;
+    drawVLine(x, y, h);
+}
+
+void PCD8544_drawHLine(u8 module, u8 x, u8 y, u8 h)
+{
+    PCD8544_SPI = module;
+    drawHLine(x, y, h);
+}
+
 void drawVLine(u16 x, u16 y, u16 h)
 {
-    // To optimized
+    // To optimize
     drawLine(x, y, x, y+h-1);
 }
 
 void drawHLine(u16 x, u16 y, u16 w)
 {
-    // To optimized
+    // To optimize
     drawLine(x, y, x+w-1, y);
 }
+*/
 
 //clear Pixel on the buffer
 void PCD8544_clearPixel(u8 module, u8 x, u8 y)
@@ -503,8 +543,8 @@ void PCD8544_clearPixel(u8 module, u8 x, u8 y)
 
 u8 PCD8544_getPixel(u8 module, u8 x, u8 y)
 {
-    if (x >= PCD8544[module].screen.width)  return;
-    if (y >= PCD8544[module].screen.height) return;
+    if (x >= PCD8544[module].screen.width)  return 0;
+    if (y >= PCD8544[module].screen.height) return 0;
 
     return (PCD8544_buffer[x+ (y>>3) * PCD8544[module].screen.width] >> (y%8)) & 0x1;  
 }
@@ -515,13 +555,17 @@ void PCD8544_drawCircle(u8 module, u8 x, u8 y, u8 radius)
     drawCircle(x, y, radius);
 }
 
-void PCD8544_fillRect(u8 module, u8 x, u8 y, u8 w, u8 h, u8 color)
+void PCD8544_fillRect(u8 module, u8 x, u8 y, u8 w, u8 h)
  {
-    u8 i;
+    //u8 i;
+    PCD8544_SPI = module;
+    fillRect(x, y, x+w, y+h);
+    /*
     for (i=x; i<x+w; i++) 
     {
-        PCD8544_drawFastVLine(i, y, h, color);
+        PCD8544_drawVLine(module, i, y, h);
     }
+    */
  }
 
 void PCD8544_fillCircle(u8 module, u8 x, u8 y, u8 radius)
@@ -744,19 +788,8 @@ void PCD8544_setOrientation(u8 module, u8 x)
 #ifdef  _PCD8544_USE_INVERT
 void PCD8544_invertDisplay(u8 module, bool i)
 {
-    // Do nothing, must be subclassed if supported
-    PCD8544.wrap = w;
-}
+  // Do nothing, must be subclassed if supported
 }
 #endif
-
-//Abs function
-// Goal : Not using Math lib for one function
-/*
-u8 PCD8544_abs(u8 nb)
-{
-if (nb<0) nb=-nb;
-return nb;
-} */
 
 #endif /* __PCD8544_C */

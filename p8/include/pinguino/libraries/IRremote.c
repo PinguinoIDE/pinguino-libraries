@@ -18,23 +18,32 @@
 
  /*
   * Test version by PinguPlus 2014-02-16
+  * Pinguino32 version by Regis Blanchot 2015-02-04
   * 
  */
  
 #ifndef IRREMOTE_C
 #define IRREMOTE_C
 
+//#define DEBUG
+
 #include <typedef.h>
 #include <macro.h>
 #include <pin.h>
-#include <interrupt.h>
 #include <IRremote.h>
-//#include <IRremoteInt.h>      // moved content in IRremote.h
 #include <pwm.c>
+#ifndef __PIC32MX__
+#include <interrupt.h>
 #include <digitalw.c>           // digitalwrite
 #include <digitalr.c>           // digitalread
 #include <delayms.c>            // Delayms
 #include <oscillator.c>
+#else
+#include <interrupt.c>
+#include <digitalw.c>           // digitalwrite
+#include <delay.c>              // Delayms
+#include <system.c>             // GetPeripheralClock
+#endif
 
 //#define _1us_ { nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); nop(); }
 #define _1us_ { nop(); nop(); nop(); nop(); }

@@ -28,15 +28,16 @@
 #ifndef __SWPWM__
 #define __SWPWM__
 
-#include <compiler.h>       // sfr's
-#include <typedef.h>        // u8, u16, u32, ...
-#include <macro.h>          // BitSet, ...
+#include <compiler.h>               // sfr's
+#include <typedef.h>                // u8, u16, u32, ...
+#include <macro.h>                  // BitSet, ...
 
 // Uncomment this line if using a Common Anode LED
 //#define COMMON_ANODE
-#define SWPWMRES  255       // PWM resolution
+#define SWPWMRES                255 // PWM resolution
+#define SWPWMNBPIN              8   // Number of SW PWM pin
 
-volatile u8 gDutyCycle[8];
+volatile u8 gDutyCycle[SWPWMNBPIN];
 volatile u8 gCounter=0;
 volatile u8 gPinNum=0;
 volatile u8 gPinActivated=0;
@@ -45,42 +46,37 @@ volatile t16 _swpwm_period;
 /*  --------------------------------------------------------------------
     SWPWM_setFrequency
     --------------------------------------------------------------------
-    @descr:     calculate Timer2 prescaler and period to get the frequency
+    @descr:     calculate Timer prescaler and period to get the frequency
     @param:     frequency in hertz (range 2929Hz .. 12MHz)
-    @return:    value of PR2
+    @return:    period
     ------------------------------------------------------------------*/
 
 u16 SWPWM_setFrequency(u32 freq)
 {
-    u16 cycles = 1; //_cpu_clock_ / (4 * freq * SWPWMRES * 8);
-    
-    _swpwm_period.w = 0xFFFF - cycles;
+    _swpwm_period.w = 0xFFFF - ((_cpu_clock_ / 4) / (freq * SWPWMRES));
 
-    noInterrupts();             // Disable global interrupts
+    noInterrupts();                 // Disable global interrupts
 
     #if defined(__16F1459)
+    
+    #error "Not yet implemented."
+    #error "Please, contact rblanchot@pinguino.cc"
     
     #else
     
     // Configure Timer0
     TMR0H = _swpwm_period.h8;
     TMR0L = _swpwm_period.l8;
-    //Int.setPriority(INT_TMR0, INT_LOW_PRIORITY);
-    //INTCON2bits.TMR0IP = INT_HIGH_PRIORITY;
     INTCON2bits.TMR0IP = 1;
-    //Int.clearFlag(INT_TMR0);
     INTCONbits.TMR0IF = 0;
-    //Int.enable(INT_TMR0);
     INTCONbits.TMR0IE = 1;
-    //Int.start(INT_TMR0);
-    //TMR0 = T0_ON | T0_16BIT | T0_PS_OFF;
-    T0CON = 0b10001000;
+    T0CON = 0b10001000;         // TMR0 = T0_ON | T0_16BIT | T0_PS_OFF;
 
     #endif
 
-    interrupts();               // Enable global interrupts
+    interrupts();                   // Enable global interrupts
 
-    return cycles;
+    return _swpwm_period.w;
 }
 
 /*  --------------------------------------------------------------------
@@ -93,14 +89,9 @@ u16 SWPWM_setFrequency(u32 freq)
 
 void SWPWM_setDutyCycle(u8 pin, u8 duty)
 {
-    // Configure pins as output
-    BitClear(TRISB, pin);
-
-    // Declare pin as activated
-    BitSet(gPinActivated, pin);
-
-    // Set duty cycle
-    gDutyCycle[pin] = duty;
+    BitClear(TRISB, pin);           // Configure pins as output
+    BitSet(gPinActivated, pin);     // Declare pin as activated
+    gDutyCycle[pin] = duty;         // Set duty cycle
 }
 
 /*  --------------------------------------------------------------------
@@ -128,9 +119,13 @@ void SWPWM_setPercentDutyCycle(u8 pin, u8 percent)
     SWPWM_setDutyCycle(pin, duty);
 }
 
-// Compute output level by comparing each register with the gCounter
-// The associated pin is made LOW or HIGH according to the result of comparison
-// For speed reason we used LAT registers rather than digitalWrite function
+/*  --------------------------------------------------------------------
+    Interrupt routine
+    --------------------------------------------------------------------
+    Compute output level by comparing each register with the gCounter
+    The associated pin is made LOW or HIGH according to the result of comparison
+    For speed reason we used LAT registers rather than digitalWrite function
+    ------------------------------------------------------------------*/
 
 void swpwm_interrupt()
 {
@@ -146,46 +141,22 @@ void swpwm_interrupt()
         gCounter++;
         gCounter &= SWPWMRES;
         //
-        if ( gPinActivated & 1)
-        {
-            if ( gCounter < gDutyCycle[0] ) LATBbits.LATB0 = 1;
-            else                            LATBbits.LATB0 = 0;
-        }
-        if ( gPinActivated & 2)
-        {
-            if ( gCounter < gDutyCycle[1] ) LATBbits.LATB1 = 1;
-            else                            LATBbits.LATB1 = 0;
-        }
-        if ( gPinActivated & 4)
-        {
-            if ( gCounter < gDutyCycle[2] ) LATBbits.LATB2 = 1;
-            else                            LATBbits.LATB2 = 0;
-        }
-        if ( gPinActivated & 8)
-        {
-            if ( gCounter < gDutyCycle[3] ) LATBbits.LATB3 = 1;
-            else                            LATBbits.LATB3 = 0;
-        }
-        if ( gPinActivated & 16)
-        {
-            if ( gCounter < gDutyCycle[4] ) LATBbits.LATB4 = 1;
-            else                            LATBbits.LATB4 = 0;
-        }
-        if ( gPinActivated & 32)
-        {
-            if ( gCounter < gDutyCycle[5] ) LATBbits.LATB5 = 1;
-            else                            LATBbits.LATB5 = 0;
-        }
-        if ( gPinActivated & 64)
-        {
-            if ( gCounter < gDutyCycle[6] ) LATBbits.LATB6 = 1;
-            else                            LATBbits.LATB6 = 0;
-        }
-        if ( gPinActivated & 128)
-        {
-            if ( gCounter < gDutyCycle[7] ) LATBbits.LATB7 = 1;
-            else                            LATBbits.LATB7 = 0;
-        }
+        if (gPinActivated & 1)
+            LATBbits.LATB0 = (gCounter < gDutyCycle[0]);
+        if (gPinActivated & 2)
+            LATBbits.LATB1 = (gCounter < gDutyCycle[1]);
+        if (gPinActivated & 4)
+            LATBbits.LATB2 = (gCounter < gDutyCycle[2]);
+        if (gPinActivated & 8)
+            LATBbits.LATB3 = (gCounter < gDutyCycle[3]);
+        if (gPinActivated & 16)
+            LATBbits.LATB4 = (gCounter < gDutyCycle[4]);
+        if (gPinActivated & 32)
+            LATBbits.LATB5 = (gCounter < gDutyCycle[5]);
+        if (gPinActivated & 64)
+            LATBbits.LATB6 = (gCounter < gDutyCycle[6]);
+        if (gPinActivated & 128)
+            LATBbits.LATB7 = (gCounter < gDutyCycle[7]);
     }
 }
 

@@ -123,7 +123,9 @@
 
     /**************************************************************************/
 
-    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // DCF77 TO MOVE
+    // TODO : MOVE DCF77 FROM TIMER1 TO TIMER?
+    #if !defined(TMR1INT)   && !defined(__MILLIS__) && \
+        !defined(__DCF77__) && !defined(__SWPWM__)
     void Timer1Interrupt(void) { Nop(); }
     #endif
 
@@ -246,7 +248,7 @@
     void RTCCInterrupt(void) { Nop(); }
     #endif // __RTCC__
 
-    #if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) ||
+    #if !defined(__USBINTERRUPT__)
     void USBInterrupt(void) { Nop(); }
     #endif
 

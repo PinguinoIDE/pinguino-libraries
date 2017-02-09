@@ -6,8 +6,10 @@
                     André Gentric <>
                     Alfred Broda <alfredbroda@gmail.com>
                     Mark Harper <markfh@f2s.com>
-    FIRST RELEASE:  23 Dec. 2011
-    LAST RELEASE:   20 Jan. 2016
+    --------------------------------------------------------------------
+    Changelog
+    23 Dec. 2011    Régis Blanchot - first release
+    23 Jun. 2016    Régis Blanchot - cleaned up the code
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -28,20 +30,25 @@
 #ifndef _DISKIO_C
 #define _DISKIO_C
 
+#ifndef __PIC32MX__
 #include <compiler.h>
+#include <oscillator.c>
+#else
+#include <p32xxxx.h>
+#include <system.c>
+#endif
+
 #include <typedef.h>
 #include <spi.h>                // Pinguino SPI lib.
 #include <spi.c>
 #include <sd/ffconf.h>          // SD lib. config. file
+#include <sd/diskio.h>
 
 #if _FS_TINY
-#include <sd/tff.c>             // Tiny Fat Filesystem
+#include <sd/tff.c>             // Tiny Fat Filesystem (default)
 #else
 #include <sd/pff.c>             // Petit Fat Filesystem
 #endif
-
-#include <sd/diskio.h>
-#include <oscillator.c>
 
 #ifdef SD_DEBUG
     #define ST7735PRINTNUMBER
@@ -62,17 +69,16 @@
     //#include <serial.c>
 #endif
 
-//#include <delayms.c>
-//#include <delayus.c>
-//#include <digitalw.c>
-//#include <millis.c>
 
 // For boards known to support the RTCC library
-#if defined(__18f26j50) || defined(__18f46j50) || \
-    defined(__18f27j53) || defined(__18f47j53)
+#if defined(__18f26j50)      || defined(__18f46j50) || \
+    defined(__18f27j53)      || defined(__18f47j53) || \
+    defined (PIC32_PINGUINO) || defined (PIC32_PINGUINO_OTG)
     #define RTCCGETTIMEDATE
     #include <rtcc.c>
+    #ifndef __PIC32MX__
     #include <rtcc1.c>
+    #endif
 #endif
 
 //static volatile u16 Timer1, Timer2; /* 1000Hz decrement timer */
@@ -103,16 +109,22 @@ FRESULT disk_mount(u8 module, ...)
     
     if (module == SPISW)
     {
-        sda = va_arg(args, u8);             // get the next arg
-        sck = va_arg(args, u8);             // get the next arg
-        cs  = va_arg(args, u8);             // get the last arg
+        sda = (u8)va_arg(args, int);             // get the next arg
+        sck = (u8)va_arg(args, int);             // get the next arg
+        cs  = (u8)va_arg(args, int);             // get the last arg
         SPI_setBitOrder(module, SPI_MSBFIRST);
         SPI_begin(module, sda, sck, cs);
     }
     else
     { 
+        SPI_setMode(module, SPI_MASTER);
+        #ifndef __PIC32MX__
         //minimum baud rate possible = FPB/64
         SPI_setMode(module, SPI_MASTER_FOSC_64);
+        #else
+        //minimum baud rate possible = FPB/1024
+        SPI_setClockDivider(module, SPI_PBCLOCK_DIV1024);
+        #endif
         SPI_setDataMode(module, SPI_MODE1);
         SPI_begin(module);
     }
@@ -494,6 +506,7 @@ u8 disk_initialize(u8 spi, u8 drv)
     {
         // 6. increase speed to the max. baud rate possible
         SPI_close(spi);
+        SPI_setMode(spi, SPI_MASTER);
         SPI_setDataMode(spi, SPI_MODE1); // SPI_MODE3
 
         #ifdef SD_DEBUG
@@ -526,7 +539,11 @@ u8 disk_initialize(u8 spi, u8 drv)
         // otherwise fsd >= fpb so wwe set Fspi = max
         else
         {
+            #ifndef __PIC32MX__
             SPI_setMode(spi, SPI_MASTER_FOSC_4);
+            #else
+            SPI_setMode(spi, SPI_PBCLOCK_DIV2);
+            #endif
             #ifdef SD_DEBUG
             //ST7735_printf(SPI2, "SPI @ %dMHz\r\n", fpb);
             #endif
@@ -660,7 +677,7 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
         //SPI_read(spi);SPI_read(spi);SPI_select(spi);SPI_read(spi);SPI_read(spi);
 
         // Check if command was accepted and valid token received
-        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK)
+        if ((disk_sendcommand(spi, READ_SINGLE_BLOCK, sector) == CMD_OK) // CMD17
             && disk_readblock(spi, buff, 512))
                 count = 0;
     }
@@ -669,7 +686,7 @@ DRESULT disk_readsector(u8 spi, u8 drv, u8 *buff, u32 sector, u8 count)
     else
     {
         // check if command was accepted
-        if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)
+        if (disk_sendcommand(spi, READ_MULTIPLE_BLOCKS, sector) == CMD_OK)  // CMD18
         {
             do {
                 if (!disk_readblock(spi, buff, 512))
@@ -1079,8 +1096,10 @@ u32 get_fattime(void)
     u32 tmr = 0;
 
     // For boards known to support the RTCC library
-    #if defined(__18f26j50) || defined(__18f46j50) || \
-        defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__18f26j50)     || defined(__18f46j50) || \
+        defined(__18f27j53)     || defined(__18f47j53) || \
+        defined(PIC32_PINGUINO) || defined(PIC32_PINGUINO_OTG)
+
     
     rtccTime Tm;
     rtccDate Dt;

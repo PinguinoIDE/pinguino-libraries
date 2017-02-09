@@ -11,6 +11,7 @@ LedControl.setRow LedControl_setRow#include <ledcontrol.c>#define LEDCONTROLSETR
 LedControl.setColumn LedControl_setColumn#include <ledcontrol.c>#define LEDCONTROLSETCOLUMN
 LedControl.setDigit LedControl_setDigit#include <ledcontrol.c>#define LEDCONTROLSETDIGIT
 LedControl.setChar LedControl_setChar#include <ledcontrol.c>#define LEDCONTROLSETCHAR
+LedControl.setFont LedControl_setFont#include <ledcontrol.c>#define LEDCONTROLPRINTCHAR
 LedControl.printChar LedControl_printChar#include <ledcontrol.c>#define LEDCONTROLPRINTCHAR
 LedControl.print LedControl_print#include <ledcontrol.c>#define LEDCONTROLPRINT
 LedControl.printNumber LedControl_printNumber#include <ledcontrol.c>#define LEDCONTROLPRINTNUMBER

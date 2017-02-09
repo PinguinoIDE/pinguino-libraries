@@ -58,7 +58,8 @@
 extern volatile t16 _period;
 #endif
 
-//extern volatile u32 _cpu_clock_;
+// defined in main.cclear
+extern u32 _cpu_clock_;
 
 // The indices are valid values for PLLDIV
 //static const u8 plldiv[] = { 12, 10, 6, 5, 4, 3, 2, 1 };
@@ -993,4 +994,3 @@ void System_setPeripheralFrequency(u32 freq)
 #endif /* defined(__18f14k22) ... */
 
 #endif /* __OSCILLATOR_C */
-

@@ -62,8 +62,8 @@ u8 digitalread(u8 pin)
         case pC:
             return ((PORTC & mask[pin])!=0);
 
-        #if defined(PINGUINO4455)   || defined(PINGUINO4550)  || \
-            defined(PINGUINO45K50)  || defined(PINGUINO46J50) || \
+        #if defined(PINGUINO4455)  || defined(PINGUINO4550)  || \
+            defined(PINGUINO45K50) || defined(PINGUINO46J50) || \
             defined(PINGUINO47J53) || defined(PICUNO_EQUO)
 
         case pD:

@@ -30,17 +30,14 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ----------------------------------------------------------------------*/
 
-
 // NOTES:
-// - Fosc 48Mhz => 12 MIPS (Fosc/4). Lesser clock frecuencies are not compatible with this library.
 // - This library allows 250 positions for a servo.
 //   Those 1-250 values are mapped from 0-180 degrees,
 //   which is the input value by user at servo.write function.
 // - There is a correspondence table where is stored maximum and minimum
 //   values that any servo could reach in microseconds. But the value stored is from 1 to 250.
 // - All servos are automatically refreshed by PIC in a parallel way.
-//
-//
+
 // Values mapping between position and microseconds:
 //
 // TIMESLOT(byte value):
@@ -57,7 +54,6 @@
 // - ServoMaximumPulse(u8 servo, int max_microseconds)
 //
 // -------------------------------------------------------------------------------------------------------
-
 
 #ifndef SERVOSLIBRARY
 #define SERVOSLIBRARY
@@ -104,7 +100,7 @@ volatile u8 needreordering=0;
 #define TotalPICports   3
 
 #elif defined(PINGUINO46J50) || defined(PINGUINO47J53)
-#define TotalPICpins   32
+#define TotalPICpins    32
 #define TotalPICports   5
 
 #elif defined(PINGUINO4455) || defined(PINGUINO4550) || defined(PINGUINO45K50)
@@ -146,14 +142,13 @@ u8 mascaratotal[TotalPICports];
 u8 timevalue[TotalPICpins];              // This keeps values ordered for all pins.
 u8 timings[TotalPICpins][TotalPICports]; // This keeps ports and pins activated for a specific timevalue (both matrix share index to make access easy).
 u8 activatedservos[TotalPICports];       // This keeps masks for every port with the activated pins to be servos.
-
-u8 servovalues[TotalPICpins]; // Entry table for values sets for every pin-servo.
-
-u8 maxminpos[2][TotalPICpins]; // This table keeps minimum(0 degrees) and maximum(180 degrees) values(in ticks) that the servo can reach.
+u8 servovalues[TotalPICpins];            // Entry table for values sets for every pin-servo.
+u8 maxminpos[2][TotalPICpins];           // This table keeps minimum(0 degrees) and maximum(180 degrees) values(in ticks) that the servo can reach.
 
 //-----------------------------------------------------------------------------------------------------------------------------
 //  Functions for SERVO library
 //-----------------------------------------------------------------------------------------------------------------------------
+
 void servos_init()
 {
     u8 a;
@@ -161,7 +156,7 @@ void servos_init()
     // Filling up the servovalues table to 255. 
     for(a=0;a<TotalPICpins;a++)
     {
-        servovalues[a]=255;  //Filling up the servovalues table to 255.
+        servovalues[a]=255;               // Filling up the servovalues table to 255.
         maxminpos[0][a]= DefaultSERVOMIN; // Setting min servo position to 1000 usec.
         maxminpos[1][a]= DefaultSERVOMAX; // Setting max servo position to 2000 usec.
     }

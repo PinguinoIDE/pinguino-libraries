@@ -108,12 +108,12 @@ _startup (void) __naked
     bsf     0xa6, 7, _bank_      ; EECON1.EEPGD = 1, TBLPTR accesses program memory
     bcf     0xa6, 6, _bank_      ; EECON1.CFGS  = 0, TBLPTR accesses program memory
 
-  /* cleanup the RAM 
-	 Data RAM area is 0x000 - 0xEBF */
+/*  Cleanup the RAM 
+    Bigger Data RAM area is 0x000 - 0xFFF (was 0xEBF) */
     ; Load FSR0 with top of RAM.
-    movlw   0xbf
+    movlw   0xFF
     movwf   _FSR0L, _bank_
-    movlw   0x0e
+    movlw   0x0F
     movwf   _FSR0H, _bank_
 
     ; Place 0xff at address 0x00 as a sentinel.

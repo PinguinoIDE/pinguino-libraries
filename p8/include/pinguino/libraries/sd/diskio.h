@@ -5,7 +5,11 @@
 #ifndef _DISKIO_H
 #define _DISKIO_H
 
+#ifndef __PIC32MX__
 #include <compiler.h>
+#else
+#include <p32xxxx.h>
+#endif
 #include <typedef.h>
 #include <sd/ffconf.h>
 #if _FS_TINY
@@ -13,7 +17,6 @@
 #else
 #include <sd/pff.h>             // Petit Fat Filesystem
 #endif
-
 
 // Results of Disk Functions 
 typedef enum

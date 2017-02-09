@@ -57,8 +57,8 @@ void pinmode(u8 pin, u8 state)
             if (state) TRISC=TRISC | mask[pin];
             else TRISC=TRISC & (255-mask[pin]);
             break;
-        #if defined(PINGUINO4455)   || defined(PINGUINO4550)  || \
-            defined(PINGUINO45K50)  || defined(PINGUINO46J50) || \
+        #if defined(PINGUINO4455)  || defined(PINGUINO4550)  || \
+            defined(PINGUINO45K50) || defined(PINGUINO46J50) || \
             defined(PINGUINO47J53) || defined(PICUNO_EQUO)
         case pD:
             if (state) TRISD=TRISD | mask[pin];

@@ -1,48 +1,30 @@
- /*
-   10-04-2013
-   
-   
-   Version 1_0
-   
-   Keypad for PIC32 MX targets: 
-    
-    - This is a example adapted fom the p8 library and should work
-    with all PIC32MX boards. 10K Pull-ups are required for the rows, in order
-    to grant levels. 
-    
-    - It has also includes a patch in the library, in which you would pressed 2 keys
-    and would write infinite the second key.
-    
-   
-    fabio.malagas@gmail.com
-      
+/*
+    Membrane Keypas example
 */
 
-const u8 rows = 4;
-const u8 cols = 3;
-KeypadState state;
-char currentKey;
-unsigned long lastUpdate;
-unsigned int debounceTime;
-unsigned int holdTime;
+#define ROWS 4
+#define COLS 3
 
 // create keypad matrix
-char keypadmap[4][3] = {
+u8 keymap[ROWS][COLS] = {
     {'1','2','3'},
     {'4','5','6'},
     {'7','8','9'},
-    {'*', '0', '#'}
+    {'*','0','#'}
 };
 
-u8 rowp[4] = {0, 2,  5, 9}; //connect to the row pinouts of the keypad
-u8 colp[3] = {3, 4, 1}; //connect to the column pinouts of the keypad
+// pin numbers down the right side of the keypad
+u8 rowpins[ROWS] = {6, 5, 4, 3};
+// pin numbers across the bottom of the keypad
+u8 colpins[COLS] = {2, 1, 0};
 
 void setup ()
 {
-    Keypad.init(*keypadmap,rowp,colp,rows,cols);
+    Keypad.init(*keymap, rowpins, colpins, ROWS, COLS);
     Serial.begin(9600);
+    Serial.print("\f*** Keypad test ***\r\n");
     
-    // costumizar o debounce.
+    // costumize debounce
     Keypad.setDebounceTime(50);
     Keypad.setHoldTime(1000);
 }
@@ -51,9 +33,16 @@ void loop ()
 {
     u8 key = Keypad.getKey();
 
-    if (key != NO_KEY )
+    if (key != NO_KEY)
     {
+        Serial.print("You pressed key: ");
         Serial.printChar(key);
+        Serial.print(", status = ");
+        if (Keypad.getStatus() == HOLD)
+            Serial.print("HOLD\r\n");
+        if (Keypad.getStatus() == PRESSED)
+            Serial.print("PRESSED\r\n");
+        if (Keypad.getStatus() == RELEASED)
+            Serial.print("RELEASED\r\n");
     }
-    delay(100);  
 }

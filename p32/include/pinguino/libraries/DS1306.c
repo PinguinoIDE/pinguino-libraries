@@ -18,11 +18,11 @@
 */
 
 
-#include "DS1306.h"
+#include <DS1306.h>
 #include <digitalw.c>
 #include <spi.c>
-#include <SpiLoc.c>
-#include <string.h>
+//#include <SpiLoc.c>	// SPI software now in si.c
+#include <string.h>     // memset
 
  
 SPI_Loc_Conf DS1306_SPILoc;
@@ -33,7 +33,7 @@ u8 DS1306_LocalSPI;
 
 
 // Must call initialize prior to using any other method in this class (except constructor)
-void DS1306_Init(u8 LocalSPI, u8 LoCE,u8 LoSCK, u8 LoSDO, u8 LoSDI) 
+void DS1306_init(u8 LocalSPI, u8 LoCE, u8 LoSCK, u8 LoSDO, u8 LoSDI) 
 {
 	unsigned char cr;
 	// Initialize SPI Bus
@@ -59,7 +59,8 @@ void DS1306_Init(u8 LocalSPI, u8 LoCE,u8 LoSCK, u8 LoSDO, u8 LoSDI)
     break;
     case 1:
     case 2:
-     SPI_init();
+     SPI_begin();
+     //SPI_init();
      break;
    }
 
@@ -424,24 +425,26 @@ void DS1306_disableBothAlarms()
 // Any other values will fail (false returned, no changes made)
 BOOL DS1306_enableTrickleCharge(unsigned char numDiodes, unsigned char kRes)
 {
-	if (numDiodes < 1 || numDiodes > 2) return false;
+	unsigned char b;
 
-	unsigned char byte = 0xA0 | (numDiodes << 2);
+	if (numDiodes < 1 || numDiodes > 2) return false;
+    
+    b = 0xA0 | (numDiodes << 2);
 	switch(kRes) {
-		case 2	:	byte |= 0x01; break;
-		case 4	:	byte |= 0x02; break;
-		case 8	:	byte |= 0x03; break;
+		case 2	:	b |= 0x01; break;
+		case 4	:	b |= 0x02; break;
+		case 8	:	b |= 0x03; break;
 		default	:	return false;
 	}
 
-	DS1306_writen(DS1306_TCR, &byte, 1);
+	DS1306_writen(DS1306_TCR, &b, 1);
 }
 
 // Disable trickle charging
 void DS1306_disableTrickleCharge()
 {
-	unsigned char byte = 0;
-	DS1306_writen(DS1306_TCR, &byte, 1);
+	unsigned char b = 0;
+	DS1306_writen(DS1306_TCR, &b, 1);
 }
 
 // Retrieve trickle charging state
@@ -450,15 +453,15 @@ void DS1306_disableTrickleCharge()
 // When disabled numDiodes and kRes will be set to 0
 BOOL DS1306_getTrickleChargeState(unsigned char *numDiodes, unsigned char *kRes)
 {
-	unsigned char byte;
-	DS1306_readn(DS1306_TCR, &byte, 1);
+	unsigned char b;
+	DS1306_readn(DS1306_TCR, &b, 1);
 
 	*numDiodes = 0;
 	*kRes = 0;
 
-	if ((byte & 0xF0) != 0xA0) return false;	// TCR disabled
+	if ((b & 0xF0) != 0xA0) return false;	// TCR disabled
 
-	switch(byte & 0x03) {
+	switch(b & 0x03) {
 		case 0x01	:	*kRes = 2; break;
 		case 0x02	:	*kRes = 4; break;
 		case 0x03	:	*kRes = 8; break;
@@ -466,7 +469,7 @@ BOOL DS1306_getTrickleChargeState(unsigned char *numDiodes, unsigned char *kRes)
 	}
 
 	// TCR is enabled if we got this far
-	*numDiodes = (byte & 0x0C) >> 2;
+	*numDiodes = (b & 0x0C) >> 2;
 
 	return true;
 }
@@ -489,6 +492,7 @@ BOOL DS1306_writeUser(unsigned char addr, const char *buf, int num)
 // Will return true provided read is valid
 BOOL DS1306_readUser(unsigned char addr, char *buf, int num)
 {
+	//memset((__data *)buf, 0, num);
 	memset(buf, 0, num);
 	if (addr >= DS1306_USER_START && addr < DS1306_USER_END && (addr + num - 1) <= DS1306_USER_END) {
 		DS1306_readn(addr, (unsigned char *) buf, num);

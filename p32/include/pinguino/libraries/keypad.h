@@ -1,34 +1,43 @@
 /*
-Pinguino Library for Keypads
+    Pinguino Library for PS2 Keypads
 */
 
 #ifndef KEYPAD_H
 #define KEYPAD_H
 
+#include <typedef.h>
 
 typedef enum {
-	IDLE=0, 
-	PRESSED, 
-	RELEASED, 
-	HOLD
-} KeypadState;
+    IDLE=0, 
+    PRESSED, 
+    RELEASED, 
+    HOLD
+} KeypadStatus;
 
+typedef struct {
+    u8 rows;
+    u8 columns;
+    u8 lastKey;
 
-const char NO_KEY = '\0';
+    u8 *rowPins;
+    u8 *columnPins;
+    u8 *map;
+
+    u16 debounceTime;
+    u16 holdTime;
+    u32 lastUpdate;
+
+    KeypadStatus status;
+} Keypad;
+
+const u8 NO_KEY = '\0';
+
 #define KEY_RELEASED NO_KEY
 
-//public functions: 
-#define makeKeymap(x) ((char *)x)
-
-void Keypad_init(char *keypadmap, uchar *rowp, uchar *colp, uchar rows, uchar cols);
+void Keypad_init(u8*, u8*, u8*, u8, u8);
 char Keypad_getKey();
-KeypadState Keypad_getState();
-void Keypad_setDebounceTime(unsigned int debounce);
-void Keypad_setHoldTime(unsigned int hold);
-//void addEventListener(void (*listener)(char));
-	
-//private functions:
-void Keypad_transitionTo(KeypadState newState);
-void Keypad_initializePins();
-	
-#endif
+//KeypadStatus Keypad_getStatus();
+void Keypad_setDebounceTime(u16);
+void Keypad_setHoldTime(u16);
+
+#endif // KEYPAD_H

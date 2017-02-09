@@ -65,8 +65,18 @@
         };
     } t24;
 
-    typedef void (*funcout) (u8);   // type of void funcout(u8)
+    typedef union
+    {
+        u32 v;                              // value
+        struct
+        {
+            u8  s;                          // sign (1=negative)
+            u8  i;                          // integer part
+            u16 f;                          // fractional part
+        };
+    } tFloat;                               // Pinguino float format
 
+    typedef void (*funcout) (u8);           // type of void funcout(u8)
 
 /*	----------------------------------------------------------------------------
     avr-gcc types

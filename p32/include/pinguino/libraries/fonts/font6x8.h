@@ -9,7 +9,15 @@
 #include <typedef.h>
 
 const u8 font6x8[] = {
-    6, 8,
+    0x0, 0x0, // size of zero indicates fixed width font, actual length is width * height
+    0x06,     // width
+    0x08,     // height
+    0x20,     // first char
+    0x7E,     // char count
+    
+    // Fixed width; char width table not used !!!!
+    
+    // font data
     0x00,  0x00,  0x00,  0x00,  0x00,  0x00,    // [0x20] ' '
     0x00,  0x00,  0x2F,  0x00,  0x00,  0x00,    // [0x21] '!'
     0x00,  0x03,  0x00,  0x03,  0x00,  0x00,    // [0x22] '"'

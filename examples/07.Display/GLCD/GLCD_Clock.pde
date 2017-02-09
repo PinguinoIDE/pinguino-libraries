@@ -1,122 +1,144 @@
-//Yellow LED
-#define DEBUG_LED 58
+/**
+    Author:    Régis Blanchot (Nov. 2016)
+    Tested on: Pinguino 47J53
+    Output:    Graphic LCD 128x64 with KS0108 Controller
+    Wiring :   (Panel E)
+    
+    1	Vss	Ground on breadboard
+    2	Vdd	+5V on breadboard
+    3 	Vout	Center pin of 10k pot
+    4	RS	Pin 8
+    5	RW	Pin 9
+    6	E	Pin 10
+    7	DB0	Pin 0
+    8	DB1	Pin 1
+    9	DB2	Pin 2
+    10	DB3	Pin 3
+    11	DB4	Pin 4
+    12	DB5	Pin 5
+    13	DB6	Pin 6
+    14	DB7	Pin 7
+    15	CS1	Pin 11
+    16	CS2	Pin 12
+    17	/RST	Pin 13
+    18	Vee	An end of a 10k pot
+    19	LED+	+5V on breadboard
+    20	LED-	Ground on breadboard
+**/
 
-//UBW32 User and Prog buttons
+//Buttons
 #define HOUR 68
 #define MIN 69
 
-//degrees
-#define RSEC 16
-#define RMIN 12
-#define RHOUR 8
-   
-//FONTS
-#include <VerdanaNumbers.h>	// Huge 28pt Verdana font. only Mumbers, save space!
-#include <SystemFont5x7.h>   	// system font.
+//Degrees
+#define A60 360/60
+#define A12 360/12
 
-//Bitmap
-#include <Pinguino.h>   		// bitmap  
+//Clock size
+#define RADIUS 18
+
+//Fonts
+#include <fonts/font5x7.h>        // font system
+//#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
+//#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
+#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+//#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
 //global vars
 u8 counter = 0;
-u8 sec  = 0;
-u8 min  = 0;
-u8 hour = 0;
+// 10h15mn37s
+u8 hour = 10;
+u8 min  = 15;
+u8 sec  = 37;
 
-void setup(){
-	/* Debug */
-	pinMode(DEBUG_LED, OUTPUT);		// LED on pin 13
-	
-	//Setup buttons
-	pinMode(HOUR, INPUT);
-	pinMode(MIN, INPUT);
-	
-	//Setup GLCD
-	GLCD.Init(NON_INVERTED);   // initialise the library
-	GLCD.ClearScreenX();  
-	GLCD.DrawBitmap(Pinguino, 32,0, BLACK); //draw the bitmap at the given x,y position
-	delay(5000);
-	GLCD.ClearScreenX();	
+void setup()
+{
+    pinMode(USERLED, OUTPUT);
+    
+    //Setup buttons
+    pinMode(HOUR, INPUT);
+    pinMode(MIN, INPUT);
+    
+    //Setup GLCD
+    // Initialize the LCD
+    // rs (di), rw, en, cs1, cs2, rst, d0 to d7
+    GLCD.init(8,9,10,11,14,13,0,1,2,3,4,5,6,7);
 }
 
-void loop(){ // run over and over again	
-	int x, y;
-	
-	if (counter>9){
-		counter = 0;
-		sec++;
-	}
-	
-	if (sec>59){
-		sec = 0;
-		min++;
-	}
-	
-	if (min>59){
-		min = 0;
-		hour++;
-	}
-	
-	if (hour>23){
-		hour = 0;
-	}
-	
-	GLCD.SelectFont(VerdanaNumbers, BLACK);
-	GLCD.GotoXY(3,0);
-	
-	if (hour < 10)
-		GLCD.PutChar('0');
-	GLCD.PrintNumber(hour);
-	
-	GLCD.PutChar(':');
-	if (min < 10)
-		GLCD.PutChar('0');
-	GLCD.PrintNumber(min);
-	
-	GLCD.PutChar(':');
-	if (sec < 10)
-		GLCD.PutChar('0');
-	GLCD.PrintNumber(sec);
-	
-	//Display ticker centesimos de seconds (1/100) ...
-	GLCD.SelectFont(System5x7, BLACK);
-	GLCD.PrintNumber(counter);
-	
-	//set hour and min	
-	if(!(digitalRead(HOUR))){
-		hour++;
-	}
-	if(!(digitalRead(MIN))){
-		min++;
-	}
-				
-	//Relogio analógico?
-	GLCD.DrawCircle(21,43,18,BLACK);
-	//Second
-	x = (int) RSEC * sinr(sec*0.10472);
-	y = (int) RSEC * cosr(sec*0.10472);
-	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
-	//Minute
-	x = (int) RMIN * sinr(min*0.10472);
-	y = (int) RMIN * cosr(min*0.10472);
-	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
-	//Hour
-	x = (int) RHOUR * sinr((hour>12?hour-12:hour)*0.5236);
-	y = (int) RHOUR * cosr((hour>12?hour-12:hour)*0.5236);
-	GLCD.DrawLine(21,43,21+x,43-y, BLACK);
-	
-	GLCD.DrawRect(45, 30, 82, 10, BLACK); 
-	GLCD.GotoXY(48,32);
-	GLCD.Puts("Pinguino 32X!");
-	
-	//DEBUG LED
-	delay(40); //just a fine tune to get 100ms with this!
-	digitalWrite(DEBUG_LED, LOW);
-	delay(40);
-	digitalWrite(DEBUG_LED, HIGH);
-	
-	if(!counter)
-		GLCD.ClearScreen(WHITE);         // clear the screen
-	
-	counter++;
+void loop()
+{
+    u8 xo = KS0108.screen.width/2;
+    u8 yo = KS0108.screen.height/2;
+    u8 x, y;
+    
+    if (counter>9)
+    {
+        counter = 0;
+        sec++;
+    }
+    
+    if (sec>59)
+    {
+        sec = 0;
+        min++;
+    }
+    
+    if (min>59)
+    {
+        min = 0;
+        hour++;
+    }
+    
+    if (hour>11)
+    {
+        hour = 0;
+    }
+    
+    GLCD.setFont(ArialBold14);
+    GLCD.goto(0,0);
+    
+    GLCD.printf("%02d:%02d:%02d", hour, min, sec);
+    /* or ...
+    if (hour < 10)
+        GLCD.printChar('0');
+    GLCD.printNumber(hour, DEC);
+    
+    GLCD.printChar(':');
+    if (min < 10)
+        GLCD.printChar('0');
+    GLCD.printNumber(min, DEC);
+    
+    GLCD.printChar(':');
+    if (sec < 10)
+        GLCD.printChar('0');
+    GLCD.printNumber(sec, DEC);
+    */
+    
+    //Display ticker 1/100 seconds ...
+    GLCD.setFont(font5x7);
+    GLCD.printNumber(counter, DEC);
+    
+    //Draw the clock         
+    GLCD.drawCircle(xo, yo, RADIUS);
+    //Seconds
+    x = xo + (RADIUS * cos100(A60*sec-90)) / 100;
+    y = yo + (RADIUS * sin100(A60*sec-90)) / 100;
+    GLCD.drawLine(xo, yo, x, y);
+    //Minutes
+    x = xo + (RADIUS * cos100(A60*min-90)) / 100;
+    y = yo + (RADIUS * sin100(A60*min-90)) / 100;
+    GLCD.drawLine(xo, yo, x, y);
+    //Hours
+    x = xo + (RADIUS * cos100(A12*hour-90)) / 100;
+    y = yo + (RADIUS * sin100(A12*hour-90)) / 100;
+    GLCD.drawLine(xo, yo, x, y);
+
+    //Wait for 100ms
+    delay(50);
+    toggle(USERLED);
+    
+    if(!counter)
+        GLCD.clearScreen();
+    
+    counter++;
  }

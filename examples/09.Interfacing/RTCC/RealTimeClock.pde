@@ -1,14 +1,14 @@
 /*	----------------------------------------------------------------------------
-	FILE:  			RealTimeClock.pde
-	PROJECT: 		Pinguino
-	PURPOSE: 		Real Time Clock and Calendar functions Demo
-	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-	DOCUMENTATION:	mark harper
-	BOARD:			PIC32-PINGUINO			(OLIMEX)
-						PIC32-PINGUINO-OTG	(OLIMEX)
-						or any other PIC32MX board with external 32.768 kHz clock crystal
-	FIRST RELEASE:	11 Apr 2011
-	LAST RELEASE:	07 Nov 2011
+	FILE:             RealTimeClock.pde
+	PROJECT:          Pinguino
+	PURPOSE:          Real Time Clock and Calendar functions Demo
+	PROGRAMER:        Regis Blanchot <rblanchot@gmail.com>
+	DOCUMENTATION:    Mark Harper
+	BOARD:            PIC32-PINGUINO (OLIMEX)
+	                  PIC32-PINGUINO-OTG (OLIMEX)
+	                  or any other PIC32MX board with external 32.768 kHz clock crystal
+	FIRST RELEASE:    11 Apr 2011
+	LAST RELEASE:     07 Nov 2011
 	--------------------------------------------------------------------------*/
 
 char	Day[7][5]		= {"Sat","Sun","Mon","Tue","Wed","Thu","Fri"};

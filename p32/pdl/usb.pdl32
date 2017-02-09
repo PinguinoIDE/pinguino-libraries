@@ -1,14 +1,41 @@
-CDC.begin CDC_begin#include <cdc.c>
-CDC.polling CDC_polling#include <cdc.c>#define __USBCDCPOLLING__
-CDC.write CDC_print#include <cdc.c>#define CDCWRITE
-CDC.print CDC_print#include <cdc.c>#define CDCPRINT
-CDC.println CDC_println#include <cdc.c>#define CDCPRINTLN
-CDC.printf CDC_printf#include <cdc.c>#define CDCPRINTF
-CDC.printNumber CDC_printNumber#include <cdc.c>#define CDCPRINTNUMBER
-CDC.printFloat CDC_printFloat#include <cdc.c>#define CDCPRINTFLOAT
-CDC.read cdc_getc#include <cdc.c>
-CDC.getKey CDC_getkey#include <cdc.c>#define CDCGETKEY
-CDC.getString CDC_getstring#include <cdc.c>#define CDCGETSTRING
-CDC.isConnected CDC_isConnected#include <cdc.c>
-CDC.available CDC_available#include <cdc.c>
-CDC.isReady cdc_is_tx_ready#include <cdc.c>
+USB.begin USB_begin#include <usbbulk.c>
+USB.polling USB_polling#include <usbbulk.c>#define __USBPOLLING__
+USB.write BULK_write#include <usbbulk.c>
+USB.send BULK_write#include <usbbulk.c>
+USB.print BULK_print#include <usbbulk.c>#define BULKPRINT
+USB.println BULK_println#include <usbbulk.c>#define BULKPRINTLN
+USB.printf BULK_printf#include <usbbulk.c>#define BULKPRINTF
+USB.printNumber BULK_printNumber#include <usbbulk.c>#define BULKPRINTNUMBER
+USB.printFloat BULK_printFloat#include <usbbulk.c>#define BULKPRINTFLOAT
+USB.read BULK_read#include <usbbulk.c>
+USB.available BULK_available#include <usbbulk.c>
+USB.gets BULKgets#include <usbbulk.c>
+USB.puts BULKputs#include <usbbulk.c>
+
+BULK.begin BULK_begin#include <usbbulk.c>
+BULK.polling BULK_polling#include <usbbulk.c>#define __USBPOLLING__
+BULK.available BULK_available#include <usbbulk.c>
+BULK.write BULK_write#include <usbbulk.c>
+BULK.print BULK_print#include <usbbulk.c>#define BULKPRINT
+BULK.println BULK_println#include <usbbulk.c>#define BULKPRINTLN
+BULK.printf BULK_printf#include <usbbulk.c>#define BULKPRINTF
+BULK.printNumber BULK_printNumber#include <usbbulk.c>#define BULKPRINTNUMBER
+BULK.printFloat BULK_printFloat#include <usbbulk.c>#define BULKPRINTFLOAT
+BULK.read BULK_read#include <usbbulk.c>
+BULK.gets BULKgets#include <usbbulk.c>
+BULK.puts BULKputs#include <usbbulk.c>
+
+CDC.begin CDC_begin#include <usbcdc.c>
+CDC.polling CDC_polling#include <usbcdc.c>#define __USBPOLLING__
+CDC.write CDC_print#include <usbcdc.c>#define CDCWRITE
+CDC.print CDC_print#include <usbcdc.c>#define CDCPRINT
+CDC.println CDC_println#include <usbcdc.c>#define CDCPRINTLN
+CDC.printf CDC_printf#include <usbcdc.c>#define CDCPRINTF
+CDC.printNumber CDC_printNumber#include <usbcdc.c>#define CDCPRINTNUMBER
+CDC.printFloat CDC_printFloat#include <usbcdc.c>#define CDCPRINTFLOAT
+CDC.read cdc_getc#include <usbcdc.c>
+CDC.getKey CDC_getkey#include <usbcdc.c>#define CDCGETKEY
+CDC.getString CDC_getstring#include <usbcdc.c>#define CDCGETSTRING
+CDC.isConnected CDC_isConnected#include <usbcdc.c>
+CDC.available CDC_available#include <usbcdc.c>
+CDC.isReady cdc_is_tx_ready#include <usbcdc.c>

@@ -14,7 +14,7 @@
     NB : 1-wire bus (DQ line) must have 4K7 pull-up resistor (connected to +5V)
     ----------------------------------------------------------------------*/
 
-#define ONEWIREBUS	31    // DQ line						
+#define ONEWIREBUS	0    // DQ line						
 
 TEMPERATURE t;
 u8 numsensor;
@@ -28,11 +28,13 @@ void setup()
     delay(1000);
     Serial.println("\f*** Multi DS18x20 Demo ***");
     
-    DS18B20.begin(ONEWIREBUS);
-    numsensor = DS18B20.deviceCount();
+    // Find all sensors present on the bus
+    DS18x20.find(ONEWIREBUS);
+    numsensor = DS18x20.deviceCount();
+    
     // Optional : set alarms and resolution
     for (i=1; i<=numsensor; i++)
-        DS18B20.configure(ONEWIREBUS, i, -40, 60, RES12BIT);
+        DS18x20.configure(ONEWIREBUS, i, -40, 60, RES12BIT);
     // Or simpler, address them all with SKIPROM
     //DS18B20.configure(ONEWIREBUS, SKIPROM, -40, 60, RES12BIT);
     
@@ -46,7 +48,7 @@ void loop()
     
     for (i=1; i<=numsensor; i++)
     {
-        if (DS18B20.read(ONEWIREBUS, i, &t))
+        if (DS18x20.read(ONEWIREBUS, i, &t))
         {
             //Serial.printf("Sensor #%d : ", i);
             Serial.print("Sensor #");

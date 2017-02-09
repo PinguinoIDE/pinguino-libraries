@@ -3,8 +3,15 @@
     PROJECT:        Pinguino - http://www.pinguino.cc/
     PURPOSE:        Driving a LCD display through i2c PCF8574 I/O expander
     PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:  29 Jul. 2008
-    LAST RELEASE:   15 Jun. 2011
+    --------------------------------------------------------------------
+    CHANGELOG:
+    29 Jul. 2008    Regis Blanchot - first release
+    15 Jun. 2011    Regis Blanchot - added print functions
+    25 Nov. 2016    Regis Blanchot - added multi I2C module support
+    28 Nov. 2016    Regis Blanchot - replaced all global variables with LCDI2C struct
+    --------------------------------------------------------------------
+    TODO:
+    * Manage other I/O expander (cf MCP23S17 / MCP342x / MCP23017 libraries)
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -35,47 +42,51 @@
     11 a 16 - D4 to D7 connected to PCF8574's pins (see below)
     15 - LED+ R330
     16 - LED- GND or Backlight pin in PCF8574
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 /*  --------------------------------------------------------------------
-    PCF8574P
+    ---------- PCF8574P
     --------------------------------------------------------------------
 
-    +5V		A0		-|o |-		VDD		+5V
-    +5V		A1		-|	|-		SDA		pull-up 1K8 au +5V
-    +5V		A2		-|	|-		SCL 	pull-up 1K8 au +5V
-    LCD_BL	P0		-|	|-		INT
-    LCD_RS	P1		-|	|-		P7		LCD_D7
-    LCD_RW	P2		-|	|-		P6		LCD_D6
-    LCD_EN	P3		-|	|-		P5		LCD_D5
-    GRND	VSS		-|	|-		P4		LCD_D4
+    +5V     A0 -|o  |- VDD  +5V
+    +5V     A1 -|   |- SDA  pull-up 1K8 au +5V
+    +5V     A2 -|   |- SCL  pull-up 1K8 au +5V
+            P0 -|   |- INT
+            P1 -|   |- P7
+            P2 -|   |- P6
+            P3 -|   |- P5
+    GRND   VSS -|   |- P4
 
-    SYMBOL 	PIN		DESCRIPTION					NB
-    A0		1		address input 0				adress = 0 1 0 0 A2 A1 A0 0
-    A1		2		address input 1				A0, A1 et A2 connected to +5V
-    A2		3		address input 2				then address is 01001110 = 0x4E
-    P0		4		quasi-bidirectional I/O 0	LCD_BL
-    P1		5		quasi-bidirectional I/O 1	LCD_RS
-    P2		6		quasi-bidirectional I/O 2	LCD_RW
-    P3		7		quasi-bidirectional I/O 3	LCD_EN
-    VSS		8		supply ground
-    P4		9		quasi-bidirectional I/O 4	LCD_D4
-    P5		10		quasi-bidirectional I/O 5	LCD_D5
-    P6		11		quasi-bidirectional I/O 6	LCD_D6
-    P7		12		quasi-bidirectional I/O 7	LCD_D7
-    INT		13		interrupt output (active LOW)
-    SCL		14		serial clock line			uC_SCL
-    SDA		15		serial data line			uC_SDA
-    VDD		16		supply voltage
-    --------------------------------------------------------------------------*/
+    SYMBOL  PIN DESCRIPTION                     NB
+    A0      1   address input 0                 adress = 0 1 0 0 A2 A1 A0 0
+    A1      2   address input 1                 A0, A1 et A2 relies au +5V
+    A2      3   address input 2                 so adress = 01001110 = 0x4E
+    P0      4   quasi-bidirectional I/O 0
+    P1      5   quasi-bidirectional I/O 1
+    P2      6   quasi-bidirectional I/O 2
+    P3      7   quasi-bidirectional I/O 3
+    VSS     8   supply ground
+    P4      9   quasi-bidirectional I/O 4
+    P5      10  quasi-bidirectional I/O 5
+    P6      11  quasi-bidirectional I/O 6
+    P7      12  quasi-bidirectional I/O 7
+    INT     13  interrupt output (active LOW)
+    SCL     14  serial clock line               Pinguino SCL
+    SDA     15  serial data line                Pinguino SDA
+    VDD     16  supply voltage
+    ------------------------------------------------------------------*/
 
 #ifndef __LCDI2C_C
 #define __LCDI2C_C
 
 #include <typedef.h>
 #include <lcdi2c.h>
-//#include <pcf8574.h>
+#include <stdarg.h>
+#ifndef __PIC32MX__
+#include <delayms.c>
+#else
 #include <delay.c>
+#endif
 #include <i2c.c>
 
 // Printf
@@ -93,8 +104,6 @@
     #include <printNumber.c>
 #endif
 
-#define I2C_write(c)		I2C_writechar(I2C1, c)
-
 /*  --------------------------------------------------------------------
     Défintion des caractères spéciaux
     --------------------------------------------------------------------
@@ -104,7 +113,7 @@
        lcdi2c_newchar(car3, 0);
     2/ écriture du nouveau caractère sur le LCD : lcdi2c_write(0);
     ------------------------------------------------------------------*/
-#ifndef __32MX220F032D__
+#if 0
     const u8 car0[8]={
         0b00000100,      //â
         0b00001010,
@@ -235,22 +244,14 @@
         0b00001101,
         0b00000000
     };
-#endif /* __32MX220F032D__ */
+#endif
 
 /*  --------------------------------------------------------------------
     global variables
     ------------------------------------------------------------------*/
 
-    u8 gLCDWIDTH;                           // from 0 to 15 = 16
-    u8 gLCDHEIGHT;                          // from 0 to 1 = 2
-    u8 gBacklight = 0;                      // backlight status
-    u8 PCF8574_address;
-    u8 PCF8574_data;
-    u8 posd4_7;
-    u8 pos_en;
-    u8 pos_rw;
-    u8 pos_rs;
-    u8 pos_bl;
+    LCDI2C_t LCDI2C[NUMOFI2C];
+    u8 gI2C_module;
 
 /*  --------------------------------------------------------------------
     Ecriture d'un quartet (mode 4 bits) dans le LCD
@@ -263,30 +264,35 @@
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
     ------------------------------------------------------------------*/
 
-static void lcdi2c_send4(u8 quartet, u8 mode)
+static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
 {
-    PCF8574_data = quartet;                    // x  x  x  x  0  0  0    0
+    // x  x  x  x  0  0  0    0
+    LCDI2C[module].data = quartet;
+
     if(mode)
-        PCF8574_data |= (mode << pos_rs);      // x  x  x  x  0  0  0/1  0
-    if(gBacklight)
-        PCF8574_data |= (gBacklight << pos_bl);// x  x  x  x  0  0  0/1  0
+        // x  x  x  x  0  0  0/1  0
+        LCDI2C[module].data |= (mode << LCDI2C[module].pin.rs);
+
+    if(LCDI2C[module].backlight)
+        // x  x  x  x  0  0  0/1  0
+        LCDI2C[module].data |= (LCDI2C[module].backlight << LCDI2C[module].pin.bl);
 
     /// ---------- LCD Enable Cycle
 
-    I2C_start(I2C1);                            // send start condition
+    I2C_start(module);                            // send start condition
 
-    //I2C_writechar(PCF8574_address | I2C_WRITE);
-    I2C_write((PCF8574_address << 1) | I2C_WRITE);
+    //I2C_writechar(LCDI2C[module].address | I2C_WRITE);
+    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
 
-    PCF8574_data |= (1 << pos_en);
-    I2C_write(PCF8574_data);
+    LCDI2C[module].data |= (1 << LCDI2C[module].pin.en);
+    I2C_writeChar(module, LCDI2C[module].data);
     // E Pulse Width > 300ns
 
-    PCF8574_data &= ~(1 << pos_en);
-    I2C_write(PCF8574_data);
+    LCDI2C[module].data &= ~(1 << LCDI2C[module].pin.en);
+    I2C_writeChar(module, LCDI2C[module].data);
     // E Enable Cycle > (300 + 200) = 500ns
 
-    I2C_stop(I2C1);                             // send stop confition
+    I2C_stop(module);                             // send stop confition
 }
 
 /*  --------------------------------------------------------------------
@@ -301,17 +307,17 @@ static void lcdi2c_send4(u8 quartet, u8 mode)
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
     ------------------------------------------------------------------*/
 
-static void lcdi2c_send8(u8 octet, u8 mode)
+static void lcdi2c_send8(u8 module, u8 octet, u8 mode)
 {
-    if (posd4_7 == 0)
+    if (LCDI2C[module].pin.d4 == 0)
     {
-        lcdi2c_send4((octet>>4), mode);     // send upper 4 bits
-        lcdi2c_send4(octet & 0x0F, mode);   // send lower 4 bits
+        lcdi2c_send4(module, (octet>>4), mode);     // send upper 4 bits
+        lcdi2c_send4(module, octet & 0x0F, mode);   // send lower 4 bits
     }
     else
     {
-        lcdi2c_send4(octet & 0xF0, mode);   // send upper 4 bits
-        lcdi2c_send4((octet <<4), mode);    // send lower 4 bits
+        lcdi2c_send4(module, octet & 0xF0, mode);   // send upper 4 bits
+        lcdi2c_send4(module, (octet <<4), mode);    // send lower 4 bits
     }
     //Delayus(46);                          // Wait for instruction excution time (more than 46us)
 }
@@ -324,14 +330,14 @@ static void lcdi2c_send8(u8 octet, u8 mode)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
-void lcdi2c_blight(u8 status)
+void lcdi2c_blight(u8 module, u8 status)
 {
-    gBacklight = status;
-    PCF8574_data |= (gBacklight << pos_bl);
-    I2C_start(I2C1);
-    I2C_write((PCF8574_address << 1) | I2C_WRITE);
-    I2C_write(PCF8574_data);
-    I2C_stop(I2C1);
+    LCDI2C[module].backlight = status;
+    LCDI2C[module].data |= (LCDI2C[module].backlight << LCDI2C[module].pin.bl);
+    I2C_start(module);
+    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    I2C_writeChar(module, LCDI2C[module].data);
+    I2C_stop(module);
 }
 #endif
 
@@ -341,17 +347,17 @@ void lcdi2c_blight(u8 status)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CSETCURSOR)
-void lcdi2c_setCursor(u8 col, u8 line)
+void lcdi2c_setCursor(u8 module, u8 col, u8 line)
 {
-    int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
+    const u8 row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 
-    if (line > gLCDHEIGHT)
-        line = gLCDHEIGHT;// - 1;           // we count rows starting w/0
-        
-    if (col > gLCDWIDTH)
-        col = gLCDWIDTH;  // - 1;           // we count rows starting w/0
-        
-    lcdi2c_send8(LCD_SETDDRAMADDR | (col + row_offsets[line]), LCD_CMD);
+    if (col > LCDI2C[module].width)
+        col = LCDI2C[module].width;  // - 1;           // we count rows starting w/0
+
+    if (line > LCDI2C[module].height)
+        line = LCDI2C[module].height;// - 1;           // we count rows starting w/0
+
+    lcdi2c_send8(module, LCD_SETDDRAMADDR | (col + row_offsets[line]), LCD_CMD);
 }
 #endif
 
@@ -360,13 +366,13 @@ void lcdi2c_setCursor(u8 col, u8 line)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CCLEARLINE)
-void lcdi2c_clearLine(u8 line)
+void lcdi2c_clearLine(u8 module, u8 line)
 {
     u8 i;
 
-    lcdi2c_setCursor(0, line);
-    for (i = 0; i <= gLCDWIDTH; i++)
-        lcdi2c_write(SPACE);                // display spaces
+    lcdi2c_setCursor(module, 0, line);
+    for (i = 0; i <= LCDI2C[module].width; i++)
+        lcdi2c_printChar(module, SPACE);                // display spaces
 }
 #endif
 
@@ -375,10 +381,16 @@ void lcdi2c_clearLine(u8 line)
     c = code ASCII du caractere
     ------------------------------------------------------------------*/
 
-void lcdi2c_printChar(u8 c)
+void lcdi2c_printChar(u8 module, u8 c)
 {
     if (c < 32) c = 32;                     // replace ESC char with space
-    lcdi2c_send8(c, LCD_DATA);
+    lcdi2c_send8(module, c, LCD_DATA);
+}
+
+void lcdi2c_putChar(u8 c)
+{
+    if (c < 32) c = 32;                     // replace ESC char with space
+    lcdi2c_send8(gI2C_module, c, LCD_DATA);
 }
 
 /*  --------------------------------------------------------------------
@@ -389,10 +401,11 @@ void lcdi2c_printChar(u8 c)
     defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT) || \
     defined(LCDI2CPRINTCENTER)
 
-void lcdi2c_print(const u8 *string)
+void lcdi2c_print(u8 module, const u8 *string)
 {
+    gI2C_module = module;
     while (*string)
-        lcdi2c_printChar(*string++);
+        lcdi2c_putChar(*string++);
 }
 
 #endif
@@ -403,7 +416,7 @@ void lcdi2c_print(const u8 *string)
 
 #if 0
 #if defined(LCDI2CPRINTLN)
-void lcdi2c_println(const u8 *string)
+void lcdi2c_println(u8 module, const u8 *string)
 {
     lcdi2c_print(string);
     lcdi2c_print((u8*)"\n\r");
@@ -416,20 +429,20 @@ void lcdi2c_println(const u8 *string)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTCENTER)
-void lcdi2c_printCenter(const u8 *string)
+void lcdi2c_printCenter(u8 module, const u8 *string)
 {
     u8 len=0, nbspace;
     const u8 *p = string;
 
     while (*p++) len++;
-    nbspace = (gLCDWIDTH + 1 - len) / 2;
+    nbspace = (LCDI2C[module].width + 1 - len) / 2;
     
     // write spaces before
     while(nbspace--)
-        lcdi2c_send8((u8)SPACE, LCD_DATA);
+        lcdi2c_send8(module, (u8)SPACE, LCD_DATA);
 
     // write string
-    lcdi2c_print(string);
+    lcdi2c_print(module, string);
 }
 #endif
 
@@ -438,9 +451,10 @@ void lcdi2c_printCenter(const u8 *string)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTNUMBER) || defined(LCDI2CPRINTFLOAT)
-void lcdi2c_printNumber(s32 value, u8 base)
+void lcdi2c_printNumber(u8 module, s32 value, u8 base)
 {
-    printNumber(lcdi2c_printChar, value, base);
+    gI2C_module = module;
+    printNumber(lcdi2c_putChar, value, base);
 }
 #endif
 
@@ -449,9 +463,10 @@ void lcdi2c_printNumber(s32 value, u8 base)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTFLOAT)
-void lcdi2c_printFloat(float number, u8 digits)
+void lcdi2c_printFloat(u8 module, float number, u8 digits)
 {
-    printFloat(lcdi2c_printChar, number, digits);
+    gI2C_module = module;
+    printFloat(lcdi2c_putChar, number, digits);
 }
 #endif
 
@@ -460,12 +475,36 @@ void lcdi2c_printFloat(float number, u8 digits)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTF)
-void lcdi2c_printf(char *fmt, ...)
+/*
+void lcdi2c_printf(u8 module, char *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
-    pprintf(lcdi2c_printChar, fmt, args);
+    gI2C_module = module;
+    pprintf(lcdi2c_putChar, fmt, args);
+    va_end(args);
+}
+*/
+void lcdi2c1_printf(char* fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    gI2C_module = I2C1;
+    pprintf(lcdi2c_putChar, fmt, args);
+    //lcdi2c_printf(I2C1, fmt, args)
+    va_end(args);
+}
+
+void lcdi2c2_printf(char* fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    gI2C_module = I2C2;
+    pprintf(lcdi2c_putChar, fmt, args);
+    //lcdi2c_printf(I2C2, fmt, args)
     va_end(args);
 }
 #endif
@@ -480,8 +519,8 @@ void lcdi2c_printf(char *fmt, ...)
     lcdi2c_newchar(car8, 1); Définit le caractère 'è' à l'adresse 1.
     ------------------------------------------------------------------*/
 
-//#if defined(LCDI2CNEWCHAR)
-void lcdi2c_newchar(const u8 *c, u8 char_code)
+#if defined(LCDI2CNEWCHAR)
+void lcdi2c_newchar(u8 module, const u8 *c, u8 char_code)
 {
     u8 i, a;
 
@@ -489,18 +528,17 @@ void lcdi2c_newchar(const u8 *c, u8 char_code)
     a = (char_code << 3) | LCD_ADRESS_CGRAM;
     for(i=0; i<8; i++)
     {
-        lcdi2c_send8(a, LCD_CMD);
-        lcdi2c_send8(c[i], LCD_DATA);
+        lcdi2c_send8(module, a, LCD_CMD);
+        lcdi2c_send8(module, c[i], LCD_DATA);
         a++;
     };
 }
-//#endif
+#endif
 
 /*  --------------------------------------------------------------------
     Définition de 8 nouveaux caractères
     ------------------------------------------------------------------*/
-
-#ifndef __32MX220F032D__
+/*
 void lcdi2c_newpattern()
 {
     lcdi2c_newchar(car0,  ACIRC);		// â
@@ -522,8 +560,7 @@ void lcdi2c_newpattern()
     //lcdi2c_newchar(car11,  UGRAVE);	// ù
     //lcdi2c_newchar(car12, UCIRC);		// û
 }
-#endif
-
+*/
 /*  --------------------------------------------------------------------
     Initialisation du LCD
     --------------------------------------------------------------------
@@ -536,47 +573,51 @@ void lcdi2c_newpattern()
     usage : lcdi2c.init(16, 2, 0x27, 4, 2, 1, 0, 3);
     ------------------------------------------------------------------*/
 
-void lcdi2c_init(u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
+void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
 {
     u8 cmd03 = 0x03, cmd02 = 0x02;
-    gLCDWIDTH  = numcol - 1;
-    gLCDHEIGHT = numline - 1;
-    PCF8574_address = i2c_address;
-    PCF8574_data = 0;
-    posd4_7 = d4_7;
-    pos_en = en;
-    pos_rw = rw;
-    pos_rs = rs;
-    pos_bl = bl;
+    LCDI2C[module].width  = numcol - 1;
+    LCDI2C[module].height = numline - 1;
+    LCDI2C[module].address = i2c_address;
+    LCDI2C[module].data = 0;
+    LCDI2C[module].pin.d4 = d4_7;
+    LCDI2C[module].pin.d5 = d4_7 + 1;
+    LCDI2C[module].pin.d6 = d4_7 + 2;
+    LCDI2C[module].pin.d7 = d4_7 + 3;
+    LCDI2C[module].pin.en = en;
+    LCDI2C[module].pin.rw = rw;
+    LCDI2C[module].pin.rs = rs;
+    LCDI2C[module].pin.bl = bl;
+    gI2C_module = module;
 
-    if(posd4_7 != 0)
+    if(LCDI2C[module].pin.d4 != 0)
     {
         cmd03=0x30;
         cmd02=0x20;
     }
 
-    //I2C_init(I2C1, I2C_MASTER_MODE, I2C_100KHZ);
-    I2C_init(I2C1, I2C_MASTER_MODE, I2C_400KHZ);
-    //I2C_init(I2C1, I2C_MASTER_MODE, I2C_1MHZ);
+    //I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
+    I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
+    //I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ);
 
     Delayms(15);                                // Wait more than 15 ms after VDD rises to 4.5V
-    lcdi2c_send4(cmd03, LCD_CMD);               // 0x30 - Mode 8 bits
+    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
     Delayms(5);                                 // Wait for more than 4.1 ms
-    lcdi2c_send4(cmd03, LCD_CMD);               // 0x30 - Mode 8 bits
+    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
     //Delayus(100);                             // Wait more than 100 μs
-    lcdi2c_send4(cmd03, LCD_CMD);               // 0x30 - Mode 8 bits
+    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
     //Delayus(100);                             // Wait more than 100 μs
-    lcdi2c_send4(cmd02, LCD_CMD);               // 0x20 - Mode 4 bits
-    lcdi2c_send8(LCD_SYSTEM_SET_4BITS, LCD_CMD);// 0x28 - Mode 4 bits - 2 Lignes - 5x8
+    lcdi2c_send4(module, cmd02, LCD_CMD);       // 0x20 - Mode 4 bits
+    lcdi2c_send8(module, LCD_SYSTEM_SET_4BITS, LCD_CMD);// 0x28 - Mode 4 bits - 2 Lignes - 5x8
     //Delayus(4);                               // Wait more than 40 ns
-    lcdi2c_send8(LCD_DISPLAY_ON, LCD_CMD);      // 0x0C - Display ON + Cursor OFF + Blinking OFF
+    lcdi2c_send8(module, LCD_DISPLAY_ON, LCD_CMD);// 0x0C - Display ON + Cursor OFF + Blinking OFF
     //Delayus(4);                               // Wait more than 40 ns
-    lcdi2c_send8(LCD_DISPLAY_CLEAR, LCD_CMD);   // 0x01 - Efface l'affichage + init. DDRAM
+    lcdi2c_send8(module, LCD_DISPLAY_CLEAR, LCD_CMD);   // 0x01 - Efface l'affichage + init. DDRAM
     Delayms(2);                                 // Execution time > 1.64ms
-    lcdi2c_send8(LCD_ENTRY_MODE_SET, LCD_CMD);  // 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
+    lcdi2c_send8(module, LCD_ENTRY_MODE_SET, LCD_CMD);// 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
     //Delayus(4);                               // Wait more than 40 ns
-    #ifndef __32MX220F032D__
-    lcdi2c_newpattern();                        // Set new characters
+    #if 0
+    lcdi2c_newpattern(module);                  // Set new characters
     #endif
 }
 

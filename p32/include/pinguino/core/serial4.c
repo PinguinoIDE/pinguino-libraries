@@ -40,6 +40,11 @@ void serial4init(u32 speed)
     SerialConfigure(UART4, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
 }
 
+void serial4printchar(u8 c)
+{
+    SerialPutChar(UART4, c);
+}
+
 void serial4printf(char *fmt, ...)		
 {
     va_list args;
@@ -123,4 +128,3 @@ BOOL serial4clearrxerror(void)
 }
 
 #endif /* __SERIAL4__ */
-

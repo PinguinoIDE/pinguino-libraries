@@ -37,7 +37,7 @@
 #include <typedef.h>
 #include <macro.h>
 //#include <stdlib.h>       // no longer used (09-11-2012)
-#include <delayms.c>
+//#include <delayms.c>
 //#include <oscillator.c>
 
 // Printf
@@ -165,14 +165,19 @@ void Serial_begin(u32 baudrate)
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
 
+        // IO's
         TRISCbits.TRISC7= 1;        // Rx1    set input
-        TXSTA1bits.BRGH=1;          // set BRGH bit
-        BAUDCON1bits.BRG16=1;       // set 16 bits SPBRG
+
+        // Baud Rate
         SPBRGH1=high8(spbrg);       // set UART speed SPBRGH
         SPBRG1=low8(spbrg);         // set UART speed SPBRGL
-        RCSTA1=0x90;                // set RCEN and SPEN
+        TXSTA1bits.BRGH=1;          // set BRGH bit
+        BAUDCON1bits.BRG16=1;       // set 16 bits SPBRG
+
         BAUDCON1bits.RCIDL=1;       // set receive active
-        TXSTA1bits.TXEN=1;          // enable TX
+        // Enable EUSART
+        TXSTA1bits.TXEN=1;          // Transmit Enabled
+        RCSTA1=0x90;                // st RCEN and SPEN
 
         // Enable RX interrupt
         PIR1bits.RC1IF = 0;         // Clear RX interrupt flag
@@ -192,7 +197,7 @@ void Serial_begin(u32 baudrate)
 
     interrupts();                   // Enable global interrupts
     
-    Delayms(1000);                  // AG : 12-11-2012
+    //Delayms(1000);                  // AG : 12-11-2012
 }
 
 /***********************************************************************

@@ -8,6 +8,9 @@
     15 Mar. 2014 - Régis Blanchot - first release
     09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
+    18 Oct. 2016 - Régis Blanchot - changed PIC16F1459 and PIC1xK50 numbering
+    24 Nov. 2016 - Régis Blanchot - fixed pin 12 (set it to RA5 while it was RA4) for PIC18F47J53
     --------------------------------------------------------------------
     TODO : 
     --------------------------------------------------------------------
@@ -33,23 +36,23 @@
 //#include <pin.h>
 #include <typedef.h>
 
-#define pA	0
-#define pB	1
-#define pC	2
-#define pD	3
-#define pE	4
-#define pF	5
-#define pG	6
+#define pA  0
+#define pB  1
+#define pC  2
+#define pD  3
+#define pE  4
+#define pF  5
+#define pG  6
 #define pU  0xFF    // unused
 
-#define _0	0x01    // 1<<0
-#define _1	0x02    // 1<<1 
-#define _2	0x04    // 1<<2
-#define _3	0x08    // 1<<3 
-#define _4	0x10    // 1<<4 
-#define _5	0x20    // 1<<5 
-#define _6	0x40    // 1<<6 
-#define _7	0x80    // 1<<7 
+#define _0  0x01    // 1<<0
+#define _1  0x02    // 1<<1 
+#define _2  0x04    // 1<<2
+#define _3  0x08    // 1<<3 
+#define _4  0x10    // 1<<4 
+#define _5  0x20    // 1<<5 
+#define _6  0x40    // 1<<6 
+#define _7  0x80    // 1<<7 
 #define _U  0xFF    // unused
 
 /**********************************************************************/
@@ -65,9 +68,9 @@ const u8 port[18]={
                     pA, pA, pA, pC, pC, pC, pB, pB, pB };
 
 /**********************************************************************/
-#elif defined(PINGUINO1459)
+#elif defined(PINGUINO1459) || defined(PINGUINO13K50) || defined(PINGUINO14K50) 
 /**********************************************************************/
-                                                        // Pinguino pin number
+/*                                                  // Pinguino pin number
 const u8 mask[18]={
                     _5,_4,_3,_5,_4,_3,_6,_7,_7,         // 00 - 09
                     _0,_1,_U,_0,_1,_2,_4,_5,_6  };      // 10 - 18
@@ -75,6 +78,14 @@ const u8 mask[18]={
 const u8 port[18]={
                     pA, pA, pA, pC, pC, pC, pC, pC, pB, // 00 - 09
                     pA, pA, pU, pC, pC, pC, pB, pB, pB};// 10 - 18
+*/
+const u8 mask[18]={ _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
+                    _0,_1,_U,_3,_4,_5,              // 08 - 13
+                    _4,_5,_6,_7};                   // 14 - 17
+
+const u8 port[18]={ pC, pC, pC, pC, pC, pC, pC, pC, // 00 - 07
+                    pA, pA, pU, pA, pA, pA,         // 08 - 13    
+                    pB, pB, pB, pB};                // 14 - 17
 
 /**********************************************************************/
 #elif defined(PINGUINO1220) || defined(PINGUINO1320)
@@ -175,7 +186,7 @@ const u8 port[36]={
                                                     // Pinguino pin number
 const u8 mask[32]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
-                    _0,_1,_2,_3,_4,_0,_1,_2,        // 08 - 15
+                    _0,_1,_2,_3,_5,_0,_1,_2,        // 08 - 15
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 16 - 23
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 24 - 31
                     };            

@@ -1,6 +1,7 @@
 Serial.init serial1init#include <serial1.c>#define ENABLE_UART1
 Serial.begin serial1init#include <serial1.c>#define ENABLE_UART1
 Serial.write serial1write#include <serial1.c>
+Serial.printChar serial1printchar#include <serial1.c>
 Serial.print serial1print#include <serial1.c>#define SERIALPRINT
 Serial.println serial1println#include <serial1.c>#define SERIALPRINTLN
 Serial.printNumber serial1printNumber#include <serial1.c>#define SERIALPRINTNUMBER
@@ -12,4 +13,3 @@ Serial.available serial1available#include <serial1.c>
 Serial.read serial1read#include <serial1.c>
 Serial.flush serial1flush#include <serial1.c>
 Serial.ClearRxError serial1clearrxerror#include <serial1.c>
-

@@ -1,8 +1,8 @@
 // Bulk module for Pinguino
 // André Gentric 2013
 
-#ifndef __USBBULK
-#define __USBBULK
+#ifndef __USBBULK__
+#define __USBBULK__
 
 /**********************************************************************/
 #ifdef boot4
@@ -175,4 +175,4 @@ u8 BULK_available(void)
 
 #endif /* boot4 and boot2 */
 
-#endif /* __USBBULK */
+#endif /* __USBBULK__ */

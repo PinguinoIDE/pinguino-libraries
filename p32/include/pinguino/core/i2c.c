@@ -3,27 +3,25 @@
     PROJECT:        pinguino32
     PURPOSE:        I2C functions
     PROGRAMER:      regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:  04 Mar. 2011
     --------------------------------------------------------------------
     CHANGELOG :
     --------------------------------------------------------------------
-    04/04/2012  alterations by RLmonitor
-                tested on PIC32MX440 pinguino-OTG
-                added speed modes 100kHz, 400kHz, 1 MHz
-                changed completion flag polling to the various bits e.g. PEN, SEN
-                I2C_readchar 2nd argument - NACK or ACK
-                implemented init, start, restart, stop, writechar, readchar - don't need others
-                suggest 2 new functions - writebytes(module, address, *bytes, count),
-                readbytes(module, address, *bytes, count)
-                NO interrupt facility - not sure that it is needed?
-    29/04/2014  Alterations by Moreno Manzini as suggested by Djpark
-                Create 2 versions of I2C_wait, normally is used the standard one.
-                If definited I2CWAIT_WORKAROUND is used the second version which avoid potentially infinite loop.
-                I2CWAIT_WORKAROUND is defined as default.
-    23/03/2015  Regis Blanchot added I2C_master and I2C_slave functions
-                Added support to PIC32MX270F256B
-    11/08/2015  Robert Teschner added slave functions after Regis added
-                interrupt methods. Fixed PIC32MX220 freezing after interrupt enable.
+    04 Mar. 2011    Régis Blanchot - first release
+    04/04/2012      RLmonitor      - tested on PIC32MX440 pinguino-OTG
+                    added speed modes 100kHz, 400kHz, 1 MHz
+                    changed completion flag polling to the various bits e.g. PEN, SEN
+                    I2C_readChar 2nd argument - NACK or ACK
+                    implemented init, start, restart, stop, writechar, readchar - don't need others
+                    suggest 2 new functions - writebytes(module, address, *bytes, count),
+                    readbytes(module, address, *bytes, count)
+                    NO interrupt facility - not sure that it is needed?
+    29/04/2014      Moreno Manzini - Create 2 versions of I2C_wait.
+                    If definited I2CWAIT_WORKAROUND is used the second version which avoid potentially infinite loop.
+                    I2CWAIT_WORKAROUND is defined as default.
+    23/03/2015      Regis Blanchot - added I2C_master and I2C_slave functions
+                    Added support to PIC32MX270F256B
+    11/08/2015      Robert Teschner - added slave functions after Regis added
+                    interrupt methods. Fixed PIC32MX220 freezing after interrupt enable.
     --------------------------------------------------------------------
     TODO : further slave modes improvement in case of slave writing
     --------------------------------------------------------------------
@@ -48,55 +46,12 @@
 #define __I2C__
 
 #include <p32xxxx.h>    // Always in first place to avoid conflict with const.h ON
-//#include <stdarg.h>
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+#include <i2c.h>
 #include <system.c>
 #include <interrupt.c>
-
-// Mode I2C
-#define I2C_WRITE				0
-#define I2C_READ				1
-#define I2C_MASTER_MODE			0
-#define I2C_SLAVE_MODE			1
-#define I2C_MULTIMASTER_MODE	2
-#define I2C_SLEW_OFF			0
-#define I2C_SLEW_ON				1
-
-//RL added speed definitions
-#define I2C_100KHZ				100000
-#define I2C_400KHZ				400000
-#define I2C_1MHZ				1000000
-#define I2C_TIMEOUT				4000
-
-#define I2C_7BIT_ADDRESS        7
-#define I2C_10BIT_ADDRESS       10
-
-// Module I2C
-#define I2C1					1
-#define I2C2					2
-
-#define I2C_BUFFER_LENGTH       16        // @regis: I would guess 64 bits are far to much
-
-/// PROTOTYPES
-
-void I2C_master(u8, u32);   
-void I2C_slave(u8, u16, u32);   
-void I2C_init(u8, u8, u32);
-//u8   I2C_send(u8, u8, u8);
-//u8   I2C_get(u8, u16);
-u8   I2C_writechar(u8, u8);
-u8   I2C_readchar(u8);//, u8);
-u8   I2C_read(u8);
-void I2C_wait(u8);
-void I2C_start(u8);
-void I2C_stop(u8);
-void I2C_restart(u8);
-void I2C_sendNack(u8);
-void I2C_sendAck(u8);
-u8   I2C1Interrupt();
-u8   I2C2Interrupt();
 
 /// GLOBALS
 
@@ -292,7 +247,7 @@ void I2C_init(u8 module, u8 mode, u32 speed)
     * timeout value calculation ?
     ------------------------------------------------------------------*/
 
-u8 I2C_writechar(u8 module, u8 value)
+u8 I2C_writeChar(u8 module, u8 value)
 {
     u8 mode = gI2CMODE[module];
     
@@ -396,7 +351,7 @@ u8 I2C_writechar(u8 module, u8 value)
     In master mode, it up to the user to send NACK or ACK
     ------------------------------------------------------------------*/
 
-u8 I2C_readchar(u8 module) //, u8 last)
+u8 I2C_readChar(u8 module) //, u8 last)
 {
     u8 mode = gI2CMODE[module];
     u8 value;
@@ -521,8 +476,8 @@ u8 I2C_send(u8 module, u8 address, u8 value)
     u8 r;
     
     I2C_start(module);
-    if ((r = I2C_writechar(module, address | I2C_WRITE)))
-        r = I2C_writechar(module, value);
+    if ((r = I2C_writeChar(module, address | I2C_WRITE)))
+        r = I2C_writeChar(module, value);
     I2C_stop(module);
     return r;
 }
@@ -541,9 +496,9 @@ u8 I2C_get(u8 module, u16 adress)
 
     I2C_sendID(module, adress, I2C_READ);
     I2C_restart(module);
-    if (I2C_writechar(module, adress) == 0)
+    if (I2C_writeChar(module, adress) == 0)
         return (0);
-    value = I2C_readchar(module, true);
+    value = I2C_readChar(module, true);
     I2C_sendNack(module);
     I2C_stop(module);
     return (value);
@@ -584,14 +539,14 @@ void I2C_sendID(u8 module, u16 deviceID, u8 rw)
                 //byte1 = 
                 //byte2 = 
                 I2C_start(module);
-                while (I2C_writechar(module, deviceID | rw) != 1)
+                while (I2C_writeChar(module, deviceID | rw) != 1)
                     I2C_restart(module);
             }
             else
             {         
                 I2C1CONbits.A10M = 0;				// 0 = I2CxADD is a 7-bit slave address
                 I2C_start(module);
-                while (I2C_writechar(module, deviceID | rw) != 1)
+                while (I2C_writeChar(module, deviceID | rw) != 1)
                     I2C_restart(module);
             }
             break;
@@ -608,14 +563,14 @@ void I2C_sendID(u8 module, u16 deviceID, u8 rw)
                 //byte2 = 
                 I2C_start(module);
 
-                while (I2C_writechar(module, deviceID | rw) != 1)
+                while (I2C_writeChar(module, deviceID | rw) != 1)
                     I2C_restart(module);
             }
             else
             {         
                 I2C2CONbits.A10M = 0;				// 0 = I2CxADD is a 7-bit slave address
                 I2C_start(module);
-                while (I2C_writechar(module, deviceID | rw) != 1)
+                while (I2C_writeChar(module, deviceID | rw) != 1)
                     I2C_restart(module);
             }
             break;
@@ -875,7 +830,7 @@ u8 I2C1Interrupt()
         {
             // reset any state variables needed by a message sequence
             // perform a dummy read of the address
-            temp = I2C_readchar(I2C1);
+            temp = I2C_readChar(I2C1);
             
             // release the clock to restart I2C
             I2C1CONbits.SCLREL = 1; // release the clock
@@ -886,7 +841,7 @@ u8 I2C1Interrupt()
         else if ((I2C1STATbits.R_W == 0) && (I2C1STATbits.D_A == 1))
         {
             // writing data to our module
-            gI2C1Buffer[I2C1wPtr] = I2C_readchar(I2C1);   
+            gI2C1Buffer[I2C1wPtr] = I2C_readChar(I2C1);   
             if (I2C1wPtr < I2C_BUFFER_LENGTH-1)
                 I2C1wPtr++;
             else
@@ -904,9 +859,9 @@ u8 I2C1Interrupt()
         else if ((I2C1STATbits.R_W == 1) && (I2C1STATbits.D_A == 0))
         {
             // read of the slave device, read the address 
-            temp = I2C_readchar(I2C1);
+            temp = I2C_readChar(I2C1);
             dIndex1 = 0;
-//            I2C_writechar(I2C1, dataRead);
+//            I2C_writeChar(I2C1, dataRead);
         }
         
         // R/W bit = 1 --> indicates data transfer is output from slave
@@ -920,7 +875,7 @@ u8 I2C1Interrupt()
             
             if (dIndex1 < I2C_BUFFER_LENGTH-1)
             {
-                I2C_writechar(I2C1, gI2C1Buffer[dIndex1]);
+                I2C_writeChar(I2C1, gI2C1Buffer[dIndex1]);
                 dIndex1++;
             }
         }
@@ -962,7 +917,7 @@ u8 I2C2Interrupt()
         {
             // reset any state variables needed by a message sequence
             // perform a temp read of the address
-            temp = I2C_readchar(I2C2);
+            temp = I2C_readChar(I2C2);
             // release the clock to restart I2C
             I2C2CONbits.SCLREL = 1; // release the clock
         }
@@ -972,7 +927,7 @@ u8 I2C2Interrupt()
         else if ((I2C2STATbits.R_W == 0) && (I2C2STATbits.D_A == 1))
         {
             // writing data to our module
-            gI2C2Buffer[I2C2wPtr] = I2C_readchar(I2C2);   
+            gI2C2Buffer[I2C2wPtr] = I2C_readChar(I2C2);   
             if (I2C2wPtr < I2C_BUFFER_LENGTH-1)
                 I2C2wPtr++;
             else
@@ -990,9 +945,9 @@ u8 I2C2Interrupt()
         else if ((I2C2STATbits.R_W == 1) && (I2C2STATbits.D_A == 0))
         {
             // read of the slave device, read the address 
-            temp = I2C_readchar(I2C2);
+            temp = I2C_readChar(I2C2);
             dIndex2 = 0;
-//            I2C_writechar(I2C2, dataRead);
+//            I2C_writeChar(I2C2, dataRead);
         }
         
         // R/W bit = 1 --> indicates data transfer is output from slave
@@ -1006,7 +961,7 @@ u8 I2C2Interrupt()
             
             if (dIndex2 < I2C_BUFFER_LENGTH-1)
             {
-                I2C_writechar(I2C2, gI2C2Buffer[dIndex2]);
+                I2C_writeChar(I2C2, gI2C2Buffer[dIndex2]);
                 dIndex2++;
             }
         }
@@ -1018,4 +973,3 @@ u8 I2C2Interrupt()
 }
 
 #endif	/* __I2C_C */
-

@@ -1,11 +1,11 @@
-/**
+/*
         Author: 	Régis Blanchot (Mar. 2014)
         Tested on:	Pinguino 47J53A & Pinguino 32MX250
-        Output:	Oled 0.96" with SSD1306 Controller
+        Output:	        Oled 0.96" with SSD1306 Controller
 
         Wiring :
         
-        if MODULE = PMP6800
+        if OUTPUT = SSD1306_PMP6800
                 OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO (res)
                 OLED D/C#   connected to Pinguino PMA[0:15] (dc)
@@ -14,7 +14,7 @@
                 OLED D[7:0] connected to Pinguino PMD[7:0]
                 SSD1306.init(PMP6800, rst, dc);
                 
-        if MODULE = PMP8080
+        if OUTPUT = SSD1306_PMP8080
                 OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO (res)
                 OLED D/C#   connected to Pinguino PMA1
@@ -23,7 +23,7 @@
                 OLED D[7:0] connected to Pinguino PMD[7:0]
                 SSD1306.init(PMP6800, rst);
                 
-        if MODULE = PORTB
+        if OUTPUT = SSD1306_PORT6800
                 OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO
                 OLED D/C#   connected to any GPIO
@@ -31,7 +31,7 @@
                 OLED E/RD#  connected to GND
                 OLED D[7:0] connected to Pinguino D[0:7]
                 
-        if MODULE = PORTD 
+        if OUTPUT = SSD1306_PORT8080 
                 OLED CS#    connected to GND
                 OLED RES#   connected to any GPIO (D0)
                 OLED D/C#   connected to any GPIO (D1)
@@ -39,35 +39,30 @@
                 OLED E/RD#  connected to GND
                 OLED D[7:0] connected to Pinguino D[31:24]
                 
-        if MODULE = I2C
+        if OUTPUT = SSD1306_I2Cx (I2C1, I2C2)
                 SSD1306.init(I2C, address);
         
-        if MODULE = SPISW
+        if OUTPUT = SSD1306_SPISW
                 SSD1306.init(SPISW, rst, dc, sda, sck, cs);
         
-        if MODULE = SPIx (SPI1, SPI2, ...)
+        if OUTPUT = SSD1306_SPIx (SPI1, SPI2, ...)
                 SSD1306.init(SPI1, rst, dc);
         
     ------------------------------------------------------------------*/
 
-#define MODULE SPI1
-
 /*
-#define MODULE I2C
-#define MODULE SPISW      // or SPI1, SPI2, ...
-#define MODULE PMP6800    // or PMP8080
+    Load one or more fonts and active them with SSD1306.setFont()
 */
 
-/**
-    Load one or more fonts and active them with SSD1306.setFont()
-**/
+#include <fonts/font5x7.h>        // System font
+//#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
+//#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
+//#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+//#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
-#include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
+u8 i;
+const u8 intf = SSD1306_I2C1;
+//const u8 intf = SSD1306_SPI1;
 
 void setup()
 {
@@ -76,23 +71,31 @@ void setup()
     pinMode(USERLED, OUTPUT);
     
     // if 6800- or 8080-interface and PMP is used
-    //SSD1306.init(1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
+    //SSD1306.init(intf, 1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
     
     // if i2c interface is used
-    //SSD1306.init(0x3C); // i2c address of the display
+    SSD1306.init(intf, 0x78); // i2c address of the display
     
     // if 6800- or 8080-interface (but not PMP) is used
-    //void SSD1306.init(u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
-    SSD1306.init(8, 9, 0, 1, 2, 3, 4, 5, 6, 7);
+    //void SSD1306.init(u8 intf, u8 rst, u16 dc)
+    //SSD1306.init(intf, 8, 9);
 
-    SSD1306.clearScreen();
-    SSD1306.setFont(font6x8);
+    // if SPI Hardware is used (you need to connect pins SDO, SCK and CS if needed)
+    //SSD1306.init(intf, 4, 5); // DC, RST
+
+    // if SPI Software is used
+    //SSD1306.init(intf, 0,1,2,3); // SDO, SCK, CS, DC and optionnaly RST
+    
+    //SSD1306.setFont(intf, ArialBold14);
+    SSD1306.setFont(intf, font5x7);
+    SSD1306.print(intf, "Hello World!\r\n");
+    SSD1306.refresh(intf);
+    delay(2000);
+    SSD1306.clearScreen(intf);
 }   
 
 void loop()
 {
-    SSD1306.println("Hello World!");
-    SSD1306.refresh();
     toggle(USERLED);
     delay(1000);
 }

@@ -1,6 +1,6 @@
 /*
   AnalogReadSerial
- Reads an analog input on pin 0, prints the result to the serial monitor 
+ Reads an analog input on pin 0, and prints the result to the serial monitor.
  
  This example code is in the public domain.
  */
@@ -12,7 +12,7 @@ void setup()
 
 void loop()
 {
-    int sensorValue = analogRead(A0);
+    int sensorValue = analogRead(0);
     Serial.printNumber(sensorValue, DEC);
     Serial.print("\r\n");
 }

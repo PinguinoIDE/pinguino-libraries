@@ -9,6 +9,8 @@
     ----------------------------------------------------------------------------
     CHANGELOG:
     30 Nov 2015 - Régis Blanchot - added PIC16F1459 support
+    30 Jan 2017 - Régis Blanchot - added PIC18F1xK50 support
+    30 Jan 2017 - Régis Blanchot - added SPI_PBCLOCK_DIV for P32 compatibility
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -30,27 +32,32 @@
 
 #include <compiler.h>
 
-// SPI modules
-#define SPISW   0
-#define SPI1    1
-#define SPI2    2
+// SPI modules (05-12-2016 - RB - moved to const.h)
+//#define SPISW   0
+//#define SPI1    1
+//#define SPI2    2
 
 // pins
-#if defined(__16F1459)
-#elif defined(__18f2455) || defined(__18f4455) || \
-      defined(__18f2550) || defined(__18f4550)
-#else
-#endif
 
 #if   defined(__16F1459)
 
-    #define SD_CS           PORTCbits.RC6       // SPI1 Chip Select cf. io.c/IO_remap()
+    #define SD_CS           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
     #define SSPIN           TRISCbits.TRISC6    // SPI1 Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB4    // SPI1 SDI Master input/Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB6    // SPI1 SCK Clock TRIS
     #define SDOPIN          TRISCbits.TRISC7    // SPI1 SDO Master output/Slave input TRIS
     #define SSP1BUF         SSPBUF
-    #define SSP1INTFLAG          PIR1bits.SSP1INTFLAG
+    #define SSP1INTFLAG     PIR1bits.SSP1IF
+
+#elif defined(__18f13k50)  || defined(__18f14k50)
+
+    #define SD_CS           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
+    #define SSPIN           TRISCbits.TRISC6    // CS1  Pin 6  Chip Select TRIS
+    #define SDIPIN          TRISBbits.TRISB4    // SDI1 Pin 14 Master Input/Slave Output TRIS
+    #define SCKPIN          TRISBbits.TRISB6    // SCK1 Pin 16 Clock TRIS
+    #define SDOPIN          TRISCbits.TRISC7    // SDO1 Pin 7  Master Output/Slave input TRIS
+    #define SSP1BUF         SSPBUF
+    #define SSP1INTFLAG     PIR1bits.SSPIF
 
 #elif defined(__18f2455)  || defined(__18f4455)  || \
       defined(__18f2550)  || defined(__18f4550)
@@ -127,6 +134,11 @@
 #define SPI_CLOCK_DIV64         SPI_MASTER_FOSC_64
 #define SPI_CLOCK_TIMER2        SPI_MASTER_FOSC_T2
 
+#define SPI_PBCLOCK_NODIV       SPI_CLOCK_DIV4
+#define SPI_PBCLOCK_DIV2        SPI_CLOCK_DIV8
+#define SPI_PBCLOCK_DIV4        SPI_CLOCK_DIV16
+#define SPI_PBCLOCK_DIV16       SPI_CLOCK_DIV64
+
 // SPI Data Mode
 #define SPI_MODE0               0x00
 #define SPI_MODE1               0x04
@@ -157,9 +169,9 @@ typedef struct
     u8 role;
     u8 bitorder;
     u8 phase;
-    u8 sda;
-    u8 sck;
-    u8 cs;
+    int sdo;
+    int sck;
+    int cs;
 } spi_t;
 
 /// Prototypes

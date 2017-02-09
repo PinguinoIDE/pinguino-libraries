@@ -40,6 +40,15 @@ void serial2init(u32 speed)
     #endif
 }
 
+void serial2printchar(u8 c)
+{
+    #ifdef PIC32_PINGUINO_220
+        SerialPutChar(UART1, c);
+    #else
+        SerialPutChar(UART2, c);
+    #endif
+}
+
 #ifdef SERIALPRINTF
 void serial2printf(char *fmt, ...)
 {
@@ -162,4 +171,3 @@ BOOL serial2clearrxerror(void)
 }
 
 #endif /* __SERIAL2__ */
-

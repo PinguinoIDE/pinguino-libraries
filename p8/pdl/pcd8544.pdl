@@ -25,20 +25,16 @@ PCD8544.getOrientation PCD8544_getOrientation#include <PCD8544.c>#define _PCD854
 PCD8544.drawPixel PCD8544_drawPixel#include <PCD8544.c>PCD8544GRAPHICS
 PCD8544.getPixel PCD8544_getPixel#include <PCD8544.c>PCD8544GRAPHICS
 PCD8544.drawCircle PCD8544_drawCircle#include <PCD8544.c>#define PCD8544GRAPHICS
-PCD8544.drawCircleHelper  PCD8544_drawCircleHelper#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.fillCircle PCD8544_fillCircle#include <PCD8544.c>#define PCD8544GRAPHICS
-PCD8544.fillCircleHelper PCD8544_fillCircleHelper#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.drawTriangle PCD8544_drawTriangle#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.fillTriangle PCD8544_fillTriangle#include <PCD8544.c>#define PCD8544GRAPHICS
-PCD8544.drawRoundRect PCD8544_drawRoundRect#include <PCD8544.c>#define PCD8544GRAPHICS 
-PCD8544.fillRoundRect PCD8544_fillRoundRect#include <PCD8544.c>#define _PCD8544GRAPHICS
-PCD8544.drawBitmap PCD8544_drawBitmap#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.drawLine PCD8544_drawLine#include <PCD8544.c>#define PCD8544GRAPHICS
-PCD8544.drawFastVLine PCD8544_drawFastVLine#include <PCD8544.c>#define PCD8544GRAPHICS
-PCD8544.drawFastHLine PCD8544_drawFastHLine#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.drawRect PCD8544_drawRect#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.fillRect PCD8544_fillRect#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.fillScreen PCD8544_fillScreen#include <PCD8544.c>#define PCD8544GRAPHICS
+PCD8544.drawRoundRect PCD8544_drawRoundRect#include <PCD8544.c>#define PCD8544GRAPHICS 
+PCD8544.fillRoundRect PCD8544_fillRoundRect#include <PCD8544.c>#define _PCD8544GRAPHICS
 
+PCD8544.drawBitmap PCD8544_drawBitmap#include <PCD8544.c>#define PCD8544GRAPHICS
 PCD8544.invertDisplay PCD8544_invertDisplay#include <PCD8544.c>#define _PCD8544_USE_INVERT
 PCD8544.updateBoundingBox PCD8544_updateBoundingBox#include <PCD8544.c>

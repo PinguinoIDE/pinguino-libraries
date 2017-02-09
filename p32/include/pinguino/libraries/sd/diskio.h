@@ -5,7 +5,11 @@
 #ifndef _DISKIO_H
 #define _DISKIO_H
 
-#include <p32xxxx.h>            //#include <compiler.h>
+#ifndef __PIC32MX__
+#include <compiler.h>
+#else
+#include <p32xxxx.h>
+#endif
 #include <typedef.h>
 #include <sd/ffconf.h>
 #if _FS_TINY

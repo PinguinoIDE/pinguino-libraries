@@ -42,12 +42,12 @@
 
     /// MATH
 
-    //#ifndef __XC8__
+    #if !defined(__XC8__) && !defined(_STDLIB_H_)
         //#define min(a,b)            ((a)<(b)?(a):(b))
-        //#define min(x, y)           (y ^ ((x ^ y) & -(x < y)))
+        #define min(x, y)           (y ^ ((x ^ y) & -(x < y)))
         //#define max(a,b)            ((a)>(b)?(a):(b))
-        //#define max(x, y)           (x ^ ((x ^ y) & -(x < y)))
-    //#endif
+        #define max(x, y)           (x ^ ((x ^ y) & -(x < y)))
+    #endif
     
     //already defined in stdlib.h / mathlib.c
     //#define abs(x)					((x)>0?(x):-(x))
@@ -82,6 +82,7 @@
     */
     
     #define Bit(n)                  (1 << (n))
+    #define BitTest(b, n)           (((b) & (1 << (n)))!=0)
     #define BitRead(val, n)         (((val) >> (n)) & 1)
     #define BitSet(val, n)          ((val) |= (1 << (n)))
     #define BitClear(val, n)        ((val) &= ~(1 << (n)))

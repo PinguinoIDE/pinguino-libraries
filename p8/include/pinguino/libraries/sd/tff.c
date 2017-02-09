@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------/
-/  FatFs - Tiny FAT file system module  R0.06 (C)ChaN, 2008
+/  tff.c - Tiny FAT File system module R0.06 (C)ChaN, 2008
 /----------------------------------------------------------------------/
 / The FatFs module is an experimenal project to implement FAT file system to
 / cheap microcontrollers. This is a free software and is opened for education,

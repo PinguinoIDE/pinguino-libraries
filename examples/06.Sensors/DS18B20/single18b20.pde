@@ -13,7 +13,7 @@
     NB : 1-wire bus (DQ line) must have 4K7 pull-up resistor (connected to +5V)
     ----------------------------------------------------------------------*/
 
-#define ONEWIREBUS	31   // DQ line						
+#define ONEWIREBUS	0   // DQ line						
 
 void setup()
 {
@@ -26,15 +26,15 @@ void loop()
 {
     TEMPERATURE t;
  
-    if (DS18B20.read(ONEWIREBUS, SKIPROM, &t))
+    if (DS18x20.read(ONEWIREBUS, SKIPROM, &t))
     {
         if (t.sign)
             Serial.printChar('-');
-        //Serial.printf("%d.%dC \r", t.integer, t.fraction);
-        Serial.printNumber(t.integer, DEC);
-        Serial.printChar('.');
-        Serial.printNumber(t.fraction, DEC);
-        Serial.print("C \r\n");
+        Serial.printf("%2d.%02dC \r\n", t.integer, t.fraction);
+        //Serial.printNumber(t.integer, DEC);
+        //Serial.printChar('.');
+        //Serial.printNumber(t.fraction, DEC);
+        //Serial.print("C \r\n");
     }
     
     delay(1000);
