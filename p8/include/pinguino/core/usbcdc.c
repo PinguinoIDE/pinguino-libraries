@@ -27,10 +27,19 @@
 #define __USBCDC__
 
 #define USB_USE_CDC
+//#define USB_USE_DEBUG
 
 #include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
+#include <delayms.c>
+
+// Debug
+#ifdef USB_USE_DEBUG
+#define SERIALPRINTF
+#include <serial.c>
+#endif
+
 //#include <usb/usb_cdc.h>
 #include <usb/usb_cdc.c>
 //#include <usb/usb_config.h>
@@ -72,6 +81,11 @@ u32 cdc_baudrate = USB_CDC_BAUDRATE_DEFAULT;
 void CDCbegin(u32 baudrate)
 {
     u32 counter=-1;
+    u8 i;
+    
+    #ifdef USB_USE_DEBUG
+    Serial_begin(9600);
+    #endif
 
     // Disable global interrupts
     noInterrupts();
@@ -86,7 +100,7 @@ void CDCbegin(u32 baudrate)
     UEP10=0;UEP11=0;UEP12=0;
     UEP13=0;UEP14=0;UEP15=0;
 
-    // Delayms(2000);
+    Delayms(2000);
     
     // Enable pullup resistors; full speed mode (0x14)
     #ifdef __XC8__
@@ -141,8 +155,7 @@ void CDCbegin(u32 baudrate)
 
 u8 CDCwrite(u8 *buffer, u8 len)
 {
-    u8 i;
-    u8 t=0xFF;
+    u8 i, t=0xFF;
 
     if (deviceState != CONFIGURED) return 0;
 
@@ -185,31 +198,26 @@ u8 CDCread(u8* buffer, u8 len)
     
     if (deviceState != CONFIGURED) return 0;
     
-    // Only Process if we own the buffer ( aka not own by SIE)
+    // Only Process if we own the buffer (aka not own by SIE)
     if (!CONTROL_LINE) return 0;
     
     // Only process if a serial device is connected
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
-        //EP_OUT_BD(USB_CDC_DATA_EP_NUM).ADDR = PTR16(&CDCRxBuffer);
-        // Set counter to num bytes ready for read
-        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
-        //EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = len;
-        // clear BDT Stat bits beside DTS
-        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
-        // toggle DTS
-        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
-        // reset Buffer to original state
-        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
-    
-        // return the bytes read
-        //for (i=0; i<=sizeof(CDCRxBuffer); i++)
-        //if (&buffer != &CDCRxBuffer)
-        for (i=0; i<len; i++)
+        for (i=0; i < EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt; i++)
             buffer[i] = CDCRxBuffer[i];
+
+        // clear BDT Stat bits beside DTS and then togle DTS
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc &= BDS_DTS;
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.DTS ^= 1;
+        // reset buffer count and handle controll of buffer to USB
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt = sizeof(CDCRxBuffer);
+        EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.uc |= (BDS_UOWN | BDS_DTSEN);
+
+        return i;
     }
         
-    return i;
+    return 0;
 }
 #endif
 
@@ -323,12 +331,9 @@ void CDCprintf(const u8 *fmt, ...)
 #if defined(CDCGETKEY) || defined(CDCGETSTRING)
 u8 CDCgetkey(void)
 {
-    CDCRxBuffer[0] = 0;
-    do {
-        CDCread(CDCRxBuffer, 1);
-    } while (CDCRxBuffer[0] == 0);
-    
-    return CDCRxBuffer[0];
+    u8 c=0;
+    while (!CDCread(&c, 1));
+    return c;
 }
 #endif
 
@@ -338,16 +343,19 @@ u8 CDCgetkey(void)
  **********************************************************************/
 
 #if defined(CDCGETSTRING)
-void CDCgetstring(u8 *buffer)
+u8* CDCgetstring(void)
 {
     u8 c, i=0;
-    
+    static u8 buffer[32];
+
     do {
         c = CDCgetkey();
         if (CDCwrite(&c, 1) == 1)
             buffer[i++] = c;
     } while (c != '\r');
     buffer[i-1] = 0;            // EOL
+    
+    return buffer;
 }
 #endif
 
@@ -375,4 +383,3 @@ void CDC_interrupt(void)
 }
 
 #endif /* __USBCDC__ */
-

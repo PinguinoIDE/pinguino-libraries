@@ -74,6 +74,7 @@
     #include <18x20.h>
     #include <1wire.c>
     #ifdef DS18X20DEBUG
+    #define SERIALPRINTF
     #include <serial.c>
     #endif
 

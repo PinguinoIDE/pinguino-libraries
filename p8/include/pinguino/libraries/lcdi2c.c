@@ -311,13 +311,13 @@ static void lcdi2c_send8(u8 module, u8 octet, u8 mode)
 {
     if (LCDI2C[module].pin.d4 == 0)
     {
-        lcdi2c_send4(module, (octet>>4), mode);     // send upper 4 bits
+        lcdi2c_send4(module, octet >> 4, mode);     // send upper 4 bits
         lcdi2c_send4(module, octet & 0x0F, mode);   // send lower 4 bits
     }
     else
     {
         lcdi2c_send4(module, octet & 0xF0, mode);   // send upper 4 bits
-        lcdi2c_send4(module, (octet <<4), mode);    // send lower 4 bits
+        lcdi2c_send4(module, octet << 4, mode);     // send lower 4 bits
     }
     //Delayus(46);                          // Wait for instruction excution time (more than 46us)
 }

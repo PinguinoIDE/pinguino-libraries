@@ -313,7 +313,7 @@ typedef struct
     #define TX_ADDR                 0x2050 // (RX_ADDR + USB_CDC_OUT_EP_SIZE)
     #endif
     
-#elif defined(__18f14k50) || defined(__18f14k50)
+#elif defined(__18f13k50) || defined(__18f14k50)
 
     #define BD_ADDR                 0x200
 

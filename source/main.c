@@ -44,11 +44,11 @@
 #include "define.h"
 ////////////////////////////////////////////////////////////////////////
 
-#ifdef CRYSTAL
-unsigned long _cpu_clock_ = CRYSTAL;
-#else
+//#ifdef CRYSTAL
+//unsigned long _cpu_clock_ = CRYSTAL;
+//#else
 unsigned long _cpu_clock_ = 48000000;
-#endif
+//#endif
 
 #include <compiler.h>       // SDCC / XC8 compatibility
 #include <typedef.h>        // u8, u16, u32 and other types definition
@@ -69,6 +69,12 @@ unsigned long _cpu_clock_ = 48000000;
 #endif
 
 #if defined (noboot)
+    #ifndef CRYSTAL
+    #error "***********************************"
+    #error "* Crystal frequency expected !    *"
+    #error "* Ex: #define CRYSTAL 20000000    *"
+    #error "***********************************"
+    #endif
     #define SPEED   1
     // runtime start code with variable initialisation
     //#include "crt0.c"

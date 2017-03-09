@@ -17,16 +17,18 @@ void setup()
 void loop()
 {
 	u8 *buffer;
-	
+	u8 k;
+
+	CDC.printf("Press Any Key to start ...\r\n");
 	CDC.getKey();
- 
 	CDC.printf("\r\n");
+
 	CDC.printf("**************************\r\n");
 	CDC.printf("*** CDC Printf Demo  ***\r\n");
 	CDC.printf("**************************\r\n");
 	CDC.printf("\r\n");
 	CDC.printf("string = %s\r\n", string);
-	CDC.printf("character = \"%c\"\r\n", c);
+	CDC.printf("character = [%c]\r\n", c);
 	CDC.printf("signed char = %d / unsigned char = %u\r\n", -c, -c);
 	CDC.printf("signed int = %d / unsigned int = %u\r\n", -i, -i);
 	CDC.printf("signed long = %ld / unsigned long = %lu\r\n", -l, -l);
@@ -44,12 +46,10 @@ void loop()
 	CDC.printf("\r\n");
 
 	CDC.printf("Press Any Key ...\r\n");
-	c = CDC.getKey();
-	CDC.printf("\rYou pressed Key %c, (ASCII=%d)\r\n", c, c);
+	k = CDC.getKey();
+	CDC.printf("\rYou pressed Key [%c] (ASCII=%d)\r\n", k, k);
 	CDC.printf("\r\n");
 
-	CDC.printf("Press Any Key to continue ...\r\n");
-	CDC.getKey();
 	CDC.printf("Write Any Texte ...\r\n");
 	buffer = CDC.getString();
 	CDC.printf("You wrote : %s\r\n", buffer);

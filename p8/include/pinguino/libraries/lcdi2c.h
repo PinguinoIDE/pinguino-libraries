@@ -243,7 +243,7 @@ void lcdi2c_printNumber(u8, s32, u8);
 void lcdi2c_printFloat(u8, float, u8);
 
 #if defined(LCDI2CPRINTF)
-void lcdi2c_printf(u8, char*, ...);
+//void lcdi2c_printf(u8, char*, ...);
 void lcdi2c1_printf(char*, ...);
 void lcdi2c2_printf(char*, ...);
 #endif

@@ -27,11 +27,11 @@ extern u32 cdc_baudrate;
         #define RX_ADDR_TAG @##RX_ADDR
         #define TX_ADDR_TAG @##TX_ADDR
         u8 __section("usbram5") dummy; // to prevent a compilation error
-        u8 CDCRxBuffer[USB_CDC_OUT_EP_SIZE] RX_ADDR_TAG; //@ 0x2028; //0x2098;
-        u8 CDCTxBuffer[USB_CDC_IN_EP_SIZE]  TX_ADDR_TAG; //@ 0x2030; //0x20D8;
+        volatile u8 CDCRxBuffer[USB_CDC_OUT_EP_SIZE] RX_ADDR_TAG; //@ 0x2028; //0x2098;
+        volatile u8 CDCTxBuffer[USB_CDC_IN_EP_SIZE]  TX_ADDR_TAG; //@ 0x2030; //0x20D8;
     #else
-        u8 __section("usbram5") CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
-        u8 __section("usbram5") CDCTxBuffer[USB_CDC_IN_EP_SIZE];
+        volatile u8 __section("usbram5") CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
+        volatile u8 __section("usbram5") CDCTxBuffer[USB_CDC_IN_EP_SIZE];
     #endif
 #else // SDCC
     //extern volatile BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
@@ -50,8 +50,8 @@ Zero_Packet_Length zlp;
 
 void CDCInitEndpoint(void)
 {
-    #ifdef DEBUG_PRINT_CDC
-    printf("CDCInitEndpoint\r\n");
+    #ifdef USB_USE_DEBUG
+    Serial_printf("CDCInitEndpoint\r\n");
     #endif
 
     line_config.dwDTERate =   cdc_baudrate;
@@ -91,8 +91,8 @@ void CDCInitEndpoint(void)
 
     deviceState=CONFIGURED; 
 
-    #ifdef DEBUG_PRINT_CDC
-    printf("end CDCInitEndpoint\r\n");
+    #ifdef USB_USE_DEBUG
+    Serial_printf("end CDCInitEndpoint\r\n");
     #endif         
 }
 
@@ -102,16 +102,16 @@ void CDCInitEndpoint(void)
 
 void ProcessCDCRequest(void)
 {
-    #ifdef DEBUG_PRINT_CDC
-    printf("requete %x\r\n",SetupPacket.bmRequestType);
+    #ifdef USB_USE_DEBUG
+    Serial_printf("requete %x\r\n",SetupPacket.bmRequestType);
     #endif  
 
     // If its not a Class request return
     if ((SetupPacket.bmRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS)
         return;
 
-    #ifdef DEBUG_PRINT_CDC
-    printf("%x\r\n",SetupPacket.bRequest);
+    #ifdef USB_USE_DEBUG
+    Serial_printf("%x\r\n",SetupPacket.bRequest);
     #endif
 
     switch(SetupPacket.bRequest)
@@ -130,10 +130,10 @@ void ProcessCDCRequest(void)
 
         case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
             // Populate dummy_encapsulated_cmd_response first.
-            #ifdef DEBUG_PRINT_CDC
-            printf("set control line\r\n");
-            printf("%x\r\n",SetupPacket.wValue0);
-            printf("%x\r\n",SetupPacket.wValue1);
+            #ifdef USB_USE_DEBUG
+            Serial_printf("set control line\r\n");
+            Serial_printf("%x\r\n",SetupPacket.wValue0);
+            Serial_printf("%x\r\n",SetupPacket.wValue1);
             #endif
             if (SetupPacket.wValue0==3)
                 CONTROL_LINE=1;
@@ -169,8 +169,8 @@ u8 CDCgets(u8 *buffer)
     // Only process if a serial device is connected
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
     {
-        #ifdef DEBUG_PRINT_CDC
-        printf("Rx on EP %d, Size %d\r\n", USB_CDC_DATA_EP_NUM, EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt);
+        #ifdef USB_USE_DEBUG
+        Serial_printf("Rx on EP %d, Size %d\r\n", USB_CDC_DATA_EP_NUM, EP_OUT_BD(USB_CDC_DATA_EP_NUM).Cnt);
         #endif
 
         // check how much bytes came
@@ -181,13 +181,13 @@ u8 CDCgets(u8 *buffer)
         {
             buffer[i] = CDCRxBuffer[i];
 
-            #ifdef DEBUG_PRINT_CDC
-            printf("%c",CDCRxBuffer[i]);
+            #ifdef USB_USE_DEBUG
+            Serial_printf("%c",CDCRxBuffer[i]);
             #endif
         }
         
-        #ifdef DEBUG_PRINT_CDC
-        printf("->");
+        #ifdef USB_USE_DEBUG
+        Serial_printf("->");
         #endif
 
         // clear BDT Stat bits beside DTS and then togle DTS
@@ -220,13 +220,13 @@ u8 CDCputs(const u8 *buffer, u8 length)
         {
             CDCTxBuffer[i] = buffer[i];
 
-            #ifdef DEBUG_PRINT_CDC
-            printf("%c",CDCTxBuffer[i]);
+            #ifdef USB_USE_DEBUG
+            Serial_printf("%c",CDCTxBuffer[i]);
             #endif
         }
 
-        #ifdef DEBUG_PRINT_CDC
-        printf("->");
+        #ifdef USB_USE_DEBUG
+        Serial_printf("->");
         #endif
 
         // Set counter to num bytes ready for send

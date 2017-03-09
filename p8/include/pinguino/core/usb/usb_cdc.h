@@ -9,8 +9,6 @@
 #include <usb/picUSB.h>                 // BufferDescriptorTable
 //#include <usb/usb_config.h>             // USB_MAX_ENDPOINTS
 
-//#define DEBUG_PRINT_CDC 1
-
 /* conventional codes for class-specific descriptors */
 #define USB_DT_CS_DEVICE                0x21
 #define USB_DT_CS_CONFIG                0x22
