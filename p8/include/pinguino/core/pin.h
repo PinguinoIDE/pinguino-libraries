@@ -11,6 +11,7 @@
     09 Sep. 2015 - Régis Blanchot - added Pinguino 1459
     27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
+    05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -416,7 +417,7 @@
     */
 
 /**********************************************************************/
-#elif defined(PINGUINO47J53)
+#elif defined(PINGUINO47J53A)
 /**********************************************************************/
 
     //#error "*** BREAKPOINT ***"
@@ -492,7 +493,38 @@
     #define PMBE        1  // RB1
     #define PMCS        15 // RE2
     */
+/**********************************************************************/
+#elif defined(PINGUINO47J53B) // AKA Pinguino Torda
+/**********************************************************************/
 
+    #define RTC         1  // RB1
+
+    #define PWM1        4  // RB4
+    #define PWM2        5  // RB5
+    #define PWM3        6  // RB6
+    #define PWM4        7  // RB7
+    #define PWM5        9  // RC1
+    #define PWM6        14 // RC6
+    #define PWM7        15 // RC7
+
+    #define LED1        10 // RC2
+    #define USERLED     10 // RC2
+
+    /*
+    #define PMD0        24
+    #define PMD1        25
+    #define PMD2        26
+    #define PMD3        27
+    #define PMD4        28
+    #define PMD5        29
+    #define PMD6        30
+    #define PMD7        31
+    #define PMRD        21 // RE0
+    #define PMWR        22 // RE1
+    #define PMCS        23 // RE2
+    #define PMA0        5  // RB5
+    */
+    
 #endif
 
 #endif /* __PIN_H */

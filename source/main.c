@@ -7,7 +7,7 @@
     LAST RELEASE:   06 Oct 2015
     --------------------------------------------------------------------
     CHANGELOG :
-    Originally based on a file by (c) 2006 Pierre Gaufillet <pierre.gaufillet@magic.fr>
+    Originally based on a file by (c)2006 Pierre Gaufillet <pierre.gaufillet@magic.fr>
     19 Sep. 2008 - Jean-pierre Mandon - adapted to Pinguino  
     21 Apr. 2012 - Régis Blanchot - added bootloader v4.x support
     20 Jun. 2012 - Régis Blanchot - added io.c support (remapping)
@@ -131,11 +131,11 @@ unsigned long _cpu_clock_ = 48000000;
         #error "* Please change for ICSP mode. *"
         #error "********************************"
     #endif
-    
+
     #if !defined(__XC8__)
         // runtime start code
         //#include "crt0.c"     // minimal  init.
-        #include "crt0i.c"    // variables init.
+        #include "crt0i.c"    // variables init. (CDC compatible)
         //#include "crt0iz.c"     // variables init. + clear
     #endif
 

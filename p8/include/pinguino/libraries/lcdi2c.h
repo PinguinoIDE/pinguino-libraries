@@ -73,6 +73,7 @@
 #define __LCDI2C_H
 
 #include <typedef.h>
+#include <const.h>
 //#include <pcf8574.h>
 #include <stdarg.h>
 #ifndef __PIC32MX__
@@ -158,7 +159,7 @@
 #define SIGMA                   0b11100101     // ASCII for sigma
 #define MICRO                   0b11100100     // ASCII for micro
 #define INFINI                  0b11110011     // ASCII for infinite
-#define ESPACE                  0x20           // ASCII for space
+#define SPACE                   0x20           // ASCII for space
 
 /*
 #define HEXADECIMAL             16
@@ -275,12 +276,12 @@ void lcdi2c_newchar(u8, const u8 *, u8);
 //#define lcdi2c2_newpattern()          lcdi2c_newpattern(I2C2)
 
 #if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
-#define lcdi2c_backlight(m)             lcdi2c_blight(m, 1)
-#define lcdi2c1_backlight()             lcdi2c_blight(I2C1, 1)
-#define lcdi2c2_backlight()             lcdi2c_blight(I2C2, 1)
-#define lcdi2c_noBacklight(m)           lcdi2c_blight(m, 0)
-#define lcdi2c1_noBacklight()           lcdi2c_blight(I2C1, 0)
-#define lcdi2c2_noBacklight()           lcdi2c_blight(I2C2, 0)
+#define lcdi2c_backlight(m)             lcdi2c_blight(m, 0)
+#define lcdi2c1_backlight()             lcdi2c_blight(I2C1, 0)
+#define lcdi2c2_backlight()             lcdi2c_blight(I2C2, 0)
+#define lcdi2c_noBacklight(m)           lcdi2c_blight(m, 1)
+#define lcdi2c1_noBacklight()           lcdi2c_blight(I2C1, 1)
+#define lcdi2c2_noBacklight()           lcdi2c_blight(I2C2, 1)
 #endif
 
 #if defined(LCDI2CCLEAR)

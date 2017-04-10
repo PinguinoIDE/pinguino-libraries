@@ -40,11 +40,10 @@ void setup()
         Serial.print("Sensor #");
         Serial.printNumber(i, DEC);
         Serial.print(" Hex ROM Code' : 0x");
-        DS18x20.readRom(ONEWIREBUS, i, &romcode);
+        //DS18x20.readRom(ONEWIREBUS, i, &romcode);
+        DS18x20ReadMemory(ONEWIREBUS, i, READROM, romcode);
         for (j=0; j<8; j++)
-        {
-            Serial.printf("%X", romcode[j]);
-        }
+            Serial.printNumber(romcode[j], HEX);
         Serial.print("\r\n");
     }
 }

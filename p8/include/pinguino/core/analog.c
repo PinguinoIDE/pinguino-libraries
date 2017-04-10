@@ -13,6 +13,7 @@
     26 Jun. 2013 - Regis Blanchot - fixed analogWrite()
     09 Sep. 2013 - Regis blanchot - added 18Fx7J53 support
     03 Feb. 2016 - Regis blanchot - added 16F1459 support
+    05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -101,7 +102,7 @@ void analog_init(void)
 	ADCON0=0x00;        // 0b00000000 = VRef-=VSS, VRef+=VDD, No channel selected yet 
 	ADCON1=0xBD;		// 0b10111101 = Right justified, Calibration Normal, 20TAD, FOSC/16
 
-    #elif defined(PINGUINO27J53) || defined(PINGUINO47J53)
+    #elif defined(PINGUINO27J53) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
     // RB 09/09/2013: Analog Conversion Mode is set to 12-bit in Bootloader Config file
     // #pragma config ADCSEL = BIT12 // 12-bit conversion mode is enabled
 
@@ -134,7 +135,7 @@ void analog_init(void)
 void analogreference(u8 Type)
 {
     #if !defined(PINGUINO26J50) && !defined(PINGUINO46J50) && \
-        !defined(PINGUINO27J53) && !defined(PINGUINO47J53)   
+        !defined(PINGUINO27J53) && !defined(PINGUINO47J53A) && !defined(PINGUINO47J53B)   
 
     if(Type == DEFAULT)			//the default analog reference of 5 volts (on 5V Arduino boards) or 3.3 volts (on 3.3V Arduino boards)
         ADCON1|=0x00;			//Vref+ = VDD
@@ -194,13 +195,31 @@ u16 analogread(u8 channel)
     // RB - March 2014 - Enable individual Analog channel selection
     //                   Has to be done for other Pinguino
     
-    #elif defined(PINGUINO47J53)
+    #elif defined(PINGUINO47J53A)
 
         if (channel > 15)
             return 0;
 
         if (channel >= 8 && channel <= 15)
             channel = channel - 8;      // A0=8 to A7=15
+
+        if (channel < 5)
+            TRISA |= 1 << channel;      // channel as INPUT
+
+        if (channel >= 5 && channel <= 7)
+            TRISE |= 1 << (channel - 5);// channel as INPUT
+
+        ANCON0 |= 1 << channel;         // channel enabled
+
+        ADCON0 = channel << 2;          // A0=0 to A7=7
+
+    #elif defined(PINGUINO47J53B) // AKA Pinguino Torda
+
+        if (channel > 23)
+            return 0;
+
+        if (channel >= 16 && channel <= 23)
+            channel = channel - 16;     // A0=16 to A7=23
 
         if (channel < 5)
             TRISA |= 1 << channel;      // channel as INPUT

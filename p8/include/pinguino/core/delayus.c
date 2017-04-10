@@ -30,59 +30,15 @@
 #include <compiler.h>
 #include <typedef.h>
 #include <macro.h>
-//#include <mathlib.c>
 
 //extern u32 _cpu_clock_;
 
-/*
-    NB:Cycles per second = FOSC/4
-    31KHz < FOSC                   < 64MHz
-     7750 < Cycles per second      < 16.000.000
-        8 < Cycles per millisecond < 16.000
-        0 < Cycles per microsecond < 16
-*/
+// Cycles per second = FOSC/4000000
 
-                        // XC8  :  4 cycles included return
-void Delayus(u16 us)    // SDCC : 19 cycles included return
+void Delayus(u16 us)
 {
-    /*
-    u8  d1ms;
-    u16 dloop;
-    
-    // cycles / 1us
-    //   48 MHz : 12 cycles
-    //   32 MHz : 8
-    //   16 MHz : 4
-    //    4 MHz : 1
-    
-    if (_cpu_clock_ >= 4000000UL)
-    {
-        d1ms  = (u8)udiv32(_cpu_clock_, 4000000UL);
-        dloop = umul16((u16)d1ms, us);
-    }
-
-    //    2 MHz : 0.5
-    //    1 MHz : 0.25
-    //  500 KHz : 0.125
-    //  250 KHz : 0.0625
-    //  125 KHz : 0.03125
-    // 32768 Hz : 0.008192
-
-    else
-    {
-        d1ms  = (u8)udiv32(4000000UL, _cpu_clock_);
-        dloop = (u16)udiv32((u32)us, (u32)d1ms);
-    }
-
-    #ifdef __XC8__
-    dloop  = (u16)udiv32(dloop, 12UL);
-    #else
-    dloop  = (u16)udiv32(dloop, 7UL);
-    #endif
-
-    while(--dloop);
-    */
-
+    u8 status = isInterrupts();
+    if (status) noInterrupts();    
     #ifdef __XC8__
     while(--us)
     {
@@ -91,25 +47,15 @@ void Delayus(u16 us)    // SDCC : 19 cycles included return
         nop();
     }
     #else
-    if (us>1000)
+    // valid up to 40.000 us
+    if (us > 1000)
     {
-        // valid up to 40.000 us
-        us = us / 12;
-        us = us * 20;
+        us = us / 3;
+        us = us * 5;
     }
     while(--us);
     #endif
-    
-    /*
-    u8 i;
-    u8 cyus = udiv32(_cpu_clock_, 4000000UL);
-    
-    while (us--)
-    {
-        i = cyus;
-        while (i--);
-    }
-    */
+    if (status) interrupts();    
 }
 
 #endif // __DELAYUS_C__ 

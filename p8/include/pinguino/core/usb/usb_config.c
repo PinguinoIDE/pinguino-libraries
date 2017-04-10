@@ -216,10 +216,12 @@ const USB_Configuration_Descriptor libconfiguration_descriptor =
 
 /*  --------------------------------------------------------------------
     String descriptors for the USB device
+    NB : string must be 10 char. max.
     ------------------------------------------------------------------*/
 
 // Language code string descriptor (english)
-const USB_String_Descriptor lang  =
+//const USB_String_Descriptor lang  =
+static const struct {u8  bLength; u8  bDescriptorType; u16 str;} lang =
 {
     sizeof(lang),
     STRING_DESCRIPTOR,
@@ -227,16 +229,18 @@ const USB_String_Descriptor lang  =
 };
 
 // Manufacturer string descriptor
-const USB_String_Descriptor manu =
+//const USB_String_Descriptor manu =
+static const struct {u8  bLength; u8  bDescriptorType; u16 string[9];} manu =
 {
     sizeof(manu),
     STRING_DESCRIPTOR,
-    //{'S','e','a','I','c','e','L','a','b'}
-    {'P','i','n','g','u','i','n','o'}
+    {'S','e','a','I','c','e','L','a','b'}
+    //{'P','i','n','g','u','i','n','o'}
 };
 
 // Product string descriptor
-const USB_String_Descriptor prod =
+//const USB_String_Descriptor prod =
+static const struct {u8  bLength; u8  bDescriptorType; u16 string[8];} prod =
 {
     sizeof(prod),
     STRING_DESCRIPTOR,
@@ -244,22 +248,29 @@ const USB_String_Descriptor prod =
 };
 
 // Serial Number string descriptor
-const USB_String_Descriptor seri =
+// Microchip's SQTP program only allows eight instruction words to be modified.
+
+//const USB_String_Descriptor seri =
+static const struct {u8  bLength; u8  bDescriptorType; u16 string[4];} seri =
 {
     sizeof(seri),
     STRING_DESCRIPTOR,
     #ifdef USB_USE_BULK
-    {'U','S','B',' ','B','U','L','K'}
+    //{'U','S','B',' ','B','U','L','K'}
+    {'B','U','L','K'}
     #endif
     #ifdef USB_USE_CDC
-    {'U','S','B',' ','C','D','C'}
+    //{'U','S','B',' ','C','D','C'}
+    {'C','D','C'}
     #endif
     #ifdef USB_USE_HID
-    {'U','S','B',' ','H','I','D'}
+    //{'U','S','B',' ','H','I','D'}
+    {'H','I','D'}
     #endif
 };
 
 // Array of string descriptors
+/*
 const u8 *const libstring_descriptor[] =
 {
     (const u8 *const)&lang,
@@ -267,5 +278,35 @@ const u8 *const libstring_descriptor[] =
     (const u8 *const)&prod,
     (const u8 *const)&seri
 };
+*/
+
+u16 GetString(u8 string_number, const void **ptr)
+{
+    if (string_number == 0)
+    {
+        *ptr = &lang;
+        return sizeof(lang);
+    }
+
+    else if (string_number == 1)
+    {
+        *ptr = &manu;
+        return sizeof(manu);
+    }
+
+    else if (string_number == 2)
+    {
+        *ptr = &prod;
+        return sizeof(prod);
+    }
+
+    else if (string_number == 3)
+    {
+        *ptr = &seri;
+        return sizeof(seri);
+    }
+
+    return -1;
+}
 
 #endif // USBCONFIG_C_

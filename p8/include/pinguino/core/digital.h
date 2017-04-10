@@ -11,6 +11,7 @@
     13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
     18 Oct. 2016 - Régis Blanchot - changed PIC16F1459 and PIC1xK50 numbering
     24 Nov. 2016 - Régis Blanchot - fixed pin 12 (set it to RA5 while it was RA4) for PIC18F47J53
+    05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
     --------------------------------------------------------------------
     TODO : 
     --------------------------------------------------------------------
@@ -181,13 +182,13 @@ const u8 port[36]={
                     };
 
 /**********************************************************************/
-#elif defined(PINGUINO46J50) || defined(PINGUINO47J53) || defined(PINGUINO47J53B)
+#elif defined(PINGUINO46J50) || defined(PINGUINO47J53A)
 /**********************************************************************/
                                                     // Pinguino pin number
 const u8 mask[32]={
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
                     _0,_1,_2,_3,_5,_0,_1,_2,        // 08 - 15
-                    _0,_1,_2,_3,_4,_5,_6,_7,        // 16 - 23
+                    _0,_1,_2,_U,_4,_5,_6,_7,        // 16 - 23
                     _0,_1,_2,_3,_4,_5,_6,_7,        // 24 - 31
                     };            
 
@@ -195,6 +196,24 @@ const u8 port[32]={
                     pB, pB, pB, pB, pB, pB, pB, pB, // 00 - 07
                     pA, pA, pA, pA, pA, pE, pE, pE, // 08 - 15
                     pC, pC, pC, pC, pC, pC, pC, pC, // 16 - 23
+                    pD, pD, pD, pD, pD, pD, pD, pD  // 24 - 31
+                    };            
+
+/**********************************************************************/
+#elif defined(PINGUINO47J53B) // AKA Pinguino Torda
+/**********************************************************************/
+                                                    // Pinguino pin number
+const u8 mask[32]={
+                    _0,_1,_2,_3,_4,_5,_6,_7,        // 00 - 07
+                    _0,_1,_2,_U,_4,_5,_6,_7,        // 08 - 15
+                    _0,_1,_2,_3,_5,_0,_1,_2,        // 16 - 23
+                    _0,_1,_2,_3,_4,_5,_6,_7,        // 24 - 31
+                    };            
+
+const u8 port[32]={
+                    pB, pB, pB, pB, pB, pB, pB, pB, // 00 - 07
+                    pC, pC, pC, pC, pC, pC, pC, pC, // 08 - 15
+                    pA, pA, pA, pA, pA, pE, pE, pE, // 16 - 23
                     pD, pD, pD, pD, pD, pD, pD, pD  // 24 - 31
                     };            
 

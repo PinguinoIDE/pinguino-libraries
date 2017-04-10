@@ -279,7 +279,7 @@ s16 RTCC_GetCalibration(void)
 #ifdef RTCCINIT
 void RTCC_init(u32 tm, u32 dt, s16 drift)
 {
-    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B)
+    #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
     T1CONbits.T1OSCEN = 1;
     #endif
     
@@ -294,4 +294,3 @@ void RTCC_init(u32 tm, u32 dt, s16 drift)
 #endif
 
 #endif	/* __RTCC1__ */
-

@@ -43,6 +43,7 @@
 #include <ledcontrol.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <spi.h>
 #include <spi.c>
 

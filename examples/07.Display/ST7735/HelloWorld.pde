@@ -34,8 +34,8 @@
 #include <fonts/font6x8.h>
 //#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
 //#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
-#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
-#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
+//#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+//#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
 #define SPIMODULE SPI2
 
@@ -57,7 +57,7 @@ void setup()
     ST7735.setColor(SPIMODULE, ST7735_YELLOW);
     ST7735.setCursor(SPIMODULE, 0, 0);
     ST7735.printCenter(SPIMODULE, "Hello World");
-
+    /*
     ST7735.setFont(SPIMODULE, ArialBold14);
     ST7735.setColor(SPIMODULE, ST7735_GREEN);
     ST7735.setCursor(SPIMODULE, 0, 2);
@@ -67,6 +67,7 @@ void setup()
     ST7735.setColor(SPIMODULE, ST7735_RED);
     ST7735.setCursor(SPIMODULE, 0, 2);
     ST7735.printCenter(SPIMODULE, "Hello World");
+    */
 }   
 
 void loop()

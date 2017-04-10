@@ -28,7 +28,7 @@
 #ifndef __MATHLIB_C
 #define __MATHLIB_C
 
-//#include <typedef.h>
+#include <typedef.h>
 #include <macro.h>
 #include <stdlib.h>
 
@@ -71,18 +71,18 @@ int random(int mini, int maxi)
 
 long bounds(long x, long _min, long _max)
 {
-	long temp;
-	
-	if (_max < _min)
-	{
-		temp = _max;
-		_max = _min;
-		_min = temp;
-	}
-	
-	if (x > _max) return _max;
-	if (x < _min) return _min;
-	return x;
+    long temp;
+
+    if (_max < _min)
+    {
+        temp = _max;
+        _max = _min;
+        _min = temp;
+    }
+
+    if (x > _max) return _max;
+    if (x < _min) return _min;
+    return x;
 }
 
 /** --------------------------------------------------------------------
@@ -95,8 +95,10 @@ long bounds(long x, long _min, long _max)
 
 int map(int x, int in_min, int in_max, int out_min, int out_max)
 {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+
+#ifndef __PIC32MX__ // For 8-bit PIC only
 
 /** --------------------------------------------------------------------
     ---------- umul16
@@ -158,5 +160,7 @@ u32 udiv32(u32 dividend, u32 divisor)
     }
     return quotient;
 }
+
+#endif /* !__PIC32MX__ */
 
 #endif

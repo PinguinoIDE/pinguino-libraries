@@ -19,7 +19,7 @@
 #include <fonts/font6x8.h>
 
 // SPI Module
-#define SPILCD       2 
+#define SPILCD       1 
 #define NBPOINTS     8
 #define SIZE         100.0
 #define DISTANCE     256.0    // distance eye - screen
@@ -111,9 +111,10 @@ void setup()
 
     // if SPILCD = SPISW (SPI Software)
     //PCD8544.init(SPILCD, 6, 7, 0, 1, 2); // DC, RST, SDO, SCK and CS pins
+    PCD8544.init(SPILCD, 3, 2); // DC and RST pin 45K50
     //PCD8544.init(SPILCD, 0, 1); // DC and RST pin 47J53
     //PCD8544.init(SPILCD, 0, 2); // DC and RST pin 32MX2x0 SPI1
-    PCD8544.init(SPILCD, 5, 6); // DC and RST pin 32MX2x0 SPI2
+    //PCD8544.init(SPILCD, 5, 6); // DC and RST pin 32MX2x0 SPI2
     PCD8544.setContrast(SPILCD, 40); // 0 to 127
     PCD8544.setFont(SPILCD, font6x8);
     PCD8544.clearScreen(SPILCD);

@@ -10,10 +10,12 @@
     28 Sep 2010 Régis Blanchot      first release based on Maxim AN162 and Microchip AN1199
     28 May 2014 Régis Blanchot      fixed OneWireRead  -> OneWireReadByte
                                     fixed OneWireWrite -> OneWireWriteByte
-    12 Oct 2015 Luca (aka Brikker)	disabled interrupts in OneWireReset, OneWireReadBit,
+    12 Oct 2015 Luca (aka Brikker)  disabled interrupts in OneWireReset, OneWireReadBit,
                                     and OneWireWriteBit functions
-    23 Mai 2016 Régis Blanchot	    disabled/enabled interrupts when necessary
+    23 Mai 2016 Régis Blanchot      disabled/enabled interrupts when necessary
                                     used Maxim's official timings
+    29 Mar 2017 Régis Blanchot      reported interrupt management to delay functions
+                                    updated timings to work with SDCC and XC8
     ----------------------------------------------------------------------------
     TODO :
     ----------------------------------------------------------------------------
@@ -50,22 +52,23 @@
 
     // Standard 1-Wire timing
     // https://www.maximintegrated.com/en/app-notes/index.mvp/id/126
-    #define TimeA   6
-    #define TimeB   64
-    #define TimeC   60
-    #define TimeD   10
-    #define TimeE   9
-    #define TimeF   55
-    #define TimeG   0
-    #define TimeH   480
-    #define TimeI   70
+    #define TimeA   10      // 6
+    #define TimeB   55      // 64
+    #define TimeC   65      // 60
+    #define TimeD   5       // 10
+    #define TimeE   10      // 9
+    #define TimeF   53      // 55
+    #define TimeG   3       // 0
+    #define TimeH   1000    // 480 min
+    #define TimeI   100     // 70
     #define TimeJ   410
 
     // private
-    //static void OneWireLow(u8, u16);
-    //static void OneWireHigh(u8, u16);
-    static u8 OneWireRead(u8, u16);
-    
+    /*
+    void OneWireLow(u8, u16);
+    void OneWireHigh(u8, u16);
+    u8 OneWireRead(u8, u16);
+    */
     // public
     u8 OneWireReset(u8);
     u8 OneWireReadBit(u8);
@@ -76,41 +79,39 @@
 /*  ----------------------------------------------------------------------------
     ---------- Force the DQ line to a logic low
     --------------------------------------------------------------------------*/
-
-    //static void OneWireLow(u8 DQpin, u16 t)
-    #define OneWireLow(DQpin, t)    \
-    {                               \
-        digitalwrite(DQpin, LOW);   \
-        pinmode(DQpin, OUTPUT);     \
-        if (t) Delayus(t);          \
+/*
+    void OneWireLow(u8 DQpin, u16 t)
+    {
+        pinmode(DQpin, OUTPUT);
+        digitalwrite(DQpin, LOW);
+        if (t) Delayus(t);
     }
-
+*/
 /*  ----------------------------------------------------------------------------
     ---------- Force the DQ line into a high impedance state
     --------------------------------------------------------------------------*/
-
-    //static void OneWireHigh(u8 DQpin, u16 t)
-    #define OneWireHigh(DQpin, t)   \
-    {                               \
-        pinmode(DQpin, INPUT);      \
-        if (t) Delayus(t);          \
+/*
+    void OneWireHigh(u8 DQpin, u16 t)
+    {
+        pinmode(DQpin, INPUT);
+        if (t) Delayus(t);
     }
-    
+*/
 /*  --------------------------------------------------------------------
     ---------- Read the one-wire bus and return it.
     ------------------------------------------------------------------*/
-
-    static u8 OneWireRead(u8 DQpin, u16 t)
+/*
+    u8 OneWireRead(u8 DQpin, u16 t)
     {
         u8 b;
         
         //pinmode(DQpin, INPUT);
-        b = digitalread(DQpin); // get signal
-        if (t) Delayus(t);      // wait for rest of timeslot
+        b = digitalread(DQpin);         // get signal
+        if (t) Delayus(t);              // wait for rest of timeslot
 
-        return b;               // return value of DQ line
+        return b;                       // return value of DQ line
     }
-
+*/
 /*  ----------------------------------------------------------------------------
     ---------- Initiates the one wire bus
     ----------------------------------------------------------------------------
@@ -122,14 +123,25 @@
     u8 OneWireReset(u8 DQpin)
     {
         u8 dq;
+        /*
         u8 status = isInterrupts();
         
         if (status) noInterrupts();
-        OneWireLow(DQpin, TimeH);   // pull DQ line low
-        OneWireHigh(DQpin, TimeI);  // allow line to return high
-        dq=OneWireRead(DQpin, TimeJ);// get presence signal
+        OneWireLow(DQpin, TimeH);       // pull DQ line low
+        OneWireHigh(DQpin, TimeI);      // allow line to return high
+        dq=OneWireRead(DQpin, TimeJ);   // get presence signal
         if (status) interrupts();
-        
+        */
+        //u8 status = isInterrupts();
+        //if (status) noInterrupts();
+        digitalwrite(DQpin, LOW);
+        pinmode(DQpin, OUTPUT);
+        Delayus(TimeH);
+        pinmode(DQpin, INPUT);
+        Delayus(TimeI);        
+        dq = digitalread(DQpin);         // get signal
+        Delayus(TimeJ);        
+        //if (status) interrupts();
         return dq;
     }
 
@@ -140,16 +152,26 @@
     u8 OneWireReadBit(u8 DQpin)
     {
         u8 dq;
+        /*
         u8 status = isInterrupts();
         
         if (status) noInterrupts();
-        //OneWireLow(DQpin, TimeA); // pull DQ line low
-        OneWireLow(DQpin, TimeG);   // pull DQ line low
-        OneWireHigh(DQpin, TimeE);  // allow line to return high
-        dq = OneWireRead(DQpin, TimeF);// Get the bit
+        OneWireLow(DQpin, TimeG);       // pull DQ line low
+        OneWireHigh(DQpin, TimeE);      // allow line to return high
+        dq = OneWireRead(DQpin, TimeF); // Get the bit
         if (status) interrupts();
-        
-        return dq;                  // return value of DQ line
+        */
+        //u8 status = isInterrupts();
+        //if (status) noInterrupts();
+        pinmode(DQpin, OUTPUT);
+        digitalwrite(DQpin, LOW);
+        //Delayus(TimeG);
+        pinmode(DQpin, INPUT);
+        Delayus(TimeE);        
+        dq = digitalread(DQpin);         // get signal
+        Delayus(TimeF);        
+        //if (status) interrupts();
+        return dq;                      // return value of DQ line
     }
 
 /*  ----------------------------------------------------------------------------
@@ -158,14 +180,20 @@
 
     u8 OneWireReadByte(u8 DQpin)
     {
+        /*
         u8 i, val = 0;
         
         for (i=0; i<8; i++)
-        {
-            if (OneWireReadBit(DQpin))	// reads byte in, one bit at a time
+            if (OneWireReadBit(DQpin))
                 BitSet(val, i);
-        }
+        */
         
+        u8 bitMask, val = 0;
+
+        for (bitMask = 0x01; bitMask; bitMask <<= 1)
+            if (OneWireReadBit(DQpin))
+                val |= bitMask;
+
         return val;
     }
 
@@ -175,20 +203,34 @@
 
     void OneWireWriteBit(u8 DQpin, u8 bitval)
     {
-        u8 status = isInterrupts();
+        //u8 status = isInterrupts();
         
-        if (status) noInterrupts();
+        //if (status) noInterrupts();
         if (bitval)
         {
-            OneWireLow(DQpin, TimeA);// pull DQ line low
-            OneWireHigh(DQpin, TimeB);// allow line to return high
+            /*
+            OneWireLow(DQpin, TimeA);   // pull DQ line low
+            OneWireHigh(DQpin, TimeB);  // allow line to return high
+            */
+            digitalwrite(DQpin, LOW);
+            pinmode(DQpin, OUTPUT);
+            Delayus(TimeA);
+            pinmode(DQpin, INPUT);
+            Delayus(TimeB);        
         }
         else
         {
-            OneWireLow(DQpin, TimeC);// pull DQ line low
-            OneWireHigh(DQpin, TimeD);// allow line to return high
+            /*
+            OneWireLow(DQpin, TimeC);   // pull DQ line low
+            OneWireHigh(DQpin, TimeD);  // allow line to return high
+            */
+            digitalwrite(DQpin, LOW);
+            pinmode(DQpin, OUTPUT);
+            Delayus(TimeC);
+            pinmode(DQpin, INPUT);
+            Delayus(TimeD);        
         }
-        if (status) interrupts();
+        //if (status) interrupts();
     }
 
 /*  ----------------------------------------------------------------------------
@@ -197,9 +239,14 @@
 
     void OneWireWriteByte(u8 DQpin, u8 val)
     {
+        /*
         u8 n;
         for (n=0; n<8; n++)
             OneWireWriteBit(DQpin, BitRead(val, n));
+        */
+        u8 bitMask;
+        for (bitMask = 0x01; bitMask; bitMask <<= 1)
+            OneWireWriteBit(DQpin, (bitMask & val)?1:0 );
     }
 
 #endif

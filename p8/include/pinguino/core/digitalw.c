@@ -18,6 +18,7 @@
         regis blanchot 2013/01/05 : fixed warnings about pointers in RAM
         andre gentric  2013/03/29 : fixed Pinguino4550 RA4 pin definition
         regis blanchot 2014/04/15 : one function / file
+    05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -65,9 +66,10 @@ void digitalwrite(u8 pin, u8 state)
             if (state) LATC=LATC | mask[pin];
             else LATC=LATC & (255-mask[pin]);
             break;
-        #if defined(PINGUINO4455)  || defined(PINGUINO4550)  || \
-            defined(PINGUINO45K50) || defined(PINGUINO46J50) || \
-            defined(PINGUINO47J53) || defined(PICUNO_EQUO)
+        #if defined(PINGUINO4455)   || defined(PINGUINO4550)   || \
+            defined(PINGUINO45K50)  || defined(PINGUINO46J50)  || \
+            defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || \
+            defined(PICUNO_EQUO)
         case pD:
             if (state) LATD=LATD | mask[pin]; 
             else LATD=LATD & (255-mask[pin]);

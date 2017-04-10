@@ -19,7 +19,7 @@
 #ifndef FIXEDNUMS8x16_H
 #define FIXEDNUMS8x16_H
 
-GLCDFONTDECL(fixednums8x16) = {
+const unsigned char fixednums8x16[] = {
     0x0, 0x0,	// size of zero indicates fixed width font
     8,		// width
     15,		// height

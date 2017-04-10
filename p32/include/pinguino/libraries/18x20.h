@@ -64,6 +64,7 @@
     /// PROTOTYPES
     u8 DS18x20Configure(u8, u8, u8, u8, u8);
     u8 DS18x20Select(u8, u8);
+    u8 DS18x20SendCommand(u8, u8);
     u8 DS18x20StartMeasure(u8, u8);
     ///-----------------------------------------------------------------
     u8 DS18x20ReadMeasure(u8, u8, DS18x20_Temperature *);
@@ -83,7 +84,7 @@
     void DS18x20Wait(u8);
 
     // Skip ROM check, address all devices
-    #define DS18x20Skip(bus)        OneWireWriteByte(bus, SKIPROM)
+    #define DS18x20SkipRom(bus)        OneWireWriteByte(bus, SKIPROM)
 
     // Returns the number of devices available on the bus
     #define DS18x20DeviceCount()    (gNumROMs)

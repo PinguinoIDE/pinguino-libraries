@@ -5,10 +5,10 @@ DS18x20.startMeasure DS18x20StartMeasure#include <18x20.c>
 DS18x20.readMeasure DS18x20ReadMeasure#include <18x20.c>
 DS18x20.read DS18x20Read#include <18x20.c>
 DS18x20.readCelsius DS18x20Read#include <18x20.c>
-DS18x20.readFahrenheit DS18x20ReadFahrenheit#include <18x20.c> 
+DS18x20.readFahrenheit DS18x20ReadFahrenheit#include <18x20.c>#define DS18x20READFAHRENHEIT 
 DS18x20.wait DS18x20Wait#include <18x20.c>
-DS18x20.matchRom DS18x20MatchRom#include <18x20.c>
-DS18x20.readRom DS18x20ReadRom#include <18x20.c>
+DS18x20.matchRom DS18x20MatchRom#include <18x20.c>#define DS18x20MATCHROM
+DS18x20.readRom DS18x20ReadRom#include <18x20.c>#define DS18x20READROM
 DS18x20.configure DS18x20Configure#include <18x20.c>#define DS18x20CONFIGURE
 DS18x20.find DS18x20Find#include <18x20.c>#define DS18x20FIND
 DS18x20.getFirst DS18x20GetFirst#include <18x20.c>#define DS18x20FIND

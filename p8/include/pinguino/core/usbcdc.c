@@ -5,22 +5,24 @@
     PROGRAMER:    Jean-Pierre Mandon 2010
     CHANGELOG:
     --------------------------------------------------------------------
-    14 Jun 2011 - Regis Blanchot (rblanchot@gmail.com) added :
+    14 Jun. 2011 - Regis Blanchot (rblanchot@gmail.com) added :
                   printf, println, print, write, getKey, getString
-    05 Feb 2013 - Regis Blanchot (rblanchot@gmail.com) moved :
+    05 Feb. 2013 - Regis Blanchot (rblanchot@gmail.com) moved :
                   interrupt routine
-    04 Mar 2014 - Regis Blanchot (rblanchot@gmail.com) added :
+    04 Mar. 2014 - Regis Blanchot (rblanchot@gmail.com) added :
                   print, printNumber and printFloat
-    10 Mar 2014 - Regis Blanchot (rblanchot@gmail.com) fixed :
+    10 Mar. 2014 - Regis Blanchot (rblanchot@gmail.com) fixed :
                   printNumber, getKey and getString
-    18 Feb 2016 - Regis Blanchot (rblanchot@gmail.com) :
+    18 Feb. 2016 - Regis Blanchot (rblanchot@gmail.com) :
                   * use of printFormated.c, printFloat.c and printNumber.c
                   * optimized CDCsend, CDCRead, 
                   * added 16F1549 support (still not working, codesize too large)
                   * changed cdc_init() to CDC_begin(u32 baudrate)
-    14 Sep 2016 -  Regis Blanchot (rblanchot@gmail.com) changed :
+    14 Sep. 2016 -  Regis Blanchot (rblanchot@gmail.com) changed :
                   * void CDCwrite(u8 len) in u8 CDCwrite(u8 *buffer, u8 len)
                   * void CDC.read() in u8 CDC.read(u8* buffer, u8 len)
+    23 Mar. 2017 - Regis Blanchot (rbalcnhot@gmail.com) fixed
+                  * string descriptors for SDCC
     ------------------------------------------------------------------*/
 
 #ifndef __USBCDC__
@@ -80,8 +82,7 @@ u32 cdc_baudrate = USB_CDC_BAUDRATE_DEFAULT;
 
 void CDCbegin(u32 baudrate)
 {
-    u32 counter=-1;
-    u8 i;
+    u32 counter=(u32)-1;
     
     #ifdef USB_USE_DEBUG
     Serial_begin(9600);
@@ -155,7 +156,7 @@ void CDCbegin(u32 baudrate)
 
 u8 CDCwrite(u8 *buffer, u8 len)
 {
-    u8 i, t=0xFF;
+    u8 i = 0, t=0xFF;
 
     if (deviceState != CONFIGURED) return 0;
 

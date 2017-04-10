@@ -1,19 +1,19 @@
-/*	----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     FILE:           spi.c
     PROJECT:        pinguino
     PURPOSE:        Functions to handle SPI communication
                     Master and Slave
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     CHANGELOG
     03 Apr. 2010 - Régis Blanchot - first release
     01 Oct. 2015 - Régis Blanchot - added SPI2 support
     30 Nov. 2015 - Régis Blanchot - added PIC16F1459 support
     22 Jan. 2016 - Régis Blanchot - removed setPin(), extended begin() with vargs
     25 Jan. 2017 - Régis Blanchot - prepared SPI Sofware Data-In support (SDI)
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     TODO
     * SPI Sofware Data-In support (SDI)
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -27,7 +27,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __SPI_C__
 #define __SPI_C__
@@ -177,7 +177,7 @@ void SPI_begin(int module, ...)
             _spi[SPISW].sck = va_arg(args, int);
             _spi[SPISW].cs  = va_arg(args, int);
             pinmode(_spi[SPISW].sdo, OUTPUT);
-            //pinmode(_spi[SPISW].sdo, INPUT);
+            //pinmode(_spi[SPISW].sdi, INPUT);
             pinmode(_spi[SPISW].sck, OUTPUT);
             pinmode(_spi[SPISW].cs,  OUTPUT);
             //TRISBbits.TRISB1 = 0;
@@ -431,7 +431,7 @@ u8 SPI_write(u8 module, u8 dataout)
 {
     u8 clear, i, bitMask;
 
-    switch(module)
+    switch (module)
     {
         case SPISW:
             for (i = 0; i <= 7; i++)

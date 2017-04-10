@@ -9,6 +9,7 @@
     15 Jun. 2011    Regis Blanchot - added print functions
     25 Nov. 2016    Regis Blanchot - added multi I2C module support
     28 Nov. 2016    Regis Blanchot - replaced all global variables with LCDI2C struct
+    13 Mar. 2017    Regis Blanchot - fixed backlight routine
     --------------------------------------------------------------------
     TODO:
     * Manage other I/O expander (cf MCP23S17 / MCP342x / MCP23017 libraries)
@@ -80,6 +81,8 @@
 #define __LCDI2C_C
 
 #include <typedef.h>
+#include <const.h>
+//#include <macro.h>              // interrupt(), noInterrupt(), ...
 #include <lcdi2c.h>
 #include <stdarg.h>
 #ifndef __PIC32MX__
@@ -250,8 +253,8 @@
     global variables
     ------------------------------------------------------------------*/
 
-    LCDI2C_t LCDI2C[NUMOFI2C];
-    u8 gI2C_module;
+    volatile LCDI2C_t LCDI2C[NUMOFI2C];
+    volatile u8 gI2C_module;
 
 /*  --------------------------------------------------------------------
     Ecriture d'un quartet (mode 4 bits) dans le LCD
@@ -266,6 +269,8 @@
 
 static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
 {
+    //u8 status = isInterrupts();
+
     // x  x  x  x  0  0  0    0
     LCDI2C[module].data = quartet;
 
@@ -279,6 +284,8 @@ static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
 
     /// ---------- LCD Enable Cycle
 
+    //if (status) noInterrupts();    
+    
     I2C_start(module);                            // send start condition
 
     //I2C_writechar(LCDI2C[module].address | I2C_WRITE);
@@ -293,6 +300,8 @@ static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
     // E Enable Cycle > (300 + 200) = 500ns
 
     I2C_stop(module);                             // send stop confition
+
+    //if (status) interrupts();    
 }
 
 /*  --------------------------------------------------------------------
@@ -320,6 +329,9 @@ static void lcdi2c_send8(u8 module, u8 octet, u8 mode)
         lcdi2c_send4(module, octet << 4, mode);     // send lower 4 bits
     }
     //Delayus(46);                          // Wait for instruction excution time (more than 46us)
+    #ifdef __XC8__
+    Delayms(5);
+    #endif
 }
 
 /*  --------------------------------------------------------------------
@@ -333,7 +345,12 @@ static void lcdi2c_send8(u8 module, u8 octet, u8 mode)
 void lcdi2c_blight(u8 module, u8 status)
 {
     LCDI2C[module].backlight = status;
-    LCDI2C[module].data |= (LCDI2C[module].backlight << LCDI2C[module].pin.bl);
+
+    if (status)
+        BitSet(LCDI2C[module].data, LCDI2C[module].pin.bl);
+    else
+        BitClear(LCDI2C[module].data, LCDI2C[module].pin.bl);
+    
     I2C_start(module);
     I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
     I2C_writeChar(module, LCDI2C[module].data);
@@ -526,7 +543,7 @@ void lcdi2c_newchar(u8 module, const u8 *c, u8 char_code)
 
     // les caractères sont logés dans le CGRAM du LCD à partir de l'adresse 0x40.
     a = (char_code << 3) | LCD_ADRESS_CGRAM;
-    for(i=0; i<8; i++)
+    for (i=0; i<8; i++)
     {
         lcdi2c_send8(module, a, LCD_CMD);
         lcdi2c_send8(module, c[i], LCD_DATA);
@@ -576,6 +593,7 @@ void lcdi2c_newpattern()
 void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
 {
     u8 cmd03 = 0x03, cmd02 = 0x02;
+    
     LCDI2C[module].width  = numcol - 1;
     LCDI2C[module].height = numline - 1;
     LCDI2C[module].address = i2c_address;

@@ -26,6 +26,7 @@
 
 #include <usb/picUSB.h>
 #include <usb/usb_config.h>
+#include <usb/usb_microsoft.h>
 
 #ifdef USB_USE_CDC
 #include <usb/usb_cdc.c>
@@ -73,7 +74,7 @@ u8 requestHandled;                    // Set to 1 if request was understood and 
 
 u8 *outPtr;                           // Data to send to the host
 u8 *inPtr;                            // Data from the host
-word wCount;                            // Number of bytes of data
+u16 wCount;                            // Number of bytes of data
 
   // HID Class variables
 #ifdef USB_USE_HID
@@ -157,11 +158,32 @@ void GetDescriptor(void)
             Serial_printf("  STRING: %d\r\n", (u16)descriptorIndex);
             #endif
 
-            requestHandled = 1;
-            //outPtr = (u8 *)&libstring_descriptor[SetupPacket.wValue0];
-            //outPtr = libstring_descriptor[SetupPacket.wValue0];
-            outPtr = (u8*)&libstring_descriptor+SetupPacket.wValue0;
-            wCount = *outPtr;
+            #ifdef MICROSOFT_OS_DESC_VENDOR_CODE
+            if (SetupPacket.wValue0 == MICROSOFT_OS_DESC_VENDOR_CODE)
+            {
+                const MICROSOFT_OS_DESCRIPTOR microsoft_os_descriptor =
+                {
+                    0x12,                          /* bLength */
+                    0x3,                           /* bDescriptorType */
+                    {'M','S','F','T','1','0','0'}, /* qwSignature */
+                    MICROSOFT_OS_DESC_VENDOR_CODE, /* bMS_VendorCode */
+                    0x0,                           /* bPad */
+                };
+
+                requestHandled = 1;
+                outPtr = (u8*)&microsoft_os_descriptor;
+                wCount = sizeof(microsoft_os_descriptor);
+            }
+            else
+            #endif
+            {
+                requestHandled = 1;
+                //outPtr = (u8 *)&libstring_descriptor[SetupPacket.wValue0];
+                //outPtr = libstring_descriptor[SetupPacket.wValue0];
+                //outPtr = (u8*)&libstring_descriptor+SetupPacket.wValue0;
+                //wCount = *outPtr;
+                wCount = GetString(SetupPacket.wValue0, (const void *)&outPtr);
+            }
         }
 
         #if !defined(__16F1459)
@@ -316,6 +338,19 @@ void ProcessStandardRequest(void)
         return;
     }
     
+    #ifdef AUTOMATIC_WINUSB_SUPPORT
+    if (request == MICROSOFT_OS_DESC_VENDOR_CODE)
+    {
+        requestHandled = 1;
+
+        if (SetupPacket.bmRequestType == 0xC0 && SetupPacket.wIndex1 == 0x00 && SetupPacket.wIndex0 == 0x04)
+            wCount = m_stack_winusb_get_microsoft_compat(SetupPacket.wValue0, &outPtr);
+
+        else if (SetupPacket.bmRequestType == 0xC1 && SetupPacket.wIndex1 == 0x00 && SetupPacket.wIndex0 == 0x05)
+            wCount = m_stack_winusb_get_microsoft_property(SetupPacket.wValue0, &outPtr);
+    }
+    #endif
+
     // Set the address of the device.  All future requests
     // will come to that address.  Can't actually set UADDR
     // to the new address yet because the rest of the SET_ADDRESS
@@ -422,6 +457,7 @@ void ProcessStandardRequest(void)
         #ifdef USB_USE_DEBUG
         Serial_printf("> SET_DESCRIPTOR\r\n");
         #endif
+        return;
     }
     
     else if (request == SYNCH_FRAME)
@@ -429,6 +465,7 @@ void ProcessStandardRequest(void)
         #ifdef USB_USE_DEBUG
         Serial_printf("> SYNCH_FRAME\r\n");
         #endif
+        return;
     }
     
     else
@@ -436,6 +473,7 @@ void ProcessStandardRequest(void)
         #ifdef USB_USE_DEBUG
         Serial_printf("> Default Std Request\r\n");
         #endif
+        return;
     }
     
     #endif
@@ -453,7 +491,7 @@ void InDataStage(void) //unsigned char ep)
     #endif
     
     // Determine how many bytes are going to the host
-    if(wCount < EP0_BUFFER_SIZE)
+    if (wCount < EP0_BUFFER_SIZE)
         bufferSize = wCount;
     else
         bufferSize = EP0_BUFFER_SIZE;
@@ -786,7 +824,7 @@ void Stall(void)
     #ifdef USB_USE_DEBUG
     Serial_printf("Stall\r\n");
     #endif
-    if(UEP0bits.EPSTALL == 1)
+    if (UEP0bits.EPSTALL == 1)
     {
         // Prepare for the Setup stage of a control transfer
         WaitForSetupStage();

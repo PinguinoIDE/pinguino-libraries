@@ -53,12 +53,14 @@ typedef struct
 #endif
 
 // String Descriptor
+/*
 typedef struct
 {
     u8  bLength;
     u8  bDescriptorType;
     u16 string[9];
 } USB_String_Descriptor;
+*/
 
 #ifdef USB_USE_CDC
     /* Definitions for CDC : 115200 8N1 */
@@ -81,6 +83,8 @@ typedef struct
 
 extern const USB_Device_Descriptor libdevice_descriptor;
 extern const USB_Configuration_Descriptor libconfiguration_descriptor;
-extern const u8 * const libstring_descriptor[]; // rb 25-01-2013
+//extern const u8 * const libstring_descriptor[]; // rb 25-01-2013
+
+u16 GetString(u8 string_number, const void **ptr);
 
 #endif /* USBCONFIG_H_ */

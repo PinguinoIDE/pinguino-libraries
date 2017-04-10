@@ -1,7 +1,7 @@
 // Output on Linux : sudo cat /dev/ttyACM0
 // Outout on Windows : 
 
-u8 i;
+u8 i=0;
 
 void setup()
 {

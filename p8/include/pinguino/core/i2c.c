@@ -36,7 +36,7 @@
 
 #include <compiler.h>
 #include <typedef.h>
-#include <macro.h>
+//#include <macro.h>              // interrupt(), noInterrupt(), ...
 #include <const.h>
 #include <i2c.h>
 
@@ -74,7 +74,7 @@ void I2C_slave(u8 module, u16 DeviceID)
 void I2C_init(u8 module, u8 mode, u16 sora)
 {
     u8 conf;
-    
+
     // Datasheet 22.4.3 SDA AND SCL PINS
     // Selection of any I2C mode with the SSPEN bit set, forces the SCL
     // and SDA pins to be open-drain. These pins should be set by the
@@ -313,6 +313,7 @@ u8 I2C_writeChar(u8 module, u8 value)
             defined(__18f26j53) || defined(__18f46j53) || \
             defined(__18f27j53) || defined(__18f47j53)
             
+        
         SSP1BUF = value;                    // Write byte to SSPBUF (BF is set to 1)
         return (!SSP1CON2bits.ACKSTAT);     // 1 if Ack, 0 if NAck
 

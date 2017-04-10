@@ -62,7 +62,7 @@
 #elif defined(__18f2455)  || defined(__18f4455)  || \
       defined(__18f2550)  || defined(__18f4550)
 
-    #define SD_CS           PORTAbits.RA5       // D13 - Chip Select
+    #define SD_CS           LATAbits.LATA5      // D13 - Chip Select
     #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
@@ -72,7 +72,7 @@
 
 #elif defined(__18f25k50) || defined(__18f45k50)
     
-    #define SD_CS           PORTAbits.RA5       // D13 - Chip Select
+    #define SD_CS           LATAbits.LATA5      // D13 - Chip Select
     #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
@@ -134,10 +134,10 @@
 #define SPI_CLOCK_DIV64         SPI_MASTER_FOSC_64
 #define SPI_CLOCK_TIMER2        SPI_MASTER_FOSC_T2
 
-#define SPI_PBCLOCK_NODIV       SPI_CLOCK_DIV4
-#define SPI_PBCLOCK_DIV2        SPI_CLOCK_DIV8
-#define SPI_PBCLOCK_DIV4        SPI_CLOCK_DIV16
-#define SPI_PBCLOCK_DIV16       SPI_CLOCK_DIV64
+#define SPI_PBCLOCK_NODIV       SPI_MASTER_FOSC_4  // SPI_CLOCK_DIV4
+#define SPI_PBCLOCK_DIV2        SPI_MASTER_FOSC_8  // SPI_CLOCK_DIV8
+#define SPI_PBCLOCK_DIV4        SPI_MASTER_FOSC_16 // SPI_CLOCK_DIV16
+#define SPI_PBCLOCK_DIV16       SPI_MASTER_FOSC_64 // SPI_CLOCK_DIV64
 
 // SPI Data Mode
 #define SPI_MODE0               0x00
@@ -176,29 +176,32 @@ typedef struct
 
 /// Prototypes
 
-void SPI_select(u8 module);
-void SPI_deselect(u8 module);
-void SPI_begin(int module, ...);
-void SPI_close(u8 module);
+void SPI_select(u8);
+void SPI_deselect(u8);
+void SPI_begin(int, ...);
+void SPI_close(u8);
 void SPI_init();
-void SPI_setMode(u8 module, u8 mode);
-void SPI_setBitOrder(u8 module, u8 bitorder);
-void SPI_setDataMode(u8 module, u8 mode);
-void SPI_setClockDivider(u8 module, u8 clock);
-u8 SPI_write(u8 module, u8 datax);
-u8 SPI_read(u8 module);
+void SPI_setMode(u8, u8);
+void SPI_setBitOrder(u8, u8);
+void SPI_setDataMode(u8, u8);
+void SPI_setClockDivider(u8, u8);
+u8 SPI_write(u8, u8);
+
+// cf. spi.c line 511
+//u8 SPI_read(u8);
+//#define SPI_read(m) SPI_write(m, 0xFF)
 
 #ifdef SPIINT
 void SPI1_interrupt();
 static void SPI1_onEvent (u8(*func)(u8));
-static u8 (*SPI1_onEvent_func)( u8);
+static u8 (*SPI1_onEvent_func)(u8);
 
 #if defined(__18f26j50)|| defined(__18f46j50) || \
     defined(__18f27j53)|| defined(__18f47j53)
 
 void SPI2_interrupt();
 static void SPI2_onEvent (u8(*func)(u8));
-static u8 (*SPI2_onEvent_func)( u8);
+static u8 (*SPI2_onEvent_func)(u8);
 
 #endif
 #endif

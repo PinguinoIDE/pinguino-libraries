@@ -71,8 +71,8 @@
 
 extern u32 _cpu_clock_;
 
-char rx[RXBUFFERLENGTH];            // serial buffer
-u8 wpointer=1,rpointer=1;           // write and read pointer
+volatile char rx[RXBUFFERLENGTH];            // serial buffer
+volatile u8 wpointer=1,rpointer=1;           // write and read pointer
 
 /***********************************************************************
  * Serial.begin()
@@ -177,7 +177,7 @@ void Serial_begin(u32 baudrate)
         BAUDCON1bits.RCIDL=1;       // set receive active
         // Enable EUSART
         TXSTA1bits.TXEN=1;          // Transmit Enabled
-        RCSTA1=0x90;                // st RCEN and SPEN
+        RCSTA1=0x90;                // set RCEN and SPEN
 
         // Enable RX interrupt
         PIR1bits.RC1IF = 0;         // Clear RX interrupt flag
