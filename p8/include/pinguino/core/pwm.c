@@ -50,7 +50,11 @@
 //#include <interrupt.c>    // to save memory space
 
 // Mode of legacy PWM
-#define PWMMODE         0b00001100 // PxA, PxC active-high, PxB, PxD active-high
+#if defined(__16F1459)
+    #define PWMMODE         0b11000000 // PWM module enabled, output enabled, output low, active-high
+#else
+    #define PWMMODE         0b00001100 // PxA, PxC active-high, PxB, PxD active-high
+#endif
 
 // Config of Enhanced PWM
 #define SINGLE_OUT      0b00111111 // Single output: P1A modulated; P1B, P1C, P1D assigned as port pins
