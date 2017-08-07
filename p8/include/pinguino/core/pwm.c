@@ -106,28 +106,57 @@ u16 PWM_setFrequency(u32 freq)
     // only 3 possible prescaler value : 1, 4 or 16
     // so gPR2PLUS1 can not be > to 16 * 256 = 4096
     // and frequency can not be < 2929Hz (12MHZ/4096)
+    // PIC16F1459 also has a 1:64 prescaler setting,
+    // which allows frequencies down to 733Hz
     
-    if (gPR2PLUS1 <= 4096)                  // check if it's not too high
-    {
-        if (gPR2PLUS1 <= 256)               // no needs of any prescaler
+    #if defined(__16F1459)
+        if (gPR2PLUS1 <= 16384)                 // check if it's not too high
         {
-            gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
-        }
-        else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
-        {
-            gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
-            gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
-        }
-        else                                // needs prescaler 1:6
-        {
-            gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
-            gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
-        }
+            if (gPR2PLUS1 <= 256)               // no needs of any prescaler
+            {
+                gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
+            }
+            else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
+            {
+                gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+                gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
+            }
+            else if (gPR2PLUS1 <= 4096)         // needs prescaler 1:16
+            {
+                gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+                gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
+            }
+            else                                // needs prescaler 1:64
+            {
+                gPR2PLUS1 = gPR2PLUS1 >> 6;     // divided by 64
+                gT2CON = 0b00000111;            // prescaler is 64, Timer2 On
+            }
 
-        // Returns PR2+1 value
-        return gPR2PLUS1;
-    }
+            // Returns PR2+1 value
+            return gPR2PLUS1;
+        }
+        #else
+        if (gPR2PLUS1 <= 4096)                  // check if it's not too high
+        {
+            if (gPR2PLUS1 <= 256)               // no needs of any prescaler
+            {
+                gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
+            }
+            else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
+            {
+                gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+                gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
+            }
+            else                                // needs prescaler 1:6
+            {
+                gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+                gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
+            }
 
+            // Returns PR2+1 value
+            return gPR2PLUS1;
+        }
+    #endif
     return 0;                           // error (mostly freq. is too low)
 }
 
