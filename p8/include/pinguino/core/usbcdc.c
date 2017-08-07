@@ -97,9 +97,13 @@ void CDCbegin(u32 baudrate)
 
     UEP1=0;UEP2=0;UEP3=0;
     UEP4=0;UEP5=0;UEP6=0;
-    UEP7=0;UEP8=0;UEP9=0;
-    UEP10=0;UEP11=0;UEP12=0;
-    UEP13=0;UEP14=0;UEP15=0;
+    UEP7=0;
+
+    #if !defined __16F1459
+        UEP8=0;UEP9=0;
+        UEP10=0;UEP11=0;UEP12=0;
+        UEP13=0;UEP14=0;UEP15=0;
+    #endif
 
     Delayms(2000);
     
