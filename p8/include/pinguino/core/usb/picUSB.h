@@ -308,10 +308,6 @@ typedef struct
     #define BD_ADDR                 0x2000
     #define PA_ADDR                 0x2020 // (BD_ADDR + (2*USB_MAX_ENDPOINTS*sizeof(BufferDescriptorTable))
     #define TR_ADDR                 0x2028 // (PA_ADDR + EP0_BUFFER_SIZE)
-    #ifdef USB_USE_CDC
-    #define RX_ADDR                 0x2030 // (TR_ADDR + EP0_BUFFER_SIZE)
-    #define TX_ADDR                 0x2050 // (RX_ADDR + USB_CDC_OUT_EP_SIZE)
-    #endif
     
 #elif defined(__18f13k50) || defined(__18f14k50)
 

@@ -23,16 +23,8 @@ extern u32 cdc_baudrate;
 
 #ifdef __XC8__
     //extern volatile BufferDescriptorTable ep_bdt[2*USB_MAX_ENDPOINTS];
-    #if defined(__16F1459)
-        #define RX_ADDR_TAG @##RX_ADDR
-        #define TX_ADDR_TAG @##TX_ADDR
-        u8 __section("usbram5") dummy; // to prevent a compilation error
-        volatile u8 CDCRxBuffer[USB_CDC_OUT_EP_SIZE] RX_ADDR_TAG; //@ 0x2028; //0x2098;
-        volatile u8 CDCTxBuffer[USB_CDC_IN_EP_SIZE]  TX_ADDR_TAG; //@ 0x2030; //0x20D8;
-    #else
-        volatile u8 __section("usbram5") CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
-        volatile u8 __section("usbram5") CDCTxBuffer[USB_CDC_IN_EP_SIZE];
-    #endif
+    volatile u8 __section("usbram5") CDCRxBuffer[USB_CDC_OUT_EP_SIZE];
+    volatile u8 __section("usbram5") CDCTxBuffer[USB_CDC_IN_EP_SIZE];
 #else // SDCC
     //extern volatile BufferDescriptorTable __at BD_ADDR ep_bdt[2*USB_MAX_ENDPOINTS];
     #pragma udata usbram5 CDCRxBuffer CDCTxBuffer
