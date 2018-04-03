@@ -32,9 +32,9 @@
 
 #if !defined(__18f26j50) && !defined(__18f46j50) && \
     !defined(__18f27j53) && !defined(__18f47j53)
-        #error "****************************************************"
-        #error "*** Your Pinguino doesn't have a RTCC module     ***"
-        #error "****************************************************"
+    #error "****************************************************"
+    #error "*** Your Pinguino doesn't have a RTCC module     ***"
+    #error "****************************************************"
 #endif
 
 #include <compiler.h>
@@ -59,18 +59,24 @@ void RTCC_SetTime(u32 tm)
     t0.l = tm;
     //RTCC_ConvertTime(&t0);
     RTCC_SetWriteEnable();
+    
     RTCCFGbits.RTCPTR1 = 0;     
     RTCCFGbits.RTCPTR0 = 1;     
-    // RTCPTR = 01 points on RTCVALH = Weekday and RTCVALL = Hours
+    // RTCPTR = 01 = Weekday/Hours
+
     RTCC_Wait();
     RTCVALL = t0.hours;
+
     RTCC_Wait();
-    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    dummy = RTCVALH;        // auto-decrement RTCPTR    
+
     // RTCPTR = 00 = Minutes/Seconds
     RTCC_Wait();
     RTCVALL = t0.seconds;
+
     RTCC_Wait();
     RTCVALH = t0.minutes;   
+
     RTCC_SetWriteDisable();
 }
 #endif
@@ -88,21 +94,29 @@ void RTCC_SetDate(u32 dt)
         
     d0.l = dt;
     RTCC_SetWriteEnable();
+
     RTCCFGbits.RTCPTR1 = 1;
     RTCCFGbits.RTCPTR0 = 1; 
     // RTCPTR = 11 = Reserved/Year
+
     RTCC_Wait();
     RTCVALL = d0.year;
+
     RTCC_Wait();
-    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    dummy = RTCVALH;        // auto-decrement RTCPTR
+
     // RTCPTR = 10 = Month/Day
+
     RTCC_Wait();
-    RTCVALL = d0.dayofmonth;      
+    RTCVALL = d0.dayofmonth;
+
     RTCC_Wait();
-    RTCVALH = d0.month;   
+    RTCVALH = d0.month;
+
     // RTCPTR = 01 = Weekday/Hours
     RTCC_Wait();
     RTCVALH = d0.dayofweek;
+
     // RTCPTR = 00 = Minutes/Seconds
     RTCC_SetWriteDisable();
 }

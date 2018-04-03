@@ -19,6 +19,7 @@
         andre gentric  2013/03/29 : fixed Pinguino4550 RA4 pin definition
         regis blanchot 2014/04/15 : one function / file
     05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
+    10 Apr. 2017 - Régis Blanchot - reduced code size, especially with XC8
 	----------------------------------------------------------------------------
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -40,7 +41,6 @@
 
 #include <compiler.h>
 #include <typedef.h>
-#include <pin.h>
 #include <digital.h>
 #if defined(ANALOGWRITE) || defined(__PWM__)
 #include <pwmclose.c>
@@ -51,35 +51,50 @@ void digitalwrite(u8 pin, u8 state)
     #if defined(ANALOGWRITE) || defined(__PWM__)
     PWM_close(pin);
     #endif
+    
+    u8 m = mask[pin];
+    u8 c = 255 - m;
+
+    #ifdef __XC8__
+
+    u8* p;
+    
+    p = (u8 *)(0xF89 + port[pin]);
+    
+    (state) ? *p |= m : *p &= c;
+
+    #else // SDCC
 
     switch (port[pin])
     {
         case pA:
-            if (state) LATA=LATA | mask[pin];
-            else LATA=LATA & (255-mask[pin]);
+            if (state) LATA=LATA | m;
+            else LATA=LATA & c;
             break;
         case pB:
-            if (state) LATB=LATB | mask[pin]; 
-            else LATB=LATB & (255-mask[pin]);
+            if (state) LATB=LATB | m; 
+            else LATB=LATB & c;
             break;
         case pC:
-            if (state) LATC=LATC | mask[pin];
-            else LATC=LATC & (255-mask[pin]);
+            if (state) LATC=LATC | m;
+            else LATC=LATC & c;
             break;
         #if defined(PINGUINO4455)   || defined(PINGUINO4550)   || \
             defined(PINGUINO45K50)  || defined(PINGUINO46J50)  || \
             defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || \
             defined(PICUNO_EQUO)
         case pD:
-            if (state) LATD=LATD | mask[pin]; 
-            else LATD=LATD & (255-mask[pin]);
+            if (state) LATD=LATD | m; 
+            else LATD=LATD & c;
             break;
         case pE:
-            if (state) LATE=LATE | mask[pin]; 
-            else LATE=LATE & (255-mask[pin]);
+            if (state) LATE=LATE | m; 
+            else LATE=LATE & c;
             break;
         #endif
     }
+
+    #endif
 }
 
 #endif /* __DIGITALW__ */

@@ -11,5 +11,6 @@ Serial4.getKey serial4getkey#include <serial4.c>
 Serial4.getString serial4getstring#include <serial4.c>
 Serial4.available serial4available#include <serial4.c>
 Serial4.read serial4read#include <serial4.c>
+Serial4.readChar serial4read#include <serial4.c>
 Serial4.flush serial4flush#include <serial4.c>
 Serial4.ClearRxError serial4clearrxerror#include <serial4.c>

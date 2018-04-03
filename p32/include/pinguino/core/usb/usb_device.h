@@ -28,7 +28,7 @@
 #ifndef USBDEVICE_H
 #define USBDEVICE_H
 
-#define VENDORID                            0x4D8
+#define VENDORID                            0x04D8
 #define PRODUCTID                           0xFEAB
 
 #include <typedef.h>

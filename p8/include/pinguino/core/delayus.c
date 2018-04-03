@@ -37,8 +37,8 @@
 
 void Delayus(u16 us)
 {
-    u8 status = isInterrupts();
-    if (status) noInterrupts();    
+    //u8 status = isInterrupts();
+    //if (status) noInterrupts();    
     #ifdef __XC8__
     while(--us)
     {
@@ -55,7 +55,7 @@ void Delayus(u16 us)
     }
     while(--us);
     #endif
-    if (status) interrupts();    
+    //if (status) interrupts();    
 }
 
 #endif // __DELAYUS_C__ 

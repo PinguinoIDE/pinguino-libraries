@@ -75,6 +75,8 @@
     16 - LED- to GND depending from i2c mododule
     
     --------------------------------------------------------------------------*/
+
+const u8 intf = I2C1;
 u16 i=0;
 
 void setup()
@@ -83,7 +85,7 @@ void setup()
     pinMode(USERLED, OUTPUT);   
 
     // initialize the display.
-    lcdi2c.init(16, 2, 0x27, 4, 3, 2, 1, 0);
+    lcdi2c.init(intf, 16, 2, 0x27, 4, 3, 2, 1, 0);
     // 1st arg : LCD screen's num. of columns = 16
     // 2nd arg : LCD screen's num. of lines = 2
     // 3rd arg : PCF8574 I2C address = 0x27
@@ -100,22 +102,22 @@ void setup()
     // lcdi2c.init(16, 2, 0x20,0,4,5,6,7);  // blue mjkdz, address from 20 to 27, needs pullup resistors on SDA/SCL
 
     // Select backlight or noBacklight according your i2c/lcd module
-    lcdi2c.noBacklight();          // turns backlight off (for DIY module or DFRobot)
-    // lcdi2c.backlight();         // turns backlight on (for mjkdz)
+    lcdi2c.noBacklight(intf);          // turns backlight off (for DIY module or DFRobot)
+    //lcdi2c.backlight(intf);         // turns backlight on (for mjkdz)
 
-    lcdi2c.clear();                // clear screen
-    lcdi2c.home();                 // set cursor at (0,0)
-    lcdi2c.print("lcdi2c demo");
+    lcdi2c.clearScreen(intf);          // clear screen
+    lcdi2c.home(intf);                 // set cursor at (0,0)
+    lcdi2c.print(intf, "lcdi2c demo");
 }
 
 void loop()
 {
-    lcdi2c.setCursor(0, 1);     // set cursor at line 1, col 0
-    lcdi2c.printf("i=%d ", i++);
+    lcdi2c.setCursor(intf, 0, 1);     // set cursor at line 1, col 0
+    lcdi2c.printf(intf, "i=%d ", i++);
     /*
-    lcdi2c.print("i=");
-    lcdi2c.printNumber(i++, DEC);
-    lcdi2c.print(" ");
+    lcdi2c.print(intf, "i=");
+    lcdi2c.printNumber(intf, i++, DEC);
+    lcdi2c.print(intf, " ");
     */
     toggle(USERLED);        // alternate ON and OFF
     delay(1000);

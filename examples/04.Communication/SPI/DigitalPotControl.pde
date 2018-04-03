@@ -26,7 +26,7 @@
  
 */
 
-const u8 MODULE = SSD1306_SPI1;
+const u8 MODULE = SPI1;
 
 // pin SS is the slave select for the digital pot:
 const int slaveSelectPin = 10;

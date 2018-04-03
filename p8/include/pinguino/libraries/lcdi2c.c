@@ -288,15 +288,15 @@ static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
     
     I2C_start(module);                            // send start condition
 
-    //I2C_writechar(LCDI2C[module].address | I2C_WRITE);
-    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    //I2C_write(LCDI2C[module].address | I2C_WRITE);
+    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
 
     LCDI2C[module].data |= (1 << LCDI2C[module].pin.en);
-    I2C_writeChar(module, LCDI2C[module].data);
+    I2C_write(module, LCDI2C[module].data);
     // E Pulse Width > 300ns
 
     LCDI2C[module].data &= ~(1 << LCDI2C[module].pin.en);
-    I2C_writeChar(module, LCDI2C[module].data);
+    I2C_write(module, LCDI2C[module].data);
     // E Enable Cycle > (300 + 200) = 500ns
 
     I2C_stop(module);                             // send stop confition
@@ -352,8 +352,8 @@ void lcdi2c_blight(u8 module, u8 status)
         BitClear(LCDI2C[module].data, LCDI2C[module].pin.bl);
     
     I2C_start(module);
-    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
-    I2C_writeChar(module, LCDI2C[module].data);
+    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    I2C_write(module, LCDI2C[module].data);
     I2C_stop(module);
 }
 #endif
@@ -492,7 +492,7 @@ void lcdi2c_printFloat(u8 module, float number, u8 digits)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTF)
-/*
+
 void lcdi2c_printf(u8 module, char *fmt, ...)
 {
     va_list args;
@@ -502,7 +502,7 @@ void lcdi2c_printf(u8 module, char *fmt, ...)
     pprintf(lcdi2c_putChar, fmt, args);
     va_end(args);
 }
-*/
+
 void lcdi2c1_printf(char* fmt, ...)
 {
     va_list args;
@@ -587,7 +587,7 @@ void lcdi2c_newpattern()
     --------------------------------------------------------------------
     pcf8574 adress format is [0 1 0 0 A2 A1 A0 0]
     --------------------------------------------------------------------
-    usage : lcdi2c.init(16, 2, 0x27, 4, 2, 1, 0, 3);
+    usage ex. : lcdi2c.init(I2C1, 16, 2, 0x27, 4, 2, 1, 0, 3);
     ------------------------------------------------------------------*/
 
 void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
@@ -614,8 +614,8 @@ void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 e
         cmd02=0x20;
     }
 
-    //I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
-    I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
+    I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
+    //I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
     //I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ);
 
     Delayms(15);                                // Wait more than 15 ms after VDD rises to 4.5V

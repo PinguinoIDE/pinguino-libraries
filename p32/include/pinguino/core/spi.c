@@ -5,10 +5,9 @@
     PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
                     Marcus Fazzi <anunakin@gmail.com>
                     Jean-Pierre Mandon <jp.mandon@gmail.com>
-    FIRST RELEASE:	16 Mar 2011
-    LAST RELEASE:	15 Mar 2014
     ----------------------------------------------------------------------------
     CHANGELOG : 
+    16 Mar. 2011 - rblanchot  - first release
     24 May. 2011 - jp.mandon  - fixed a bug in SPI_write, RX int flag must be called even for write
     20 Feb. 2012 - r.blanchot - added PIC32_PINGUINO_220 support
     28 May. 2012 - MFH        - added PIC32_PINGUINO_MICRO support and fixed a bug
@@ -21,7 +20,8 @@
     14 Apr. 2015 - rblanchot  - added SPI structure to store SPI features 
     01 Oct. 2015 - rblanchot  - added SPI SOFTWARE support
     22 Jan. 2016 - rblanchot  - removed setPin(), extended begin() with vargs
-    20 Jun. 2016 - rblanchot  - fixed SPI_select and SPI_deselect for PIC32_PINGUINO and PIC32_PINGUINO_OTG
+    20 Jun. 2016 - rblanchot  - fixed SPI_select and SPI_deselect for PIC32_PINGUINO_OTG
+    29 Nov. 2017 - rblanchot  - fixed SPI_select and SPI_deselect for PIC32_PINGUINO
      ----------------------------------------------------------------------------
     TODO :
     * SLAVE MODE support
@@ -63,7 +63,7 @@ void SPI_init()
     
     for (i=0; i<NUMOFSPI; i++)
     {
-        SPI[i].mode     = SPI_MODE0;
+        SPI[i].mode     = SPI_MODE1;
         SPI[i].divider  = SPI_PBCLOCK_DIV64;
         SPI[i].role     = SPI_MASTER;
         SPI[i].bitorder = SPI_MSBFIRST;
@@ -88,7 +88,7 @@ void SPI_select(u8 module)
         #if !defined(__32MX440F256H__)
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            // RB7 is defined as SS1 pin
+            // D5 = RB7 is defined as SS1 pin
             LATBCLR = 1 << 7;
             #endif
             break;
@@ -96,12 +96,14 @@ void SPI_select(u8 module)
         
         case SPI2:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            // RB9 is defined as SS2 pin
+            // D3 = RB9 is defined as SS2 pin
             LATBCLR = 1 << 9;
 
             #elif  defined(PIC32_PINGUINO)
-            // RB14 is defined as SS2 pin
-            LATBCLR = 1 << 14;
+            // If RG9 is defined as SS2 pin
+            LATGCLR = 1 << 9;
+            // If RF0 is defined as SS2 pin
+            //LATFCLR = 1 << 0;
 
              #elif  defined(PIC32_PINGUINO_OTG)
             // RB13 is defined as SS2 pin
@@ -129,7 +131,7 @@ void SPI_deselect(u8 module)
         #if !defined(__32MX440F256H__)
         case SPI1:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            // RB7 is defined as SS1 pin
+            // D5 = RB7 is defined as SS1 pin
             LATBSET = 1 << 7; // stops device selection
             #endif
             break;
@@ -137,14 +139,16 @@ void SPI_deselect(u8 module)
 
         case SPI2:
             #if  defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            // RB9 is defined as SS1 pin
+            // D3 = RB9 is defined as SS1 pin
             LATBSET = 1 << 9; // stops device selection
 
             #elif  defined(PIC32_PINGUINO)
-            // RB14 is defined as SS2 pin
-            LATBSET = 1 << 14;
+            // If RG9 is defined as SS2 pin
+            LATGSET = 1 << 9;
+            // If RF0 is defined as SS2 pin
+            //LATFSET = 1 << 0;
 
-             #elif  defined(PIC32_PINGUINO_OTG)
+            #elif  defined(PIC32_PINGUINO_OTG)
             // RB13 is defined as SS2 pin
             LATBSET = 1 << 13;
 
@@ -280,7 +284,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SPI1CON = 0;
             // 3.  Clear the receive buffer.
-            rData=SPI1BUF;
+            rData = SPI1BUF;
             break;
         
         #endif
@@ -293,7 +297,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SPI2CON = 0;
             // 3.  Clear the receive buffer.
-            rData=SPI2BUF;
+            rData = SPI2BUF;
             break;
 
         #if defined(__32MX795F512L__) || \
@@ -307,7 +311,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SPI3CON = 0;
             // 3.  Clear the receive buffer.
-            rData=SPI3BUF;
+            rData = SPI3BUF;
             break;
 
         case SPI4:
@@ -318,7 +322,7 @@ void SPI_close(u8 module)
             // 2.  Stop and reset the SPI module by clearing the ON bit.
             SPI4CON = 0;
             // 3.  Clear the receive buffer.
-            rData=SPI4BUF;
+            rData = SPI4BUF;
             break;
 
         #endif
@@ -364,10 +368,12 @@ void SPI_begin(u8 module, ...)
     {
         case SPISW:
             // Sets SPI software pins
-            SPI[SPISW].sda = (u8)va_arg(args, int); // get the first arg
+            SPI[SPISW].sdo = (u8)va_arg(args, int); // get the first arg
+            SPI[SPISW].sdi = (u8)va_arg(args, int); // get the first arg
             SPI[SPISW].sck = (u8)va_arg(args, int);
             SPI[SPISW].cs  = (u8)va_arg(args, int);
-            pinmode(SPI[SPISW].sda, OUTPUT);
+            pinmode(SPI[SPISW].sdo, OUTPUT);
+            pinmode(SPI[SPISW].sdi, INPUT);
             pinmode(SPI[SPISW].sck, OUTPUT);
             pinmode(SPI[SPISW].cs,  OUTPUT);
             break;
@@ -380,9 +386,9 @@ void SPI_begin(u8 module, ...)
 
             // IO's
             #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            TRISBCLR = 1<<14;                   // SCK1 is on RB14 ( D1 )
             TRISACLR = 1<<4;                    // SDO1 is on RA4  ( D7 )
             TRISBSET = 1<<5;                    // SDI1 is on RB5  ( D6 )
+            TRISBCLR = 1<<14;                   // SCK1 is on RB14 ( D1 )
             TRISBCLR = 1<<7;                    // SS1  is on RB7  ( D5 )
             #endif
             
@@ -464,7 +470,9 @@ void SPI_begin(u8 module, ...)
                     SPI1CONbits.MSTEN  = 1;     // Master
                     break;
                 case SPI_SLAVE:
+                    #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
                     TRISBSET = 1<<14;           // SCK INPUT
+                    #endif
                     SPI1CONbits.MSTEN  = 0;     // Slave
                     break;
             }
@@ -495,10 +503,19 @@ void SPI_begin(u8 module, ...)
 
             // IO's
             #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
-            TRISBCLR = 1<<15;                   // SCK2 is on RB15 ( D0 )
+
             TRISBCLR = 1<<8;                    // SDO2 is on RB8  ( D4 )
             TRISBSET = 1<<13;                   // SDI2 is on RB13 ( D2 )
+            TRISBCLR = 1<<15;                   // SCK2 is on RB15 ( D0 )
             TRISBCLR = 1<<9;                    // SS2  is on RB9  ( D3 )
+            /*
+            #elif  defined(PIC32_PINGUINO)
+            
+            TRISGCLR = 1<<8;                    // SDO2 is on RG8 ( D11 )
+            TRISGSET = 1<<7;                    // SDI2 is on RG7 ( D12 )
+            TRISGCLR = 1<<6;                    // SCK2 is on RG6 ( D13 )
+            TRISGCLR = 1<<9;                    // SS2  is on RG9 ( D10 )
+            */
             #endif
             
             // 6. Write the Baud Rate register, SPIxBRG.
@@ -548,7 +565,9 @@ void SPI_begin(u8 module, ...)
                     SPI2CONbits.MSTEN  = 1; // Master
                     break;
                 case SPI_SLAVE:
+                    #if defined(PINGUINO32MX220) || defined(PINGUINO32MX250) || defined(PINGUINO32MX270)
                     TRISBCLR = 1<<15;       // SCK INPUT
+                    #endif
                     SPI2CONbits.MSTEN  = 0; // Slave
                     break;
             }
@@ -702,7 +721,7 @@ u8 SPI_write(u8 module, u8 dataout)
                     bitMask = 1 << i;
 
                 // Send bit
-                digitalwrite(SPI[module].sda, (dataout & bitMask) ? 1 : 0);
+                digitalwrite(SPI[module].sdo, (dataout & bitMask) ? 1 : 0);
 
                 // pulse
                 high(SPI[module].sck);
@@ -713,14 +732,14 @@ u8 SPI_write(u8 module, u8 dataout)
         #if !defined(__32MX440F256H__)
 
         case SPI1:
-            SPI1BUF = dataout;             // write to buffer for TX
+            SPI1BUF = dataout;              // write to buffer for TX
             while (!SPI1STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI1BUF;
 
         #endif
 
         case SPI2:
-            SPI2BUF = dataout;             // write to buffer for TX
+            SPI2BUF = dataout;              // write to buffer for TX
             while (!SPI2STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI2BUF;
 
@@ -728,12 +747,12 @@ u8 SPI_write(u8 module, u8 dataout)
             defined(__32MX795F512H__)
 
         case SPI3:
-            SPI3BUF = dataout;             // write to buffer for TX
+            SPI3BUF = dataout;              // write to buffer for TX
             while (!SPI3STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI3BUF;
 
         case SPI4:
-            SPI4BUF = dataout;             // write to buffer for TX
+            SPI4BUF = dataout;              // write to buffer for TX
             while (!SPI4STATbits.SPIRBF);   // wait for the receive flag (transfer complete)
             return SPI4BUF;
 

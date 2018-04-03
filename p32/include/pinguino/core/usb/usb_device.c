@@ -579,7 +579,6 @@ void usb_device_tasks(void)
     // Stall
     // -----------------------------------------------------------------
 
-    #if 1
     if (U1IE & _U1IE_STALLIE_MASK)
     {
         if (U1IR & _U1IR_STALLIF_MASK)
@@ -606,7 +605,6 @@ void usb_device_tasks(void)
             return;
         }
     }
-    #endif
 
     // -----------------------------------------------------------------
     // Error

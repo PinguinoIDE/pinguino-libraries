@@ -73,7 +73,7 @@
 #define __LCDI2C_H
 
 #include <typedef.h>
-#include <const.h>
+#include <const.h>              // I2C1, I2C2
 //#include <pcf8574.h>
 #include <stdarg.h>
 #ifndef __PIC32MX__
@@ -276,18 +276,18 @@ void lcdi2c_newchar(u8, const u8 *, u8);
 //#define lcdi2c2_newpattern()          lcdi2c_newpattern(I2C2)
 
 #if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
-#define lcdi2c_backlight(m)             lcdi2c_blight(m, 0)
-#define lcdi2c1_backlight()             lcdi2c_blight(I2C1, 0)
-#define lcdi2c2_backlight()             lcdi2c_blight(I2C2, 0)
-#define lcdi2c_noBacklight(m)           lcdi2c_blight(m, 1)
-#define lcdi2c1_noBacklight()           lcdi2c_blight(I2C1, 1)
-#define lcdi2c2_noBacklight()           lcdi2c_blight(I2C2, 1)
+#define lcdi2c_backlight(m)             lcdi2c_blight(m, false)
+#define lcdi2c1_backlight()             lcdi2c_blight(I2C1, false)
+#define lcdi2c2_backlight()             lcdi2c_blight(I2C2, false)
+#define lcdi2c_noBacklight(m)           lcdi2c_blight(m, true)
+#define lcdi2c1_noBacklight()           lcdi2c_blight(I2C1, true)
+#define lcdi2c2_noBacklight()           lcdi2c_blight(I2C2, true)
 #endif
 
 #if defined(LCDI2CCLEAR)
-#define lcdi2c_clear(m)                 do { lcdi2c_send8(m, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
-#define lcdi2c1_clear()                 do { lcdi2c_send8(I2C1, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
-#define lcdi2c2_clear()                 do { lcdi2c_send8(I2C2, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
+#define lcdi2c_clearScreen(m)           do { lcdi2c_send8(m, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
+#define lcdi2c1_clearScreen()           do { lcdi2c_send8(I2C1, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
+#define lcdi2c2_clearScreen()           do { lcdi2c_send8(I2C2, LCD_DISPLAY_CLEAR, LCD_CMD); Delayms(2); } while(0)
 #endif
 
 #if defined(LCDI2CHOME)

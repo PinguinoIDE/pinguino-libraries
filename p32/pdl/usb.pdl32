@@ -28,6 +28,7 @@ BULK.puts BULKputs#include <usbbulk.c>
 CDC.begin CDC_begin#include <usbcdc.c>
 CDC.polling CDC_polling#include <usbcdc.c>#define __USBPOLLING__
 CDC.write CDC_print#include <usbcdc.c>#define CDCWRITE
+CDC.printChar CDC_printChar#include <usbcdc.c>#define CDCPRINTCHAR
 CDC.print CDC_print#include <usbcdc.c>#define CDCPRINT
 CDC.println CDC_println#include <usbcdc.c>#define CDCPRINTLN
 CDC.printf CDC_printf#include <usbcdc.c>#define CDCPRINTF

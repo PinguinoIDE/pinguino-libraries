@@ -95,6 +95,17 @@ void serial1printFloat(float number, u8 digits)
 }
 #endif
 
+#if defined(SERIALPRINTX)
+void serial1printx(const char *s, s32 value, u8 base)
+{
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintX(UART2, s, value, base);
+    #else
+    SerialPrintX(UART1, s, value, base);
+    #endif
+}
+#endif /* SERIALPRINTX ... */
+
 #ifdef SERIALPRINTF
 void serial1printf(char *fmt, ...)		
 {

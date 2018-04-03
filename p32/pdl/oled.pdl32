@@ -49,6 +49,7 @@ SSD1306.setFont SSD1306_setFont#include <SSD1306.c>
 SSD1306.printChar SSD1306_printChar#include <SSD1306.c>
 SSD1306.print SSD1306_print#include <SSD1306.c>#define SSD1306PRINT
 SSD1306.println SSD1306_println#include <SSD1306.c>#define SSD1306PRINTLN
+SSD1306.printCenter SSD1306_printCenter#include <SSD1306.c>#define SSD1306PRINTCENTER
 SSD1306.printNumber SSD1306_printNumber#include <SSD1306.c>#define SSD1306PRINTNUMBER
 SSD1306.printFloat SSD1306_printFloat#include <SSD1306.c>#define SSD1306PRINTFLOAT
 SSD1306.printf SSD1306_printf#include <SSD1306.c>#define SSD1306PRINTF

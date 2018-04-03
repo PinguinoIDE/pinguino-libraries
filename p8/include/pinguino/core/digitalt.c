@@ -18,6 +18,7 @@
         regis blanchot 2013/01/05 : fixed warnings about pointers in RAM
         andre gentric  2013/03/29 : fixed Pinguino4550 RA4 pin definition
         regis blanchot 2014/04/15 : one function / file
+        regis blanchot 2017/04/10 : reduced the size of the code
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -39,16 +40,14 @@
 
 #include <compiler.h>
 #include <typedef.h>
-#include <pin.h>
-#include <digital.h>
 #include <digitalw.c>       // digitalwrite
-#include <digitalr.c>       // digitalread
+
+u8 gToggleStatus;
 
 void toggle(u8 pin)
 {
-    u8 state;
-    state = digitalread(pin);
-    digitalwrite(pin, state^1);
+    gToggleStatus = gToggleStatus ^ 1;
+    digitalwrite(pin, gToggleStatus);
 }
 
 #endif /* __DIGITALT__ */

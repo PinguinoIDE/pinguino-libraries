@@ -44,8 +44,10 @@ CONTROL_SIGNAL_BITMAP control_signal_bitmap;
 // *** MUST BE VOLATILE ***
 //USBVOLATILE u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
 //USBVOLATILE u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
-volatile u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
-volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
+//volatile u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+//volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
+u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
 
 /***********************************************************************
  * SEND_ENCAPSULATED_COMMAND and GET_ENCAPSULATED_RESPONSE are required
@@ -284,9 +286,7 @@ u8 cdc_gets(char *buffer)
 char cdc_getc()
 {
     char buffer[64];
-    u8 len;
-    
-    len = cdc_gets(buffer);
+    u8 len = cdc_gets(buffer);
 
     if (len > 0)
         return buffer[0];

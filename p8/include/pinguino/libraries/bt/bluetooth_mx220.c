@@ -210,4 +210,3 @@ u8 BT_connect(u8 uart_port, u8 * bdaddr)
 }
 
 #endif /* __BLUETOOTH_C */
-

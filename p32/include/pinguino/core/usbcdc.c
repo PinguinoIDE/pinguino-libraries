@@ -1,5 +1,5 @@
 /*  --------------------------------------------------------------------
-    FILE:               cdc.c
+    FILE:               usbcdc.c
     PROJECT:            pinguino 32
     PURPOSE:            usb cdc module based on the Microchip USB stack
     PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
@@ -7,24 +7,25 @@
     --------------------------------------------------------------------
     CHANGELOG:
     --------------------------------------------------------------------
-    16 Nov. 2010 - 1.0 - Jean-Pierre Mandon - first release
-            2011 - 1.1 - Régis Blanchot     - added printf, println, print, write, getKey, getString
-    25 Feb. 2012 - 1.2 - Jean-Pierre Mandon - added support for 32MX220F032
-    03 Mar. 2012 - 1.3 - Jean-Pierre Mandon - fixed a bug in WINDOWS CDC
-    18 Jun. 2013 - 1.4 - Moreno manzini     - added CDC.USBIsConnected to check if USB cable is connected
-    13 Mar. 2014 - 1.5 - Régis Blanchot     - added printNumber, printFloat
-    13 Mar. 2014 - 1.6 - Régis Blanchot     - updated print, println, getKey and getString to spare memory on small memory PIC
-    28 Aug. 2014 - 1.7 - Régis Blanchot     - added #include <string.h> to use strlen
-    23 Jan. 2015 - 2.0 - Régis Blanchot     - replaced use of libcdc.a with c files
-    02 Feb. 2015 - 2.1 - Régis Blanchot     - added interrupt-driven mode
-    04 Feb. 2015 - 2.2 - Régis Blanchot     - added CDC.begin and CDC.polling functions
-    06 Feb. 2015 - 2.3 - Régis Blanchot     - renamed CDC.USBIsConnected in CDC.isConnected
-    06 Feb. 2015 - 2.4 - Régis Blanchot     - renamed CDC.TXIsReady in CDC.available
-    06 Feb. 2015 - 2.5 - Régis Blanchot     - added CDC.isReady and CDC.connect
-    10 Feb. 2015 - 2.6 - Régis Blanchot     - splited usb_device_tasks() to create usb_enable_module()
-    12 Feb. 2015 - 2.7 - Régis Blanchot     - added usb_check_cable() an interrupt attach/detach USB cable routine
-    30 Mar. 2015 - 2.8 - Régis Blanchot     - fixed usb_device_init() and usb_device_task()
-    23 Jun. 2016 - 2.9 - Régis Blanchot     - added Print functions support
+    16 Nov. 2010 - 1.0  - Jean-Pierre Mandon - first release
+            2011 - 1.1  - Régis Blanchot     - added printf, println, print, write, getKey, getString
+    25 Feb. 2012 - 1.2  - Jean-Pierre Mandon - added support for 32MX220F032
+    03 Mar. 2012 - 1.3  - Jean-Pierre Mandon - fixed a bug in WINDOWS CDC
+    18 Jun. 2013 - 1.4  - Moreno manzini     - added CDC.USBIsConnected to check if USB cable is connected
+    13 Mar. 2014 - 1.5  - Régis Blanchot     - added printNumber, printFloat
+    13 Mar. 2014 - 1.6  - Régis Blanchot     - updated print, println, getKey and getString to spare memory on small memory PIC
+    28 Aug. 2014 - 1.7  - Régis Blanchot     - added #include <string.h> to use strlen
+    23 Jan. 2015 - 2.0  - Régis Blanchot     - replaced use of libcdc.a with c files
+    02 Feb. 2015 - 2.1  - Régis Blanchot     - added interrupt-driven mode
+    04 Feb. 2015 - 2.2  - Régis Blanchot     - added CDC.begin and CDC.polling functions
+    06 Feb. 2015 - 2.3  - Régis Blanchot     - renamed CDC.USBIsConnected in CDC.isConnected
+    06 Feb. 2015 - 2.4  - Régis Blanchot     - renamed CDC.TXIsReady in CDC.available
+    06 Feb. 2015 - 2.5  - Régis Blanchot     - added CDC.isReady and CDC.connect
+    10 Feb. 2015 - 2.6  - Régis Blanchot     - splited usb_device_tasks() to create usb_enable_module()
+    12 Feb. 2015 - 2.7  - Régis Blanchot     - added usb_check_cable() an interrupt attach/detach USB cable routine
+    30 Mar. 2015 - 2.8  - Régis Blanchot     - fixed usb_device_init() and usb_device_task()
+    23 Jun. 2016 - 2.9  - Régis Blanchot     - added Print functions support
+    01 Aug. 2017 - 2.10 - Régis Blanchot     - fixed Printf function
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -46,7 +47,7 @@
 
 // Version
 #define CDC_MAJOR_VER 2
-#define CDC_MINOR_VER 9
+#define CDC_MINOR_VER 10
 
 /***********************************************************************
  ** Config. ************************************************************
@@ -67,6 +68,8 @@
 #endif
 
 // Polling or interrupt mode
+//#define __USBPOLLING__
+
 #ifndef __USBPOLLING__
 #define __USBINTERRUPT__
 #endif
@@ -184,9 +187,10 @@ void CDC_printChar(char c)
 /***********************************************************************
  * USB CDC print routine (CDC.print)
  * write a string on the CDC port
- * 2014-03-04   Régis Blanchot    added  
- * 2015-01-23   Régis Blanchot    updated 
- * 2016-07-01   Régis Blanchot    optimized 
+ * 2014-03-04 - Régis Blanchot - added  
+ * 2015-01-23 - Régis Blanchot - updated 
+ * 2016-07-01 - Régis Blanchot - optimized
+ * 2017-08-01 - Régis Blanchot - fixed
  **********************************************************************/
 
 #if defined(CDCWRITE) || defined(CDCPRINT) || defined(CDCPRINTLN) || defined(CDCPRINTF)
@@ -203,8 +207,8 @@ void CDC_print(const char *string)
     while (cdc_trf_state != CDC_TX_READY)
         cdc_tx_service();
 
-    cdc_tx_len = strlen(string);
     cdc_trf_state = CDC_TX_BUSY;
+    cdc_tx_len = strlen(string);
     *cdc_data_tx = *string;
 }
 #endif
@@ -261,13 +265,16 @@ void CDC_printFloat(float number, u8 digits)
 #if defined(CDCPRINTF)
 void CDC_printf(const char *fmt, ...)
 {
-    u8 length;
     va_list	args;
 
     va_start(args, fmt);
-    length = psprintf2(cdc_data_tx, fmt, args);
-    CDC_print(cdc_data_tx);//, length);
-    
+
+    while (cdc_trf_state != CDC_TX_READY)
+        cdc_tx_service();
+
+    cdc_trf_state = CDC_TX_BUSY;
+    cdc_tx_len = psprintf2(&cdc_data_tx, fmt, args);
+
     va_end(args);
 }
 #endif

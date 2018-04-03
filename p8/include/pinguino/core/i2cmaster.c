@@ -397,7 +397,6 @@ u8 I2C_requestFrom(u8 module, u8 address, u8 quantity)
     return read;
 }
 
-
 /*  --------------------------------------------------------------------
     ---------- beginTransmission
     --------------------------------------------------------------------
@@ -413,7 +412,6 @@ void I2C_beginTransmission(u8 module, u8 address)
     _i2c_txBufferIndex = 0;
     _i2c_txBufferLength = 0;
 }
-
 
 /*  --------------------------------------------------------------------
     ---------- endTransmission
@@ -580,6 +578,7 @@ int peek(u8 module)
     ---------- OnRequest
     ----------------------------------------------------------------------------
     --------------------------------------------------------------------------*/
+
 #ifdef I2CINT
 
 void I2C_onRequest(void (* func) ())
@@ -596,6 +595,7 @@ void I2C_onReceive(void (*func) (u8))
     _i2c_rxBufferIndex = 0;
     I2C_sendAck();
 }
+
 #endif
 
 #endif //__I2CMASTER_C

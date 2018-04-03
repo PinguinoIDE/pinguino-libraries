@@ -15,39 +15,39 @@
     I2C addresses
 */ 
 //const u8 TC74A0 = 0b1001000;
-const  u8 TC74A3 = 0b1001011;
-const  u8 LCDI2C = 0b0100111;
+const  u8 TC74A3ADDR = 0b1001011;
+const  u8 LCDI2CADDR = 0b0100111;
 
 u8 num;
 char temperature[] = " 000  C";
 
 void setup()
 {
-    pinMode(12, OUTPUT);                // Pinguino 26j50 build-in led is on pin 12
-    I2C.master(I2C_100KHZ);             // or I2C.master(100);
-    lcdi2c.init(16, 2, LCDI2C);         // display is 2x16
+    pinMode(USERLED, OUTPUT);           // Pinguino build-in LED
+    //I2C.master(I2C_100KHZ);             // or I2C.master(100);
+    lcdi2c.init(16, 2, LCDI2CADDR, 4, 2, 1, 0, 3);     // display is 16x2
     lcdi2c.backlight();                 // turns backlight on
-    lcdi2c.clear();                     // clear screen
+    lcdi2c.clearScreen();               // clear screen
     lcdi2c.home();                      // set cursor at (0,0)
     lcdi2c.setCursor(2, 0);             // set cursor at col 1, line 1
     lcdi2c.printf("Testing TC74");
     lcdi2c.setCursor(1, 1);             // set cursor at col 1, line 2
     lcdi2c.printf("Thermal sensor");
     delay(2000);
-    lcdi2c.clear();                     // clear screen
+    lcdi2c.clearScreen();               // clear screen
 }
 
 void loop()
 {
-    digitalWrite(12, 1);                // Led on
+    digitalWrite(USERLED, 1);                // Led on
     I2C.start();
-    if (I2C.write((TC74A3<<1)&0xFE))
+    if (I2C.write((TC74A3ADDR<<1)&0xFE))
     {
         // Read temperature
         
         I2C.write(0x00);                    // Read Temp
         I2C.restart();                      // Issue start signal
-        I2C.write((TC74A3<<1)+1);            // Address + Read bit
+        I2C.write((TC74A3ADDR<<1)+1);            // Address + Read bit
         num = I2C.read();
 
         // Check for negative temperature
@@ -90,6 +90,6 @@ void loop()
     }
 
     I2C.stop();
-    digitalWrite(12, 0);                // Led off
+    digitalWrite(USERLED, 0);                // Led off
     delay(5000);
 }

@@ -114,54 +114,54 @@ u16 PWM_setFrequency(u32 freq)
     // which allows frequencies down to 733Hz
     
     #if defined(__16F1459)
-        if (gPR2PLUS1 <= 16384)                 // check if it's not too high
+    if (gPR2PLUS1 <= 16384)                 // check if it's not too high
+    {
+        if (gPR2PLUS1 <= 256)               // no needs of any prescaler
         {
-            if (gPR2PLUS1 <= 256)               // no needs of any prescaler
-            {
-                gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
-            }
-            else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
-            {
-                gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
-                gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
-            }
-            else if (gPR2PLUS1 <= 4096)         // needs prescaler 1:16
-            {
-                gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
-                gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
-            }
-            else                                // needs prescaler 1:64
-            {
-                gPR2PLUS1 = gPR2PLUS1 >> 6;     // divided by 64
-                gT2CON = 0b00000111;            // prescaler is 64, Timer2 On
-            }
-
-            // Returns PR2+1 value
-            return gPR2PLUS1;
+            gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
         }
-        #else
-        if (gPR2PLUS1 <= 4096)                  // check if it's not too high
+        else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
         {
-            if (gPR2PLUS1 <= 256)               // no needs of any prescaler
-            {
-                gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
-            }
-            else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
-            {
-                gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
-                gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
-            }
-            else                                // needs prescaler 1:6
-            {
-                gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
-                gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
-            }
-
-            // Returns PR2+1 value
-            return gPR2PLUS1;
+            gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+            gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
         }
+        else if (gPR2PLUS1 <= 4096)         // needs prescaler 1:16
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+            gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
+        }
+        else                                // needs prescaler 1:64
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 6;     // divided by 64
+            gT2CON = 0b00000111;            // prescaler is 64, Timer2 On
+        }
+
+        // Returns PR2+1 value
+        return gPR2PLUS1;
+    }
+    #else
+    if (gPR2PLUS1 <= 4096)                  // check if it's not too high
+    {
+        if (gPR2PLUS1 <= 256)               // no needs of any prescaler
+        {
+            gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
+        }
+        else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+            gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
+        }
+        else                                // needs prescaler 1:6
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+            gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
+        }
+
+        // Returns PR2+1 value
+        return gPR2PLUS1;
+    }
     #endif
-    return 0;                           // error (mostly freq. is too low)
+    return 0;                               // error (mostly freq. is too low)
 }
 
 /*  --------------------------------------------------------------------
@@ -226,15 +226,19 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
                                         // at the first PWM output
     PR2 = gPR2PLUS1 - 1;                // set PWM period
 
+    // 3- Assign Timer2 to all CCP pins
+
+    CCPTMRS0 = 0;
+
     #if defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
 
-    CCPTMRS1 = 0;                       // assign Timer2 to all CCP pins
+    CCPTMRS1 = 0;
     CCPTMRS2 = 0;
 
     #endif
     
-    // 3- Set the PWM duty cycle by writing to the CCPRxL register and
+    // 4- Set the PWM duty cycle by writing to the CCPRxL register and
     // CCPxCON<5:4> bits.
 
     msb = (duty >> 2) & 0xFF;           // 8 MSB
@@ -332,11 +336,11 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
             break;
     }
 
-    // 4- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
+    // 5- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
 
     T2CON = gT2CON;                     // Timer2 prescaler + ON
 
-    // 5- Make the CCPx pin an output by clearing the appropriate TRIS bit.
+    // 6- Make the CCPx pin an output by clearing the appropriate TRIS bit.
 
     pinmode(pin, OUTPUT);               // PWM pin as OUTPUT
 }

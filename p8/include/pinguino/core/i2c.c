@@ -13,6 +13,7 @@
     --------------------------------------------------------------------
     TODO
     * Slave 10-bit address
+    * SSPADD = Fcpu / (4 * Fi2c) - 1
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -48,12 +49,12 @@
     ---------- Initialisation Functions for Master and Slave
     ------------------------------------------------------------------*/
 
-void I2C_master(u8 module, u16 speed)   
+void I2C_master(u8 module, u16 speed)
 {
     I2C_init(module, I2C_MASTER_MODE, speed);
 }
 
-void I2C_slave(u8 module, u16 DeviceID)   
+void I2C_slave(u8 module, u16 DeviceID)
 {
     I2C_init(module, I2C_SLAVE_MODE, DeviceID);
 }
@@ -82,7 +83,8 @@ void I2C_init(u8 module, u8 mode, u16 sora)
     
     if (module == I2C1)
     {
-        #if defined(__16F1459)
+        #if defined(__16F1459)  || \
+            defined(__18f13k50) || defined(__18f14k50)
         
         TRISBbits.TRISB4 = INPUT;           // SDA = INPUT
         TRISBbits.TRISB6 = INPUT;           // SCL = INPUT
@@ -109,7 +111,7 @@ void I2C_init(u8 module, u8 mode, u16 sora)
         TRISDbits.TRISD0 = INPUT;           // SCL2 = INPUT
     }
     #endif
-    
+
     switch (mode)
     {
         case I2C_SLAVE_MODE:
@@ -248,9 +250,9 @@ void I2C_init(u8 module, u8 mode, u16 sora)
             defined(__18f25k50) || defined(__18f45k50) || \
             defined(__18f26j53) || defined(__18f46j53) || \
             defined(__18f27j53) || defined(__18f47j53)
-        SSP1CON2= 0;
+        SSP1CON2 = 0;
         #else
-        SSPCON2= 0;
+        SSPCON2 = 0;
         #endif
        
         #if defined(__16F1459)  || \
@@ -268,7 +270,7 @@ void I2C_init(u8 module, u8 mode, u16 sora)
     #if defined(__18f46j50) || defined(__18f46j53) || defined(__18f47j53)
     else if (module == I2C2)
     {    
-        SSP2CON2= 0;
+        SSP2CON2 = 0;
         PIR3bits.SSP2IF = 0;                // MSSP Interrupt Flag
         PIR3bits.BCL2IF = 0;                // Bus Collision Interrupt Flag
     }
@@ -302,7 +304,7 @@ void I2C_init(u8 module, u8 mode, u16 sora)
     Datasheet, figure 19-23
     ------------------------------------------------------------------*/
 
-u8 I2C_writeChar(u8 module, u8 value)
+u8 I2C_write(u8 module, u8 value)
 {
     I2C_idle(module);                   // Wait the MSSP module is inactive
     
@@ -347,6 +349,37 @@ u8 I2C_writeChar(u8 module, u8 value)
     return 0;
 }
 
+// i2caddress has to be a 7-bit address
+u8 I2C_writeChar(u8 module, u8 i2caddress, u8 writefrom, u8 val)
+{
+    u8 r;
+    
+    I2C_start(module);
+    I2C_write(module, (i2caddress << 1) & 0xFE); // write
+    I2C_write(module, writefrom);
+    r = I2C_write(module, val);
+    I2C_stop(module);
+    
+    return r;
+}
+
+// i2caddress has to be a 7-bit address
+u8 I2C_writeBytes(u8 module, u8 i2caddress, u8 writefrom, u8 *buffer, u8 length)
+{
+    u8 i, r;
+
+    I2C_start(module);
+    r = I2C_write(module, (i2caddress << 1) & 0xFE); // write
+    if (r)
+    {
+        I2C_write(module, writefrom);
+        for (i = 0; i < length; i++)
+            I2C_write(module, buffer[i]);
+    }
+    I2C_stop(module);
+    return r;
+}
+
 /*  --------------------------------------------------------------------
     ---------- Get a byte from the slave
     --------------------------------------------------------------------
@@ -363,7 +396,7 @@ u8 I2C_writeChar(u8 module, u8 value)
     Fixed by Rolf Ziegler
     ------------------------------------------------------------------*/
 
-u8 I2C_readChar(u8 module)
+u8 I2C_read(u8 module)
 {
     I2C_idle(module);                   // Wait the MSSP module is inactive
 
@@ -423,6 +456,47 @@ u8 I2C_readChar(u8 module)
     #endif
 
     return 0;
+}
+
+// i2caddress has to be a 7-bit address
+u8 I2C_readChar(u8 module, u8 i2caddress, u8 readfrom)
+{
+    u8 val;
+    
+    I2C_start(module);
+    I2C_write(module, (i2caddress << 1) & 0xFE); // write
+    I2C_write(module, readfrom);
+    //I2C_stop(module);
+    I2C_start(module);
+    I2C_write(module, (i2caddress << 1) | 0x01); // read
+    val = I2C_read(module);
+    I2C_sendNack(module);
+    I2C_stop(module);
+    
+    return val;
+}
+
+// i2caddress has to be a 7-bit address
+u8 I2C_readBytes(u8 module, u8 i2caddress, u8 readfrom, u8 *buffer, u8 length)
+{
+    u8 i, r;
+
+    I2C_start(module);
+    r = I2C_write(module, (i2caddress << 1) & 0xFE); // write
+    if (r)
+    {
+        I2C_write(module, readfrom);
+        //I2C_stop(module);
+        I2C_start(module);
+        I2C_write(module, (i2caddress << 1) | 0x01); // read
+        for(i = 0; i < length; i++)
+        {
+            buffer[i] = I2C_read(module);
+            (i == length - 1) ? I2C_sendNack(module) : I2C_sendAck(module);
+        }
+    }
+    I2C_stop(module);
+    return r;
 }
 
 /*  --------------------------------------------------------------------

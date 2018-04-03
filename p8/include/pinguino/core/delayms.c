@@ -93,7 +93,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
     u16 d1ms, remain;
     u8  dloop1, dloop2;
     u8  d1, d2;
-    u8 status = isInterrupts();
+    //u8 status = isInterrupts();
         
     /**
     31000 Hz < Freq. 8-bit PIC Clock < 64MHz
@@ -112,7 +112,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
     remain = d1ms - umul16(dloop2, KLOOP);
     dloop1 = udiv32(remain + KLOOPD2, KLOOPD1); // @48MHz : XC8=150 / SDCC=210
 
-    if (status) noInterrupts();    
+    //if (status) noInterrupts();    
     while(--ms)                                 // 10 cycles
     {
         d1 = dloop1 + 1;                        // 2 cycles (incf+movwf)
@@ -125,7 +125,7 @@ void Delayms(u16 ms)                            // 4 cycles (incl. return)
         while(--d2)                             // KLOOPD2
             while(--d1);                        // KLOOPD1 and then KLOOP
     }
-    if (status) interrupts();    
+    //if (status) interrupts();    
 }
 
 #endif /* __DELAYMS_C__ */

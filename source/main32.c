@@ -58,8 +58,9 @@ int main()
     // Configure pins
     IOsetDigital();
     IOsetSpecial();
-    #if defined(__SERIAL__) || defined(__SPI__) || \
-        defined(__PWM__)    || defined(__AUDIO__)
+    #if defined(__SERIAL__) || defined(__SPI__)   || \
+        defined(__PWM__)    || defined(__SERVO__) || \
+        defined(__AUDIO__)
     IOsetRemap();
     #endif
 
@@ -93,8 +94,8 @@ int main()
     SPI_init();
     #endif    
     
-    #ifdef __SERVOS__
-    servos_init();
+    #ifdef __SERVO__
+    servo_init();
     #endif    
 
     #ifdef __USBCDC__
@@ -113,6 +114,8 @@ int main()
     {
         #if defined(__USBPOLLING__)
         usb_device_tasks();
+        // otherwise we're in interrupt mode and
+        // USBInterrupt() is called (see lkr/ISR_wrapper.S, line 165)
         #endif
  
         loop();

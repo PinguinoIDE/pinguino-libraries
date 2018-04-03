@@ -1,4 +1,4 @@
-/*	----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     FILE:			trigo.c
     PROJECT:		pinguino
     PURPOSE:		optimized trigonometric calculation
@@ -6,12 +6,12 @@
     PROGRAMER:		Regis Blanchot
     FIRST RELEASE:	07 Apr. 2012
     LAST RELEASE:	18 Mar. 2014
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     CHANGELOG : 
     Apr 07 2012 - initial release, sin and cos
     Feb 08 2013 - added some comments for better understanding
     Mar 18 2014 - added fast and accurate float sine/cosine
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -25,7 +25,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __TRIGO_C
 #define __TRIGO_C

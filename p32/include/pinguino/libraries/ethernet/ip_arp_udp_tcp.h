@@ -8,35 +8,38 @@
  * adapted to Pinguino Project by Andre Gentric - July 2014
  *
  *********************************************/
-//@{
-#ifndef IP_ARP_UDP_TCP_H
-#define IP_ARP_UDP_TCP_H
+
+#ifndef IPARPUDPTCP_H
+#define IPARPUDPTCP_H
+
+#include <typedef.h>
 
 // you must call this function once before you use any of the other functions:
-extern void init_ip_arp_udp_tcp(uint8_t *mymac,uint8_t *myip,uint8_t wwwp);
+void init_ip_arp_udp_tcp(u8 *mymac,u8 *myip,u8 wwwp);
 //
-extern void www_server_reply(uint8_t *buf,uint16_t dlen);
+void www_server_reply(u8 spi, u8 *buf,u16 dlen);
 
-extern uint8_t eth_type_is_arp_and_my_ip(uint8_t *buf,uint16_t len);
-extern uint8_t eth_type_is_ip_and_my_ip(uint8_t *buf,uint16_t len);
-extern void make_arp_answer_from_request(uint8_t *buf);
-extern void make_echo_reply_from_request(uint8_t *buf,uint16_t len);
-extern void make_udp_reply_from_request(uint8_t *buf,char *data,uint8_t datalen,uint16_t port);
+void init_len_info(u8 *buf);
+u16 get_tcp_data_pointer(void);
+u16 fill_tcp_data(u8 *buf,u16 pos, const char *s);
+
+u8 eth_type_is_arp_and_my_ip(u8 *buf,u16 len);
+u8 eth_type_is_ip_and_my_ip(u8 *buf,u16 len);
+
+void make_arp_answer_from_request(u8 spi, u8 *buf);
+void make_echo_reply_from_request(u8 spi, u8 *buf,u16 len);
+void make_udp_reply_from_request(u8 spi, u8 *buf,char *data,u8 datalen,u16 port);
+void make_tcp_synack_from_syn(u8 spi, u8 *buf);
+void make_tcp_ack_with_data_noflags(u8 spi, u8 *buf,u16 dlen);
+void make_tcp_ack_from_any(u8 spi, u8 *buf, s16 datlentoack,u8 addflags);
+//void make_tcp_ack_with_data(u8 spi, u8 *buf,u16 dlen);
+void make_arp_request(u8 spi, u8 *buf, u8 *server_ip);
+
+u8 arp_packet_is_myreply_arp ( u8 *buf );
+u16 tcp_get_dlength ( u8 *buf );
+
+void tcp_client_send_packet(u8 spi, u8 *buf,u16 dest_port, u16 src_port, u8 flags, u8 max_segment_size, 
+u8 clear_seqck, u16 next_ack_num, u16 dlength, u8 *dest_mac, u8 *dest_ip);
 
 
-extern void make_tcp_synack_from_syn(uint8_t *buf);
-extern void init_len_info(uint8_t *buf);
-extern uint16_t get_tcp_data_pointer(void);
-extern uint16_t fill_tcp_data(uint8_t *buf,uint16_t pos, const char *s);
-extern void make_tcp_ack_with_data_noflags(uint8_t *buf,uint16_t dlen);
-extern void make_tcp_ack_from_any(uint8_t *buf,int16_t datlentoack,uint8_t addflags);
-//extern void make_tcp_ack_with_data(uint8_t *buf,uint16_t dlen);
-extern void make_arp_request(uint8_t *buf, uint8_t *server_ip);
-extern uint8_t arp_packet_is_myreply_arp ( uint8_t *buf );
-extern void tcp_client_send_packet(uint8_t *buf,uint16_t dest_port, uint16_t src_port, uint8_t flags, uint8_t max_segment_size, 
-uint8_t clear_seqck, uint16_t next_ack_num, uint16_t dlength, uint8_t *dest_mac, uint8_t *dest_ip);
-extern uint16_t tcp_get_dlength ( uint8_t *buf );
-
-
-#endif /* IP_ARP_UDP_TCP_H */
-//@}
+#endif // IPARPUDPTCP_H

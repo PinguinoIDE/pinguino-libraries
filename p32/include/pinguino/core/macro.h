@@ -9,14 +9,25 @@
 #ifndef __MACRO_H
 #define __MACRO_H
 
+    // Tell the compiler the next function must be MIPS32.
+    // Typically needed by all functions such as interrupt handlers
+    // which cannot be MIPS16 functions when -mips16 option is enabled.
+    // Usage : void MIPS32 myfunction(...)
+    #define MIPS32          __attribute__((noinline,nomips16))
+
+    // Make next statement or block Atomic
+    #define ATOMIC //u32 status; for(asm volatile("di %0" : "r="(status)); !status; asm volatile("ei %0" : "r="(status)))
+
     /// ASM
     #include <mips.h>
     #define interrupts()        EnableInterrupt()
     #define noInterrupts()      DisableInterrupt()
     #define isInterrupts()      (true)
-
     //Already defined ???
     #define nop()               asm volatile("nop")
+
+    /// C
+    #define noEndLoop()             while(1)
 
     /// BYTES
 

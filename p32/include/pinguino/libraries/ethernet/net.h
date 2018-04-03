@@ -14,11 +14,6 @@
  * Modified: nuelectronics.com -- Ethershield for Arduino
  *********************************************/
 
-// notation: _P = position of a field
-//           _V = value of a field
-
-//@{
-
 #ifndef NET_H
 #define NET_H
 
@@ -38,7 +33,6 @@
 //
 #define ETH_DST_MAC 0
 #define ETH_SRC_MAC 6
-
 
 // ******* ARP *******
 #define ETH_ARP_OPCODE_REPLY_H_V 0x0
@@ -81,7 +75,6 @@
 #define ARP_DST_MAC_P			0x20
 #define ARP_DST_IP_P			0x26
 
-
 // ******* IP *******
 #define IP_HEADER_LEN		20
 
@@ -112,6 +105,7 @@
 #define IP_SRC_P 			0x1a
 #define IP_DST_P 			0x1e
 #define IP_HEADER_LEN_VER_P 0xe
+
 // ******* ICMP *******
 #define ICMP_TYPE_ECHOREPLY_V 0
 #define ICMP_TYPE_ECHOREQUEST_V 8
@@ -137,7 +131,6 @@
 //  plain len without the options:
 #define TCP_HEADER_LEN_PLAIN 20
 
-		
 #define TCP_FLAG_FIN_V		0x01
 #define TCP_FLAGS_FIN_V		0x01
 #define TCP_FLAGS_SYN_V		0x02
@@ -174,7 +167,4 @@
 #define TCP_OPTIONS_P 		0x36
 #define TCP_DATA_P			0x36
 
-//
-#endif
-//@}
-
+#endif // NET_H

@@ -1,14 +1,67 @@
-Serial.begin Serial_begin#include <serial.c>
-Serial.init Serial_begin#include <serial.c>
-Serial.available Serial_available#include <serial.c>
-Serial.flush Serial_flush#include <serial.c>
-Serial.read Serial_read#include <serial.c>#define SERIALREAD
-Serial.write Serial_putchar#include <serial.c>
-Serial.printChar Serial_putchar#include <serial.c>
-Serial.print Serial_print#include <serial.c>#define SERIALPRINTSTRING
-Serial.println Serial_println#include <serial.c>#define SERIALPRINTLN
-Serial.printNumber Serial_printNumber#include <serial.c>#define SERIALPRINTNUMBER
-Serial.printFloat Serial_printFloat#include <serial.c>#define SERIALPRINTFLOAT
-Serial.printf Serial_printf#include <serial.c>#define SERIALPRINTF
-Serial.getKey Serial_getkey#include <serial.c>#define SERIALGETKEY
-Serial.getString Serial_getstring#include <serial.c>#define SERIALGETSTRING
+Serial.begin Serial1_begin#include <serial.c>#define SERIALUSEPORT1
+Serial.init Serial1_begin#include <serial.c>#define SERIALUSEPORT1
+Serial.available Serial1_available#include <serial.c>#define SERIALAVAILABLE
+Serial.flush Serial1_flush#include <serial.c>
+Serial.read Serial1_readChar#include <serial.c>#define SERIALREAD
+Serial.readChar Serial1_readChar#include <serial.c>#define SERIALREAD
+Serial.write Serial1_printChar#include <serial.c>
+Serial.printChar Serial1_printChar#include <serial.c>
+Serial.print Serial1_print#include <serial.c>#define SERIALPRINTSTRING
+Serial.println Serial1_println#include <serial.c>#define SERIALPRINTLN
+Serial.printNumber Serial1_printNumber#include <serial.c>#define SERIALPRINTNUMBER
+Serial.printFloat Serial1_printFloat#include <serial.c>#define SERIALPRINTFLOAT
+Serial.printf Serial1_printf#include <serial.c>#define SERIALPRINTF1
+Serial.printx Serial1_printX#include <serial.c>#define SERIALPRINTX
+Serial.getKey Serial1_getKey#include <serial.c>#define SERIALGETKEY
+Serial.getString Serial1_getString#include <serial.c>#define SERIALGETSTRING
+
+Serial1.begin Serial1_begin#include <serial.c>#define SERIALUSEPORT1
+Serial1.init Serial1_begin#include <serial.c>#define SERIALUSEPORT1
+Serial1.available Serial1_available#include <serial.c>#define SERIALAVAILABLE1
+Serial1.flush Serial1_flush#include <serial.c>
+Serial1.read Serial1_readChar#include <serial.c>#define SERIALREAD
+Serial1.readChar Serial1_readChar#include <serial.c>#define SERIALREAD
+Serial1.write Serial1_printChar#include <serial.c>
+Serial1.printChar Serial1_printChar#include <serial.c>
+Serial1.print Serial1_print#include <serial.c>#define SERIALPRINTSTRING
+Serial1.println Serial1_println#include <serial.c>#define SERIALPRINTLN
+Serial1.printNumber Serial1_printNumber#include <serial.c>#define SERIALPRINTNUMBER
+Serial1.printFloat Serial1_printFloat#include <serial.c>#define SERIALPRINTFLOAT
+Serial1.printf Serial1_printf#include <serial.c>#define SERIALPRINTF1
+Serial1.printx Serial1_printX#include <serial.c>#define SERIALPRINTX
+Serial1.getKey Serial1_getKey#include <serial.c>#define SERIALGETKEY
+Serial1.getString Serial1_getString#include <serial.c>#define SERIALGETSTRING
+
+Serial2.begin Serial2_begin#include <serial.c>#define SERIALUSEPORT2
+Serial2.init Serial2_begin#include <serial.c>#define SERIALUSEPORT2
+Serial2.available Serial2_available#include <serial.c>#define SERIALAVAILABLE2
+Serial2.flush Serial2_flush#include <serial.c>
+Serial2.read Serial2_readChar#include <serial.c>#define SERIALREAD
+Serial2.readChar Serial2_readChar#include <serial.c>#define SERIALREAD
+Serial2.write Serial2_printChar#include <serial.c>
+Serial2.printChar Serial2_printChar#include <serial.c>
+Serial2.print Serial2_print#include <serial.c>#define SERIALPRINTSTRING
+Serial2.println Serial2_println#include <serial.c>#define SERIALPRINTLN
+Serial2.printNumber Serial2_printNumber#include <serial.c>#define SERIALPRINTNUMBER
+Serial2.printFloat Serial2_printFloat#include <serial.c>#define SERIALPRINTFLOAT
+Serial2.printf Serial2_printf#include <serial.c>#define SERIALPRINTF2
+Serial2.printx Serial2_printX#include <serial.c>#define SERIALPRINTX
+Serial2.getKey Serial2_getKey#include <serial.c>#define SERIALGETKEY
+Serial2.getString Serial2_getString#include <serial.c>#define SERIALGETSTRING
+
+SerialSW.begin SerialSW_begin#include <serial.c>#define SERIALUSEPORTSW
+SerialSW.init SerialSW_begin#include <serial.c>#define SERIALUSEPORTSW
+SerialSW.available SerialSW_available#include <serial.c>#define SERIALAVAILABLESW
+SerialSW.flush SerialSW_flush#include <serial.c>
+SerialSW.read SerialSW_readChar#include <serial.c>#define SERIALREAD
+SerialSW.readChar SerialSW_readChar#include <serial.c>#define SERIALREAD
+SerialSW.write SerialSW_printChar#include <serial.c>
+SerialSW.printChar SerialSW_printChar#include <serial.c>
+SerialSW.print SerialSW_print#include <serial.c>#define SERIALPRINTSTRING
+SerialSW.println SerialSW_println#include <serial.c>#define SERIALPRINTLN
+SerialSW.printNumber SerialSW_printNumber#include <serial.c>#define SERIALPRINTNUMBER
+SerialSW.printFloat SerialSW_printFloat#include <serial.c>#define SERIALPRINTFLOAT
+SerialSW.printf SerialSW_printf#include <serial.c>#define SERIALPRINTFSW
+SerialSW.printx SerialSW_printX#include <serial.c>#define SERIALPRINTX
+SerialSW.getKey SerialSW_getKey#include <serial.c>#define SERIALGETKEY
+SerialSW.getString SerialSW_getString#include <serial.c>#define SERIALGETSTRING

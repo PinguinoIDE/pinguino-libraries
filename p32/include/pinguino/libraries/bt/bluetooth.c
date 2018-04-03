@@ -56,8 +56,8 @@ typedef struct
 {
     u8 *command;
     u8 *data;
-    u8 *status;			// OK or ERROR
-    BT_STATUS code;		// BT_OK or BT_ERROR
+    u8 *status;			        // OK or ERROR
+    BT_STATUS code;		        // BT_OK or BT_ERROR
 } BT_RESPONSE;
 
 //	----------------------------------------------------------------------------
@@ -288,7 +288,8 @@ BT_RESPONSE BT_setAutoConnection(u8 uart_port)
 
 BT_RESPONSE BT_setUARTSpeed(u8 uart_port, u32 baud_rate)
 {
-    char *string;
+    //char *string = NULL;
+    char string[6];
 
     // Change UART settings (baud rate, data bits, stop bits, parity, stop bits, flow control)
     // Enable RTS/CTS, DTR/DSR Flow control

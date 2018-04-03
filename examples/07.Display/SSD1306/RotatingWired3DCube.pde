@@ -1,41 +1,41 @@
 /**
         Author: 	Régis Blanchot (Mar. 2014)
         Tested on:	Pinguino 47J53A & Pinguino 32MX250
-        Output:	Oled 0.96" with SSD1306 Controller
+        Output:	Oled display
         Wiring :
         
-        if SSD1306_PMP6800
+        if OLED_PMP6800
                 OLED CS     connected to GND
                 OLED RES    connected to any GPIO (D3)
                 OLED D/C    connected to Pinguino PMA1 (D4)
                 OLED W/R    connected to Pinguino PMRD/PMWR (D13)
                 OLED E/RD   connected to GND
                 OLED D[7:0] connected to Pinguino PMD[7:0] (D[31:24])
-        if SSD1306_PORT6800
+        if OLED_PORT6800
                 OLED CS     connected to GND
                 OLED RES    connected to any GPIO (D0)
                 OLED D/C    connected to any GPIO (D1)
                 OLED W/R    connected to any GPIO (D2)
                 OLED E/RD   connected to GND
                 OLED D[7:0] connected to Pinguino D[31:24]
-        if SSD1306_PMP8080 
+        if OLED_PMP8080 
                 OLED CS     connected to GND
                 OLED RES    connected to any GPIO (D3)
                 OLED D/C    connected to Pinguino PMA1 (D4)
                 OLED W/R    connected to Pinguino PMWR (D14)
                 OLED E/RD   connected to GND
                 OLED D[7:0] connected to Pinguino PMD[7:0]
-        if SSD1306_PORT8080 
+        if OLED_PORT8080 
                 OLED CS     connected to GND
                 OLED RES    connected to any GPIO (D0)
                 OLED D/C    connected to any GPIO (D1)
                 OLED W/R    connected to any GPIO (D2)
                 OLED E/RD   connected to GND
                 OLED D[7:0] connected to Pinguino D[31:24]
-        if SSD1306_I2Cx
+        if OLED_I2Cx
                 OLED SDA    connected to SDAx pin
                 OLED SCL    connected to SCLx pin
-        if SSD1306_SPIx
+        if OLED_SPIx
                 OLED SDI    connected to SDOx pin
                 OLED SCK    connected to SCKx pin
                 OLED D/C    connected to any GPIO
@@ -44,27 +44,36 @@
 **/
 
 /**
-    Load one or more fonts and active them with SSD1306.setFont()
+    Load one or more fonts and active them with OLED.setFont()
 **/
 
 #include <fonts/fixednums5x7.h>
 
+/*DISPLAY CONTROLLER*******************************************/
+#define OLED_SH1106
+//#define OLED_SSD1306
+/*DISPLAY SIZE*************************************************/
+//#define OLED_128X32
+#define OLED_128X64
+/**************************************************************/
+
 #define NBVERTICES  8
 #define NBFACES     6
-#define NBEDGES  	NBVERTICES + NBFACES - 2
-#define DISTANCE	256       // Distance eye-screen
-#define SIZE	100
+#define NBEDGES     (NBVERTICES + NBFACES - 2)
+#define DISTANCE    256.0       // Distance eye-screen
+#define SIZE        100
 
 typedef struct { float x, y, z; } point3D;
-typedef struct { float x, y;    } point2D;
+typedef struct { u16   x, y;    } point2D;
 
 point3D Point3D[NBVERTICES];  // Vertices after rotation
 point2D Point2D[NBVERTICES];  // Vertices after projection
   
-const u8 intf=SSD1306_I2C1;   // Interface
-const u16 Xoff=64, Yoff=32, Zoff=1600;
+//const u8 intf=OLED_I2C1;   // Interface
+const u8 intf=OLED_SPI2;   // Interface
+const u16 Zoff=1600;
 
-const float Vertex[NBVERTICES][3] = {
+const point3D Vertex[NBVERTICES] = {
     {-SIZE,-SIZE,-SIZE},
     { SIZE,-SIZE,-SIZE},
     { SIZE, SIZE,-SIZE},
@@ -114,9 +123,9 @@ void Rotation()
 
     for (i = 0; i < NBVERTICES; i++)
     {
-        Point3D[i].x = (matrice[0][0]*Vertex[i][0] + matrice[1][0]*Vertex[i][1] + matrice[2][0]*Vertex[i][2]);
-        Point3D[i].y = (matrice[0][1]*Vertex[i][0] + matrice[1][1]*Vertex[i][1] + matrice[2][1]*Vertex[i][2]);
-        Point3D[i].z = (matrice[0][2]*Vertex[i][0] + matrice[1][2]*Vertex[i][1] + matrice[2][2]*Vertex[i][2]);
+        Point3D[i].x = (matrice[0][0]*Vertex[i].x + matrice[1][0]*Vertex[i].y + matrice[2][0]*Vertex[i].z);
+        Point3D[i].y = (matrice[0][1]*Vertex[i].x + matrice[1][1]*Vertex[i].y + matrice[2][1]*Vertex[i].z);
+        Point3D[i].z = (matrice[0][2]*Vertex[i].x + matrice[1][2]*Vertex[i].y + matrice[2][2]*Vertex[i].z);
     }
 }
 
@@ -130,8 +139,8 @@ void Projection()
 
     for (i = 0; i < NBVERTICES; i++)
     {
-        Point2D[i].x = (Point3D[i].x * DISTANCE) / (Point3D[i].z + Zoff) + Xoff;
-        Point2D[i].y = (Point3D[i].y * DISTANCE) / (Point3D[i].z + Zoff) + Yoff;
+        Point2D[i].x = (u16)((Point3D[i].x * DISTANCE) / (Point3D[i].z + Zoff)) + OLED.screen.width / 2;
+        Point2D[i].y = (u16)((Point3D[i].y * DISTANCE) / (Point3D[i].z + Zoff)) + OLED.screen.height/ 2;
     }
 }
 
@@ -141,17 +150,13 @@ void Projection()
 /// K = vision vector
 /// if K * (AB /\ BC) > 0 then ABC is visible
  
-#if 0 // defined(__PIC32MX__) || defined(PINGUINO47J53)
 u8 isVisible(u8 A, u8 B, u8 C)
 {
-    s16 prod;
+    float prod = ((Point3D[B].y - Point3D[A].y) * (Point3D[C].z - Point3D[B].z) - 
+                  (Point3D[C].y - Point3D[B].y) * (Point3D[B].z - Point3D[A].z));
     
-    prod = ((Point3D[B].y - Point3D[A].y) * (Point3D[C].z - Point3D[B].z) - 
-            (Point3D[C].y - Point3D[B].y) * (Point3D[B].z - Point3D[A].z));
-    
-    return (prod > 0 ? 1:0);
+    return ((u32)prod > 0 ? 1:0);
 }
-#endif
 
 ///
 /// Draw a polygon
@@ -159,10 +164,10 @@ u8 isVisible(u8 A, u8 B, u8 C)
 
 void drawFace(u8 A, u8 B, u8 C, u8 D)
 {
-    SSD1306.drawLine(intf, Point2D[A].x, Point2D[A].y, Point2D[B].x, Point2D[B].y);
-    SSD1306.drawLine(intf, Point2D[B].x, Point2D[B].y, Point2D[C].x, Point2D[C].y);
-    SSD1306.drawLine(intf, Point2D[C].x, Point2D[C].y, Point2D[D].x, Point2D[D].y);
-    SSD1306.drawLine(intf, Point2D[D].x, Point2D[D].y, Point2D[A].x, Point2D[A].y);
+    OLED.drawLine(intf, Point2D[A].x, Point2D[A].y, Point2D[B].x, Point2D[B].y);
+    OLED.drawLine(intf, Point2D[B].x, Point2D[B].y, Point2D[C].x, Point2D[C].y);
+    OLED.drawLine(intf, Point2D[C].x, Point2D[C].y, Point2D[D].x, Point2D[D].y);
+    OLED.drawLine(intf, Point2D[D].x, Point2D[D].y, Point2D[A].x, Point2D[A].y);
 }
 
 ///
@@ -179,9 +184,7 @@ void drawObject()
         B = Face[i][1];
         C = Face[i][2];
         D = Face[i][3];
-        #if 0 // defined(__PIC32MX__) || defined(PINGUINO47J53)
-        if (isVisible(A, B, C))
-        #endif
+        //if (isVisible(A, B, C))
             drawFace(A, B, C, D);
     }
 }
@@ -195,23 +198,23 @@ void setup()
     pinMode(USERLED, OUTPUT);
 
     // if 6800- or 8080-interface and PMP is used
-    //SSD1306.init(MODULE, 1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
+    //OLED.init(intf, 1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
     
     // if i2c interface is used
-    SSD1306.init(intf, 0x78); // i2c address of the display
+    //OLED.init(intf, 0x78); // i2c address of the display
     
     // if 6800- or 8080-interface (but not PMP) is used
-    //void SSD1306.init(u8 module, u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
-    //SSD1306.init(MODULE, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7);
+    //void OLED.init(u8 module, u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
+    //OLED.init(intf, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7);
 
     // if SPI Hardware is used (you need to connect pins SDO, SCK and CS if needed)
-    //SSD1306.init(MODULE, 4, 5); // DC [, RST]
+    OLED.init(intf, 4, 5); // DC [, RST]
 
     // if SPI Software is used
-    //SSD1306.init(MODULE, 0,1,2,3,5); // SDA, SCK, CS, DC, RST
+    //OLED.init(intf, 0,1,2,3,5); // SDA, SCK, CS, DC, RST
         
     // set the fixednums7x15 font (no letters)
-    SSD1306.setFont(intf, fixednums5x7);
+    OLED.setFont(intf, fixednums5x7);
 }
 
 ///
@@ -235,10 +238,10 @@ void loop()
         Projection();
         
         // display
-        SSD1306.clearScreen(intf);
-        SSD1306.printNumber(intf, gFps, DEC);
+        OLED.clearScreen(intf);
+        OLED.printNumber(intf, gFps, DEC);
         drawObject();
-        SSD1306.refresh(intf);
+        OLED.refresh(intf);
 
         // one frame done !
         frame++;

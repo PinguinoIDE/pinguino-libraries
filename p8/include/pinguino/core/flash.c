@@ -6,9 +6,10 @@
                     rblanchot@gmail.com
     --------------------------------------------------------------------
     CHANGELOG:
-      -  -2008 - jp mandon - first release
-      -  -2010 - rblanchot - fixed for Pinguino IDE v9
-    08-09-2015 - rblanchot - added PINGUINO1459 support
+            2008 - jp mandon - first release
+            2010 - rblanchot - fixed for Pinguino IDE v9
+    08 Sep. 2015 - rblanchot - added PINGUINO1459 support
+    09 Jul. 2017 - Mario de Jesus Martinez Sanchez - fixed TBLPTR issue in Flash_read
     --------------------------------------------------------------------
     TODO :
     * fix 16F and 18F syntax
@@ -131,6 +132,11 @@ u16 Flash_read(u32 address)
     __asm__("TBLRD*+");
      h8 = TABLAT;
     //r.h8 = TABLAT;
+    
+    // 09 Jul. 2017 : fixed by Mario de Jesus Martinez Sanchez
+    TBLPTRU = 0;
+    TBLPTRH = 0;
+    TBLPTRL = 0;
     
     return ((h8 << 8) + l8);
     //return r.w;

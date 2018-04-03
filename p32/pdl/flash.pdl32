@@ -1,0 +1,4 @@
+Flash.erase FlashErasePage#include <flash.c>#define FLASHERASE
+Flash.read FlashRead#include <flash.c>#define FLASHREAD
+Flash.write FlashWriteWord#include <flash.c>#define FLASHWRITEWORD
+Flash.getSize FlashGetSize#include <flash.c>

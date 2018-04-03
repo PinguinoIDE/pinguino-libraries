@@ -6,7 +6,6 @@ TODO
 - [x] modifying RTCC lib. to have the same syntax for both 8- and 32-bit version.
       either RTCC.getTime(&cT); or cT = RTCC.getTime();
 - [x] renaming rtccTime type to RTCCTIME
-- [ ] renaming C++ name.other to C name_other
 
 WORK IN PROGRES
 ==================
@@ -21,6 +20,7 @@ WORK IN PROGRES
 - [ ] adding scroll routines to ST7735 lib. 
 - [x] Generating Bitnap fonts from TTF fonts to use with all LCD/TFT display libraries
       Tip : http://arduinoexplained.blogspot.nl/2012/05/generating-your-own-lcd-raster-fonts.html
+- [ ] renaming C++ name.other to C name_other
       
 DONE
 ==================

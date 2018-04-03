@@ -284,9 +284,10 @@ void IO_remap(void)
 
     #elif defined(__18f27j53) || defined(__18f47j53)
 
+        //SystemUnlock();
         EECON2 = 0x55;
         EECON2 = 0xAA;
-        PPSCONbits.IOLOCK = 0;			// Turn on PPS Write Protect
+        PPSCONbits.IOLOCK = 0;          // Turn on PPS Write Protect
 
         /**
          * datasheet 18f47j53 p296
@@ -307,10 +308,17 @@ void IO_remap(void)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR4 = 10;                     // RP4 (RB1) -> SDO2 (func. num. 10)
 
+        #if defined(SERIALUSEPORT2)
+        RPINR16 = 4;                    // RP4 (RB1) <- RX2
+        RPOR3 = 6;                      // RP3 (RB0) -> TX2 (func. num. 6)
+        //RPINR17 = ;                     // EUSART2 Clock Input (CKR2)
+        #endif
+    
+        //SystemLock();
         EECON2 = 0x55;
         EECON2 = 0xAA;
-        PPSCONbits.IOLOCK = 1;			// Turn on PPS Write Protect
-    
+        PPSCONbits.IOLOCK = 1;          // Turn on PPS Write Protect
+
     #endif
 }
 #endif // defined(__18f26j50) || defined(__18f46j50) ...

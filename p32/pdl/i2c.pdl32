@@ -11,8 +11,8 @@ I2C.wait I2C1_wait#include <i2c.c>
 I2C.start I2C1_start#include <i2c.c>
 I2C.stop I2C1_stop#include <i2c.c>
 I2C.restart I2C1_restart#include <i2c.c>
-I2C.sendnack I2C1_sendNack#include <i2c.c>
-I2C.sendack I2C1_sendAck#include <i2c.c>
+I2C.sendNack I2C1_sendNack#include <i2c.c>
+I2C.sendAck I2C1_sendAck#include <i2c.c>
 
 I2C1.master I2C1_master#include <i2c.c>
 I2C1.slave I2C1_slave#include <i2c.c>  
@@ -27,8 +27,8 @@ I2C1.wait I2C1_wait#include <i2c.c>
 I2C1.start I2C1_start#include <i2c.c>
 I2C1.stop I2C1_stop#include <i2c.c>
 I2C1.restart I2C1_restart#include <i2c.c>
-I2C1.sendnack I2C1_sendNack#include <i2c.c>
-I2C1.sendack I2C1_sendAck#include <i2c.c>
+I2C1.sendNack I2C1_sendNack#include <i2c.c>
+I2C1.sendAck I2C1_sendAck#include <i2c.c>
 
 I2C2.master I2C2_master#include <i2c.c>
 I2C2.slave I2C2_slave#include <i2c.c>  
@@ -43,8 +43,8 @@ I2C2.wait I2C2_wait#include <i2c.c>
 I2C2.start I2C2_start#include <i2c.c>
 I2C2.stop I2C2_stop#include <i2c.c>
 I2C2.restart I2C2_restart#include <i2c.c>
-I2C2.sendnack I2C2_sendNack#include <i2c.c>
-I2C2.sendack I2C2_sendAck#include <i2c.c>
+I2C2.sendNack I2C2_sendNack#include <i2c.c>
+I2C2.sendAck I2C2_sendAck#include <i2c.c>
 
 Wire.begin I2C1_begin#include <i2c.c>#define WIRE
 Wire.write I2C1_inBuffer#include <i2c.c>

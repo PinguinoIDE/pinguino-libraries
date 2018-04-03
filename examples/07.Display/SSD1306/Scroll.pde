@@ -42,14 +42,16 @@
         if SSD1306_SPI4
 **/
 
-#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_8080 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_I2C  | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI3 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI4 | SSD1306_128X64)
+/*DISPLAY CONTROLLER*******************************************/
+#define OLED_SH1106
+//#define OLED_SSD1306
+/*DISPLAY SIZE*************************************************/
+//#define OLED_128X32
+#define OLED_128X64
+/**************************************************************/
 
 /**
-    Load one or more fonts and active them with SSD1306.setFont()
+    Load one or more fonts and active them with OLED.setFont()
 **/
 
 #include <fonts/font6x8.h>
@@ -59,23 +61,26 @@
 //#include <fonts/font16x8.h>         // wrong direction
 //#include <fonts/font16x16.h>        // ???
 
+//const u8 intf=OLED_I2C1;   // Interface
+const u8 intf=OLED_SPI2;   // Interface
+
 void setup()
 {
-    SSD1306.init(3, 4);
-    SSD1306.clearScreen();
-    SSD1306.setFont(font6x8);
-    SSD1306.setCursor(0, 4);
-    SSD1306.print("Pinguino\r\n");
-    SSD1306.refresh();
+    OLED.init(intf, 4, 5);
+    OLED.clearScreen(intf);
+    OLED.setFont(intf, font6x8);
+    OLED.setCursor(intf, 0, 4);
+    OLED.print(intf, "Pinguino\r\n");
+    OLED.refresh(intf);
 }
 
 void loop()
 {
-    SSD1306.scrollRight();
+    OLED.scrollRight(intf);
     delay(1800);
-    SSD1306.stopScroll();
+    OLED.stopScroll(intf);
     
-    SSD1306.scrollLeft();
+    OLED.scrollLeft(intf);
     delay(1800);
-    SSD1306.stopScroll();
+    OLED.stopScroll(intf);
 }

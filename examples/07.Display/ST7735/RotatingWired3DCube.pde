@@ -154,7 +154,8 @@ void setup()
     //System.setCpuFrequency(60000000);
     //System.setPeripheralFrequency(60000000);
     
-    ST7735.init(SPIMODULE, 7);// Hard. SPI : DC
+    //ST7735.init(SPIMODULE, 24);// Hard. SPI : DC for Pinguino Torda
+    ST7735.init(SPIMODULE, 19);// Hard. SPI : DC=SCL1 for PIC32-Pinguino
     //ST7735.init(SPIMODULE, 7, 1, 2, 0); // Soft. SPI : DC, SDA, SCK, CS
 
     ST7735.setFont(SPIMODULE, fixednums5x7);

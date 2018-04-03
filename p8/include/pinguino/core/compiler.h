@@ -89,6 +89,7 @@
 
 
     #ifdef _16F1459
+        #define __16f1459
         #define PROC_NAME      "16F1459"
     #endif
     #ifdef __18f13k50

@@ -1,5 +1,5 @@
 /* $Id: getsuart.c,v 1.1 2003/12/09 22:43:28 GrosbaJ Exp $ */
-/* $Id: putsuart.c,v 1.1 2003/12/09 22:43:28 GrosbaJ Exp $ */
+/* $Id: swserial_print.c,v 1.1 2003/12/09 22:43:28 GrosbaJ Exp $ */
 // Adaptation from Free Open Source Codes Forge and Sharing - www.codeforge.com
 // Functions to get RS232 transmission without UART hardware
 // RXD pin is defined on RB5, TXD on RB4
@@ -112,7 +112,7 @@ void DelayTXBitUART(void)
 void DelayRXHalfBitUART(void)
 {
 //delay = (((2*OSC_FREQ)/(8*BAUDRATE))+1)/2 - 9 Tcy
-    delay10tcy(30); //30 +4nop
+    delay10tcy(30); //30 + 4 nop
     __asm
     nop
     nop
@@ -248,42 +248,51 @@ void DelayTXBitUART(void)
 
 unsigned char getcUART(void)
 {
-extern unsigned char uartdata;
-int i;
-//unsigned char temp;
-uartdata=0;
-while (SW_PORT_RXDpin){
-	while (SW_PORT_RXDpin);
-	DelayRXHalfBitUART();
-}
-/*      __asm
-	      banksel _PORTB
-	beginloop:
-		  btfsc _PORTB,5
-		  goto beginloop
-		  call DelayRXHalfBitUART
-	  __endasm;
-*/
-for(i=0; i<8; i++){	// data reading
-    DelayRXBitUART();
-//    uartdata = uartdata | (SW_PORT_RXDpin<<i);	//bits are written one by one
-      __asm
-        banksel _SW_PORT
-        btfss   _SW_PORT,RXDpin         ; Set or clear the carry bit
-        bcf             STATUS,0        ; according to the state of the
-        btfsc   _SW_PORT,RXDpin         ; RXD I/O pin
-        bsf             STATUS,0
-        banksel _uartdata
-        rrcf    _uartdata,F              ; Rotate the carry into data
-	  __endasm;
-}
-      __asm
-        banksel _uartdata
-        movf   _uartdata,W,B
-	  __endasm;
-DelayRXBitUART(); // stop bit
-//		swserial_printf("%c", uartdata);
-return uartdata;
+    extern unsigned char uartdata;
+    int i;
+    //unsigned char temp;
+
+    uartdata=0;
+
+    while (SW_PORT_RXDpin)
+    {
+        while (SW_PORT_RXDpin);
+        DelayRXHalfBitUART();
+    }
+
+    /*      __asm
+              banksel _PORTB
+        beginloop:
+              btfsc _PORTB,5
+              goto beginloop
+              call DelayRXHalfBitUART
+          __endasm;
+    */
+
+    // data reading
+    // bits are written one by one
+    for(i=0; i<8; i++)
+    {
+        DelayRXBitUART();
+        //uartdata = uartdata | (SW_PORT_RXDpin<<i);
+          __asm
+            banksel _SW_PORT
+            btfss   _SW_PORT,RXDpin         ; Set or clear the carry bit
+            bcf     STATUS,0                ; according to the state of the
+            btfsc   _SW_PORT,RXDpin         ; RXD I/O pin
+            bsf     STATUS,0
+            banksel _uartdata
+            rrcf    _uartdata,F             ; Rotate the carry into data
+          __endasm;
+    }
+          __asm
+            banksel _uartdata
+            movf   _uartdata,W,B
+          __endasm;
+
+    DelayRXBitUART(); // stop bit
+    //		swserial_printf("%c", uartdata);
+    return uartdata;
 }
 
 /* **********************************************************************
@@ -302,30 +311,31 @@ return uartdata;
 *********************************************************************** */
 
 
-void putcUART (unsigned char uartdat)
+void swserial_printChar (unsigned char uartdat)
 {
-int i;
-//unsigned char temp;
-uartdata=uartdat;
-SW_PORT_TXDpin=1;
-DelayTXBitUART();
-SW_PORT_TXDpin=0; //start bit
-DelayTXBitUART();
-for(i=0;i < 8; i++) {
-      __asm
+    int i;
+
+    uartdata=uartdat;
+    SW_PORT_TXDpin=1;
+    DelayTXBitUART();
+    SW_PORT_TXDpin=0; //start bit
+    DelayTXBitUART();
+    for(i=0;i < 8; i++)
+    {
+        __asm
         banksel _uartdata
-        rrcf    _uartdata,F              ; Rotate next bit into carry
+        rrcf    _uartdata,F     ; Rotate next bit into carry
         banksel _SW_PORT
-        btfss   STATUS,0                ; Set or clear TXD pin according
-        bcf     _SW_PORT,TXDpin  ; to what is in the carry
+        btfss   STATUS,0        ; Set or clear TXD pin according
+        bcf     _SW_PORT,TXDpin ; to what is in the carry
         btfsc   STATUS,0
         bsf     _SW_PORT,TXDpin
-      __endasm;
-//    SW_PORT_TXDpin= (uartdata>>i) & 0x01;
-	DelayTXBitUART();
-}
-SW_PORT_TXDpin=1;
-DelayTXBitUART();
+        __endasm;
+        //SW_PORT_TXDpin= (uartdata>>i) & 0x01;
+        DelayTXBitUART();
+    }
+    SW_PORT_TXDpin=1;
+    DelayTXBitUART();
 }
 
 void swserial_printf(char *fmt, ...)
@@ -333,7 +343,7 @@ void swserial_printf(char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	pprintf(putcUART, fmt, args);
+	pprintf(swserial_printChar, fmt, args);
 	va_end(args);
 }
 
@@ -347,33 +357,32 @@ void swserial_printf(char *fmt, ...)
 ********************************************************************/
 unsigned char * getsUART(void)
 {
-	static unsigned char buffer[80]; // Need static attribute, because a function can not return
-	                      // local array without static attribute.
+    // Need static attribute, because a function can not return
+    // local array without static attribute.
+	static unsigned char buffer[80];
 	unsigned char c;
 	unsigned char i = 0;
 
 	do {
 		c = getcUART();
 		swserial_printf("%c", c);
-		buffer[i++] = c;
+        buffer[i++] = c;
 	} while (c != '\r');
 	buffer[i] = '\0';
 	return (buffer);
-
 }
 
 /**********************************************************************
-*    Function Name:  putsUART                                         *
+*    Function Name:  swserial_print                                         *
 *    Return Value:   void                                             *
 *    Parameters:     data: pointer to string of data                  *
 *    Description:    This routine transmits a string of characters    *
 *                    to the UART data byte including the null.        *
 **********************************************************************/
-void putsUART( char *datx)
+void swserial_print( char *datx)
 {
-  do
-  {    // Transmit a byte
-    putcUART(*datx);
-  } while( *datx++ );
+    while (*datx)
+        swserial_printChar(*datx++);
 }
-#endif
+
+#endif // __SWSERIAL__

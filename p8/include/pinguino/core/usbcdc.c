@@ -100,9 +100,9 @@ void CDCbegin(u32 baudrate)
     UEP7=0;
 
     #if !defined __16F1459
-        UEP8=0;UEP9=0;
-        UEP10=0;UEP11=0;UEP12=0;
-        UEP13=0;UEP14=0;UEP15=0;
+    UEP8=0;UEP9=0;
+    UEP10=0;UEP11=0;UEP12=0;
+    UEP13=0;UEP14=0;UEP15=0;
     #endif
 
     Delayms(2000);
@@ -205,6 +205,10 @@ u8 CDCread(u8* buffer, u8 len)
     
     // Only Process if we own the buffer (aka not own by SIE)
     if (!CONTROL_LINE) return 0;
+    
+    // Reset reception buffer
+    for (i=0; i < sizeof(CDCRxBuffer); i++)
+        CDCRxBuffer[i] = 0;
     
     // Only process if a serial device is connected
     if (!EP_OUT_BD(USB_CDC_DATA_EP_NUM).Stat.UOWN)
@@ -369,7 +373,7 @@ u8* CDCgetstring(void)
  * called from main.c
  **********************************************************************/
  
-void CDC_interrupt(void)
+void cdc_interrupt(void)
 {
     #if defined(__18f25k50) || defined(__18f45k50)
     if(PIR3bits.USBIF)

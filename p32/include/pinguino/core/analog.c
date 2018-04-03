@@ -31,31 +31,7 @@
 #ifndef __ANALOG__
 #define __ANALOG__
 
-#define pA	0
-#define pB	1
-#define pC	2
-#define pD	3
-#define pE	4
-#define pF	5
-#define pG	6
-
-#define _0	1<<0
-#define _1	1<<1
-#define _2	1<<2
-#define _3	1<<3
-#define _4	1<<4
-#define _5	1<<5
-#define _6	1<<6
-#define _7	1<<7
-#define _8	1<<8
-#define _9	1<<9
-#define _10	1<<10
-#define _11	1<<11
-#define _12	1<<12
-#define _13	1<<13
-#define _14	1<<14
-#define _15	1<<15
-#define nil 1<<16
+#include <digital.h>
 
 #if defined(PIC32_PINGUINO)
 
@@ -119,8 +95,8 @@ u16 __analogmask[]={0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
                     0x0020,0x0010,0x0008,0x0004,0x0002,0x0001,0x0000,0x0000,
                     0x0100,0x0200,0x0400,0x0800,0x0000,0x0000,0x0000,0x1000,
                     0x2000,0x4000,0x8000};
-u16 __bufmask[]=   {0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,				  
-                    0x0014,0x0010,0x000C,0x0008,0x0004,0x0000,0x0000,0x0000,				  
+u16 __bufmask[]=   {0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
+                    0x0014,0x0010,0x000C,0x0008,0x0004,0x0000,0x0000,0x0000,
                     0x001E,0x0022,0x0026,0x002A,0x0000,0x0000,0x0000,0x002E,
                     0x0032,0x0036,0x003A};					
 #endif
@@ -131,7 +107,7 @@ u16 __analogmask[]={0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
                     0x0800,0x0000,0x0000,0x0000,0x1000,0x2000,0x4000,0x8000};
 u16 __bufmask[]=   {0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
                     0x0014,0x0010,0x000C,0x0000,0x0000,0x0020,0x0024,0x0028,
-                    0x002C,0x0000,0x0000,0x0000,0x0030,0x0034,0x0038,0x003C};				    
+                    0x002C,0x0000,0x0000,0x0000,0x0030,0x0034,0x0038,0x003C};
 #endif
 
 #if defined(PIC32_PINGUINO_T795)
@@ -180,7 +156,7 @@ void SetAnalog(u8 pin)
                 case 2: ANSELCSET=__analogmask[pin];
                         TRISCSET=__analogmask[pin];
                         break;
-                }		
+                }
         #endif
     #else
     TRISBSET=__analogmask[pin];
@@ -192,21 +168,23 @@ u8 IsDigital(u8 pin)
 {
     #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
         #if defined(PINGUINO32MX250) || defined(PINGUINO32MX270)||defined(PINGUINO32MX220)
-            if (ANSELB&__analogmask[pin]) return 1;
+            if (ANSELB & __analogmask[pin]) return 1;
             else return 0;
         #else
             switch (__portanalogmask[pin])
-                {
-                case 1:	if (ANSELB&__analogmask[pin]) return 1;
+            {
+                case 1:
+                    if (ANSELB & __analogmask[pin]) return 1;
                         else return 0;
-                        break;
-                case 2: if (ANSELC&__analogmask[pin]) return 1;
+                    break;
+                case 2:
+                    if (ANSELC & __analogmask[pin]) return 1;
                         else return 0;
-                        break;
-                }
+                    break;
+            }
         #endif
-    #else	
-    if ((AD1PCFG&__analogmask[pin])!=0) return 1;
+    #else
+    if ((AD1PCFG & __analogmask[pin])!=0) return 1;
     else return 0;
     #endif
 }
@@ -228,7 +206,7 @@ u16 analogRead(u8 pin)
     AD1CON1bits.ADON = 1;				  // start analogic converter
     AD1CON1bits.SAMP=1;					  // start sampling
     while (!AD1CON1bits.DONE);			  // wait for conversion
-    return(ADC1BUF0+(8*(AD1CON2bits.BUFS&0x01))); // return result
+    return (ADC1BUF0 + (8 * (AD1CON2bits.BUFS & 0x01)));
 }
 
 #endif

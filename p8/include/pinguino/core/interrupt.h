@@ -218,8 +218,8 @@
         #else // x6j50, xxj53
 
         // bit 3 T1OSCEN: Timer1 Oscillator Enable bit
-        #define T1_OSC_ON			(1<<3)  // Timer 1 oscilator is shut off
-        #define T1_OSC_OFF			(0)     // Timer 1 oscilator enable on
+        #define T1_OSC_ON			(1<<3)  // Timer 1 oscilator enable
+        #define T1_OSC_OFF			(0)     // Timer 1 oscilator disable
 
         #endif
         

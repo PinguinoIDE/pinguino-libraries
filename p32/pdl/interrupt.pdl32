@@ -33,6 +33,12 @@ OnTimer3 OnTimer3#include <onevent.c>#define TMR3INT
 OnTimer4 OnTimer4#include <onevent.c>#define TMR4INT
 OnTimer5 OnTimer5#include <onevent.c>#define TMR5INT
 
+OnChangePin0 OnChangePin0#include <onevent.c>#define INT0INT
+OnChangePin1 OnChangePin1#include <onevent.c>#define INT1INT
+OnChangePin2 OnChangePin2#include <onevent.c>#define INT2INT
+OnChangePin3 OnChangePin3#include <onevent.c>#define INT3INT
+OnChangePin4 OnChangePin4#include <onevent.c>#define INT4INT
+
 Serial1Interrupt Serial1Interrupt#define __SERIAL__
 Serial2Interrupt Serial2Interrupt#define __SERIAL__
 Serial3Interrupt Serial3Interrupt#define __SERIAL__
@@ -40,11 +46,11 @@ Serial4Interrupt Serial4Interrupt#define __SERIAL__
 Serial5Interrupt Serial5Interrupt#define __SERIAL__
 Serial6Interrupt Serial6Interrupt#define __SERIAL__
 
-Timer1Interrupt Timer1Interrupt#define TMR1INT
-Timer2Interrupt Timer2Interrupt#define TMR2INT
-Timer3Interrupt Timer3Interrupt#define TMR3INT
-Timer4Interrupt Timer4Interrupt#define TMR4INT
-Timer5Interrupt Timer5Interrupt#define TMR5INT
+Timer1Interrupt Timer1Interrupt#define TMR1INTUSER
+Timer2Interrupt Timer2Interrupt#define TMR2INTUSER
+Timer3Interrupt Timer3Interrupt#define TMR3INTUSER
+Timer4Interrupt Timer4Interrupt#define TMR4INTUSER
+Timer5Interrupt Timer5Interrupt#define TMR5INTUSER
 
 Int0Interrupt Int0Interrupt#define INT0INT
 Int1Interrupt Int1Interrupt#define INT1INT

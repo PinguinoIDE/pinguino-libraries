@@ -4,7 +4,11 @@
     PURPOSE:    I2C communication for Master and Slave
     PROGRAMER:  Régis Blanchot
     --------------------------------------------------------------------
-    25 Nov. 2016 - Régis blanchot - created from i2c.c
+    25 Nov. 2016 - Régis Blanchot - created from i2c.c
+    01 Feb. 2018 - Régis Blanchot - renamed writeChar() to write()
+                                  - renamed readChar() to read()
+                                  - added new writeChar() and readChar() functions
+                                  - added I2C_writeBytes() and I2C_readBytes()
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -103,8 +107,15 @@
 void I2C_master(u8, u16);
 void I2C_slave(u8, u16);
 void I2C_init(u8, u8, u16);
-u8 I2C_writeChar(u8, u8);
-u8 I2C_readChar(u8);
+
+u8 I2C_write(u8, u8);
+u8 I2C_writeChar(u8, u8, u8, u8);
+u8 I2C_writeBytes(u8, u8, u8, u8*, u8);
+
+u8 I2C_read(u8);
+u8 I2C_readChar(u8, u8, u8);
+u8 I2C_readBytes(u8, u8, u8, u8*, u8);
+
 void I2C_wait(u8);
 void I2C_idle(u8);
 //u8 I2C_waitAck(u8);
@@ -117,7 +128,9 @@ void I2C_sendAck(u8);
 #define I2C1_master(x)      I2C_master(I2C1, x)
 #define I2C1_slave(x)       I2C_slave(I2C1, x)
 #define I2C1_init(x, y)     I2C_init(I2C1, x, y)
+#define I2C1_write(x)       I2C_write(I2C1, x)
 #define I2C1_writeChar(x)   I2C_writeChar(I2C1, x)
+#define I2C1_read()         I2C_read(I2C1)
 #define I2C1_readChar()     I2C_readChar(I2C1)
 #define I2C1_wait()         I2C_wait(I2C1)
 #define I2C1_idle()         I2C_idle(I2C1)
@@ -136,7 +149,9 @@ void I2C_sendAck(u8);
 #define I2C2_master(x)      I2C_master(I2C2, x)
 #define I2C2_slave(x)       I2C_slave(I2C2, x)
 #define I2C2_init(x, y)     I2C_init(I2C2, x, y)
+#define I2C2_write(x)       I2C_write(I2C2, x)
 #define I2C2_writeChar(x)   I2C_writeChar(I2C2, x)
+#define I2C2_read()         I2C_read(I2C2)
 #define I2C2_readChar()     I2C_readChar(I2C2)
 #define I2C2_wait()         I2C_wait(I2C2)
 #define I2C2_idle()         I2C_idle(I2C2)

@@ -12,10 +12,12 @@
                     Adapted for pinguino    (-.-) by Regis Blanchot (2013)
                     Interrupt               (0.6) by Regis Blanchot (2013)
                     Microstepping           (0.7) by Regis Blanchot (2013)
-
-    FIRST RELEASE:	17-05-2011
-    LAST RELEASE:	19-12-2013
     --------------------------------------------------------------------
+    CHANGELOG:
+    17 Nov. 2011 - Régis Blanchot - First release
+    09 Jul. 2017 - Mario de Jesus Martinez Sanchez - fixed full step issue
+    --------------------------------------------------------------------
+
     When wiring multiple stepper motors to a microcontroller,
     you quickly run out of output pins, with each motor requiring 4 connections. 
 
@@ -529,7 +531,9 @@ static void Stepper_stepMotor(u16 thisStep)
     else if (this_number_of_microsteps == 1)
     {
         // step the motor to step number 0, 2, 4, or 6:
-        i = steps_table [ (thisStep % 4) * 2 ];
+        // Fixed by Mario de Jesus Martinez Sanchez
+        //i = steps_table [ (thisStep % 4) * 2 ];
+        i = steps_table [ (thisStep % 4) * 2 + 1 ];
         Stepper_oneStep(i);
     }
 

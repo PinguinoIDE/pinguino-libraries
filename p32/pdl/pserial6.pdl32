@@ -11,5 +11,6 @@ Serial6.getKey serial6getkey#include <serial6.c>
 Serial6.getString serial6getstring#include <serial6.c>
 Serial6.available serial6available#include <serial6.c>
 Serial6.read serial6read#include <serial6.c>
+Serial6.readChar serial6read#include <serial6.c>
 Serial6.flush serial6flush#include <serial6.c>
 Serial6.ClearRxError serial6clearrxerror#include <serial6.c>

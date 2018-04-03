@@ -1,4 +1,4 @@
-//RTC PCF8593 particulars
+// RTC PCF8593
 // I2C frequency 400 kHz
 // tested with Pinguino 4550 :
 // PCF8593_SDA connected to pin0 and SCL to pin1
@@ -54,7 +54,7 @@ u8 I2C_send_receive(u8 address, u8 *wbuffer, u8 wlength, u8 *rbuffer, u8 rlength
         }
         for (i=0; i<rlength; i++)           // Sequential read (auto. inc.)
         {
-            rbuffer[i] = I2C_read();
+            rbuffer[i] = I2C.read();
             if (i== (rlength-1))            // Last byte is sent ?
                 I2C.sendNack();             // Yes, send a No Ack to the slave (no more data to read)
             else
@@ -143,7 +143,7 @@ void loop()
     while (!Serial.available());  // a character has been received
     carrec=Serial.read();//
     if(carrec=='t') // time and date to display
-	  {
+    {
         getDate();
         Serial.printf("\n\rh: %d",hourG);
         delay(200);

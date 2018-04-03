@@ -37,6 +37,6 @@ void loop()
     i = i + dir;
     // Duty Cycle is a percentage measure of the time that the LED is physically on.
     PWM.setPercentDutyCycle(MYLED, i);
-    // Delay of 25 ms
+    // Delay of 50 ms
     delay(50);
 }

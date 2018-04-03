@@ -86,7 +86,8 @@ typedef struct
     u8  role;
     u8  bitorder;
     u8  phase;
-    u8  sda;
+    u8  sdo;
+    u8  sdi;
     u8  sck;
     u8  cs;
 } spi_t;

@@ -1,19 +1,24 @@
 /*----------------------------------------------------------------------
     FILE        : servo.c
-    Version     : 4.2
+    Version     : 5.0
     Descr.      : Servo control on all Pinguino pins
     Project     : Pinguino
-    Author      : Jesús Carmona Esteban
+    Author      : Régis Blanchot
     --------------------------------------------------------------------
     CHANGELOG:
-    15/11/2013 - Several bugs removed. Improved ServoAttach function.
-    12/11/2013 - Error on ServospulseUp function corrected. Code cleaned and compacted. Expanded to all 8 bit PICs available. 
-    20/10/2013 - Fixed interrupt handling for working TMR1 with new x.4 enviroment.
-    01/10/2013 - Tested and calibrated with oscilloscope for 18F4550, 18F2550 and EQUO_UNO for X.3 IDE.
-    28/09/2013 - Corrections on maths at servowrite funtion. 
-    02/09/2012 - Changes on ServoMinPulse and ServoMaxPulse functions to assemble Arduino ones in order to expand from 500us to 2500us pulses.
-    05/04/2012 - Expansion to versions 4550/PICUNO_EQUO using #defines in user program.
-    04 Feb. 2016 - Régis Blanchot - Added all 8-bit (included 16F) support
+    05 Apr. 2012 - Expansion to versions 4550/PICUNO_EQUO using #defines in user program.
+    02 Sep. 2012 - Changes on ServoMinPulse and ServoMaxPulse functions to assemble Arduino ones in order to expand from 500us to 2500us PulseWidths.
+    28 Sep. 2013 - Corrections on maths at servowrite funtion. 
+    01 Oct. 2013 - Tested and calibrated with oscilloscope for 18F4550, 18F2550 and EQUO_UNO for X.3 IDE.
+    20 Oct. 2013 - Fixed interrupt handling for working TMR1 with new x.4 enviroment.
+    12 Nov. 2013 - Error on ServosPulseWidthUp function corrected. Code cleaned and compacted. Expanded to all 8 bit PICs available. 
+    15 Nov. 2013 - Several bugs removed. Improved ServoAttach function.
+    04 Feb. 2016 - v4.0 - Régis Blanchot - Added all 8-bit (included 16F) support
+    10 Oct. 2016 - v4.1 - Régis Blanchot - Changed PORTx to LATx
+    12 Oct. 2016 - v4.2 - Régis Blanchot - Added ServoAttached() function
+    13 Oct. 2016 - v4.3 - Régis Blanchot - ServoRead() now returns angle in degrees, not a PulseWidth width
+    20 Apr. 2017 - v4.4 - Régis Blanchot - Fixed the lib. to support XC8 and SDCC
+    16 Oct. 2017 - v5.0 - Régis Blanchot - Use of Output Compare module
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -30,580 +35,730 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ----------------------------------------------------------------------*/
 
-// NOTES:
-// - This library allows 250 positions for a servo.
-//   Those 1-250 values are mapped from 0-180 degrees,
-//   which is the input value by user at servo.write function.
-// - There is a correspondence table where is stored maximum and minimum
-//   values that any servo could reach in microseconds. But the value stored is from 1 to 250.
-// - All servos are automatically refreshed by PIC in a parallel way.
-
-// Values mapping between position and microseconds:
-//
-// TIMESLOT(byte value):
-// 1                  62                  125                  192                  250
-// |-------------------|-------------------|--------------------|--------------------|
-// 500               1000                 1500                2000                 2500
-// Time (microseconds)
-//
-// Defaul values now for SERVOMAX and SERVOMIN should be 64 and 192, 1000usec and 2000usec respectively.
-// User can change 0 degrees up to 500 us pulse as absolute minumum, 
-// and 180 degrees up to 2500 usec pulse as absolute maximum using the following functions:
-// 
-// - ServoMinimumPulse(u8 servo, int min_microseconds)
-// - ServoMaximumPulse(u8 servo, int max_microseconds)
-//
-// -------------------------------------------------------------------------------------------------------
-
-#ifndef SERVOSLIBRARY
-#define SERVOSLIBRARY
+#ifndef __SERVO__
+#define __SERVO__
 
 //Includes for functions used internally in this lib.
-//#include <stdlib.h>
-#include <typedef.h>  // u8, u16, u32, ...
-#include <digital.h>  // Ports and mask definitions.
-#include <macro.h>    // noInterrupts() and interrups()
-
-// Max and Min values that correspond to 2000 usec and 1000 usec. 
-#define DefaultSERVOMAX 192
-#define DefaultSERVOMIN  64
-
-#define MINUS 500
-#define MAXUS 2500
-#define MIDUS ((MINUS+MAXUS)/2)
-
-//library internal variables:
-volatile u8 phase=0;
-volatile u8 needreordering=0;
-
-//-----------------------------------------------------------------------------------------------------------------------------
-// Variable definition that depends on PIC type:
-//-----------------------------------------------------------------------------------------------------------------------------
-#if defined(PINGUINO1459)
-#define TotalPICpins   14
-#define TotalPICports   3
-
-#elif defined(PINGUINO1220) || defined(PINGUINO1320)
-#define TotalPICpins   19
-#define TotalPICports   2
-
-#elif defined(__16F1459) || defined(__18f14k22)
-#define TotalPICpins   19
-#define TotalPICports   3
-
-#elif  defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3)
-#define TotalPICpins   19
-#define TotalPICports   3
-
-#elif defined(PINGUINO26J50) || defined(PINGUINO27J53)
-#define TotalPICpins   18
-#define TotalPICports   3
-
-#elif defined(PINGUINO46J50) || defined(PINGUINO47J53)
-#define TotalPICpins    32
-#define TotalPICports   5
-
-#elif defined(PINGUINO4455) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-#define TotalPICpins   30
-#define TotalPICports   5
-
-#elif defined(FREEJALDUINO)
-#define TotalPICpins   19
-#define TotalPICports   3
-
-#elif defined(PICUNO_EQUO)
-#define TotalPICpins   14
-#define TotalPICports   4
-
+#if defined(__PIC32MX__)
+    #include <delay.c>          // Delayus and Delayms
+    #include <interrupt.c>      // Timers functions
+    #include <system.c>         // GetPeripheralClock
+#else
+    #include <compiler.h>
+    #include <delayus.c>        // Delayus
+    #include <interrupt.h>      // Timers definitions
 #endif
 
+#include <typedef.h>            // u8, u16, u32, ...
+#include <macro.h>              // noInterrupts(), interrups(), ATOMIC
 
-// sumary of ports per PIC
-// ---------------------------------------------------
-// 2 ports:
-// #if defined (PINGUINO1220) || defined(PINGUINO1320)
-// 3 ports:
-// #elif defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(PINGUINO4550) || defined(PICUNO_EQUO) || defined(FREEJALDUINO) 
-// 4 ports:
-// #elif defined(PICUNO_EQUO)
-// 5 ports:
-// #elif defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
+//#define SERIALUSEPORT1
+//#define SERIALPRINTNUMBER
+//#define SERIALPRINT
+//#include <serial.c>             // SerialPrintNumber, ...
+
+#define SERVOPERIOD             20000 // 1/50 Hz = 20 ms = 20 000 us
+#if defined(__PIC32MX__)
+    #define MAXNBSERVOS         5
+    #define TIMERPERIOD         (SERVOPERIOD / MAXNBSERVOS)
+#else
+    #define TOGONMATCH          0x02  // CCPx pin toggle on compare match
+    #define SETONMATCH          0x08  // CCPx pin set on compare match
+    #define CLRONMATCH          0x09  // CCPx pin cleared on compare match
+    #define CCPMATCH            SETONMATCH
+    #if defined(__18f26j50) || defined(__18f46j50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
+        #define MAXNBSERVOS     7 
+        extern volatile u16     CCPR4  @ 0xF13;
+        extern volatile u16     CCPR5  @ 0xF10;
+        extern volatile u16     CCPR6  @ 0xF0D;
+        extern volatile u16     CCPR7  @ 0xF0A;
+        extern volatile u16     CCPR8  @ 0xF07;
+        extern volatile u16     CCPR9  @ 0xF04;
+        extern volatile u16     CCPR10 @ 0xF01;
+    #else
+        //extern volatile u16     CCPR1  @ 0xFBE;
+        //extern volatile u16     CCPR2  @ 0xF90;
+        #define MAXNBSERVOS     2
+    #endif
+#endif
+
+//----------------------------------------------------------------------
+// Absolute Servos Spec.
 //
-// #endif
+// 500 (us)       1000            1500            2000             2500
+//   |---------------|---------------|---------------|----------------|
+//   0 (degrees)    45              90             135              180
+//
+//----------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------------------------------
-// Variables and Matrix definitions for Any PIC
-//-----------------------------------------------------------------------------------------------------------------------------
-u8 timingindex;
-u8 timedivision=0;
-u8 loopvar;
-u8 mascaratotal[TotalPICports];
+#define ABSOLUTE_MIN_PULSEWIDTH 500     // 0   deg <=> 0.5 ms ( 500 us)
+#define ABSOLUTE_MAX_PULSEWIDTH 2500    // 180 deg <=> 2.5 ms (2500 us)
+#define ABSOLUTE_MID_PULSEWIDTH ((ABSOLUTE_MIN_PULSEWIDTH + ABSOLUTE_MAX_PULSEWIDTH) / 2)
 
-u8 timevalue[TotalPICpins];              // This keeps values ordered for all pins.
-u8 timings[TotalPICpins][TotalPICports]; // This keeps ports and pins activated for a specific timevalue (both matrix share index to make access easy).
-u8 activatedservos[TotalPICports];       // This keeps masks for every port with the activated pins to be servos.
-u8 servovalues[TotalPICpins];            // Entry table for values sets for every pin-servo.
-u8 maxminpos[2][TotalPICpins];           // This table keeps minimum(0 degrees) and maximum(180 degrees) values(in ticks) that the servo can reach.
+//----------------------------------------------------------------------
+// Servo type
+//----------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------------------------------
-//  Functions for SERVO library
-//-----------------------------------------------------------------------------------------------------------------------------
-
-void servos_init()
+typedef struct
 {
-    u8 a;
-
-    // Filling up the servovalues table to 255. 
-    for(a=0;a<TotalPICpins;a++)
-    {
-        servovalues[a]=255;               // Filling up the servovalues table to 255.
-        maxminpos[0][a]= DefaultSERVOMIN; // Setting min servo position to 1000 usec.
-        maxminpos[1][a]= DefaultSERVOMAX; // Setting max servo position to 2000 usec.
-    }
-    
-    // Filling up the activated servos matrix.
-    for(a=0;a<TotalPICports;a++)
-        activatedservos[a]=0x00;  // Setting all pins as deactivated as servo.
-
-    noInterrupts();
-      
-    T1CON=0x01; 			//timer 1 prescaler 1 source is internal oscillator
-    TMR1H=0xFF; 			// First value on timer to start up...
-    TMR1L=0x00; 			// ...now the first interrupt will be generated by timer after 9 ms.
-    #ifndef __16F1459
-    IPR1bits.TMR1IP = 1; 	// INT_HIGH_PRIORITY
+    u8  Attached;               // attached or not
+    u16 PulseWidth;             // current pulse width
+    u16 MinPulseWidth;          // minimal pulse width
+    u16 MaxPulseWidth;          // maximal pulse width
+    u16 Range;                  // MaxPulseWidth - MinPulseWidth
+    u16 Phase1;                 // nb of cycles when signal is high
+    #if !defined(__PIC23MX__)
+    u16 Phase0;                 // nb of cycles when signal is low
     #endif
-    PIR1bits.TMR1IF = 0; 	// Setting flag to 0
-    PIE1bits.TMR1IE = 1; 	// INT_ENABLE
-    T1CONbits.TMR1ON   = 1; // Starting TMR1
-    
-    interrupts();
-}
+} SERVO_t;
 
+//----------------------------------------------------------------------
+// Global
+//----------------------------------------------------------------------
 
-static void ServosPulseDown()
-{
-    volatile u8 timingindex = 0;
-
-    for(timedivision=0;timedivision < 251;timedivision++)
-    {
-        if (timevalue[timingindex] == timedivision)
-        {
-            PORTA = PORTA ^ timings[timingindex][pA];
-            PORTB = PORTB ^ timings[timingindex][pB];
-            #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-            PORTC = PORTC ^ timings[timingindex][pC];
-            #endif
-            #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-            PORTD = PORTD ^ timings[timingindex][pD];
-            #endif
-            #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-            PORTE = PORTE ^ timings[timingindex][pE];
-            #endif
-            timingindex++;
-        }
-        
-        // NEW: Every round on this "for" loop must last 8 microseconds.
-        // So the following asm code is to adjust to that exact time.
-        #ifdef __XC8__
-            #asm
-            MOVLW 7
-            MOVWF _loopvar
-        bucle:
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            #ifdef __16F1459
-            DECFSZ _loopvar
-            #else
-            DECFSZ _loopvar,B
-            #endif
-            GOTO bucle
-            #endasm
-        #else
-            __asm
-            MOVLW 7
-            MOVWF _loopvar
-        bucle:
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            NOP
-            DECFSZ _loopvar,1
-            GOTO bucle
-            __endasm;
-        #endif
-    }
-}
-
-// This function starts up pulses for all activated servos.
-static void ServosPulseUp()
-{
-    PORTA = PORTA | activatedservos[pA];
-    PORTB = PORTB | activatedservos[pB];
-    #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-    PORTC = PORTC | activatedservos[pC];
-    #endif
-    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-    PORTD = PORTD | activatedservos[pD];
-    #endif
-    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-    PORTE = PORTE | activatedservos[pE];
-    #endif
-}
-
-
-// This funtion analyses servovalues table and creates and ordered table(timings)
-// from smaller to bigger of all the values, asociating to each
-// position of the table the servos that matches that timing.
-static void SortServoTimings()
-{
-    volatile u8 s,t,totalservos,numservos;
-
-    // table initialization:
-    for(t=0;t<TotalPICpins;t++)
-    {
-        timevalue[t]=255; 
-        timings[t][pA]=0x00;
-        timings[t][pB]=0x00;
-        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-        timings[t][pC]=0x00;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-        timings[t][pD]=0x00;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-        timings[t][pE]=0x00;
-        #endif
-    }
-    
-    // mascaratotal table initialization:
-    for(t=0;t<TotalPICports;t++)
-        mascaratotal[t]=0x00;
-
-    totalservos=0; // Total servos revised. This helps to keep within "while"
-    t=0;           // Index to go through timevalue and timings tables.
-    while(totalservos<TotalPICpins)
-    {
-        numservos=1;
-
-        for(s=0;s<TotalPICpins;s++)
-        {
-            
-            switch (port[s])
-            {
-                        case pA:
-                                    if (mask[s] & mascaratotal[pA] & activatedservos[pA]){
-                                        break;
-                                    }
-                                    else if (servovalues[s] < timevalue[t]){
-                                        timevalue[t]=servovalues[s];
-                                        timings[t][pA]=mask[s];
-                                        timings[t][pB]=0x00;
-                                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-                                        timings[t][pC]=0x00;
-                                        #endif
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-                                        timings[t][pD]=0x00;
-                                        #endif
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-                                        timings[t][pE]=0x00;
-                                        #endif
-                                        numservos=1;
-                                    }
-                                    else if (servovalues[s] == timevalue[t]){
-                                        timings[t][pA] |= mask[s];
-                                        numservos++;
-                                    }
-                                    break;      		
-
-                        case pB: 
-                                    if (mask[s] & mascaratotal[pB] & activatedservos[pB]){
-                                        break;
-                                    }
-                                    else if (servovalues[s] < timevalue[t]){
-                                        timevalue[t]=servovalues[s];
-                                        timings[t][pA]=0x00;
-                                        timings[t][pB]=mask[s];
-                                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-                                        timings[t][pC]=0x00;
-                                        #endif
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-                                        timings[t][pD]=0x00;
-                                        #endif
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-                                        timings[t][pE]=0x00;
-                                        #endif
-                                        numservos=1;
-                                    }
-                                    else if (servovalues[s] == timevalue[t]){
-                                        timings[t][pB] |= mask[s];
-                                        numservos++;
-                                    }
-                                    break;
-
-                        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-                        case pC:
-                                    if (mask[s] & mascaratotal[pC] & activatedservos[pC]){
-                                        break;
-                                    }
-                                    else if (servovalues[s] < timevalue[t]){
-                                        timevalue[t]=servovalues[s];
-                                        timings[t][pA]=0x00;
-                                        timings[t][pB]=0x00;
-                                        timings[t][pC]=mask[s];
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-                                        timings[t][pD]=0x00;
-                                        #endif
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-                                        timings[t][pE]=0x00;
-                                        #endif
-                                        numservos=1;
-                                    }
-                                    else if (servovalues[s] == timevalue[t]){
-                                        timings[t][pC] |= mask[s];
-                                        numservos++;
-                                    }
-                                    break;
-                        #endif
-
-                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-                        case pD:
-                                    if (mask[s] & mascaratotal[pD] & activatedservos[pD]){
-                                        break;
-                                    }
-                                    else if (servovalues[s] < timevalue[t]){
-                                        timevalue[t]=servovalues[s];
-                                        timings[t][pA]=0x00;
-                                        timings[t][pB]=0x00;
-                                        timings[t][pC]=0x00;
-                                        timings[t][pD]=mask[s];
-                                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-                                        timings[t][pE]=0x00;
-                                        #endif
-                                        numservos=1;
-                                    }
-                                    else if (servovalues[s] == timevalue[t]){
-                                        timings[t][pD] |= mask[s];
-                                        numservos++;
-                                    }
-                                    break;
-                        #endif
-
-                        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-                        case pE:
-                                    if (mask[s] & mascaratotal[pE] & activatedservos[pE]){
-                                        break;
-                                    }
-                                    else if (servovalues[s] < timevalue[t]){
-                                        timevalue[t]=servovalues[s];
-                                        timings[t][pA]=0x00;
-                                        timings[t][pB]=0x00;
-                                        timings[t][pC]=0x00;
-                                        timings[t][pD]=0x00;
-                                        timings[t][pE]=mask[s];
-                                        numservos=1;
-                                    }
-                                    else if (servovalues[s] == timevalue[t]){
-                                        timings[t][pE] |= mask[s];
-                                        numservos++;
-                                    }
-                                    break;
-                        #endif
-            }
-        }
-        mascaratotal[pA] |= timings[t][pA];
-        mascaratotal[pB] |= timings[t][pB];
-        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50)  || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-        mascaratotal[pC] |= timings[t][pC];
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)			
-        mascaratotal[pD] |= timings[t][pD];
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)
-        mascaratotal[pE] |= timings[t][pE];
-        #endif
-                                        
-        totalservos += numservos;
-        t++;
-
-    }
-    needreordering=0;  // This indicates that servo timings are sorted.
-}
-
-void ServoAttach(u8 pin)
-{
-    if(pin>=TotalPICpins) return;
-
-    switch (port[pin])
-    {
-        case pA: 
-                activatedservos[pA] = activatedservos[pA] | mask[pin];  // list pin as servo driver.
-                TRISA = TRISA & (~mask[pin]); 					// set as output pin
-                break;
-        case pB: 
-                activatedservos[pB] = activatedservos[pB] | mask[pin];  // list pin as servo driver.
-                TRISB = TRISB & (~mask[pin]); 					// set as output pin
-                break;
-        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-        case pC: 
-                activatedservos[pC] = activatedservos[pC] | mask[pin];  // list pin as servo driver.
-                TRISC = TRISC & (~mask[pin]); 					// set as output pin
-                break;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)				    
-        case pD: 
-                activatedservos[pD] = activatedservos[pD] | mask[pin];  // list pin as servo driver.
-                TRISD = TRISD & (~mask[pin]); 					// set as output pin
-                break;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
-        case pE: 
-                activatedservos[pE] = activatedservos[pE] | mask[pin];  // list pin as servo driver.
-                TRISE = TRISE & (~mask[pin]); 					// set as output pin
-                break;	            	            
-        #endif
-    }
-}
-
-void ServoDetach(u8 pin)
-{
-    if(pin>=TotalPICpins) return;
-
-    switch (port[pin])
-    {
-        case pA: activatedservos[pA] = activatedservos[pA] ^ mask[pin];
-                break;
-        case pB: activatedservos[pB] = activatedservos[pB] ^ mask[pin];
-                break;
-        #if defined(__16F1459) || defined(__18f14k22) || defined(PINGUINO2455) || defined(PINGUINO2550) || defined(PINGUINO25K50) || defined(CHRP3) || defined(PINGUINO26J50) || defined(FREEJALDUINO) || defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO)
-        case pC: activatedservos[pC] = activatedservos[pC] ^ mask[pin];
-                break;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50) || defined(PICUNO_EQUO) 
-        case pD: activatedservos[pD] = activatedservos[pD] ^ mask[pin];
-                break;
-        #endif
-        #if defined(PINGUINO47J53) || defined(PINGUINO47J53B) || defined(PINGUINO4550) || defined(PINGUINO45K50)	    
-        case pE: activatedservos[pE] = activatedservos[pE] ^ mask[pin];
-                break;
-        #endif
-    }
-}
-
-void ServoWrite(u8 servo,u8 degrees)
-{
-    u8 range;
-    u8 ticksperdegree;
-    u8 value;
-
-    // Check if number of servo is valid
-    if(servo>=TotalPICpins)
-        return;
-
-    // limitting degrees:
-    if(degrees>180) degrees=180;
-
-    // Converts degrees to timeslots
-    range = (maxminpos[1][servo]  - maxminpos[0][servo]);
-    value = (degrees*range) / 180 + maxminpos[0][servo];
-
-    // Storage of that new position to servovalues positions table:
-    // it should be added the min value for that servo
-    servovalues[servo]= value;
-
-    needreordering=1;  // This indicates servo timings must be reordered.
-}
-
-u8 ServoRead(u8 servo)
-{
-    if(servo>=TotalPICpins)        // test if numservo is valid
-        return 0;
-        
-    return servovalues[servo];
-}
-
-void ServoMinimumPulse(u8 servo,int min_microseconds)
-{
-    // Check if number of servo is valid:
-    if(servo>=TotalPICpins)
-        return;
-
-    // test if microseconds are within range:
-    if (min_microseconds < MINUS) min_microseconds = MINUS;
-    if (min_microseconds > MIDUS) min_microseconds = MIDUS;
-
-    // The following formula converts min. microseconds to min. timeslot
-    maxminpos[0][servo]=(min_microseconds - MINUS)>>3;   // 0 < final_min < 125
-}
-
-void ServoMaximumPulse(u8 servo,int max_microseconds)
-{
-    // Check if number of servo is valid:
-    if(servo>=TotalPICpins)
-        return;
-        
-    // test if microseconds are within range:
-    if (max_microseconds < MIDUS) max_microseconds = MIDUS;
-    if (max_microseconds > MAXUS) max_microseconds = MAXUS;
-
-    // The following formula converts max. microseconds to max. timeslot
-    maxminpos[1][servo]=(max_microseconds - MINUS)>>3;   // 125 < final_max < 250
-}
-
-//interrupt handler that handles servos
-void servos_interrupt(void)
-{
-    if (PIR1bits.TMR1IF)
-    {
-        //T1CON=0x00;
-
-        //case before 500 microseconds:
-
-        if (phase)
-        {
-            ServosPulseUp();
-            // Load at TMR1 (65535d - 6000d (-54usec for adjusments ) = 59481d = 0xE859 (after some calibration 0xe959)
-            TMR1H= 0xe9;//0xe9;
-            TMR1L= 0x59;
-            // timer 1 prescaler 1 source is internal oscillator Fosc/4 (CPU clock or Fosc=48Mhz).
-            T1CON=1;
-            phase = 0;
-        }
-
-        //case before 2500 microseconds:
-
-        else
-        {
-            //The following call takes 2 ms aprox.:
-            ServosPulseDown();
-            // After fisrt 2,5 ms we need a delay of 17,5 ms to complete a 20 ms cycle.
-            // Loading at TMR1 65535d - (4,375 x 12000(=1ms)=) 52500d = 13035d = 0x32EB => 4,375 ms
-            // This is 4,375ms x 4 (prescaler) = 17,5 ms
-            TMR1H= 0x32;
-            TMR1L= 0xeb;
-            // timer 1 prescaler 1 source is internal oscillator Fosc/4 (recordemos que Fosc=48Mhz).
-            if (needreordering)
-                SortServoTimings(); // This takes more than 1 ms, but it's call only if needed.
-            T1CON= ( 1 | 2 << 4 ) ; // activate timer1 and prescaler = 1:4
-            phase = 1;  			//This indicates that after next interrupt it will start the servos cycle.
-        }
-
-        // enable interrupt again
-        PIR1bits.TMR1IF=0;
-    }
-    return;
-}
-
+#if !defined(__PIC23MX__)
+extern unsigned long _cpu_clock_;
 #endif
 
-//-----------------------------------------------------------------------------------------------------------------------------
-// End of SERVOLIBRARY
-//----------------------------------------------------------------------------------------------------------------------------------
+u8 gPrescaler = 0;
+u8 gFpb = 0;
+
+#if defined(__PIC32MX__)
+volatile u8 gActiveServo = 0;
+#else
+u16 gServoPeriod;
+#endif
+
+SERVO_t Servo[MAXNBSERVOS];
+
+//----------------------------------------------------------------------
+//  Calculation
+//----------------------------------------------------------------------
+// Signal period (us) = (PR2 + 1) * TMR2 prescaler / Fpb
+// (PR2 + 1) * prescaler / Fpb = us/1000000
+// (PR2 + 1) * prescaler = us * Fpb / 1000000
+// PR2 = ((us * Fpb / 1000000) / prescaler) - 1
+
+#define ServoPulseToCycle(us)   (((us * gFpb) >> gPrescaler) - 1)
+
+//----------------------------------------------------------------------
+//  Initialization
+//----------------------------------------------------------------------
+
+void servo_init()
+{
+    u8  n;
+
+    #if defined(__PIC32MX__)
+    gFpb = GetPeripheralClock() / 1000000;
+    #else
+    gFpb = _cpu_clock_ / 4000000;
+    #endif
+
+    //Serial_begin(UART1, 9600, NULL);
+    //Serial_print(UART1, "TEST\r\n");
+
+    // Filling up the servo values table 
+    for (n = 0; n < MAXNBSERVOS; n++)
+    {
+        Servo[n].Attached = 0;   // detached
+        Servo[n].MinPulseWidth = ABSOLUTE_MIN_PULSEWIDTH;
+        Servo[n].MaxPulseWidth = ABSOLUTE_MAX_PULSEWIDTH;
+        Servo[n].PulseWidth    = ABSOLUTE_MID_PULSEWIDTH;
+        Servo[n].Range         = ABSOLUTE_MAX_PULSEWIDTH - ABSOLUTE_MIN_PULSEWIDTH;
+        Servo[n].Phase1        = 0;
+        #if !defined(__PIC32MX__)
+        Servo[n].Phase0        = 0;
+        #endif
+    }
+    
+    // Configure the Timer
+
+    #if defined(__PIC32MX__)
+
+        noInterrupts();
+      
+        // Reset Output Compare module
+        //OC1R = 0; OC2R = 0; OC3R = 0; OC4R = 0; OC5R = 0;
+
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        //bit 6-4 TCKPS<2:0>: Timer Input Clock Prescale Select bits
+        //gPrescaler = 0;         // 1:1   default prescale value
+        //gPrescaler = 1;         // 1:2   prescale value
+        //gPrescaler = 2;         // 1:4   prescale value
+        //gPrescaler = 3;         // 1:8   prescale value
+        //gPrescaler = 4;         // 1:16  prescale value
+
+        // Max nb of cycles value is with :
+        // - Period = 20000 us
+        // - Fpb = 80 MHz
+        // 20000 * 80 / 32 = 0xC350 = 16-bit number
+        gPrescaler = 5;         // 1:32  prescale value
+
+        //gPrescaler = 6;         // 1:64  prescale value
+        //gPrescaler = 7;         // 1:256 prescale value
+
+        TMR2  = 0;              // clear timer register
+        T2CON = gPrescaler << 4;// prescaler, internal peripheral clock
+        PR2   = ServoPulseToCycle(TIMERPERIOD); 
+
+        IntSetVectorPriority(INT_TIMER2_VECTOR, 7, 3);
+        IntClearFlag(INT_TIMER2);
+        IntEnable(INT_TIMER2);
+        
+        T2CONSET = Bit(15);     // start timer
+    
+        interrupts();
+
+    #else // PIC16F and PIC18F
+
+        // Capture mode makes use of the 16-bit Timer1 resources
+        #if defined(__18f25k50) || defined(__18f45k50)
+        T1GCON = 0;             // Timer1 counts regardless of the Timer1 gate function
+        CCPTMRS  = 0;           // associate TMR1 with CCPx
+        #elif defined(__18f26j50) || defined(__18f46j50) || \
+              defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53) 
+        T1GCON = 0;             // Timer1 counts regardless of the Timer1 gate function
+        CCPTMRS0 = 0;           // associate TMR1 with CCPx
+        CCPTMRS1 = 0;
+        CCPTMRS2 = 0;
+        #elif !defined(__16f1459)
+        CCPTMRS  = 0;           // associate TMR1 with CCPx
+        #endif
+        
+        //bit 5-4 TCKPS<1:0>: Timer Input Clock Prescale Select bits
+        //gPrescaler = 0;         // 1:1   default prescale value
+        //gPrescaler = 1;         // 1:2   default prescale value
+        //gPrescaler = 2;         // 1:4  prescale value
+        gPrescaler = 3;         // 1:8   prescale value
+
+        // Timer1 must be running in Timer mode or Synchronized Counter
+        // mode if the CCP module is using the compare feature.
+        TMR1 = 0;
+        T1CON = T1_SOURCE_FOSCDIV4 | (gPrescaler << 4) | T1_16BIT | T1_ON;
+        
+        gServoPeriod = ServoPulseToCycle(SERVOPERIOD);
+
+    #endif
+}
+
+//----------------------------------------------------------------------
+// Attach servo to a PWM pin
+// PIC32MX : the I/O pin direction is controlled by the compare module
+// PIC18F  : the I/O pin direction is controlled by the user
+//----------------------------------------------------------------------
+
+void ServoAttach(u8 num)
+{
+    if (num < MAXNBSERVOS)
+    {
+        Servo[num].Attached = 1; // Attached
+
+        // Configure the Output/Compare module
+        // * P32 OCx pin are automatically managed by the OC module
+        // * P8 CCPx pin must be configured as an output by clearing
+        // the appropriate TRIS bit.
+
+        switch (num)
+        {
+            #if defined(__PIC32MX__)
+
+            case 0:
+                OC1CON = 0x0000;        // Turn off OC1 while doing setup
+                OC1CONbits.OCTSEL = 0;  // Timer2 is the clock source for this OC
+                OC1CONbits.OCM = 0b110; // PWM mode on this OC; Fault pin disabled
+                OC1CONSET = Bit(15);    // Output Compare peripheral is enabled
+                break;
+            case 1:
+                OC2CON = 0x0000;        // Turn off OC1 while doing setup
+                OC2CONbits.OCTSEL = 0;  // Timer2 is the clock source for this OC
+                OC2CONbits.OCM = 0b110; // PWM mode on this OC; Fault pin disabled
+                OC2CONSET = Bit(15);    // Output Compare peripheral is enabled
+                break;
+            case 2:
+                OC3CON = 0x0000;        // Turn off OC1 while doing setup
+                OC3CONbits.OCTSEL = 0;  // Timer2 is the clock source for this OC
+                OC3CONbits.OCM = 0b110; // PWM mode on this OC; Fault pin disabled
+                OC3CONSET = Bit(15);    // Output Compare peripheral is enabled
+                break;
+            case 3:
+                OC4CON = 0x0000;        // Turn off OC1 while doing setup
+                OC4CONbits.OCTSEL = 0;  // Timer2 is the clock source for this OC
+                OC4CONbits.OCM = 0b110; // PWM mode on this OC; Fault pin disabled
+                OC4CONSET = Bit(15);    // Output Compare peripheral is enabled
+                break;
+            case 4:
+                OC5CON = 0x0000;        // Turn off OC1 while doing setup
+                OC5CONbits.OCTSEL = 0;  // Timer2 is the clock source for this OC
+                OC5CONbits.OCM = 0b110; // PWM mode on this OC; Fault pin disabled
+                OC5CONSET = Bit(15);    // Output Compare peripheral is enabled
+                break;
+        
+            #else // 8-bit PIC
+            
+            noInterrupts();
+
+            #if defined(__16f1459)
+
+            case 0:
+                TRISCbits.TRISC5 = 0;   // RC5 = C1OUT pin
+                CM1CON0bits.C1OE = 1;   // C1OUT signal on C1OUT pin
+                CM1CON0bits.C1ON = 1;   // Comparator 1 enable
+                PIR2bits.C1IF  = 0;     // Clear interrupt flag
+                PIE2bits.C1IE  = 1;     // INT_ENABLE
+                break;
+
+            case 1:
+                TRISCbits.TRISC6 = 0;   // RC6 = C2OUT pin
+                CM2CON0bits.C2OE = 1;   // C2OUT signal on C2OUT pin
+                CM2CON0bits.C2ON = 1;   // Comparator 2 enable
+                PIR2bits.C2IF  = 0;     // Clear interrupt flag
+                PIE2bits.C2IE  = 1;     // INT_ENABLE
+                break;
+
+            #elif defined(__18f26j50) || defined(__18f46j50) || \
+                  defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+
+            case 0:
+                TRISBbits.TRISB4 = 0;   // RB4 = CCP4 pin
+                CCPR4 = 0; 
+                CCP4CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP4IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP4IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP4IE  = 1;   // INT_ENABLE
+                break;
+
+            case 1:
+                TRISBbits.TRISB5 = 0;   // RB5 = CCP5 pin
+                CCPR5 = 0;
+                CCP5CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP5IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP5IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP5IE  = 1;   // INT_ENABLE
+                break;
+
+            case 2:
+                TRISBbits.TRISB6 = 0;   // RB6 = CCP6 pin
+                CCPR6 = 0;
+                CCP6CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP6IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP6IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP6IE  = 1;   // INT_ENABLE
+                break;
+
+            case 3:
+                TRISBbits.TRISB7 = 0;   // RB7 = CCP7 pin
+                CCPR7 = 0;
+                CCP7CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP7IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP7IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP7IE  = 1;   // INT_ENABLE
+                break;
+
+            case 4:
+                TRISCbits.TRISC1 = 0;   // RC1 = CCP8 pin
+                CCPR8 = 0;
+                CCP8CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP8IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP8IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP8IE  = 1;   // INT_ENABLE
+                break;
+
+            case 5:
+                TRISCbits.TRISC6 = 0;   // RC6 = CCP9 pin
+                CCPR9 = 0;
+                CCP9CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR4bits.CCP9IP  = 1;   // INT_HIGH_PRIORITY
+                PIR4bits.CCP9IF  = 0;   // Clear interrupt flag
+                PIE4bits.CCP9IE  = 1;   // INT_ENABLE
+                break;
+
+            case 6:
+                TRISCbits.TRISC7 = 0;   // RC7 = CCP10 pin
+                CCPR10 = 0;
+                CCP10CON = SETONMATCH;  // CCPx pin is set on compare match
+                IPR4bits.CCP10IP  = 1;  // INT_HIGH_PRIORITY
+                PIR4bits.CCP10IF  = 0;  // Clear interrupt flag
+                PIE4bits.CCP10IE  = 1;  // INT_ENABLE
+                break;
+
+            #else
+
+            case 0:
+                TRISCbits.TRISC2 = 0;   // CCP1 pin = RC2 = Output
+                CCPR1 = 0;
+                CCP1CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR1bits.CCP1IP  = 1;   // INT_HIGH_PRIORITY
+                PIR1bits.CCP1IF  = 0;   // Clear interrupt flag
+                PIE1bits.CCP1IE  = 1;   // INT_ENABLE
+                break;
+
+            case 1:
+                TRISCbits.TRISC1 = 0;   // RC1 = CCP2 pin
+                CCPR2 = 0;
+                CCP2CON = SETONMATCH;   // CCPx pin is set on compare match
+                IPR2bits.CCP2IP  = 1;   // INT_HIGH_PRIORITY
+                PIR2bits.CCP2IF  = 0;   // Clear interrupt flag
+                PIE2bits.CCP2IE  = 1;   // INT_ENABLE
+                break;
+
+            #endif
+            
+            interrupts();
+            
+            #endif
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// Detach servo from its pin
+//----------------------------------------------------------------------
+
+void ServoDetach(u8 num)
+{
+    if (num < MAXNBSERVOS)
+    {
+        Servo[num].Attached = 0;   // Detached
+
+        // Turn off the Output/Compare module
+        switch (num)
+        {
+            #if defined(__PIC32MX__)
+
+            case 0: OC1CONCLR = Bit(15); break;
+            case 1: OC2CONCLR = Bit(15); break;
+            case 2: OC3CONCLR = Bit(15); break;
+            case 3: OC4CONCLR = Bit(15); break;
+            case 4: OC5CONCLR = Bit(15); break;
+
+            #elif defined(__16f1459)
+            
+            case 0: CM1CON0 = 0x000; break;
+            case 1: CM2CON0 = 0x000; break;
+
+            #elif defined(__18f26j50) || defined(__18f46j50) || \
+                  defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+
+            case 0: CCP4CON  = 0x00; break;
+            case 1: CCP5CON  = 0x00; break;
+            case 2: CCP6CON  = 0x00; break;
+            case 3: CCP7CON  = 0x00; break;
+            case 4: CCP8CON  = 0x00; break;
+            case 5: CCP9CON  = 0x00; break;
+            case 6: CCP10CON = 0x00; break;
+
+            #else
+
+            case 0: CCP1CON  = 0x00; break;
+            case 1: CCP2CON  = 0x00; break;
+
+            #endif
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// Return 1 if the servo is currently attached.
+//----------------------------------------------------------------------
+
+u8 ServoAttached(u8 num)
+{
+    if (num < MAXNBSERVOS)
+        return Servo[num].Attached;
+    else
+        return 0;
+}
+
+//----------------------------------------------------------------------
+// Set the duration of the 0 degree PulseWidth in microseconds.
+// Default MinPulseWidth value is ABSOLUTE_MIN_PULSEWIDTH microseconds.
+//----------------------------------------------------------------------
+
+void ServoSetMinimumPulse(u8 num, u16 pulse)
+{
+    // Check if number of servo is valid:
+    if (num < MAXNBSERVOS)
+    {
+        // test if microseconds are within range:
+        if (pulse < ABSOLUTE_MIN_PULSEWIDTH)
+            pulse = ABSOLUTE_MIN_PULSEWIDTH;
+        if (pulse > ABSOLUTE_MID_PULSEWIDTH)
+            pulse = ABSOLUTE_MID_PULSEWIDTH;
+
+        Servo[num].MinPulseWidth = pulse;
+
+        // update servo range
+        Servo[num].Range = Servo[num].MaxPulseWidth - Servo[num].MinPulseWidth;
+    }
+}
+
+//----------------------------------------------------------------------
+// Get the MinPulseWidth value
+// 0 = error;
+//----------------------------------------------------------------------
+
+u16 ServoGetMinimumPulse(u8 num)
+{
+    // Check if number of servo is valid:
+    if (num < MAXNBSERVOS)
+        return Servo[num].MinPulseWidth;
+    else
+        return 0;
+}
+
+//----------------------------------------------------------------------
+// Set the duration of the 180 degree PulseWidth in microseconds.
+// Default MaxPulseWidth value is ABSOLUTE_MAX_PULSEWIDTH microseconds.
+//----------------------------------------------------------------------
+
+void ServoSetMaximumPulse(u8 num, u16 pulse)
+{
+    // Check if number of servo is valid:
+    if (num < MAXNBSERVOS)
+    {
+        // test if microseconds are within range:
+        if (pulse < ABSOLUTE_MID_PULSEWIDTH)
+            pulse = ABSOLUTE_MID_PULSEWIDTH;
+        if (pulse > ABSOLUTE_MAX_PULSEWIDTH)
+            pulse = ABSOLUTE_MAX_PULSEWIDTH;
+
+        Servo[num].MaxPulseWidth = pulse;
+
+        // update servo range
+        Servo[num].Range = Servo[num].MaxPulseWidth - Servo[num].MinPulseWidth;
+    }
+}
+
+//----------------------------------------------------------------------
+// Get the MinPulseWidth value
+// 0 = error;
+//----------------------------------------------------------------------
+
+u16 ServoGetMaximumPulse(u8 num)
+{
+    // Check if number of servo is valid:
+    if (num < MAXNBSERVOS)
+        return Servo[num].MaxPulseWidth;
+    else
+        return 0;
+}
+
+//----------------------------------------------------------------------
+// Command servo to turn from 0 to 180 degrees
+// Convert degree to PulseWidth width
+//----------------------------------------------------------------------
+
+void ServoWrite(u8 num, int degrees)
+{
+    u32 tmp;
+    
+    // Check if number of servo is valid
+    if (num < MAXNBSERVOS)
+    {
+        // Normalize the angle to be in [0, 180[
+        if (degrees < 0)
+            degrees = 360 - ((-degrees) % 360);
+        else
+            degrees %= 360;
+
+        if (degrees >= 180)
+            degrees -= 180;
+
+        // Convert degrees to pulse width
+        tmp = (u32)degrees * (u32)Servo[num].Range / 180UL;
+        Servo[num].PulseWidth = (u16)(tmp + Servo[num].MinPulseWidth);
+
+        // Convert pulse width to nb of CPU cycles
+        ATOMIC Servo[num].Phase1 = ServoPulseToCycle(Servo[num].PulseWidth);
+        #if !defined(__PIC32MX__)
+        ATOMIC Servo[num].Phase0 = gServoPeriod - Servo[num].Phase1;
+        #endif
+        
+        #if defined(__PIC32MX__)
+        Delayus(TIMERPERIOD);
+        #else
+        Delayus(SERVOPERIOD);
+        #endif
+    }
+}
+
+//----------------------------------------------------------------------
+// Command servo to turn from MinPulseWidth to MaxPulseWidth
+//----------------------------------------------------------------------
+
+void ServoPulse(u8 num, u16 pulse)
+{
+    // Check if number of servo is valid
+    if (num < MAXNBSERVOS)
+    {
+        // Converts degrees to pulse width
+        if (pulse < Servo[num].MinPulseWidth)
+            Servo[num].PulseWidth = Servo[num].MinPulseWidth;
+        else if (pulse > Servo[num].MaxPulseWidth)
+            Servo[num].PulseWidth = Servo[num].MaxPulseWidth;
+        else
+            Servo[num].PulseWidth = pulse;
+
+        ATOMIC Servo[num].Phase1 = ServoPulseToCycle(Servo[num].PulseWidth);
+        #if !defined(__PIC32MX__)
+        ATOMIC Servo[num].Phase0 = gServoPeriod - Servo[num].Phase1;
+        #endif
+        
+        #if defined(__PIC32MX__)
+        Delayus(TIMERPERIOD);
+        #else
+        Delayus(SERVOPERIOD);
+        #endif
+    }
+}
+
+//----------------------------------------------------------------------
+// Return servo position in degrees
+// 255 : error
+// 0 to 180 : valid
+//----------------------------------------------------------------------
+
+u8 ServoRead(u8 num)
+{
+    // Check if number of servo is valid:
+    if (num < MAXNBSERVOS)
+        return (180 * (Servo[num].PulseWidth - Servo[num].MinPulseWidth) / Servo[num].Range);
+    else
+        return 255;
+}
+
+//----------------------------------------------------------------------
+// Interrupt handler
+//----------------------------------------------------------------------
+
+#if defined(__PIC32MX__)
+
+// Timer2 resets to zero when it equals PR2
+void Timer2Interrupt(void)
+{
+    if (gActiveServo++ >= MAXNBSERVOS)
+        gActiveServo = 0;
+
+    // set all OCx pins low
+
+    OC1RS = 0; OC2RS = 0; OC3RS = 0; OC4RS = 0; OC5RS = 0;
+
+    // set pin high when OC value match timer value
+
+    if (gActiveServo == 0 && Servo[0].Attached)
+        OC1RS = Servo[0].Phase1;
+    if (gActiveServo == 1 && Servo[1].Attached)
+        OC2RS = Servo[1].Phase1;
+    if (gActiveServo == 2 && Servo[2].Attached)
+        OC3RS = Servo[2].Phase1;
+    if (gActiveServo == 3 && Servo[3].Attached)
+        OC4RS = Servo[3].Phase1;
+    if (gActiveServo == 4 && Servo[4].Attached)
+        OC5RS = Servo[4].Phase1;
+
+    // enable interrupt again
+
+    IntClearFlag(INT_TIMER2);
+}
+
+#else // PIC16F and PIC18F
+
+void servo_interrupt(void)
+{
+    #if defined(__16F1459)
+    
+    if (PIR2bits.C1IF) // && Servo[0].Attached)
+    {
+        //CCPR1 = TMR1 + ((CCP1CONbits.CCP1M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        //CCP1CONbits.CCP1M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR2bits.C1IF = 0;            // Allow the CCP interrupt again
+    }
+    
+    if (PIR2bits.C2IF) // && Servo[1].Attached)
+    {
+        //CCPR2 = TMR1 + ((CCP2CONbits.CCP2M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        //CCP2CONbits.CCP2M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR2bits.C2IF = 0;            // Allow the CCP interrupt again
+    }
+    
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+    if (PIR4bits.CCP4IF) // && Servo[0].Attached)
+    {
+        CCPR4 = TMR1 + ((CCP4CONbits.CCP4M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP4CONbits.CCP4M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP4IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP5IF) // && Servo[0].Attached)
+    {
+        CCPR5 = TMR1 + ((CCP5CONbits.CCP5M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP5CONbits.CCP5M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP5IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP6IF) // && Servo[0].Attached)
+    {
+        CCPR6 = TMR1 + ((CCP6CONbits.CCP6M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP6CONbits.CCP6M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP6IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP7IF) // && Servo[0].Attached)
+    {
+        CCPR7 = TMR1 + ((CCP7CONbits.CCP7M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP7CONbits.CCP7M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP7IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP8IF) // && Servo[0].Attached)
+    {
+        CCPR8 = TMR1 + ((CCP8CONbits.CCP8M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP8CONbits.CCP8M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP8IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP9IF) // && Servo[0].Attached)
+    {
+        CCPR9 = TMR1 + ((CCP9CONbits.CCP9M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP9CONbits.CCP9M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP9IF = 0;            // Allow the CCP interrupt again
+    }
+
+    if (PIR4bits.CCP10IF) // && Servo[0].Attached)
+    {
+        CCPR10 = TMR1 + ((CCP10CONbits.CCP10M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP10CONbits.CCP10M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR4bits.CCP10IF = 0;            // Allow the CCP interrupt again
+    }
+
+    #else
+    
+    if (PIR1bits.CCP1IF) // && Servo[0].Attached)
+    {
+        CCPR1 = TMR1 + ((CCP1CONbits.CCP1M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP1CONbits.CCP1M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR1bits.CCP1IF = 0;            // Allow the CCP interrupt again
+    }
+    
+    if (PIR2bits.CCP2IF) // && Servo[1].Attached)
+    {
+        CCPR2 = TMR1 + ((CCP2CONbits.CCP2M0) ? Servo[0].Phase0 : Servo[0].Phase1);
+        CCP2CONbits.CCP2M0 ^= 1;        // Toggle SETONMATCH (0) / CLRONMATCH (1)
+        PIR2bits.CCP2IF = 0;            // Allow the CCP interrupt again
+    }
+    
+    #endif
+}
+
+#endif // __PIC32MX__
+
+#endif // __SERVO__

@@ -153,7 +153,7 @@ static inline u32 ConvertToPhysicalAddress (volatile void *addr)
         }
         else
         {
-            // kseg0 или kseg1, cut bits A[31:29]
+            // kseg0 or kseg1 - cut bits A[31:29]
             phys = virt & 0x1fffffff;
         }
     }

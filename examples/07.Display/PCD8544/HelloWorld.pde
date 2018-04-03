@@ -53,11 +53,11 @@ void setup()
 
 void loop()
 {
-    PCD8544.printf(SPIMODULE, "i=%d\r\n", i++);
+    //PCD8544.printf(SPIMODULE, "i=%d\r\n", i++);
     //
-    //PCD8544.print(SPIMODULE, "i=");
-    //PCD8544.printNumber(SPIMODULE, i++, DEC);
-    //PCD8544.print(SPIMODULE, "\r\n");
+    PCD8544.print(SPIMODULE, "i=");
+    PCD8544.printNumber(SPIMODULE, i++, DEC);
+    PCD8544.print(SPIMODULE, "\r\n");
     //
     PCD8544.refresh(SPIMODULE);
     // Show that Pinguino is still alive

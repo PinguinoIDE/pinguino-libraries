@@ -59,10 +59,10 @@ void setup()
     
     delay(1000);
     CDC.printf("\n\r\n\r*** 24xx64 i2c Eeprom Demo. ***\n\r\n\r");
-    pinMode(12, OUTPUT);                // Pinguino 26j50 build-in led is on pin 12
+    pinMode(USERLED, OUTPUT);                // Pinguino build-in LED
     // Define Pinguino as Master and Clock speed on i2c bus
     I2C.master(I2C_100KHZ);             // or I2C.master(100);
-    //I2C.master(I2C_400KHZ);             // or I2C.master(400);
+    //I2C.master(I2C_400KHZ);             // or I2C.master(400);
 
     ///
     ///     Write
@@ -76,7 +76,7 @@ void setup()
     for (i=0; i<8; i++)
     {
         I2C.write(wBuffer[i]);                   // Page write (32 bytes max, auto. inc.)
-        CDC.write(wBuffer[i]);
+        CDC.printChar(wBuffer[i]);
     }
     CDC.printf("\n\r");
     I2C.stop();                                 // Terminate the write sequence
@@ -108,7 +108,7 @@ void loop()
     for (i=0; i<8; i++)                         // Sequential read (auto. inc.)
     {
         c = I2C.read();                         // read a byte from the slave
-        CDC.write(c);
+        CDC.printChar(c);
         if (i>=7)                               // Last byte is sent ?
             I2C.sendNack();                     // Yes, send a No Ack to the slave (no more data to read)
         else

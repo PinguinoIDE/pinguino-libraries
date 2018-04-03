@@ -1,12 +1,11 @@
 /*	----------------------------------------------------------------------------
-    FILE:			system.c
-    PROJECT:		pinguino
-    PURPOSE:		
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	16 nov. 2010
-    LAST RELEASE:	06 feb. 2012
+    FILE:       system.c
+    PROJECT:    pinguino
+    PURPOSE:    clocks calculations
+    PROGRAMER:  Régis Blanchot <rblanchot@gmail.com>
     ----------------------------------------------------------------------------
     CHANGELOG:
+    [16-11-10][Régis Blanchot][First release]
     [23-02-11][Marcus Fazzi][Removed  asm("di")/asm("ei") from GetCP0Count/SetCP0Count]
     [30-01-12][Régis Blanchot][Added P32MX220F032D support]
     [06-02-12][Roland Haag][Added new clock settings]
@@ -31,19 +30,19 @@
 #define __SYSTEM_C
 
 #include <p32xxxx.h>
-#include <const.h>              // MIPS32
+#include <const.h>                          // MIPS32
 #include <typedef.h>
 
 #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
-    #define CPUCOREMAXFREQUENCY	40000000L	// 40 MHz
+    #define CPUCOREMAXFREQUENCY 40000000L   // 40 MHz
 #elif defined(PINGUINO32MX270)
-    #define CPUCOREMAXFREQUENCY	64000000L	// 64 MHz (overclock)
+    #define CPUCOREMAXFREQUENCY 64000000L   // 64 MHz (overclock)
 #else
-    #define CPUCOREMAXFREQUENCY	80000000L	// 80 MHz
+    #define CPUCOREMAXFREQUENCY 80000000L   // 80 MHz
 #endif
 
-#define CRYSTALFREQUENCY	8000000L	// 8 MHz
-#define FLASHACCESSTIME		50			// 50 ns
+#define CRYSTALFREQUENCY        8000000L    // 8 MHz
+#define FLASHACCESSTIME         50          // 50 ns
 
 // COSC<2:0>: Current Oscillator Selection bits
 // NOSC<2:0>: New Oscillator Selection bits

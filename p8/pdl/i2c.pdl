@@ -1,8 +1,12 @@
 I2C.master I2C1_master#include <i2c.c>
 I2C.slave I2C1_slave#include <i2c.c>  
 I2C.init I2C1_init#include <i2c.c>
+I2C.write I2C1_write#include <i2c.c>
 I2C.writeChar I2C1_writeChar#include <i2c.c>
+I2C.writeBytes I2C1_writeBytes#include <i2c.c>
+I2C.read I2C1_read#include <i2c.c>
 I2C.readChar I2C1_readChar#include <i2c.c>
+I2C.readBytes I2C1_readBytes#include <i2c.c>
 I2C.printf I2C1_printf#include <i2c.c>
 I2C.wait I2C1_wait#include <i2c.c>
 I2C.start I2C1_start#include <i2c.c>
@@ -16,7 +20,9 @@ I2C.onReceive I2C1_onReceive#include <i2c.c>#define I2CINT
 I2C1.master I2C1_master#include <i2c.c>
 I2C1.slave I2C1_slave#include <i2c.c>  
 I2C1.init I2C1_init#include <i2c.c>
+I2C1.write I2C1_write#include <i2c.c>
 I2C1.writeChar I2C1_writeChar#include <i2c.c>
+I2C1.read I2C1_read#include <i2c.c>
 I2C1.readChar I2C1_readChar#include <i2c.c>
 I2C1.printf I2C1_printf#include <i2c.c>
 I2C1.wait I2C1_wait#include <i2c.c>
@@ -31,8 +37,12 @@ I2C1.onReceive I2C1_onReceive#include <i2c.c>#define I2CINT
 I2C2.master I2C2_master#include <i2c.c>
 I2C2.slave I2C2_slave#include <i2c.c>  
 I2C2.init I2C2_init#include <i2c.c>
+I2C2.write I2C2_write#include <i2c.c>
 I2C2.writeChar I2C2_writeChar#include <i2c.c>
+I2C2.writeBytes I2C2_writeBytes#include <i2c.c>
+I2C2.read I2C2_read#include <i2c.c>
 I2C2.readChar I2C2_readChar#include <i2c.c>
+I2C2.readBytes I2C2_readBytes#include <i2c.c>
 I2C2.printf I2C2_printf#include <i2c.c>
 I2C2.wait I2C2_wait#include <i2c.c>
 I2C2.start I2C2_start#include <i2c.c>

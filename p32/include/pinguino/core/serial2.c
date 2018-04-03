@@ -64,6 +64,17 @@ void serial2printf(char *fmt, ...)
 }
 #endif
 
+#if defined(SERIALPRINTX)
+void serial2printx(const char *s, s32 value, u8 base)
+{
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintX(UART1, s, value, base);
+    #else
+    SerialPrintX(UART2, s, value, base);
+    #endif
+}
+#endif /* SERIALPRINTX ... */
+
 #if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
 void serial2print(char *string)

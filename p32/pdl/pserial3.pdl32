@@ -11,5 +11,6 @@ Serial3.getKey serial3getkey#include <serial3.c>
 Serial3.getString serial3getstring#include <serial3.c>
 Serial3.available serial3available#include <serial3.c>
 Serial3.read serial3read#include <serial3.c>
+Serial3.readChar serial3read#include <serial3.c>
 Serial3.flush serial3flush#include <serial3.c>
 Serial3.ClearRxError serial3clearrxerror#include <serial3.c>

@@ -342,6 +342,10 @@ unsigned long _cpu_clock_ = 48000000;
     millis_init();              // Use Timer 0 (16F use Timer 1)
     #endif
 
+    #if defined(__PULSE__)
+    pulse_init();              // Use Timer 1
+    #endif
+
     #ifdef __USB__
     usb_init();
     #endif
@@ -368,8 +372,8 @@ unsigned long _cpu_clock_ = 48000000;
     spi_init();
     #endif
 
-    #ifdef SERVOSLIBRARY        // Use Timer 1
-    servos_init();
+    #ifdef __SERVO__        // Use Timer 1
+    servo_init();
     #endif
 
     #ifdef __PS2KEYB__
@@ -417,10 +421,10 @@ unsigned long _cpu_clock_ = 48000000;
 /// Interrupt 
 /// ----------------------------------------------------------------
 
-#if  defined(__USBCDC__)    || defined(__USBBULK__)   || defined(__USB__)     || \
+#if  defined(__USBCDC__)    || defined(__USBBULK__) || defined(__USB__)     || \
      defined(USERINT)       || defined(INT0INT)     || defined(I2CINT)      || \
      defined(__SERIAL__)    || defined(ON_EVENT)    || defined(__MILLIS__)  || \
-     defined(SERVOSLIBRARY) || defined(__PS2KEYB__) || defined(__DCF77__)   || \
+     defined(__SERVO__)     || defined(__PS2KEYB__) || defined(__DCF77__)   || \
      defined(__IRREMOTE__)  || defined(__AUDIO__)   || defined(__STEPPER__) || \
      defined(__CTMU__)      || defined(__SWPWM__)   || defined(RTCCALARMINTENABLE)
      // || defined(__DELAYMS__)
@@ -458,8 +462,8 @@ unsigned long _cpu_clock_ = 48000000;
             I2C_interrupt();
             #endif
 
-            #ifdef SERVOSLIBRARY
-            servos_interrupt();
+            #ifdef __SERVO__
+            servo_interrupt();
             #endif
 
             #ifdef INT0INT
@@ -559,8 +563,8 @@ unsigned long _cpu_clock_ = 48000000;
             I2C_interrupt();
             #endif
 
-            #ifdef SERVOSLIBRARY
-            servos_interrupt();
+            #ifdef __SERVO__
+            servo_interrupt();
             #endif
 
             #ifdef INT0INT

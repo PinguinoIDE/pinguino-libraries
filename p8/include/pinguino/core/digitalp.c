@@ -19,6 +19,7 @@
         andre gentric  2013/03/29 : fixed Pinguino4550 RA4 pin definition
         regis blanchot 2014/04/15 : one function / file
     05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
+    10 Apr. 2017 - Régis Blanchot - reduced code size
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -44,34 +45,50 @@
 
 void pinmode(u8 pin, u8 state)
 {
+    
+    u8 m = mask[pin];
+    u8 c = 255 - m;
+
+    #ifdef __XC8__
+
+    u8* p;
+
+    p = (u8 *)(0xF92 + port[pin]);
+
+    (state) ? *p |= m : *p &= c;
+
+    #else // SDCC
+
     switch (port[pin])
     {
         case pA:
-            if (state) TRISA=TRISA | mask[pin];
-            else TRISA=TRISA & (255-mask[pin]);
+            if (state) TRISA=TRISA | m;
+            else TRISA=TRISA & c;
             break;
         case pB:
-            if (state) TRISB=TRISB | mask[pin];
-            else TRISB=TRISB & (255-mask[pin]);
+            if (state) TRISB=TRISB | m;
+            else TRISB=TRISB & c;
             break;
         case pC:
-            if (state) TRISC=TRISC | mask[pin];
-            else TRISC=TRISC & (255-mask[pin]);
+            if (state) TRISC=TRISC | m;
+            else TRISC=TRISC & c;
             break;
         #if defined(PINGUINO4455)   || defined(PINGUINO4550)   || \
             defined(PINGUINO45K50)  || defined(PINGUINO46J50)  || \
             defined(PINGUINO47J53A) || defined(PINGUINO47J53B) || \
             defined(PICUNO_EQUO)
         case pD:
-            if (state) TRISD=TRISD | mask[pin];
-            else TRISD=TRISD & (255-mask[pin]);
+            if (state) TRISD=TRISD | m;
+            else TRISD=TRISD & c;
             break;
         case pE:
-            if (state) TRISE=TRISE | mask[pin];
-            else TRISE=TRISE & (255-mask[pin]);
+            if (state) TRISE=TRISE | m;
+            else TRISE=TRISE & c;
             break;
         #endif
     }
+
+    #endif
 }
 
 #endif /* __DIGITALP__ */

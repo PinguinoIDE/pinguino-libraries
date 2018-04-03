@@ -1,13 +1,13 @@
 /*  ----------------------------------------------------------------------------
-    FILE:			const.h
-    PROJECT:		pinguino
-    PURPOSE:		Pinguino main constant definitions
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	20 Jun. 2009
-    LAST RELEASE:	29 Nov. 2015
+    FILE:       const.h
+    PROJECT:    pinguino
+    PURPOSE:    Pinguino main constant definitions
+    PROGRAMER:  Régis Blanchot <rblanchot@gmail.com>
     ----------------------------------------------------------------------------
     CHANGELOG:
+    2009-06-20 - Régis Blanchot - First release  
     2015-11-29 - Régis Blanchot - Commented #define BYTE (conflict with typedef.h)
+    2017-05-09 - Régis Blanchot - Added UARTSW, UART1 and UART2 constants
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,10 @@
     #define PINGUINO_MINOR_VERSION 1
 
     // already defined in math.h
-    //#define PI                3.1415926535897932384626433832795
+    #ifndef PI
+    #define PI                  3.1415926535897932384626433832795
+    #endif
+    
     //#define HALF_PI           1.5707963267948966192313216916398
     //#define TWO_PI            6.2831853071795864769252867665590
     //#define SQR_PI            9.8696044010893586188344909998761
@@ -80,6 +83,9 @@
     #define MHZ                 1000000
     
     // Com. constants
+    #define UARTSW              0
+    #define UART1               1
+    #define UART2               2
     #define I2C1                1
     #define I2C2                2
     #define SPISW               0

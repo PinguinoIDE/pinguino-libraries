@@ -43,12 +43,13 @@
 #endif
 
 // PrintFloat
-#if defined(SERIALPRINTFLOAT)
+#if defined(SERIALPRINTFLOAT) || defined(SERIALPRINTX)
     #include <printFloat.c>
 #endif
 
 // PrintNumber
-#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT) || \
+    defined(SERIALPRINTX)
     #include <printNumber.c>
 #endif
 
@@ -750,9 +751,10 @@ void SerialPutChar(u8 port, u8 c)
  **********************************************************************/
  
 #if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
-    defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+    defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT) || \
+    defined(SERIALPRINTX)
 
-void SerialPrint(u8 port, char *string)
+void SerialPrint(u8 port, const char *string)
 {
     u8 i;
 
@@ -769,10 +771,10 @@ void SerialPrint(u8 port, char *string)
  **********************************************************************/
 
 #if defined(SERIALPRINTLN)
-void SerialPrintln(u8 port, char *string)
+void SerialPrintln(u8 port, const char *string)
 {
     SerialPrint(port, string);
-    SerialPrint(port, "\n\r");
+    SerialPrint(port, "\r\n");
 }
 #endif /* SERIALPRINTLN */
 
@@ -783,7 +785,9 @@ void SerialPrintln(u8 port, char *string)
  * base : see const.h (DEC, BIN, HEXA, OCTO, ...)
  **********************************************************************/
 
-#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
+#if defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT) || \
+    defined(SERIALPRINTX)
+    
 void SerialPrintNumber(u8 port, long value, u8 base)
 {  
     switch (port)
@@ -818,7 +822,7 @@ void SerialPrintNumber(u8 port, long value, u8 base)
  * base : see const.h (DEC, BIN, HEXA, OCTO, ...)
  **********************************************************************/
 
-#if defined(SERIALPRINTFLOAT)
+#if defined(SERIALPRINTFLOAT) || defined(SERIALPRINTX)
 void SerialPrintFloat(u8 port, float number, u8 digits)
 { 
     switch (port)
@@ -845,6 +849,31 @@ void SerialPrintFloat(u8 port, float number, u8 digits)
     }
 }
 #endif /* SERIALPRINTFLOAT */
+
+/***********************************************************************
+ * USB SERIAL printX routine (SERIAL.printX)
+ * added by regis blanchot on 09/12/2017
+ * useful mixed print function with a smaller footprint than printf
+ * writes a string followed by a number and jump to the next line
+ **********************************************************************/
+
+#if defined(SERIALPRINTX)
+
+void SerialPrintX(u8 port, const char *s, s32 value, u8 base)
+{
+    SerialPrint(port, s);
+    if (base == BIN)
+        SerialPrint(port, (const char *)"0b");
+    if (base == HEX)
+        SerialPrint(port, (const char *)"0x");
+    if (base == FLOAT)
+        SerialPrintFloat(port, (float)value, 2);
+    else
+        SerialPrintNumber(port, value, base);
+    SerialPrint(port, (const char *)"\n\r");
+}
+        
+#endif /* SERIALPRINTX ... */
 
 /*	--------------------------------------------------------------------
     SerialPrintf : write formated string on the serial port
@@ -888,31 +917,33 @@ void SerialPrintf(u8 port, u8 *fmt, ...)
     SerialAvailable
     ------------------------------------------------------------------*/
 
-char SerialAvailable(u8 port)
+BOOL SerialAvailable(u8 port)
 {
+    BOOL r=FALSE;
+    
     switch (port)
     {
-        case UART1: return (UART1wpointer != UART1rpointer); break;
+        case UART1: r = (UART1wpointer != UART1rpointer); break;
 
-        case UART2:	return (UART2wpointer != UART2rpointer); break;
+        case UART2:	r = (UART2wpointer != UART2rpointer); break;
 
         #ifdef ENABLE_UART3
-        case UART3:	return (UART3wpointer != UART3rpointer); break;
+        case UART3:	r = (UART3wpointer != UART3rpointer); break;
         #endif
 
         #ifdef ENABLE_UART4
-        case UART4:	return (UART4wpointer != UART4rpointer); break;
+        case UART4:	r = (UART4wpointer != UART4rpointer); break;
         #endif
 
         #ifdef ENABLE_UART5
-        case UART5:	return (UART5wpointer != UART5rpointer); break;
+        case UART5:	r = (UART5wpointer != UART5rpointer); break;
         #endif
 
         #ifdef ENABLE_UART6
-        case UART6:	return (UART6wpointer != UART6rpointer); break;
+        case UART6:	r = (UART6wpointer != UART6rpointer); break;
         #endif
     }
-    return (-1);
+    return r;
 }
 
 /*	--------------------------------------------------------------------
@@ -921,7 +952,7 @@ char SerialAvailable(u8 port)
 
 char SerialRead(u8 port)
 {
-    char c = 0;
+    char c = 255;
 
     if (SerialAvailable(port))
     {
@@ -931,14 +962,12 @@ char SerialRead(u8 port)
                 c = UART1SerialBuffer[UART1rpointer++];
                 if (UART1rpointer == SERIAL_BUFFERLENGTH)
                     UART1rpointer=1;
-                return(c);
                 break;
 
             case UART2:
                 c = UART2SerialBuffer[UART2rpointer++];
                 if (UART2rpointer == SERIAL_BUFFERLENGTH)
                     UART2rpointer=1;
-                return(c);
                 break;
 
             #ifdef ENABLE_UART3
@@ -946,7 +975,6 @@ char SerialRead(u8 port)
                 c = UART3SerialBuffer[UART3rpointer++];
                 if (UART3rpointer == SERIAL_BUFFERLENGTH)
                     UART3rpointer=1;
-                return(c);
                 break;
             #endif
 
@@ -955,7 +983,6 @@ char SerialRead(u8 port)
                 c = UART4SerialBuffer[UART4rpointer++];
                 if (UART4rpointer == SERIAL_BUFFERLENGTH)
                     UART4rpointer=1;
-                return(c);
                 break;
             #endif
 
@@ -964,7 +991,6 @@ char SerialRead(u8 port)
                 c = UART5SerialBuffer[UART5rpointer++];
                 if (UART5rpointer == SERIAL_BUFFERLENGTH)
                     UART5rpointer=1;
-                return(c);
                 break;
             #endif
             
@@ -973,12 +999,11 @@ char SerialRead(u8 port)
                 c = UART6SerialBuffer[UART6rpointer++];
                 if (UART6rpointer == SERIAL_BUFFERLENGTH)
                     UART6rpointer=1;
-                return(c);
                 break;
             #endif
         }
     }
-    return(-1);
+    return c;
 }
 
 /*	--------------------------------------------------------------------
@@ -992,7 +1017,7 @@ char SerialGetKey(u8 port)
     while (!(SerialAvailable(port)));
     c = SerialRead(port);
     SerialFlush(port);
-    return (c);
+    return c;
 }
 
 /*	--------------------------------------------------------------------
@@ -1014,7 +1039,7 @@ char * SerialGetString(u8 port)
     } while (c != '\r');
     buffer[i] = '\0';
 
-    return (buffer);
+    return buffer;
 }
 
 /*	--------------------------------------------------------------------
@@ -1371,13 +1396,15 @@ void Serial6Interrupt(void)
 
 BOOL SerialClearRxError(u8 port)
 {
+    BOOL r=TRUE;
+    
     switch (port)
     {
         case UART1:
             if (U1STAbits.OERR != 0)
             {
                 U1STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
 
@@ -1385,7 +1412,7 @@ BOOL SerialClearRxError(u8 port)
             if (U2STAbits.OERR != 0)
             {
                 U2STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
 
@@ -1394,7 +1421,7 @@ BOOL SerialClearRxError(u8 port)
             if (U3STAbits.OERR != 0)
             {
                 U3STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
         #endif
@@ -1404,7 +1431,7 @@ BOOL SerialClearRxError(u8 port)
             if (U4STAbits.OERR != 0)
             {
                 U4STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
         #endif
@@ -1414,7 +1441,7 @@ BOOL SerialClearRxError(u8 port)
             if (U5STAbits.OERR != 0)
             {
                 U5STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
         #endif
@@ -1424,12 +1451,12 @@ BOOL SerialClearRxError(u8 port)
             if (U6STAbits.OERR != 0)
             {
                 U6STAbits.OERR = 0;
-                return(FALSE);
+                r=FALSE;
             }
             break;
         #endif
     }
-    return(TRUE);
+    return r;
 }
 
 //IFS0CLR = UART1_ALL_INTERRUPT;			// clear any existing event

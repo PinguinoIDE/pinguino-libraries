@@ -10,9 +10,11 @@
     30 Nov. 2015 - Régis Blanchot - added PIC16F1459 support
     22 Jan. 2016 - Régis Blanchot - removed setPin(), extended begin() with vargs
     25 Jan. 2017 - Régis Blanchot - prepared SPI Sofware Data-In support (SDI)
+    01 Feb. 2018 - Régis Blanchot - added SPI_writeBytes() and SPI_readBytes()
+                                  - added SPI_writeChar() and SPI_readChar()
     --------------------------------------------------------------------
     TODO
-    * SPI Sofware Data-In support (SDI)
+    * SPI Sofware read function
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -39,11 +41,25 @@
 #include <stdarg.h>
 #include <compiler.h>
 #include <const.h>              // SPISW, SPI1, SPI2
+#include <macro.h>              // BitSet, BitClear, ...
 #include <spi.h>
 //#include <delayms.c>
+#include <delayus.c>
 #include <digitalp.c>
 #include <digitalw.c>
-//#include <digitalr.c>
+#include <digitalr.c>
+
+/*
+            while (1)
+            {
+                digitalwrite(USERLED, HIGH);
+                Delayms(100);
+                digitalwrite(USERLED, LOW);
+                Delayms(900);
+            }
+*/
+
+#define TEMPO   50
 
 /**
  * This function initializes the SPI hardware configuring polarity and edge
@@ -55,7 +71,7 @@
  *    1,0         1     1
  *    1,1         1     0
  *
- * Also is possible to use LOW or HIGH for mode0 to indicate the idle state
+ * It's possible to use LOW or HIGH for mode0 to indicate the idle state
  * clock level, and RISING or FALLING to indicate when the transmit should
  * take place.
  *
@@ -98,6 +114,25 @@ void spi_init()
 }
 
 /**
+ *  SPI Software Clock function
+ */
+
+void SPI_pulse()
+{
+    u8 mode = _spi[SPISW].mode;
+
+    if (mode == SPI_MODE0 || mode == SPI_MODE2)
+        mode = SPI_RISING_EDGE;
+    else
+        mode = SPI_FALLING_EDGE;
+
+    digitalwrite(_spi[SPISW].sck, !mode);
+    Delayus(TEMPO);
+    digitalwrite(_spi[SPISW].sck, mode);
+    Delayus(TEMPO);
+}
+
+/**
  *  This function selects a SPI module
  */
 
@@ -106,22 +141,18 @@ void SPI_select(u8 module)
     switch(module)
     {
         case SPISW:
-            // Pinguino pins <0:7> are always multiplexed with PORTB
-            if (_spi[SPISW].cs < 8)
-                BitClear(LATB, _spi[SPISW].cs);
-            else
-                digitalwrite(_spi[SPISW].cs, LOW);
+            digitalwrite(_spi[SPISW].cs, LOW);
             break;
 
         case SPI1:
-            SD_CS = LOW;
+            CSPIN = LOW;
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)
-            
+
         case SPI2:
-            SD_CS2 = LOW;
+            CS2PIN = LOW;
             break;
             
         #endif
@@ -137,22 +168,18 @@ void SPI_deselect(u8 module)
     switch(module)
     {
         case SPISW:
-            // Pinguino pins <0:7> are always multiplexed with PORTB
-            if (_spi[SPISW].cs < 8)
-                BitSet(LATB, _spi[SPISW].cs);
-            else
-                digitalwrite(_spi[SPISW].cs, HIGH);
+            digitalwrite(_spi[SPISW].cs, HIGH);
             break;
 
         case SPI1:
-            SD_CS = HIGH;
+            CSPIN = HIGH;
             break;
 
         #if defined(__18f26j50)|| defined(__18f46j50) || \
             defined(__18f27j53)|| defined(__18f47j53)
 
         case SPI2:
-            SD_CS2 = HIGH;
+            CS2PIN = HIGH;
             break;
             
         #endif
@@ -168,21 +195,18 @@ void SPI_begin(int module, ...)
 
     // Reset the module
     //SPI_close(module);
-    SPI_deselect(module);
+    //SPI_deselect(module);
     
     if (module == SPISW)
     {
-            _spi[SPISW].sdo = va_arg(args, int); // get the first arg
-            //_spi[SPISW].sdi = va_arg(args, int); // get the first arg
+            _spi[SPISW].sdo = va_arg(args, int);
+            _spi[SPISW].sdi = va_arg(args, int);
             _spi[SPISW].sck = va_arg(args, int);
             _spi[SPISW].cs  = va_arg(args, int);
             pinmode(_spi[SPISW].sdo, OUTPUT);
-            //pinmode(_spi[SPISW].sdi, INPUT);
+            pinmode(_spi[SPISW].sdi, INPUT);
             pinmode(_spi[SPISW].sck, OUTPUT);
             pinmode(_spi[SPISW].cs,  OUTPUT);
-            //TRISBbits.TRISB1 = 0;
-            //TRISBbits.TRISB2 = 0;
-            //TRISBbits.TRISB0 = 0;
     }
 
     else if (module == SPI1)
@@ -384,7 +408,8 @@ void SPI_close(u8 module)
  */
 
 //#ifdef SPISETDATAMODE
-#define SPI_setDataMode(m, mo)   _spi[m].mode = mo
+#define SPI_setDataMode(module, mo)   _spi[module].mode = mo
+
 //#endif
 
 /**
@@ -413,7 +438,10 @@ void SPI_setMode(u8 module, u8 mode)
  * the frequency of the system clock. 
  */
 
+#define SPI_setClockDivider(module, divider)   SPI_setMode(module, divider)
+
 //#ifdef SPISETCLOCKDIVIDER
+/*
 void SPI_setClockDivider(u8 module, u8 divider)
 {
     _spi[module].role  = divider;
@@ -424,38 +452,44 @@ void SPI_setClockDivider(u8 module, u8 divider)
     else
         _spi[module].phase = SPI_HIGH_SPEED_MODE;
 }
+*/
 //#endif
 
 //#ifdef SPIWRITE
 u8 SPI_write(u8 module, u8 dataout)
 {
     u8 clear, i, bitMask;
+    u8 datain = 0x00;
 
     switch (module)
     {
         case SPISW:
+            // send data
             for (i = 0; i <= 7; i++)
             {
                 if (_spi[SPISW].bitorder == SPI_MSBFIRST)
                     bitMask = (0x80 >> i);
                 else
                     bitMask = (0x01 << i);
-                // Pinguino pins <0:7> are always multiplexed with PORTB
-                if (_spi[SPISW].sdo < 8 && _spi[SPISW].sck < 8)
-                {
-                    (dataout & bitMask) ? BitSet(LATB, _spi[SPISW].sdo) : BitClear(LATB, _spi[SPISW].sdo);
-                    BitSet(LATB, _spi[SPISW].sck);
-                    BitClear(LATB, _spi[SPISW].sck);
-                }
-                else
-                {
-                    digitalwrite(_spi[SPISW].sdo, (dataout & bitMask) ? 1:0);
-                    digitalwrite(_spi[SPISW].sck, 1);
-                    digitalwrite(_spi[SPISW].sck, 0);
-                }
+                
+                digitalwrite(_spi[SPISW].sdo, (dataout & bitMask) ? 1:0);
+                SPI_pulse();
             }
-            return dataout;
-            //return digitalread(_spi[SPISW].sdi);
+            
+            // return answer
+            for (i = 0; i <= 7; i++)
+            {
+                if (_spi[SPISW].bitorder == SPI_MSBFIRST)
+                    bitMask = (0x80 >> i);
+                else
+                    bitMask = (0x01 << i);
+                
+                SPI_pulse();
+                if (digitalread(_spi[SPISW].sdi))
+                    datain |= bitMask;
+            }
+
+            return datain;
 
         case SPI1:
             clear = SSP1BUF;                // clears buffer
@@ -506,9 +540,61 @@ u8 SPI_write(u8 module, u8 dataout)
     // error, not a valid SPI module
     return -1;
 }
+
+u8 SPI_writeChar(u8 module, u8 address, u8 val)
+{
+    u8 r;
+    SPI_select(module);
+    r = SPI_write(module, address);
+    if (r)
+        SPI_write(module, val);
+    SPI_deselect(module);
+    return r;
+}
+
+u8 SPI_writeBytes(u8 module, u8 address, u8* buffer, u8 length)
+{
+    u8 i, r;
+
+    SPI_select(module);
+    for(i = 0; i < length; i++)
+    {
+        SPI_write(module, address++);
+        r = SPI_write(module, *buffer++);
+    }
+    SPI_deselect(module);
+    return r;
+}
 //#endif
 
 #define SPI_read(module) SPI_write(module, 0xFF)
+
+u8 SPI_readChar(u8 module, u8 address)
+{
+    u8 val;
+
+    SPI_select(module);
+    SPI_write(module, address);
+    val = SPI_read(module);
+    SPI_deselect(module);
+
+    return val;
+}
+
+u8 SPI_readBytes(u8 module, u8 address, u8 *buffer, u8 length)
+{
+    u8 i, r;
+
+    SPI_select(module);
+    r = SPI_write(module, address);
+    if (r)
+    {
+        for(i = 0; i < length; i++)
+            buffer[i] = SPI_read(module);
+    }
+    SPI_deselect(module);
+    return r;
+}
 
 /***********************************************************************
  *  Interrupt routines 

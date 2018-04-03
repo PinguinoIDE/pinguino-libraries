@@ -11,6 +11,7 @@
             . pins have to be the CPU SPI pins
             . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
             . PINGUINO 8  have only one SPI module (SPI1)
+              except Pinguino with PIC18F47J53 which have 2
         - Software SPI
             . SPISW
             . SPI operations are handled by the SPI library
@@ -48,7 +49,9 @@ void setup()
     // SDA and SCK pins must be defined by user
     // if module used is SPISW (SPI Software)
     //ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
-    ST7735.init(SPIMODULE, 7); // DC
+    //ST7735.init(SPIMODULE, 14); // DC=TX1 for Pinguino torda
+    //ST7735.init(SPIMODULE, 24); // DC=SCL2 for Pinguino torda
+    ST7735.init(SPIMODULE, 19); // DC=SCL1 for Olimex PIC32 Pinguino
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
     ST7735.setOrientation(SPIMODULE, 90);
     ST7735.clearScreen(SPIMODULE);

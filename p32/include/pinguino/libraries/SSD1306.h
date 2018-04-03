@@ -50,8 +50,12 @@
     Display sizes
     ------------------------------------------------------------------*/
 
-    //#define SSD1306_128X32              1
-    #define SSD1306_128X64              2
+    #if defined(__16f1459)  || \
+        defined(__18f13k50) || defined(__18f14k50)
+        #define SSD1306_128X32          1
+    #else
+        #define SSD1306_128X64          2
+    #endif
     
 /**	--------------------------------------------------------------------
     Display commands
@@ -229,6 +233,9 @@ void SSD1306_printChar(u8, u8);
 void SSD1306_printChar2(u8);
 void SSD1306_print(u8, u8 *);
 void SSD1306_println(u8, u8 *);
+void SSD1306_printCenter(u8, u8 *);
+u8 SSD1306_charWidth(u8, u8);
+u16 SSD1306_stringWidth(u8, u8*);
 void SSD1306_printNumber(u8, long, u8);
 void SSD1306_printFloat(u8, float, u8);
 void SSD1306_printf(u8, const u8 *, ...);
@@ -326,7 +333,7 @@ lcd_t SSD1306[6];
 
     //#define swap(i, j) {int t = i; i = j; j = t;}
 
-    #ifndef __PIC32MX__
+    #if !defined(__PIC32MX__)
     #define low(x)              digitalwrite(x, LOW)
     #define high(x)             digitalwrite(x, HIGH)
     #endif

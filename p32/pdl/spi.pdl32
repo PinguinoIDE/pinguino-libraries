@@ -9,3 +9,5 @@ SPI.setClockDivider SPI_setClockDivider#include <spi.c>
 SPI.write SPI_write#include <spi.c>
 SPI.transfer SPI_write#include <spi.c>
 SPI.read SPI_read#include <spi.c>
+SPI.select SPI_select#include <spi.c>
+SPI.deselect SPI_deselect#include <spi.c>

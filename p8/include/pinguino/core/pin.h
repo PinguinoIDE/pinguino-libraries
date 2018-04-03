@@ -508,8 +508,9 @@
     #define PWM7        15 // RC7
 
     #define LED1        10 // RC2
+    #define LED2        9  // RC1 (from Pinguino 47J53B v1.1)
     #define USERLED     10 // RC2
-
+    #define USERBUTTON  26 // RD2, PMD2 
     /*
     #define PMD0        24
     #define PMD1        25

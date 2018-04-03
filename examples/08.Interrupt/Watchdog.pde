@@ -1,5 +1,5 @@
 /*	----------------------------------------------------------------------------
-    blink led with help from interrupt library
+    Blink the built-in led with help from watchdog timer and sleep mode
     ----------------------------------------------------------------------------
     author:	Régis Blanchot
     --------------------------------------------------------------------------*/

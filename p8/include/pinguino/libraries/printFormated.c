@@ -198,7 +198,7 @@ u8 pprinti(u8 **out, u32 i, u8 islong, u8 base, u8 sign, u8 width, u8 pad, u8 se
     return pc + pprints(out, string, width, pad);
 }
 
-#if !defined(__16F1459)
+#if !defined(__16F1459) && !defined(__18f13k50) && !defined(__18f14k50)
 /*  --------------------------------------------------------------------
     pprintfl = pinguino print float
     --------------------------------------------------------------------
@@ -222,30 +222,154 @@ u8 pprintfl(u8 **out, float value, u8 width, u8 pad, u8 separator, u8 precision)
 u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision)
 #endif
 {
+    u8 i, toPrint;
+    u32 int_part;
+    float frac_part, rounding;
+
+    u8 buffer[PRINTF_BUF_LEN], *string = buffer;
+    u8 tmp[PRINTF_BUF_LEN], *s = tmp;
+    u8 count = 0, m = 0;
+    u8 length = PRINTF_BUF_LEN - 1;
+    
+    // Handle negative numbers
+    // -----------------------------------------------------------------
+    
+    if (value < 0.0)
+    {
+        if (width && (pad & PAD_ZERO))
+        {
+            pprintc(out, '-');
+            ++count;
+            --width;
+        }
+        else
+        {
+            *string++ = '-';
+            length--;
+        }
+        value = -value;
+    }
+
+    // Round correctly so that print(1.999, 2) prints as "2.00"
+    // -----------------------------------------------------------------
+    /*
+    rounding = 0.5;
+    for (i=0; i<precision; ++i)
+        rounding /= 10.0;
+    value += rounding;
+    */
+    // Extract the integer part of the number and print it  
+    // -----------------------------------------------------------------
+    
+    int_part  = (u32)value;
+    frac_part = value - (float)int_part;
+
+    // the string is more easily written backwards
+    while (int_part)
+    {
+        *s++ = int_part % 10 + '0';// decimal base
+        int_part /= 10;
+        m++;                    // string's length counter
+        length--;               // space remaining
+    }
+    // now the string is written in the right direction
+    while (m--)
+    {
+        *string++ = *--s;
+        /*----- TODO separator -------------------------------------
+        if ( separator && (m % 3 == 0) )
+        {
+            pprintc(out, ' ');
+            ++count;
+            --width;
+        }
+        ----------------------------------------------------------*/
+    }
+
+    // Add fractional part to string
+    // -----------------------------------------------------------------
+    
+    if (precision > 6)
+        precision = 6;
+
+    // check if we still have enough space
+    if (precision > length)
+        precision = length;
+ 
+    // otherwise, number has no fractional part
+    if (precision > 0)
+    {
+        // add the decimal point to string
+        *string++ = '.';
+
+        while (precision-- > 0)
+        //for (m = 0; m < precision; m++)
+        {
+            // Extract digits from the frac_part one at a time
+            // multiplies frac_part by 10 by adding 8 times and 2 times; 
+            //frac_part = (frac_part << 3) + (frac_part << 1);
+            frac_part *= 10.0;
+            toPrint = (unsigned int)frac_part;
+            // print binary-coded decimal (BCD)
+            // converts leading digits to number character
+            //*string++ = (frac_part >> 24) + '0';
+            *string++ =  toPrint + '0';
+            // strips off leading digits
+            //frac_part &= 0xFFFFFF;
+            frac_part -= (float)toPrint;
+        }
+    }
+
+    /*
     union
     {
         float f;
-        s32   l;
-        //int   l; // PIC32MX
+        u32 l;
     } helper;
+    /
     
-    u32 mantissa;
+    u32 helper;
     u32 int_part  = 0;
     u32 frac_part = 0;
-    s8 exponent;
+
+    u32 mantissa;   // bits <0:22>
+    s8  exponent;    // bits <23:30>
+    u8  sign;        // bit  <31>
+
     u8 buffer[PRINTF_BUF_LEN], *string = buffer;
     u8 tmp[PRINTF_BUF_LEN], *s = tmp;
     u8 count = 0, m, t;
     u8 length = PRINTF_BUF_LEN - 1;
-
+   
+    /* 
     #ifndef __PIC32MX__
     helper.f = value;
     #else
     helper.f = (float)value;
     #endif
+    /
+    
+    // takes last 23 bits and adds the implicit 1
+    //mantissa = (helper.l & 0x7FFFFF) | 0x800000;
+    helper = *((u32*)&value);
+    mantissa = (helper & 0x7FFFFF) | 0x800000;
+    
+    // shifts the 23 bits of mantissa out,
+    // takes the next 8 bits
+    // then subtracts 127 to get an exponent value in the range −126 .. +127
+    //exponent = ((helper.l >> 23) & 0xFF) - 127;
+    helper = helper >> 23;
+    exponent = (helper & 0xFF) -127 ;
+    
+    // sign is 31st bit
+    //sign = helper.l >> 31;
+    helper = helper >> 8;
+    sign = (helper & 0x01);
 
     // add negative sign if applicable
-    if (helper.l < 0)
+    // (1 for negative, 0 for positive)
+    //if (helper.l < 0)
+    if (sign)
     {
         if (width && (pad & PAD_ZERO))
         {
@@ -260,14 +384,7 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
         }
     }
 
-    // shifts the 23 bits of mantissa out,
-    // takes the next 8 bits then subtracts 127 to get actual exponent
-    exponent = ((helper.l >> 23) & 0xFF) - 127;	
-
-    // takes last 23 bits and adds the implicit 1
-    mantissa = (helper.l & 0x7FFFFF) | 0x800000;
-
-/*
+    /*
     if ( (exponent >= 31) || (exponent < -23) )
     {
         buffer[0] = 'i';
@@ -276,9 +393,9 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
         buffer[3] = '\0';
         return pprints(out, buffer, width, pad);
     }
-*/
-
-    if (exponent >= 31)
+    /
+    
+    if (exponent >= 38)
     {
         buffer[0] = '+';
         buffer[1] = 'i';
@@ -288,18 +405,18 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
         return pprints(out, buffer, width, pad);
     }
 
-    else if (exponent < -23)
+    else if (exponent < -38)
     {
-        /*
         buffer[0] = '-';
         buffer[1] = 'i';
         buffer[2] = 'n';
         buffer[3] = 'f';
         buffer[4] = '\0';
         return pprints(out, buffer, width, pad);
-        */
+        /*
         int_part  = 0;
         frac_part = 0;
+        /
     }
 
     else if (exponent >= 23)
@@ -346,7 +463,7 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
                 ++count;
                 --width;
             }
-            ----------------------------------------------------------*/
+            ----------------------------------------------------------/
         }
     }
     
@@ -375,6 +492,7 @@ u8 pprintfl(u8 **out, double value, u8 width, u8 pad, u8 separator, u8 precision
             frac_part &= 0xFFFFFF;
         }
     }
+    */
 
     // end of string
     *string++ = '\0';
@@ -453,7 +571,7 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             ----------------------------------------------------------*/
 
             /*--------------------------------------------------------*/
-            #if !defined(__16F1459)
+            #if !defined(__16F1459) && !defined(__18f13k50) && !defined(__18f14k50)
 
             // float precision
             if (*format == '.')
@@ -506,6 +624,7 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             // decimal (10) unsigned (0) integer
             if (*format == 'u')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, DEC, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
@@ -514,6 +633,7 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             // decimal (10) signed (1) integer
             if (*format == 'd' || *format == 'i')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, DEC, SIGNED, width, pad, separator, LOWERCASE);
                 continue;
@@ -522,6 +642,7 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             // unsigned (0) lower (LOWERCASE) hexa (16) or pointer
             if (*format == 'x' || *format == 'p')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, HEX, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
@@ -530,6 +651,7 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             // unsigned (0) upper (UPPERCASE) hexa (16) or pointer
             if (*format == 'X' || *format == 'P')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, HEX, UNSIGNED, width, pad, separator, UPPERCASE);
                 continue;
@@ -538,17 +660,19 @@ u8 pprint(u8 **out, const u8 *format, va_list args)
             // binary
             if (*format == 'b')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, BIN, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;
             }
 
             /*--------------------------------------------------------*/
-            #if !defined(__16F1459)
+            #if !defined(__16F1459) && !defined(__18f13k50) && !defined(__18f14k50)
 
             // octal
             if (*format == 'o')
             {
+                // NB : P8 int is u16
                 val = (islong) ? va_arg(args, u32) : va_arg(args, u16);
                 pc += pprinti(out, val, islong, OCT, UNSIGNED, width, pad, separator, LOWERCASE);
                 continue;

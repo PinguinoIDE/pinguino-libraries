@@ -21,10 +21,11 @@
     08 Dec. 2016 - Régis Blanchot - added variable width font support
     12 Dec. 2016 - Régis Blanchot - fixed SPI part
     13 Dec. 2016 - Régis Blanchot - fixed Low RAM PIC support
+    22 Nov. 2017 - Régis Blanchot - fixed printCenter to support different fonts
     ------------------------------------------------------------------------
     TODO:
     * Manage screen's size in SSD1306_init
-    * SSD1327 and SH1106 support
+    * Add support to SSD1309, SSD1327, SSD1331 and SH1106 support
     * Rename SSD1306.xxx functions to Oled.xxx functions
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
@@ -77,7 +78,7 @@ BS2     0       1       1       0       0
 #include <string.h>         // memset, memcpy
 #include <SSD1306.h>
 
-#ifndef __PIC32MX__
+#if !defined(__PIC32MX__)
 #include <digitalw.c>
 #include <digitalp.c>
 #include <delayms.c>
@@ -396,7 +397,7 @@ void SSD1306_init(u8 module, ...)
     pRST = va_arg(args, int);       // get the next arg
     SPI_setMode(module, SPI_MASTER);
     SPI_setDataMode(module, SPI_MODE1);
-    #ifndef __PIC32MX__
+    #if !defined(__PIC32MX__)
     //maximum baud rate possible = FPB = FOSC/4
     SPI_setClockDivider(module, SPI_CLOCK_DIV4);
     #else
@@ -831,7 +832,8 @@ void SSD1306_printChar(u8 module, u8 c)
     ------------------------------------------------------------------*/
 
 #if defined(SSD1306PRINT)       || defined(SSD1306PRINTLN)    || \
-    defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT)
+    defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT) || \
+    defined(SSD1306PRINTCENTER)
 void SSD1306_print(u8 module, u8 *string)
 {
     while (*string != 0)
@@ -847,25 +849,39 @@ void SSD1306_println(u8 module, u8 *string)
 }
 #endif
 
-#if defined(ST7735PRINTCENTER)
-void SSD1306_printCenter(u8 module, const u8 *string)
+#if defined(SSD1306PRINTCENTER)
+void SSD1306_printCenter(u8 module, u8 *string)
 {
-    u8 strlen, nbspace;
-    const u8 *p;
-
-    for (p = string; *p; ++p);
-    strlen = p - string;
-
-    nbspace = (SSD1306.screen.width / SSD1306.font.width - strlen) / 2;
+    SSD1306.pixel.x = (SSD1306.screen.width - SSD1306_stringWidth(module, string)) / 2;
     
-    // write spaces before
-    while(nbspace--)
-        SSD1306_printChar(module, 32);
-
     // write string
-    SSD1306_print(module, string);
-    SSD1306_print(module, (u8*)"\n\r");
+    while (*string != 0)
+        SSD1306_printChar(module, *string++);
 }
+
+u8 SSD1306_charWidth(u8 module, u8 c)
+{
+    // fixed width font
+    if (SSD1306.font.address[FONT_LENGTH]==0 && SSD1306.font.address[FONT_LENGTH+1]==0)
+        return (SSD1306.font.width + 1); 
+
+    // variable width font
+    if (c < SSD1306.font.firstChar || c > (SSD1306.font.firstChar + SSD1306.font.charCount))
+        c = ' ';
+    c = c - SSD1306.font.firstChar;
+    return (SSD1306.font.address[FONT_WIDTH_TABLE + c] + 1);
+}
+
+u16 SSD1306_stringWidth(u8 module, u8* str)
+{
+    u16 width = 0;
+
+    while(*str != 0)
+        width += SSD1306_charWidth(module, *str++);
+
+    return width;
+}
+
 #endif
 
 #if defined(SSD1306PRINTNUMBER) || defined(SSD1306PRINTFLOAT)
@@ -1027,7 +1043,7 @@ void SSD1306_fillCircle(u8 module, u16 x, u16 y, u16 radius)
     fillCircle(x, y, radius);
 }
 
-#ifdef ST7735DRAWBITMAP
+#ifdef SSD1306DRAWBITMAP
 void SSD1306_drawBitmap(u8 module1, u16 module2, const u8* filename, u16 x, u16 y)
 {
     SSD1306_INTF = module1;

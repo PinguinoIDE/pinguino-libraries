@@ -12,9 +12,10 @@
     23-01-2017 - Régis Blanchot -   fixed
     25-01-2017 - Régis Blanchot -   added SPI communication
     25-01-2017 - Régis Blanchot -   added PIC32MX support
+    13-12-2017 - Régis Blanchot -   replaced floats with integers
+    14-12-2017 - Régis Blanchot -   fixed different bugs
     --------------------------------------------------------------------
     TODO:
-    * back from float to integer ?
     * Check that BMP280 SPI max is always < 10MHz
     --------------------------------------------------------------------
     Our example code uses the "pizza-eating" license. You can do anything
@@ -25,9 +26,9 @@
 #ifndef __BMP280_C
 #define __BMP280_C
 
-#ifndef WIRE
-#define WIRE
-#endif
+//#ifndef WIRE
+//#define WIRE
+//#endif
 
 #ifndef __PIC32MX__
 #include <compiler.h>
@@ -44,18 +45,19 @@
 #include <i2c.c>
 #endif
 
-#if defined(BMP280SPISWENABLE) || defined(BMP280SPI1ENABLE) || defined(BMP280SPI2ENABLE)
+#if defined(BMP280SPISWENABLE) || \
+    defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
 #include <spi.h>
 #include <spi.c>
 #endif
 
-#ifndef __PIC32MX__
+#if defined(__PIC32MX__)
+#include <digitalw.c>
+#include <delay.c>
+#else
 #include <digitalw.c>
 #include <digitalp.c>
 #include <delayms.c>
-#else
-#include <digitalw.c>
-#include <delay.c>
 #endif
 
 #ifdef __XC8__
@@ -73,350 +75,589 @@
     #include <math.h>
 #endif
 
-#if defined(BMP280DEBUGSERIAL) || defined(BMP280DEBUGTESTDATA)
+#if defined(BMP280DEBUGSERIAL)
+    #ifndef SERIALPRINTX
+    #define SERIALPRINTX
+    #endif
     #ifndef SERIALPRINT
     #define SERIALPRINT
     #endif
-    //#ifndef SERIALPRINTF
-    //#define SERIALPRINTF
-    //#endif
-    //#ifndef SERIALPRINTLN
-    //#define SERIALPRINTLN
-    //#endif 
-    //#ifndef SERIALPRINTNUMBER
-    //#define SERIALPRINTNUMBER
-    //#endif
-    #ifndef SERIALPRINTFLOAT
-    #define SERIALPRINTFLOAT
+    #include <serial.c>
+    #if defined(__PIC32MX__)
+    #define Serial_printX SerialPrintX
+    #define Serial_print SerialPrint
     #endif
-    #include <serial.c> 
 #endif
 
-//int gDig_T2 , gDig_T3 , gDig_T4 , gDig_P2 , gDig_P3, gDig_P4, gDig_P5, gDig_P6, gDig_P7, gDig_P8, gDig_P9; 
-//unsigned int gDig_P1 , gDig_T1 ;
-float gDig_T1, gDig_T2 , gDig_T3, gDig_T4;
-float gDig_P1, gDig_P2 , gDig_P3, gDig_P4, gDig_P5, gDig_P6, gDig_P7, gDig_P8, gDig_P9; 
-float gT_fine, gT, gP, gA, gUT, gUP;
+u16 gDig_T1;
+s16 gDig_T2, gDig_T3;
 
-u8 error;
+u16 gDig_P1;
+s16 gDig_P2, gDig_P3, gDig_P4, gDig_P5;
+s16 gDig_P6, gDig_P7, gDig_P8, gDig_P9; 
+
+// gFT carries fine temperature as global value
+u32 gUT, gUP;
+s32 gFT, gP, gT, gA;
+
+u8 gOK, gError, gOversampling = 255;
+
+#if defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+int gBMP280I2CADDR;
+#endif
+
+/*  --------------------------------------------------------------------
+    CORE FUNCTIONS
+    ------------------------------------------------------------------*/
+
+#if defined(BMP280SPISWENABLE) || \
+    defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
+
+#define BMP280_writeChar(module, reg, val)             SPI_writeChar(module, reg, val)
+#define BMP280_writeBytes(module, reg, buffer, length) SPI_writeChar(module, reg, buffer, length)
+#define BMP280_readChar(module, reg)                   SPI_readChar(module, reg | BMP280_READ_FLAG)
+#define BMP280_readBytes(module, reg, buffer, length)  SPI_readBytes(module, reg | BMP280_READ_FLAG, buffer, length)
+
+#elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+
+#define BMP280_writeChar(module, reg, val)             I2C_writeChar(module, gBMP280I2CADDR, reg, val)
+#define BMP280_writeBytes(module, reg, buffer, length) I2C_writeBytes(module, gBMP280I2CADDR, reg, buffer, length)
+#define BMP280_readChar(module, reg)                   I2C_readChar(module, gBMP280I2CADDR, reg)
+#define BMP280_readBytes(module, reg, buffer, length)  I2C_readBytes(module, gBMP280I2CADDR, reg, buffer, length)
+
+#endif
+
+u16 BMP280_read16(u8 module, u8 reg)
+{
+    u8  data[2];
+    u16 r;
+    
+    BMP280_readBytes(module, reg, data, 2);
+    r  = data[0];
+    r <<= 8;
+    r |= data[1];
+    return r;
+}
 
 /*  --------------------------------------------------------------------
     Initialize library and coefficient for measurements
+    SPI up to 10 MHz
+    I2C up to 3.4 MHz
     ------------------------------------------------------------------*/
 
 u8 BMP280_begin(int module, ...)
 {
-    int sda, sdi, sck, cs;
+    u8 id;
+
+    #if defined(BMP280SPISWENABLE)
+    int sdo, sdi, sck, cs;
+    #endif
+    
     va_list args;
     
-    #if defined(BMP280DEBUGSERIAL) || defined(BMP280DEBUGTESTDATA)
-    Serial_begin(9600);
+    #if defined(BMP280DEBUGSERIAL)
+    #if defined(__PIC32MX__)
+    SerialConfigure(SERIALPORT, UART_ENABLE, UART_RX_TX_ENABLED, 9600);
+    #else
+    Serial_begin(SERIALPORT, 9600, NULL);
+    #endif
     #endif
 
     va_start(args, module); // args points on the argument after module
 
     #if defined(BMP280SPISWENABLE)
-    sda = va_arg(args, int);         // get the next arg
-    //sdi = va_arg(args, int);         // get the next arg
-    sck = va_arg(args, int);         // get the next arg
-    cs  = va_arg(args, int);         // get the last arg
+    
+    sdo = va_arg(args, int);            // get the next arg
+    //sdi = va_arg(args, int);          // get the next arg
+    sck = va_arg(args, int);            // get the next arg
+    cs  = va_arg(args, int);            // get the last arg
     SPI_setBitOrder(module, SPI_MSBFIRST);
-    SPI_begin(module, sda, sck, cs);
-    #endif
+    SPI_begin(module, sdo, sck, cs);
 
-    // TODO : BMP280 SPI max is 10MHz
-    #if defined(BMP280SPI1ENABLE) || defined(BMP280SPI2ENABLE)
+    #elif defined(BMP280SPI1ENABLE) || defined(BMP280SPI2ENABLE)
+
+    // Note : the 4-wire mode is used by default
+    // The 3-wire mode can be selected by setting the spi3w_en bit to 1
+    // (Bit 0 of register 0xF5 = BMP280_REG_CONFIG)
+
     SPI_setMode(module, SPI_MASTER);
     SPI_setDataMode(module, SPI_MODE1);
-    #ifndef __PIC32MX__
-    //maximum baud rate possible = FPB = FOSC/4
-    SPI_setClockDivider(module, SPI_CLOCK_DIV4);
+    //BMP280 maximum baud rate possible = 10MHz
+    #if defined(__PIC32MX__)
+    //FPB/4 = 10MHz
+    SPI_setClockDivider(module, SPI_PBCLOCK_DIV4);
     #else
-    //maximum baud rate possible = FPB/2
-    SPI_setClockDivider(module, SPI_PBCLOCK_DIV2);
+    //FOSC/8 = 8 MHz < 10 MHz
+    SPI_setClockDivider(module, SPI_CLOCK_DIV8);
     #endif
-    SPI_begin(module);
-    #endif
+    SPI_begin(module, NULL);
 
-    #if defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
-    Wire_begin(module, BMP280_I2CADDR, I2C_100KHZ);
+    #elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+    
+    gBMP280I2CADDR = va_arg(args, int);       // get the next arg
+    //if (gBMP280I2CADDR == 0)
+    //    gBMP280I2CADDR = 0x76;
+     
+    I2C_master(module, I2C_100KHZ);
+    //I2C_master(module, I2C_400KHZ);
+    //I2C_master(module, I2C_1MHZ);
+
     #endif
 
     va_end(args);                       // cleans up the list
     
-    return (BMP280_readCalibration(module));
+    //Power-on-reset
+    //BMP280_writeChar(module, BMP280_REG_RESET, 0xB6);
+
+    id = BMP280_readChar(module, BMP280_REG_ID);
+    if (id == 0x58 || id == 0x60)       // BMP280 or BME280
+    {
+        BMP280_readCalibration(module);
+        return 1;
+    }
+
+    #if BMP280DEBUGSERIAL
+    Serial_print(SERIALPORT, "Error : init\r\n");
+    #endif
+    return 0;
 }
+
+/*
+** Write a byte to device
+** @param : reg = register to address
+** @param : val = data to write
+** Note : address is not auto-incremented
+** The control bytes consist of the SPI register address
+** (= full register address without bit 7) and the write
+** command (bit7 = RW = ‘0’).
+** SPI returns 0x00 when no error
+** I2C returns 0x00 when an error occurs
+*/
+
+/*
+u8 BMP280_writeChar(u8 module, u8 reg, u8 val)
+{
+    #if defined(BMP280SPISWENABLE) || \
+        defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
+
+    SPI_select(module);
+    gOK = !SPI_write(module, BitClear(reg, 7));// write, bit 7 = 0
+    if (gOK) SPI_write(module, val);
+    SPI_deselect(module);
+    
+    #elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+
+    I2C_start(module);          // send start condition
+    gOK = I2C_writeChar(module, (gBMP280I2CADDR << 1) & 0xFE);
+    if (gOK) gOK = I2C_writeChar(module, reg);
+    if (gOK) gOK = I2C_writeChar(module, val);
+    I2C_stop(module);           // send stop condition
+
+    #endif
+
+    #if BMP280DEBUGSERIAL
+    if (!gOK) Serial_print(SERIALPORT, "Error : write8\r\n");
+    #endif
+
+    return gOK;
+}
+*/
+
+/* 
+** Read a byte from device
+** @param  : reg = register to read
+** Note : the control bytes consist of the SPI register address
+** (= full register address without bit 7) and the read command
+** (bit 7 = RW = ‘1’).
+*/
+
+/*
+u8 BMP280_readChar(u8 module, u8 reg)
+{
+    u8 val;
+    
+    #if defined(BMP280SPISWENABLE) || \
+        defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
+
+    SPI_select(module);
+    gOK = !SPI_write(module, BitSet(reg, 7));// read, bit 7 = 1
+    if (gOK) val = SPI_read(module);
+    SPI_deselect(module);
+
+    #elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+
+    I2C_start(module);
+    I2C_writeChar(module, (gBMP280I2CADDR << 1) & 0xFE);
+    I2C_writeChar(module, reg);
+    //I2C_stop(module);
+    I2C_start(module);
+    I2C_writeChar(module, (gBMP280I2CADDR << 1) | 0x01);
+    val = I2C_readChar(module);
+    I2C_sendNack(module);       // last byte is sent
+    I2C_stop(module);
+
+    #endif
+
+    #if BMP280DEBUGSERIAL
+    if (gOK)
+        Serial_printX(SERIALPORT, "read8=", val, HEX);
+    else
+        Serial_print(SERIALPORT, "Error : read8\r\n");
+    #endif
+
+    return val;
+}
+*/
+
+/* 
+** Read an unsigned integer (two bytes) from device
+** @param : reg = register to start reading (plus subsequent register)
+** The control bytes consist of the SPI register address
+** (= full register address without bit 7) and the read command
+** (bit 7 = RW = ‘1’).
+** Note that LSB is read first (Little Endian)
+*/
+
+/*
+u16 BMP280_read16(u8 module, u8 reg)
+{
+    u8 lsb, msb;
+    
+    #if defined(BMP280SPISWENABLE) || \
+        defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
+
+    SPI_select(module);
+    gOK = !SPI_write(module, BitSet(reg, 7));// read, bit 7 = 1
+    if (gOK)
+    {
+        lsb = SPI_read(module);
+        msb = SPI_read(module);
+    }
+    SPI_deselect(module);
+
+    #elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+
+    I2C_start(module);
+    I2C_writeChar(module, (gBMP280I2CADDR << 1) & 0xFE);
+    I2C_writeChar(module, reg);
+    //I2C_stop(module);
+
+    I2C_start(module);
+    I2C_writeChar(module, (gBMP280I2CADDR << 1) | 0x01);
+    lsb = I2C_readChar(module);
+    I2C_sendAck(module);        // not the last byte
+    msb = I2C_readChar(module);
+    I2C_sendNack(module);       // last byte to read
+    I2C_stop(module);
+
+    #endif
+
+    #if BMP280DEBUGSERIAL
+    if (gOK)
+    {
+        //Serial_printX(SERIALPORT, "read16 MSB = ", msb, HEX);
+        //Serial_printX(SERIALPORT, "read16 LSB = ", lsb, HEX);
+        Serial_printX(SERIALPORT, "read16 = ", (s16)((msb<<8)|lsb), DEC);
+    }
+    else
+        Serial_print(SERIALPORT, "Error : read16\r\n");
+    #endif
+
+    return ((msb << 8) | lsb);
+}
+*/
+
+/*
+** Read an array of bytes from device
+** @param : value  = external array to hold data.
+** Note : start register is in values[0].
+** @param : length = number of bytes to read
+** The control bytes consist of the SPI register address
+** (= full register address without bit 7) and the read command
+** (bit 7 = RW = ‘1’).
+*/
+
+/*
+u8 BMP280_readBytes(u8 module, u8 reg, u8 *values, u8 length)
+{
+    u8 x;
+
+    #if defined(BMP280SPISWENABLE) || \
+        defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
+
+    SPI_select(module);
+    gOK = !SPI_write(module, BitSet(reg, 7));
+    if (gOK)
+    {
+        for (x=0; x<length; x++)
+            values[x] = SPI_read(module);
+    }
+    SPI_deselect(module);
+
+    #elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
+
+    I2C_start(module);          // send start condition
+    I2C_writeChar(module, (gBMP280I2CADDR << 1) & 0xFE);
+    gOK = I2C_writeChar(module, reg);
+    //I2C_stop(module);           // send stop condition
+
+    if (gOK)
+    {
+        I2C_start(module);      // send start condition
+        I2C_writeChar(module, (gBMP280I2CADDR << 1) | 0x01);
+        for (x=0; x<length; x++)
+        {
+            values[x] = I2C_readChar(module);
+            #if BMP280DEBUGSERIAL
+            Serial_printX(SERIALPORT, "data = ", values[x], DEC);
+            #endif
+            // Send a Ack or a Nack if it's the last byte
+            (x == length - 1) ? I2C_sendNack(module) : I2C_sendAck(module);
+        }
+    }
+    I2C_stop(module);       // send stop condition
+
+    #endif
+
+    #if BMP280DEBUGSERIAL
+    if (!gOK)
+        Serial_print(SERIALPORT, "Error : readBytes\r\n");
+    #endif
+    return gOK;
+}
+*/
 
 // The BMP280 includes factory calibration data stored on the device.
 // Each device has different numbers, these must be retrieved and
 // used in the calculations when taking measurements.
 
 // Retrieve calibration data from device:
-u8 BMP280_readCalibration(u8 module)
+// Replace with a burst read from 0x88 to 0x9F ?
+// BMP280_readBytes(module, 0x88, dig, 24);
+void BMP280_readCalibration(u8 module)
 {
-    if (BMP280_readUInt(module, 0x88, &gDig_T1) &&
-        BMP280_readInt(module, 0x8A, &gDig_T2)  &&
-        BMP280_readInt(module, 0x8C, &gDig_T3)  &&
-        BMP280_readUInt(module, 0x8E, &gDig_P1) &&
-        BMP280_readInt(module, 0x90, &gDig_P2)  &&
-        BMP280_readInt(module, 0x92, &gDig_P3)  &&
-        BMP280_readInt(module, 0x94, &gDig_P4)  &&
-        BMP280_readInt(module, 0x96, &gDig_P5)  &&
-        BMP280_readInt(module, 0x98, &gDig_P6)  &&
-        BMP280_readInt(module, 0x9A, &gDig_P7)  &&
-        BMP280_readInt(module, 0x9C, &gDig_P8)  &&
-        BMP280_readInt(module, 0x9E, &gDig_P9))
-        {
-        #ifdef BMP280DEBUGSERIAL
-        Serial_print("gDig_T1="); Serial_printFloat(gDig_T1,2); Serial_print("\r\n");
-        Serial_print("gDig_T2="); Serial_printFloat(gDig_T2,2); Serial_print("\r\n");
-        Serial_print("gDig_T3="); Serial_printFloat(gDig_T3,2); Serial_print("\r\n");
-        Serial_print("gDig_P1="); Serial_printFloat(gDig_P1,2); Serial_print("\r\n");
-        Serial_print("gDig_P2="); Serial_printFloat(gDig_P2,2); Serial_print("\r\n");
-        Serial_print("gDig_P3="); Serial_printFloat(gDig_P3,2); Serial_print("\r\n");
-        Serial_print("gDig_P4="); Serial_printFloat(gDig_P4,2); Serial_print("\r\n");
-        Serial_print("gDig_P5="); Serial_printFloat(gDig_P5,2); Serial_print("\r\n");
-        Serial_print("gDig_P6="); Serial_printFloat(gDig_P6,2); Serial_print("\r\n");
-        Serial_print("gDig_P7="); Serial_printFloat(gDig_P7,2); Serial_print("\r\n");
-        Serial_print("gDig_P8="); Serial_printFloat(gDig_P8,2); Serial_print("\r\n");
-        Serial_print("gDig_P9="); Serial_printFloat(gDig_P9,2); Serial_print("\r\n");
-        #endif
-        #ifdef BMP280DEBUGTESTDATA
-        gDig_T1 = 27504.0;
-        gDig_T2 = 26435.0;
-        gDig_T3 = -1000.0;
-        gDig_P1 = 36477.0;
-        gDig_P2 = -10685.0;
-        gDig_P3 = 3024.0;
-        gDig_P4 = 2855.0;
-        gDig_P5 = 140.0;
-        gDig_P6 = -7.0;
-        gDig_P7 = 15500.0;
-        gDig_P8 = -14600.0;
-        gDig_P9 = 6000.0;
-        Serial_print("gDig_T1="); Serial_printFloat(gDig_T1,2); Serial_print("\r\n");
-        Serial_print("gDig_T2="); Serial_printFloat(gDig_T2,2); Serial_print("\r\n");
-        Serial_print("gDig_T3="); Serial_printFloat(gDig_T3,2); Serial_print("\r\n");
-        Serial_print("gDig_P1="); Serial_printFloat(gDig_P1,2); Serial_print("\r\n");
-        Serial_print("gDig_P2="); Serial_printFloat(gDig_P2,2); Serial_print("\r\n");
-        Serial_print("gDig_P3="); Serial_printFloat(gDig_P3,2); Serial_print("\r\n");
-        Serial_print("gDig_P4="); Serial_printFloat(gDig_P4,2); Serial_print("\r\n");
-        Serial_print("gDig_P5="); Serial_printFloat(gDig_P5,2); Serial_print("\r\n");
-        Serial_print("gDig_P6="); Serial_printFloat(gDig_P6,2); Serial_print("\r\n");
-        Serial_print("gDig_P7="); Serial_printFloat(gDig_P7,2); Serial_print("\r\n");
-        Serial_print("gDig_P8="); Serial_printFloat(gDig_P8,2); Serial_print("\r\n");
-        Serial_print("gDig_P9="); Serial_printFloat(gDig_P9,2); Serial_print("\r\n");
-        #endif
-        return (1);
-    }
-    else 
-        return (0);
-}
-
-/*
-**	Read a signed integer (two bytes) from device
-**	@param : address = register to start reading (plus subsequent register)
-**	@param : value   = external variable to store data (function modifies value)
-*/
-
-u8 BMP280_readInt(u8 module, u8 address, float *value)
-{
-    u8 data[2];	//u8 is 4bit, 1byte
+    gDig_T1 = BMP280_read16(module, 0x88);
+    gDig_T2 = (s16)BMP280_read16(module, 0x8A);
+    gDig_T3 = (s16)BMP280_read16(module, 0x8C);
     
-    data[0] = address;
-    if (BMP280_readBytes(module, data, 2))
-    {
-        value = (float*)(signed int)(((unsigned int)data[1]<<8)|(unsigned int)data[0]);
-        return(1);
-    }
-    value = 0;
-    return(0);
-}
-
-/* 
-**	Read an unsigned integer (two bytes) from device
-**	@param : address = register to start reading (plus subsequent register)
-**	@param : value 	 = external variable to store data (function modifies value)
-*/
-
-u8 BMP280_readUInt(u8 module, u8 address, float *value)
-{
-    u8 data[2];	//4bit
-     
-    data[0] = address;
-    if (BMP280_readBytes(module, data,2))
-    {
-        value = (float*)(unsigned int)(((unsigned int)data[1]<<8)|(unsigned int)data[0]);
-        return(1);
-    }
-    value = 0;
-    return(0);
+    gDig_P1 = BMP280_read16(module, 0x8E);
+    gDig_P2 = (s16)BMP280_read16(module, 0x90);
+    gDig_P3 = (s16)BMP280_read16(module, 0x92);
+    gDig_P4 = (s16)BMP280_read16(module, 0x94);
+    gDig_P5 = (s16)BMP280_read16(module, 0x96);
+    gDig_P6 = (s16)BMP280_read16(module, 0x98);
+    gDig_P7 = (s16)BMP280_read16(module, 0x9A);
+    gDig_P8 = (s16)BMP280_read16(module, 0x9C);
+    gDig_P9 = (s16)BMP280_read16(module, 0x9E);
 }
 
 /*
-** Read an array of bytes from device
-** @param : value  = external array to hold data. Put starting register in values[0].
-** @param : length = number of bytes to read
+**  Get the uncalibrated pressure and temperature value.
+**  gUP stores the uncalibrated pressure value (20bit)
+**  gUT stores the uncalibrated temperature value (20bit)
 */
-
-u8 BMP280_readBytes(u8 module, u8 *values, u8 length)
+u8 BMP280_getUncalibrated(u8 module)
 {
-    u8 x;
-
-    #if defined(BMP280SPISWENABLE) || defined(BMP280SPI1ENABLE) || defined(BMP280SPI2ENABLE)
-    error = SPI_write(module, values[0]);
-
-    if (error == 0)
-    {
-        for(x=0; x<length; x++)
-            values[x] = SPI_read(module);
-        return (1);
-    }
-    #endif
-
-    #if defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
-    Wire_beginTransmission(module, BMP280_I2CADDR);
-    Wire_writeChar(module, values[0]);
-    error = Wire_endTransmission(module, true);
+    u8 data[6];
     
-    if (error == 0)
+    // burst read from 0xF7 to 0xFC
+    gOK = BMP280_readBytes(module, BMP280_REG_RESULT, data, 6);
+    if (gOK)
     {
-        Wire_requestFrom(module, BMP280_I2CADDR, length);
-        while(Wire_available(module) != length); // wait until bytes are ready
-        for (x=0; x<length; x++)
-            values[x] = Wire_readChar(module);
-        return(1);
+        // gUT and gUP are 20-bit numbers stored in 3 bytes
+        // from bit 23 to 4 so we shift the bits to the right
+        //gUP = ((u32)data[0] << 16) | ((u32)data[1] << 8) | ((u32)data[2]);
+        gUP  = data[0];
+        gUP <<= 8;
+        gUP |= data[1];
+        gUP <<= 8;
+        gUP |= data[2];
+        gUP >>= 4;
+        //gUT = ((u32)data[3] << 16) | ((u32)data[4] << 8) | ((u32)data[5]);
+        gUT  = data[3];
+        gUT <<= 8;
+        gUT |= data[4];
+        gUT <<= 8;
+        gUT |= data[5];
+        gUT >>= 4;
+
+        #if BMP280DEBUGSERIAL
+        Serial_printX(SERIALPORT, "gUT = ", gUT, DEC);
+        Serial_printX(SERIALPORT, "gUP = ", gUP, DEC);
+        #endif
     }
-    #endif
 
-    return(0);
+    #if BMP280DEBUGSERIAL
+    if (!gOK) Serial_print(SERIALPORT, "Error : getUncalibrated\r\n");
+    #endif
+    return gOK;
 }
 
 /*
-** Write an array of bytes to device
-** @param : values = external array of data to write. Put starting register in values[0].
-** @param : length = number of bytes to write
-*/
-
-u8 BMP280_writeBytes(u8 module, u8 *values, u8 length)
-{
-    #if defined(BMP280SPISWENABLE) || defined(BMP280SPI1ENABLE) || defined(BMP280SPI2ENABLE)
-    u8 x;
-    for (x=0; x<length; x++)
-        error = SPI_write(module, values[x]);
-    #endif
-
-    #if defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
-    Wire_beginTransmission(module, BMP280_I2CADDR);
-    Wire_writeCharS(module, values, length);
-    error = Wire_endTransmission(module, true);
-    #endif
-
-    return (!error);
-}
-
-#define BMP280_getOversampling()    (oversampling)
-#define BMP280_setOversampling(oss)  oversampling = oss
-
-
-/*
-**	Begin a measurement cycle.
-** Oversampling: 0 to 4, higher numbers are slower, higher-res outputs.
+** Begin a measurement cycle
+** Oversampling: 0 to 4
+** The higher the number, the higher the resolution
+** the higher the resolution, the slower the calculation
 ** @returns : delay in ms to wait, or 0 if I2C error.
 */
 
 u8 BMP280_startMeasurment(u8 module, u8 oversampling)
 {
-    u8 data[2], d;
+    // Bit 7, 6, 5 = osrs_t[2:0] Controls oversampling of temperature data
+    // 001                   ×1  16 bit / 0.0050 °C
+    // 010                   ×2  17 bit / 0.0025 °C
+    // 011                   ×4  18 bit / 0.0012 °C
+    // 100                   ×8  19 bit / 0.0006 °C
+    // 101, 110, 111         ×16 20 bit / 0.0003 °C
+
+    // Bit 4, 3, 2 = osrs_p[2:0] Controls oversampling of pressure data
+    // Ultra low power       ×1  16 bit / 2.62 Pa (recommended T. os ×1)
+    // Low power             ×2  17 bit / 1.31 Pa (                  ×1)
+    // Standard resolution   ×4  18 bit / 0.66 Pa (                  ×1)
+    // High resolution       ×8  19 bit / 0.33 Pa (                  ×1)
+    // Ultra high resolution ×16 20 bit / 0.16 Pa (                  ×2)
+
+    // Bit 1, 0    = mode[1:0]   Controls the power mode of the device
+    // 00 Sleep mode
+    // 01 and 10 Forced mode
+    // 11 Normal mode
     
-    data[0] = BMP280_REG_CONTROL;
+    // 0x25 = 0b 001 001 01
+    // 0x29 = 0b 001 010 01
+    // 0x2D = 0b 001 011 01
+    // 0x31 = 0b 001 100 01 
+    // 0x5D = 0b 010 111 01
+    
+    // BMP280_COMMAND_PRESSURE0 to 4
+    u8 val[5] = {0x25, 0x29, 0x2D, 0x31, 0x5D};
 
-    switch (oversampling)
+    if (oversampling > 4)
+        oversampling = 0;
+    gOversampling = oversampling;
+    
+    if (BMP280_writeChar(module, BMP280_REG_CONTROL, val[oversampling]))
     {
-        case 0:
-            data[1] = BMP280_COMMAND_PRESSURE0;
-            d = 8;
-            break;
-        case 1:
-            data[1] = BMP280_COMMAND_PRESSURE1;
-            d = 10;
-            break;
-        case 2:
-            data[1] = BMP280_COMMAND_PRESSURE2;
-            d = 15;
-            break;
-        case 3:
-            data[1] = BMP280_COMMAND_PRESSURE3;
-            d = 24;
-            break;
-        case 4:
-            data[1] = BMP280_COMMAND_PRESSURE4;
-            d = 45;
-            break;
-        default:
-            data[1] = BMP280_COMMAND_PRESSURE0;
-            d = 9;
-            break;
-    }
-
-    if (BMP280_writeBytes(module, data, 2)) // good write?
-    {
-        Delayms(d); // wait before retrieving data
+        // wait before retrieving data
+        Delayms(10 * oversampling + 10);
+        // get uncalibrated Temperature and Pressure
+        BMP280_getUncalibrated(module);
         return (1);
     }
     else
     {
+        #if BMP280DEBUGSERIAL
+        Serial_print(SERIALPORT, "Error : startMeasurment\r\n");
+        #endif
         return (0); // or return 0 if there was a problem communicating with the BMP
     }
 }
 
 /*
-**	Get the uncalibrated pressure and temperature value.
-**  @param : gUP = stores the uncalibrated pressure value.(20bit)
-**  @param : gUT = stores the uncalibrated temperature value.(20bit)
+** Retrieve temperature and pressure.
+** @param : T = stores the temperature value in degC.
+** @param : P = stores the pressure value in mBar.
 */
-u8 BMP280_getUnPT(u8 module)
-{
-    u8 data[6];
-    u8 result;
-    
-    data[0] = BMP280_REG_RESULT_PRESSURE;   // 0xF7 
 
-    result = BMP280_readBytes(module, data, 6);     // from 0xF7 to 0xFC
-    if (result) // good read
-    {
-        //float factor = pow(2, 4);
-        gUP = (float)(data[0] * 4096 + data[1] * 16 + data[2] / 16) ;	//20bit UP
-        gUT = (float)(data[3] * 4096 + data[4] * 16 + data[5] / 16) ;	//20bit UT
-        #ifdef BMP280DEBUGSERIAL
-        Serial_printFloat(gUT, 2);
-        Serial_print(" ");
-        Serial_printFloat(gUP, 2); 
-        #endif
-        #ifdef BMP280DEBUGTESTDATA
-        gUT = 519888.0;
-        gUP = 415148.0;
-        Serial_printFloat(gUT, 2);
-        Serial_print(" ");
-        Serial_printFloat(gUP, 2); 
-        #endif
-    }
-    return(result);
+void BMP280_getTemperatureAndPressure(u8 module)
+{
+    // In case users forget to use the startMeasurment function ...
+    if (gOversampling > 4)
+        BMP280_startMeasurment(module, 0);
+    BMP280_getCalibratedTemperature();
+    BMP280_getCalibratedPressure();
 }
 
-float BMP280_getTemperatureCelsius(u8 module)
+/*
+** Temperature calculation
+** @param  : gUT, the uncalibrated temperature value.
+** @return : gT, the temperature value after calculation.
+** Temperature in DegC, resolution is 0.01 DegC.
+** Output value of “2123” equals 21.23 DegC.
+*/
+
+void BMP280_getCalibratedTemperature()
+{
+    s32 var1, var2;
+    
+    var1 = ((s32)gUT >> 3);
+    var1 -= ((s32)gDig_T1 << 1);
+    var1 *= ((s32)gDig_T2);
+    var1 >>= 11;
+    
+    var2 = ((s32)gUT >> 4);
+    var2 -= ((s32)gDig_T1);
+    var2 = var2 * var2;
+    var2 >>= 12;
+    var2 *= ((s32)gDig_T3);
+    var2 >>= 14;
+
+    gFT = (s32)(var1 + var2);
+    gT = (gFT * 5 + 128) >> 8;
+}
+
+/*
+** Pressure calculation from uncalibrated pressure value.
+** @param  : gUP, uncalibrated pressure value. 
+** @return : gP, the pressure value.
+** Pressure in Pa as unsigned 32 bit integer.
+** Output value of “96386” equals 96386 Pa = 963.86 hPa
+*/
+
+void BMP280_getCalibratedPressure()
+{
+    s32 var1, var2;
+
+    var1 = (gFT >> 1) - (s32)64000;
+    var2 = (((var1 >> 2) * (var1 >> 2)) >> 11 ) * (s32)gDig_P6;
+    var2 = var2 + var1 * ((s32)gDig_P5) << 1;
+    var2 = (var2 >> 2) + ((s32)gDig_P4 << 16);
+    var1 = (((s32)gDig_P3 * (((var1 >> 2) * (var1 >> 2)) >> 13 )) >> 3) + (((s32)gDig_P2 * var1) >> 1) >> 18;
+    var1 =((((32768 + var1))*((s32)gDig_P1))>>15);
+
+    // avoid exception caused by division by zero
+    if (var1 == 0)
+        return;
+
+    gP = (((u32)(((s32)1048576) - (s32)gUP) - (var2 >> 12))) * 3125;
+
+    if (gP < 0x80000000)
+        gP = (gP << 1) / ((u32)var1);
+    else
+        gP = (gP / (u32)var1) << 1;
+
+    var1 = ((s32)gDig_P9 * ((s32)(((gP >> 3) * (gP >> 3)) >> 13))) >> 12;
+    var2 = ((s32)(gP >> 2)) * (s32)gDig_P8;
+    var2 = var2 >> 13;
+    gP = (u32)((s32)gP + ((var1 + var2 + (s32)gDig_P7) >> 4));
+}
+
+/*
+** User's functions
+*/
+ 
+s32 BMP280_getTemperatureCelsius(u8 module)
 {
     BMP280_getTemperatureAndPressure(module);
     return gT;
 }
 
-float BMP280_getTemperatureFahrenheit(u8 module)
+s32 BMP280_getTemperatureFahrenheit(u8 module)
 {
+    s32 ti;
+    u32 tf;
+    
     BMP280_getTemperatureAndPressure(module);
-    return (gT*9/5+32);
+
+    ti = (gT/100) * 9 / 5 + 32;
+    //if (gT < 0)
+    //tf = (-gT%100) * 9 / 5;
+    //else
+    tf = (gT%100) * 9 / 5;
+    
+    return (ti * 100 + tf);
 }
 
-float BMP280_getPressure(u8 module)
+u32 BMP280_getPressure(u8 module)
 {
     BMP280_getTemperatureAndPressure(module);
     return gP;
@@ -427,165 +668,27 @@ float BMP280_getPressure(u8 module)
 // This produces pressure readings that can be used for weather measurements.
 float BMP280_getPressureAtSealevel(u8 module, float P, float A)
 {
+    float K = 1.0 - A / 44330.0;
+    
     #ifdef __XC8__
-    return(P/fastpow(1-(A/44330.0),5.255));
+    return (P / fastpow(K, 5.255));
     #else
-    return(P/powf(1-(A/44330.0),5.255));
+    return (P / powf(K, 5.255));
     #endif
 }
 
-// Given a pressure measurement P (mb) and the pressure at a baseline P0 (mb),
+// Given a pressure measurement P (Pa)
+// and the pressure at a baseline P0 (Pa),
 // return altitude (meters) above baseline.
-float BMP280_getAltitude(u8 module, float P, float baseline)
+s32 BMP280_getAltitude(u8 module, u32 P, u32 P0)
 {
+    float K = (float)P / (float)P0;
+    
     #ifdef __XC8__
-    return(44330.0*(1-fastpow(P/baseline,1/5.255)));
+    return (s32)(44330.0 * (1 - fastpow(K, 1/5.255)));
     #else
-    return(44330.0*(1-powf(P/baseline,1/5.255)));
+    return (s32)(44330.0 * (1 - powf(K, 1/5.255)));
     #endif
 }
-
-
-/*
-** Retrieve temperature and pressure.
-** @param : T = stores the temperature value in degC.
-** @param : P = stores the pressure value in mBar.
-*/
-
-u8 BMP280_getTemperatureAndPressure(u8 module)
-{
-    // calculate gUT and gUP
-    if(BMP280_getUnPT(module))
-    {
-        // calculate the temperature gT and gT_fine
-        if (BMP280_calcTemperature())
-        {
-            // calculate the pressure gP
-            if (BMP280_calcPressure())
-                return (1);
-            else
-                error = 3 ;	// pressure error ;
-            return (9);
-        }
-        else 
-            error = 2;	// temperature error ;
-    }
-    else 
-        error = 1;
-
-    return (9);
-}
-
-/*
-** temperature calculation
-** @param : T  = stores the temperature value after calculation.
-** @param : gUT = the uncalibrated temperature value.
-*/
-
-u8 BMP280_calcTemperature()
-{
-    float var1 = (gUT/16384.0 - gDig_T1/1024.0)*gDig_T2;
-    float var2 = ((gUT/131072.0 - gDig_T1/8192.0)*(gUT/131072.0 - gDig_T1/8192.0))*gDig_T3;
-
-    gT_fine = var1 + var2;
-    gT = gT_fine/(float)5120.0;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_printFloat(var1, 2);
-    Serial_print(" ");
-    Serial_printFloat(var2, 2);
-    Serial_print(" ");
-    Serial_printFloat(gT_fine, 2);
-    Serial_print(" ");
-    Serial_printFloat(gT, 2);
-    #endif
-    
-    if(gT>100 || gT <-100)
-        return 0;
-    
-    return (1);
-}
-
-/*
-**	Pressure calculation from uncalibrated pressure value.
-**  @param : P  = stores the pressure value.
-**  @param : gUP = uncalibrated pressure value. 
-*/
-
-u8 BMP280_calcPressure()
-{
-    //u8 result;
-    float var1 , var2 ;
-    
-    var1 = (gT_fine/2.0) - 64000.0;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var1 = ");Serial_printFloat(var1,2); Serial_print("\r\n");
-    #endif
-
-    var2 = var1 * (var1 * gDig_P6/32768.0);	//not overflow
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var2 = ");Serial_printFloat(var2,2); Serial_print("\r\n");
-    #endif
-
-    var2 = var2 + (var1 * gDig_P5 * 2.0);	//overflow
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var2 = ");Serial_printFloat(var2,2); Serial_print("\r\n");
-    #endif
-        
-    var2 = (var2/4.0)+((gDig_P4)*65536.0);
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var2 = ");Serial_printFloat(var2,2); Serial_print("\r\n");
-    #endif
-        
-    var1 = (gDig_P3 * var1 * var1/524288.0 + gDig_P2 * var1) / 524288.0;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var1 = ");Serial_printFloat(var1,2); Serial_print("\r\n");
-    #endif
-
-    var1 = (1.0 + var1/32768.0) * gDig_P1;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var1 = ");Serial_printFloat(var1,2); Serial_print("\r\n");
-    #endif
-        
-    gP = 1048576.0- gUP;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("gP = ");Serial_printFloat(gP,2); Serial_print("\r\n");
-    #endif
-        
-    gP = (gP-(var2/4096.0))*6250.0/var1 ;	//overflow
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("gP = ");Serial_printFloat(gP,2); Serial_print("\r\n");
-    #endif
-        
-    var1 = gDig_P9*gP*gP/2147483648.0;	//overflow
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var1 = ");Serial_printFloat(var1,2); Serial_print("\r\n");
-    #endif
-
-    var2 = gP*gDig_P8/32768.0;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("var2 = ");Serial_printFloat(var2,2); Serial_print("\r\n");
-    #endif
-
-    gP = gP + (var1+var2+gDig_P7)/16.0;
-    #ifdef BMP280DEBUGSERIAL
-    Serial_print("gP = ");Serial_printFloat(gP,2); Serial_print("\r\n");
-    #endif
-        
-    gP = gP/100.0 ;
-    
-    if(gP>1200.0 || gP < 800.0)
-        return (0);
-
-    return (1);
-}
-
-// If any library command fails, you can retrieve an extended
-// error code using this command. Errors are from the wire library: 
-// 0 = Success
-// 1 = Data too long to fit in transmit buffer
-// 2 = Received NACK on transmit of address
-// 3 = Received NACK on transmit of data
-// 4 = Other error
-#define BMP280_getError()   (error)
 
 #endif // __BMP280_C

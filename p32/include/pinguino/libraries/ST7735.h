@@ -25,7 +25,7 @@
 #ifndef __ST7735_H
 #define __ST7735_H
 
-#ifndef __PIC32MX__
+#if !defined(__PIC32MX__)
 #include <compiler.h>
 #endif
 #include <typedef.h>
@@ -38,9 +38,10 @@
     Display size (default orientation is portrait)
     ------------------------------------------------------------------*/
 
-#define ST7735_WIDTH        128
-#define ST7735_HEIGHT       160
-#define ST7735_SIZE         (ST7735_WIDTH * ST7735_HEIGHT)
+#define ST7735_DISPLAY_WIDTH        128
+#define ST7735_DISPLAY_HEIGHT       160
+#define ST7735_DISPLAY_ROWS         (ST7735_DISPLAY_HEIGHT / 8)
+#define ST7735_DISPLAY_SIZE         (ST7735_DISPLAY_WIDTH * ST7735_DISPLAY_HEIGHT)
 #define ST7735_TABSIZE      4
 
 /**	--------------------------------------------------------------------

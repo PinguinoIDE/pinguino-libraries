@@ -29,7 +29,7 @@
 
 #if 0 // p32-gcc doen't emit any weak attribute ... Don't know why ...
 
-    void __DoNothing() { /* do something */ };
+    void __DoNothing() {  Nop(); /* do nothing */ };
     // SERIAL
     void Serial1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Serial2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
@@ -46,7 +46,7 @@
     void Timer3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
-	//EXTERNAL
+    //EXTERNAL
     void Int0Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Int1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Int2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
@@ -124,24 +124,27 @@
     /**************************************************************************/
 
     // TODO : MOVE DCF77 FROM TIMER1 TO TIMER?
-    #if !defined(TMR1INT)   && !defined(__MILLIS__) && \
-        !defined(__DCF77__) && !defined(__SWPWM__)
+    #if !defined(TMR1INTUSER) && !defined(TMR1INT)   && \
+        !defined(__MILLIS__)  && !defined(__DCF77__) && !defined(__SWPWM__)
     void Timer1Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR2INT) && !defined(__SERVOS__) && !defined(__AUDIO__)
+    #if !defined(TMR2INTUSER) && !defined(TMR2INT) && \
+        !defined(__SERVO__)   && !defined(__AUDIO__)
     void Timer2Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR3INT) && !defined(__IRREMOTE__) //&& !defined(__PWM__)
+    #if !defined(TMR3INTUSER) && !defined(TMR3INT) && \
+        !defined(__IRREMOTE__) //&& !defined(__PWM__)
     void Timer3Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR4INT) && !defined(__STEPPER__)
+    #if !defined(TMR4INTUSER) && !defined(TMR4INT) && \
+        !defined(__STEPPER__)
     void Timer4Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
+    #if !defined(TMR5INTUSER) && !defined(TMR5INT) //&& !defined(__DCF77__) TODO
     void Timer5Interrupt(void) { Nop(); }
     #endif
 

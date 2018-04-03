@@ -614,8 +614,8 @@ void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 e
         cmd02=0x20;
     }
 
-    //I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
-    I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
+    I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
+    //I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
     //I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ);
 
     Delayms(15);                                // Wait more than 15 ms after VDD rises to 4.5V

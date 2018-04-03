@@ -52,6 +52,14 @@ void IOsetDigital()
         #if defined(__32MX220F032D__)
             ANSELC = 0;
         #endif
+    #elif defined(__32MX470F512H__)
+        CFGCONbits.JTAGEN=0;    // Disable the JTAG port, Port B as Digital Port
+        ANSELB = 0;
+        ANSELC = 0;
+        ANSELD = 0;
+        ANSELE = 0;
+        ANSELF = 0;
+        ANSELG = 0;
     #else
         DDPCONbits.JTAGEN=0;  // Disable the JTAG port, Port A as Digital Port
         AD1PCFG = 0xFFFF;
@@ -66,7 +74,7 @@ void IOsetDigital()
 
 void IOsetSpecial()
 {
-    #if !defined(__32MX440F256H__) && !defined(__32MX795F512H__)
+    #if !defined(__32MX470F512H__) && !defined(__32MX440F256H__) && !defined(__32MX795F512H__)
     TRISA = 0;
     LATA  = 0;
     #endif
@@ -110,8 +118,9 @@ void IOsetSpecial()
  * PIC32 Peripheral Remappage
  **********************************************************************/
 
-#if defined(__SERIAL__) || defined(__SPI__) || \
-    defined(__PWM__)    || defined(__AUDIO__)
+#if defined(__SERIAL__) || defined(__SPI__)   || \
+    defined(__PWM__)    || defined(__SERVO__) || \
+    defined(__AUDIO__)
 
 void IOsetRemap()
 {
@@ -155,7 +164,7 @@ void IOsetRemap()
     #if defined(PINGUINO32MX220) || \
         defined(PINGUINO32MX250) || \
         defined(PINGUINO32MX270)
-        
+
         //SystemUnlock();
         SYSKEY = 0;                     // ensure OSCCON is locked
         SYSKEY = 0xAA996655;            // Write Key1 to SYSKEY
@@ -189,7 +198,7 @@ void IOsetRemap()
             //RPB7Rbits.RPB7R = 0b0011;   // Define SS1  as RB7 ( D5 )
         #endif
 
-        #if defined(__PWM__) || defined(__AUDIO__)
+        #if defined(__SERVO__) || defined(__PWM__) || defined(__AUDIO__)
             RPB4Rbits.RPB4R   = 0b0101; // PWM0 = OC1 = RB4  = D8
             RPA4Rbits.RPA4R   = 0b0110; // PWM1 = OC4 = RA4  = D7
             RPB5Rbits.RPB5R   = 0b0101; // PWM2 = OC2 = RB5  = D6
@@ -206,6 +215,7 @@ void IOsetRemap()
 }
 
 #endif // defined(__SERIAL__) || defined(__SPI__) || \
-       // defined(__PWM__)    || defined(__AUDIO__)
+       // defined(__PWM__)    || defined(__SERVO__) || \
+       // defined(__AUDIO__)
 
 #endif /* __IO_C */

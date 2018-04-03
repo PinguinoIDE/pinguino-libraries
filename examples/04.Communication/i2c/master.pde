@@ -18,10 +18,6 @@ e key followed by any letter or digit you want to be dealt by the slave
 A response is printed in case of v m s e
 
 ---------------------------------------------------------------------------------------*/
-#define TR7 TRISBbits.TRISB7
-#define LA7 LATBbits.LATB7
-#define TR6 TRISBbits.TRISB6
-#define LA6 LATBbits.LATB6
 
 u8 I2C_address=0x2C; //8bits address-R/W bit included
 
@@ -50,90 +46,91 @@ void setup()
   Wire.begin(0,100);// first parameter = 0 means master mode; second bus speed = 100 KHz
   Serial.begin(9600);
 }
+
 void loop()
 {
   u8 *ptr;
   u8 c;
-// entering commands
+
+  // entering commands
   Serial.printf("\r\n>");
   get_line(Line, sizeof(Line));
   ptr = Line;
   delay(100);
+
   switch (*ptr++)
   {
+    // version request
     case 'v' :
-
-//version request
-  Wire.beginTransmission(I2C_address);
-	Wire.write(0x80);
-	Wire.endTransmission(1);
-   delay(100);
- 	Wire.requestFrom(I2C_address,2); //
-  delay(100);
-  Serial.printf("<");
-	while(Wire.available())    // slave may send less than requested
-    { 
-      c = Wire.read(); // receive a byte as character
-      Serial.printf("%2X",c);         // print the character
-    }
-  break;
+      Wire.beginTransmission(I2C_address);
+      Wire.write(0x80);
+      Wire.endTransmission(1);
+      delay(100);
+      Wire.requestFrom(I2C_address,2); //
+      delay(100);
+      Serial.printf("<");
+      while(Wire.available())    // slave may send less than requested
+      { 
+        c = Wire.read(); // receive a byte as character
+        Serial.printf("%2X",c);         // print the character
+      }
+      break;
   
-    case 'l' : // led on request
-    {
+    // led on request
+    case 'l' :
        c = *ptr;
        Wire.beginTransmission(I2C_address);
-	     Wire.write(0x90);
+       Wire.write(0x90);
        Wire.write(c);
-      	Wire.endTransmission(1);
-      break;
-    }
+       Wire.endTransmission(1);
+       break;
+
+    // led on status
     case 's' :
-// led on status
+      Wire.beginTransmission(I2C_address);
+      Wire.write(0x90);
+      Wire.endTransmission(1);
+      delay(100);
+      Wire.requestFrom(I2C_address,1);
+      while(Wire.available())    // slave may send less than requested
+      { 
+        c = Wire.read(); // receive a byte as character
+        Serial.printf("<%2X",c);         // print the character
+      }
+      break;
 
-	Wire.beginTransmission(I2C_address);
-	Wire.write(0x90);
- 	Wire.endTransmission(1);
-  delay(100);
-	Wire.requestFrom(I2C_address,1);
-	while(Wire.available())    // slave may send less than requested
-    { 
-      c = Wire.read(); // receive a byte as character
-      Serial.printf("<%2X",c);         // print the character
-    }
-    break;
-    case 'e' : // echo request
+    // echo request
+    case 'e' :
        c=*ptr;
-	Wire.beginTransmission(I2C_address);
-	Wire.write(c);
- 	Wire.endTransmission(1);
-  delay(100);
-	Wire.requestFrom(I2C_address,1);
- delay(100);
- 	while(Wire.available())    // slave may send less than requested
-    { 
+       Wire.beginTransmission(I2C_address);
+       Wire.write(c);
+       Wire.endTransmission(1);
+       delay(100);
+       Wire.requestFrom(I2C_address,1);
+       delay(100);
+       while(Wire.available())    // slave may send less than requested
+       { 
+         delay(100);
+         c = Wire.read(); // receive a byte as character
+         Serial.printf("<%c",c);         // print the character
+       }
+       break;
+  
+    // echo request
+    case 'm' :
+      Wire.beginTransmission(I2C_address);
+      Wire.write(0x81);
+      Wire.endTransmission(1);
       delay(100);
-      c = Wire.read(); // receive a byte as character
-      Serial.printf("<%c",c);         // print the character
-    }
-    break;
- 
- 
-    case 'm' : // echo request
-	Wire.beginTransmission(I2C_address);
-	Wire.write(0x81);
- 	Wire.endTransmission(1);
-  delay(100);
-	Wire.requestFrom(I2C_address,4);
- delay(100);
-  Serial.printf("<");
-  while(Wire.available())    // slave may send less than requested
-    { 
+      Wire.requestFrom(I2C_address,4);
       delay(100);
-      c = Wire.read(); // receive a byte as character
-      Serial.printf("%c",c);         // print the character
-    }
-    break;
-
- } 
-
+      Serial.printf("<");
+      while(Wire.available())    // slave may send less than requested
+      { 
+        delay(100);
+        c = Wire.read(); // receive a byte as character
+        Serial.printf("%c",c);         // print the character
+      }
+      break;
+   } 
 }

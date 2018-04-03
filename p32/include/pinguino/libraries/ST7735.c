@@ -1,24 +1,28 @@
-/*	--------------------------------------------------------------------
+/*  --------------------------------------------------------------------
     FILE:           ST7735.c
     PROJECT:        Pinguino
     PURPOSE:        Drive 1.8" 128x160 TFT display
     PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
-    LAST RELEASE:   29 Jan. 2016
-    ------------------------------------------------------------------------
+    --------------------------------------------------------------------
     http://w8bh.net/pi/TFT1.pdf to TFT5.pdf
-    ------------------------------------------------------------------------
+    --------------------------------------------------------------------
     CHANGELOG
-    * 11 Dec. 2014 - Regis Blanchot - first release
-    * 01 Oct. 2015 - Regis Blanchot - fixed ST7735_setOrientation()
-    * 03 Oct. 2015 - Regis Blanchot - added new function ST7735_printCenter()
-    * 27 Jan. 2016 - Regis Blanchot - replaced ST7735_WIDTH and ST7735_HEIGHT with
+    * 11 Dec. 2014 - R. Blanchot - first release
+    * 01 Oct. 2015 - R. Blanchot - fixed ST7735_setOrientation()
+    * 03 Oct. 2015 - R. Blanchot - added new function ST7735_printCenter()
+    * 27 Jan. 2016 - R. Blanchot - replaced ST7735_DISPLAY_WIDTH and ST7735_DISPLAY_HEIGHT with
                                       ST7735[module].screen.width and ST7735[module].screen.height
-    * 08 Dec. 2016 - Regis Blanchot - added variable width fonts support
-    ------------------------------------------------------------------------
+    * 29 Jan. 2016 - R. Blanchot - fixed ST7735_init where 'u8' were promoted to 'int'
+    * 08 Dec. 2016 - R. Blanchot - added variable width fonts support
+    --------------------------------------------------------------------
     TODO
-    * scroll functions
-    * in SPI_begin() 'u8' is promoted to 'int' when passed through '...'
-    ------------------------------------------------------------------------
+    * Scroll functions
+      Note that command ST7735_RAMRD (0x2E) won't read memory as there
+      is no MISO pin on ST7735 display with SPI interface found on eBay.
+      So we need to keep a complete display buffer image locally.
+      If we have the RAM available to do that ... 
+      128 x 160 pixels = 128 x 20 bytes = 2560 bytes :-(
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -51,25 +55,26 @@
 #ifndef __ST7735_C
 #define __ST7735_C
 
-#ifndef __PIC32MX__
+#if !defined(__PIC32MX__)
 #include <compiler.h>
 #endif
 #include <typedef.h>
 #include <macro.h>
 #include <stdarg.h>
+#include <string.h>         // memset, memcpy
 #include <ST7735.h>
 #include <spi.h>
 #include <spi.c>
 #include <digitalw.c>
-#ifndef __PIC32MX__
+#if defined(__PIC32MX__)
+#include <delay.c>
+#else
 #include <digitalp.c>
 #include <delayms.c>
-#else
-#include <delay.c>
 #endif
 
 // Printf
-#ifdef ST7735PRINTF
+#if defined(ST7735PRINTF)
     #include <printFormated.c>
 #endif
 
@@ -85,7 +90,7 @@
 
 // Graphics Library
 #if defined(ST7735GRAPHICS) || defined(ST7735DRAWBITMAP)
-    #ifdef ST7735DRAWBITMAP
+    #if defined(ST7735DRAWBITMAP)
     #define DRAWBITMAP
     #endif
     #include <graphics.c>
@@ -149,15 +154,15 @@ void ST7735_init(int module, ...)
     {
         SPI_setMode(ST7735_SPI, SPI_MASTER);
         SPI_setDataMode(ST7735_SPI, SPI_MODE1);
-        #ifndef __PIC32MX__
-        //maximum baud rate possible = FPB = FOSC/4
-        SPI_setClockDivider(ST7735_SPI, SPI_CLOCK_DIV4);
-        #else
+        #if defined(__PIC32MX__)
         //maximum baud rate possible = FPB/2
         SPI_setClockDivider(ST7735_SPI, SPI_PBCLOCK_DIV2);
+        #else
+        //maximum baud rate possible = FPB = FOSC/4
+        SPI_setClockDivider(ST7735_SPI, SPI_CLOCK_DIV4);
         #endif
-        //SPI_begin(ST7735_SPI, NULL);
-        SPI_begin(ST7735_SPI);
+        SPI_begin(ST7735_SPI, NULL);
+        //SPI_begin(ST7735_SPI);
     }
 
     va_end(args);                       // cleans up the list
@@ -169,10 +174,10 @@ void ST7735_init(int module, ...)
     ST7735[ST7735_SPI].pixel.page   = 0;
     ST7735[ST7735_SPI].screen.startx = 0;
     ST7735[ST7735_SPI].screen.starty = 0;
-    ST7735[ST7735_SPI].screen.endx   = ST7735_WIDTH  - 1;
-    ST7735[ST7735_SPI].screen.endy   = ST7735_HEIGHT - 1;
-    ST7735[ST7735_SPI].screen.width  = ST7735_WIDTH;
-    ST7735[ST7735_SPI].screen.height = ST7735_HEIGHT;
+    ST7735[ST7735_SPI].screen.endx   = ST7735_DISPLAY_WIDTH  - 1;
+    ST7735[ST7735_SPI].screen.endy   = ST7735_DISPLAY_HEIGHT - 1;
+    ST7735[ST7735_SPI].screen.width  = ST7735_DISPLAY_WIDTH;
+    ST7735[ST7735_SPI].screen.height = ST7735_DISPLAY_HEIGHT;
 
     // Software reset and minimal init.
     
@@ -204,7 +209,7 @@ void ST7735_init(int module, ...)
 /// Set the display orientation to 0, 90, 180, or 270 degrees
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735SETORIENTATION
+#if defined(ST7735SETORIENTATION)
 void ST7735_setOrientation(u8 module, s16 degrees)
 {
     u8 arg;
@@ -217,32 +222,32 @@ void ST7735_setOrientation(u8 module, s16 degrees)
     switch (degrees)
     {
         case  90:// OK
-            ST7735[module].screen.endx   = ST7735_HEIGHT - 1;
-            ST7735[module].screen.endy   = ST7735_WIDTH  - 1;
-            ST7735[module].screen.width  = ST7735_HEIGHT;
-            ST7735[module].screen.height = ST7735_WIDTH;
+            ST7735[module].screen.endx   = ST7735_DISPLAY_HEIGHT - 1;
+            ST7735[module].screen.endy   = ST7735_DISPLAY_WIDTH  - 1;
+            ST7735[module].screen.width  = ST7735_DISPLAY_HEIGHT;
+            ST7735[module].screen.height = ST7735_DISPLAY_WIDTH;
             arg = ST7735_MADCTL_MX | ST7735_MADCTL_MV | ST7735_MADCTL_RGB; // 0x60;
             break;
         case 180:// OK
-            ST7735[module].screen.endx   = ST7735_WIDTH - 1;
-            ST7735[module].screen.endy   = ST7735_HEIGHT  - 1;
-            ST7735[module].screen.width  = ST7735_WIDTH;
-            ST7735[module].screen.height = ST7735_HEIGHT;
+            ST7735[module].screen.endx   = ST7735_DISPLAY_WIDTH - 1;
+            ST7735[module].screen.endy   = ST7735_DISPLAY_HEIGHT  - 1;
+            ST7735[module].screen.width  = ST7735_DISPLAY_WIDTH;
+            ST7735[module].screen.height = ST7735_DISPLAY_HEIGHT;
             arg = ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB; // 0xC0;
             break;
         case 270:// OK
-            ST7735[module].screen.endx   = ST7735_HEIGHT - 1;
-            ST7735[module].screen.endy   = ST7735_WIDTH  - 1;
-            ST7735[module].screen.width  = ST7735_HEIGHT;
-            ST7735[module].screen.height = ST7735_WIDTH;
+            ST7735[module].screen.endx   = ST7735_DISPLAY_HEIGHT - 1;
+            ST7735[module].screen.endy   = ST7735_DISPLAY_WIDTH  - 1;
+            ST7735[module].screen.width  = ST7735_DISPLAY_HEIGHT;
+            ST7735[module].screen.height = ST7735_DISPLAY_WIDTH;
             arg = ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_MADCTL_RGB; // 0xA0;
             break;
         case 0:// OK
         default:
-            ST7735[module].screen.endx   = ST7735_WIDTH  - 1;
-            ST7735[module].screen.endy   = ST7735_HEIGHT - 1;
-            ST7735[module].screen.width  = ST7735_WIDTH;
-            ST7735[module].screen.height = ST7735_HEIGHT;
+            ST7735[module].screen.endx   = ST7735_DISPLAY_WIDTH  - 1;
+            ST7735[module].screen.endy   = ST7735_DISPLAY_HEIGHT - 1;
+            ST7735[module].screen.width  = ST7735_DISPLAY_WIDTH;
+            ST7735[module].screen.height = ST7735_DISPLAY_HEIGHT;
             arg = ST7735_MADCTL_RGB; // 0x00;
             break;
     }
@@ -260,7 +265,7 @@ void ST7735_setOrientation(u8 module, s16 degrees)
 /// Sets a rectangular display window into which pixel data is placed
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735SETWINDOW
+#if defined(ST7735SETWINDOW)
 void ST7735_setWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 {
     ST7735_select(module);
@@ -303,7 +308,7 @@ void ST7735_setWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 /// Gets pixel color
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735GETCOLOR
+#if defined(ST7735GETCOLOR)
 color_t *ST7735_getColor(u8 module, u8 x, u8 y)
 {
     color_t *color = NULL;
@@ -351,7 +356,7 @@ color_t *ST7735_getColor(u8 module, u8 x, u8 y)
 /// Max values: Red 31, Green 63, Blue 31
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735PACKCOLOR
+#if defined(ST7735PACKCOLOR)
 color_t *ST7735_packColor(u8 r, u8 g, u8 b)
 {
     color_t *color = NULL;
@@ -366,7 +371,7 @@ color_t *ST7735_packColor(u8 r, u8 g, u8 b)
 /// Reduces 16-bit color into component r,g,b values
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735UNPACKCOLOR
+#if defined(ST7735UNPACKCOLOR)
 void ST7735_unpackColor(color_t *color)
 {
     (*color).r =  (*color).c >> 11;
@@ -410,7 +415,7 @@ void ST7735_clearScreen(u8 module)
     SPI_write(module,ST7735_RAMWR);     // Write to RAM
         
     ST7735_high(ST7735[module].pin.dc); // DATA = 1
-    for (i = 0; i < ST7735_SIZE; i++)
+    for (i = 0; i < ST7735_DISPLAY_SIZE; i++)
     {
         SPI_write(module, ch);
         SPI_write(module, cl);
@@ -427,7 +432,7 @@ void ST7735_clearScreen(u8 module)
 /// Clear the window
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735CLEARWINDOW
+#if defined(ST7735CLEARWINDOW)
 void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 {
     u8 x, y;
@@ -478,7 +483,7 @@ void ST7735_clearWindow(u8 module, u8 x0, u8 y0, u8 x1, u8 y1)
 /// Print functions
 ///	--------------------------------------------------------------------
 
-#ifdef ST7735SETFONT
+#if defined(ST7735SETFONT)
 
 void ST7735_setFont(u8 module, const u8 *font)
 {
@@ -488,6 +493,36 @@ void ST7735_setFont(u8 module, const u8 *font)
     ST7735[module].font.firstChar = font[FONT_FIRST_CHAR];
     ST7735[module].font.charCount = font[FONT_CHAR_COUNT];
 }
+
+// Up handed 1-row scroll
+/*
+void ST7735_scrollUp(u8 module)
+{
+    u8 i;
+    u8 bytes = ((ST7735[module].font.height + 7) / 8);
+    u8 lastline = ST7735_DISPLAY_ROWS - bytes;
+
+    // Copy line y in Line y-1
+    //void *memcpy(void *dest, const void *src, size_t n)
+    for (i=0; i<lastline; i++)
+        #if defined(__PIC32MX__) || defined(__XC8__)
+        memcpy( ST7735_buffer[i], ST7735_buffer[i + 1], ST7735_DISPLAY_WIDTH);
+        #else
+        memcpy(&ST7735_buffer[i], ST7735_buffer[i + 1], ST7735_DISPLAY_WIDTH);
+        #endif
+
+    // Clear the last lines
+    //void *memset(void *str, int c, size_t n)
+    for (i=lastline; i<ST7735_DISPLAY_ROWS; i++)
+        #if defined(__PIC32MX__) || defined(__XC8__)
+        memset( ST7735_buffer[i], 0, ST7735_DISPLAY_WIDTH);
+        #else
+        memset(&ST7735_buffer[i], 0, ST7735_DISPLAY_WIDTH);
+        #endif
+    
+    ST7735[module].pixel.y = ST7735[module].pixel.y - (8 * bytes);
+}
+*/
 
 /*  --------------------------------------------------------------------
     DESCRIPTION:
@@ -520,6 +555,7 @@ void ST7735_printChar(u8 module, u8 c)
 
     if ((ST7735[module].pixel.y + ST7735[module].font.height) > ST7735[module].screen.height)
     {
+        ST7735_clearScreen(module);
         ST7735[module].pixel.y = 0;
         //ST7735_scrollUp(module);            
     }
@@ -892,7 +928,7 @@ void ST7735_fillRoundRect(u8 module, u16 x1, u16 y1, u16 x2, u16 y2)
     fillRoundRect(x1, y1, x2, y2);
 }
 
-#ifdef ST7735DRAWBITMAP
+#if defined(ST7735DRAWBITMAP)
 void ST7735_drawBitmap(u8 module1, u8 module2, const u8* filename, u16 x, u16 y)
 {
     ST7735_SPI = module1;

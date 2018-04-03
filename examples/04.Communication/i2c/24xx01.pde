@@ -57,10 +57,10 @@ void setup()
 {
     delay(1000);
     CDC.printf("\n\r\n\r*** 24xx01 i2c Eeprom Demo. ***\n\r\n\r");
-    pinMode(12, OUTPUT);                // Pinguino 26j50 build-in led is on pin 12
+    pinMode(USERLED, OUTPUT);           // Pinguino build-in LED
     // Define Pinguino as Master and Clock speed on i2c bus
     //I2C.master(I2C_100KHZ);           // or I2C.master(100);
-    I2C.master(I2C_400KHZ);             // or I2C.master(400);
+    I2C.master(I2C_400KHZ);             // or I2C.master(400);
 }
  
 void loop()
@@ -71,51 +71,51 @@ void loop()
     ///     Write
     ///
     
-    digitalWrite(12, LOW);                      // Switch build-in led off
+    digitalWrite(USERLED, LOW);         // Switch build-in led off
     CDC.printf("Writing ...\n\r");
 
-    I2C.start();                                // All I2C commands must begin with a Start condition
-    I2C.write((i2cAddr << 1) & 0xFE);            // write operation (bit 0 set to 0)
+    I2C.start();                        // All I2C commands must begin with a Start condition
+    I2C.write((i2cAddr << 1) & 0xFE);   // write operation (bit 0 set to 0)
     I2C.write(MemoryAddr);
 
     for (i=0; i<8; i++)
     {
-        I2C.write(wBuffer[i]);                   // Page write with auto. inc.
-        CDC.write(wBuffer[i]);
+        I2C.write(wBuffer[i]);           // Page write with auto. inc.
+        CDC.printChar(wBuffer[i]);
     }
     CDC.printf("\n\r");
-    I2C.stop();                                 // Terminate the write sequence
+    I2C.stop();                          // Terminate the write sequence
 
-    delay(1000);                                // Wait for 1 sec. (1000 ms)
+    delay(1000);                         // Wait for 1 sec. (1000 ms)
 
     ///
     ///     Read
     ///
     
-    digitalWrite(12, HIGH);                     // Switch build-in led on
+    digitalWrite(USERLED, HIGH);         // Switch build-in led on
     CDC.printf("Reading ...\n\r");
 
     // Send Memory Address
 
-    I2C.start();                                // All I2C commands must begin with a Start condition
-    I2C.write((i2cAddr << 1) & 0xFE);            // write operation (bit 0 set to 0)
+    I2C.start();                         // All I2C commands must begin with a Start condition
+    I2C.write((i2cAddr << 1) & 0xFE);    // write operation (bit 0 set to 0)
     I2C.write(MemoryAddr);
 
     // Starts reading
     
-    I2C.start();                                // start again
-    I2C.write((i2cAddr << 1) + 1);               // read operation (bit 0 set to 1)
-    for (i=0; i<8; i++)                         // Sequential read (auto. inc.)
+    I2C.start();                         // start again
+    I2C.write((i2cAddr << 1) + 1);       // read operation (bit 0 set to 1)
+    for (i=0; i<8; i++)                  // Sequential read (auto. inc.)
     {
-        c = I2C.read();                         // read a byte from the slave
-        CDC.write(c);                           // write this byte on CDC output
-        if (i>=7)                               // Last byte is sent ?
-            I2C.sendNack();                     // Yes, send a No Ack to the slave (no more data to read)
+        c = I2C.read();                  // read a byte from the slave
+        CDC.printChar(c);                // write this byte on CDC output
+        if (i>=7)                        // Last byte is sent ?
+            I2C.sendNack();              // Yes, send a No Ack to the slave (no more data to read)
         else
-            I2C.sendAck();                      // No, send a Ack bit (more data has to be read)
+            I2C.sendAck();               // No, send a Ack bit (more data has to be read)
     }
     CDC.printf("\n\r");
-    I2C.stop();                                 // Terminate the read sequence
+    I2C.stop();                          // Terminate the read sequence
 
-    delay(1000);                                // Wait for 1 sec. (1000 ms)
+    delay(1000);                         // Wait for 1 sec. (1000 ms)
 }

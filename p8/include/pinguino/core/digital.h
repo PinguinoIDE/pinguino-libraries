@@ -279,14 +279,14 @@ const u8 mask[36] = {
             _0, _1, _2, _3, _4, _5, _6, _7,	// PORT B pins
             _0, _1, _2, _3, _4, _5, _6, _7,	// PORT C pins
             _0, _1, _2, _3, _4, _5, _6, _7,	// PORT D pins
-            _0, _1, _2, _3			// PORT E pins
+            _0, _1, _2, _3			        // PORT E pins
             };
 const u8 port[36] = {
             pA, pA, pA, pA, pA, pA, pA, pA,	// PORT A
             pB, pB, pB, pB, pB, pB, pB, pB,	// PORT B
             pC, pC, pC, pC, pC, pC, pC, pC,	// PORT C
             pD, pD, pD, pD, pD, pD, pD, pD,	// PORT D
-            pE, pE, pE, pE			// PORT E
+            pE, pE, pE, pE			        // PORT E
             };
 
 /**********************************************************************/

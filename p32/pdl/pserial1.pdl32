@@ -6,10 +6,12 @@ Serial1.print serial1print#include <serial1.c>#define SERIALPRINT
 Serial1.println serial1println#include <serial1.c>#define SERIALPRINTLN
 Serial1.printNumber serial1printNumber#include <serial1.c>#define SERIALPRINTNUMBER
 Serial1.printFLoat serial1printFloat#include <serial1.c>#define SERIALPRINTFLOAT
+Serial1.printx serial1printx#include <serial1.c>#define SERIALPRINTX
 Serial1.printf serial1printf#include <serial1.c>#define SERIALPRINTF
 Serial1.getKey serial1getkey#include <serial1.c>
 Serial1.getString serial1getstring#include <serial1.c>
 Serial1.available serial1available#include <serial1.c>
 Serial1.read serial1read#include <serial1.c>
+Serial1.readChar serial1read#include <serial1.c>
 Serial1.flush serial1flush#include <serial1.c>
 Serial1.ClearRxError serial1clearrxerror#include <serial1.c>

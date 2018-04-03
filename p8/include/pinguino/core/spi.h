@@ -1,17 +1,17 @@
-/*	----------------------------------------------------------------------------
-    FILE:			spi.h
-    PROJECT:		Pinguino
-    PURPOSE:		SPI Hardware library
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
+/*  --------------------------------------------------------------------
+    FILE:           spi.h
+    PROJECT:        Pinguino
+    PURPOSE:        SPI Hardware library
+    PROGRAMER:      Régis Blanchot <rblanchot@gmail.com>
                     Francisco J. Sánchez Rivas (FJ_Sanchez) <fran@mipixel.com>
-    FIRST RELEASE:	20 Jun. 2012
-    LAST RELEASE:	30 Nov. 2015
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     CHANGELOG:
-    30 Nov 2015 - Régis Blanchot - added PIC16F1459 support
-    30 Jan 2017 - Régis Blanchot - added PIC18F1xK50 support
-    30 Jan 2017 - Régis Blanchot - added SPI_PBCLOCK_DIV for P32 compatibility
-    ----------------------------------------------------------------------------
+    20 Jun. 2012 - Régis Blanchot - first release  
+    30 Nov. 2015 - Régis Blanchot - added PIC16F1459 support
+    30 Jan. 2017 - Régis Blanchot - added PIC18F1xK50 support
+    30 Jan. 2017 - Régis Blanchot - added SPI_PBCLOCK_DIV for P32 compatibility
+    01 Feb. 2018 - Régis Blanchot - added SPI_writeBytes() and SPI_readBytes()
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -25,7 +25,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
  
 #ifndef __SPI_H__
 #define __SPI_H__
@@ -41,17 +41,17 @@
 
 #if   defined(__16F1459)
 
-    #define SD_CS           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
+    #define CSPIN           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
     #define SSPIN           TRISCbits.TRISC6    // SPI1 Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB4    // SPI1 SDI Master input/Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB6    // SPI1 SCK Clock TRIS
     #define SDOPIN          TRISCbits.TRISC7    // SPI1 SDO Master output/Slave input TRIS
-    #define SSP1BUF         SSPBUF
+    //#define SSP1BUF         SSPBUF
     #define SSP1INTFLAG     PIR1bits.SSP1IF
 
 #elif defined(__18f13k50)  || defined(__18f14k50)
 
-    #define SD_CS           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
+    #define CSPIN           LATCbits.LATC6      // SPI1 Chip Select cf. io.c/IO_remap()
     #define SSPIN           TRISCbits.TRISC6    // CS1  Pin 6  Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB4    // SDI1 Pin 14 Master Input/Slave Output TRIS
     #define SCKPIN          TRISBbits.TRISB6    // SCK1 Pin 16 Clock TRIS
@@ -62,7 +62,7 @@
 #elif defined(__18f2455)  || defined(__18f4455)  || \
       defined(__18f2550)  || defined(__18f4550)
 
-    #define SD_CS           LATAbits.LATA5      // D13 - Chip Select
+    #define CSPIN           LATAbits.LATA5      // D13 - Chip Select
     #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
@@ -72,19 +72,22 @@
 
 #elif defined(__18f25k50) || defined(__18f45k50)
     
-    #define SD_CS           LATAbits.LATA5      // D13 - Chip Select
+    #define CSPIN           LATAbits.LATA5      // D13 - Chip Select
     #define SSPIN           TRISAbits.TRISA5    // D13 - Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB0    // D0  - SDI Master input/SDO Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB1    // D1  - SCK Clock TRIS
+    // *** RB 20171123 : SDO = RB3 or RC7 (cf. Configuration bits)
     #define SDOPIN          TRISCbits.TRISC7    // D23 - SDO Master output/SDI Slave input TRIS
+    #ifndef SSP1BUF
     #define SSP1BUF         SSPBUF
+    #endif
     #define SSP1INTFLAG     PIR1bits.SSPIF
 
 #elif defined(__18f26j50)|| defined(__18f46j50) || \
       defined(__18f27j53)|| defined(__18f47j53)
 
     // SPI1 (Note: SPI SDO1 and Serial RX1 are the same)
-    #define SD_CS           LATBbits.LATB6      // SPI1 Chip Select
+    #define CSPIN           LATBbits.LATB6      // SPI1 Chip Select
     #define SSPIN           TRISBbits.TRISB6    // SPI1 Chip Select TRIS
     #define SDIPIN          TRISBbits.TRISB5    // SPI1 SDO Master input/Slave output TRIS
     #define SCKPIN          TRISBbits.TRISB4    // SPI1 SCK Clock TRIS
@@ -92,7 +95,7 @@
     #define SSP1INTFLAG     PIR1bits.SSP1IF
 
     // SPI2
-    #define SD_CS2          LATBbits.LATB0      // SPI2 Chip Select
+    #define CS2PIN          LATBbits.LATB0      // SPI2 Chip Select
     #define SS2PIN          TRISBbits.TRISB0    // SPI2 Chip Select TRIS
     #define SDI2PIN         TRISBbits.TRISB3    // SPI2 SDO Master input/Slave output TRIS
     #define SCK2PIN         TRISBbits.TRISB2    // SPI2 SCK Clock TRIS
@@ -170,6 +173,7 @@ typedef struct
     u8 bitorder;
     u8 phase;
     int sdo;
+    int sdi;
     int sck;
     int cs;
 } spi_t;
@@ -184,8 +188,15 @@ void SPI_init();
 void SPI_setMode(u8, u8);
 void SPI_setBitOrder(u8, u8);
 void SPI_setDataMode(u8, u8);
-void SPI_setClockDivider(u8, u8);
+//void SPI_setClockDivider(u8, u8);
+
 u8 SPI_write(u8, u8);
+u8 SPI_writeChar(u8, u8, u8);
+u8 SPI_writeBytes(u8, u8, u8*, u8);
+
+//u8 SPI_read(u8);
+u8 SPI_readChar(u8, u8);
+u8 SPI_readBytes(u8, u8, u8*, u8);
 
 // cf. spi.c line 511
 //u8 SPI_read(u8);

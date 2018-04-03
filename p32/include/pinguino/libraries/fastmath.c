@@ -42,6 +42,9 @@
  * 01-01-2015 - J. Collet   - Adapted for Pinguino
  * 23-01-2017 - R. Blanchot - Fixed some bugs
  *                            Added the fasthelper type
+ * 25-01-2018 - R. Blanchot - Added fastsqrt, fastinvsqrt, fastabs
+ *                            Added fastmin, fastmax
+ *                            Added fastatan2, fastasin, fastacos
  *=====================================================================*/
 
 #ifndef __FASTMATH_C_
@@ -49,8 +52,8 @@
 
 typedef union
 {
-    u32 i;
     float f;
+    u32 i;
 } fasthelper; 
   
 #include <stdint.h>
@@ -59,14 +62,64 @@ typedef union
 #define cast_u32 (u32)
 #endif // __CAST
 
+float fastmin(float x, float y)
+{
+    return (x < y) ? x : y;
+}
+
+float fastmax(float x, float y)
+{
+    return (x > y) ? x : y;
+}
+
+float fastabs(float x)
+{
+    // copy and re-interpret as 32 bit integer
+    int casted = *(int*) &x;
+    // clear highest bit
+    casted &= 0x7FFFFFFF;
+
+    // re-interpret as float
+    return *(float*)&casted;
+}
+
+// This algorithm is dependant on IEEE representation and only works for 32 bits
+float fastsqrt(float x)
+{
+    unsigned int i = *(unsigned int*) &x; 
+    // adjust bias
+    i  += 127 << 23;
+    // approximation of square root
+    i >>= 1; 
+    return *(float*) &i;
+}
+
+// The following code is the fast inverse square root implementation from Quake III Arena
+float fastinvsqrt(float number)
+{
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5F;
+
+    x2 = number * 0.5F;
+    y  = number;
+    i  = * ( long * ) &y;                       // evil floating point bit level hacking
+    i  = 0x5f3759df - ( i >> 1 );               // what the fuck? 
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    //y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+    return y;
+}
+
 /**********************************************************************/
-#ifdef FASTEXP
+//#ifdef FASTEXP
 /**********************************************************************/
 
 // Underflow of exponential is common practice in numerical routines,
 // so handle it here.
 
-float fastpow2 (float p)
+float fastpow2(float p)
 {
   float offset = (p < 0) ? 1.0f : 0.0f;
   float clipp = (p < -126) ? -126.0f : p;
@@ -77,12 +130,12 @@ float fastpow2 (float p)
   return v.f;
 }
 
-float fastexp (float p)
+float fastexp(float p)
 {
-  return fastpow2 (1.442695040f * p);
+  return fastpow2(1.442695040f * p);
 }
 
-float fasterpow2 (float p)
+float fasterpow2(float p)
 {
   float clipp = (p < -126) ? -126.0f : p;
   fasthelper v;
@@ -90,24 +143,24 @@ float fasterpow2 (float p)
   return v.f;
 }
 
-float fasterexp (float p)
+float fasterexp(float p)
 {
-  return fasterpow2 (1.442695040f * p);
+  return fasterpow2(1.442695040f * p);
 }
 
-#endif // FASTEXP
+//#endif // FASTEXP
 
 /**********************************************************************/
-#ifdef FASTLOG
+//#ifdef FASTLOG
 /**********************************************************************/
 
-float fastlog2 (float x)
+float fastlog2(float x)
 {
   float y;
   fasthelper vx, mx;
   vx.f = x;
   mx.i = (vx.i & 0x007FFFFF) | 0x3f000000;
-  y = vx.i;
+  y = (float)vx.i;
   y *= 1.1920928955078125e-7f;
 
   return y - 124.22551499f
@@ -115,50 +168,60 @@ float fastlog2 (float x)
            - 1.72587999f / (0.3520887068f + mx.f);
 }
 
-float fastln (float x)
+float fastpow(float x, float p)
 {
-  return 0.69314718f * fastlog2 (x);
+    return fastpow2(p * fastlog2(x));
 }
 
-float fastlog (float x)
+float fastln(float x)
 {
-  return 0.30102999f * fastlog2 (x);
+    return 0.69314718f * fastlog2(x);
 }
 
-float fasterlog2 (float x)
+float fastlog(float x)
 {
-  float y;
-  fasthelper vx;
-  vx.f = x;
-  y = vx.i;
-  y *= 1.1920928955078125e-7f;
-  return y - 126.94269504f;
+    return 0.30102999f * fastlog2(x);
 }
 
-float fasterln (float x)
+float fasterlog2(float x)
 {
-  //  return 0.69314718f * fasterlog2 (x);
-
-  float y;
-  fasthelper vx;
-  vx.f = x;
-  y = vx.i;
-  y *= 8.2629582881927490e-8f;
-  return y - 87.989971088f;
+    float y;
+    fasthelper vx;
+    vx.f = x;
+    y = vx.i;
+    y *= 1.1920928955078125e-7f;
+    return y - 126.94269504f;
 }
 
-float fasterlog (float x)
+float fasterpow(float x, float p)
 {
-  return 0.30102999f * fasterlog2 (x);
+    return fasterpow2(p * fasterlog2(x));
 }
 
-#endif // FASTLOG
+float fasterln(float x)
+{
+    //  return 0.69314718f * fasterlog2(x);
+
+    float y;
+    fasthelper vx;
+    vx.f = x;
+    y = vx.i;
+    y *= 8.2629582881927490e-8f;
+    return y - 87.989971088f;
+}
+
+float fasterlog(float x)
+{
+    return 0.30102999f * fasterlog2(x);
+}
+
+//#endif // FASTLOG
 
 /**********************************************************************/
-#ifdef FASTERF
+//#ifdef FASTERF
 /**********************************************************************/
 
-#include <math.h>
+//#include <math.h>
 
 // fasterfc: not actually faster than erfcf(3) on newer machines!
 // ... although vectorized version is interesting
@@ -221,10 +284,10 @@ float fasterinverseerf (float x)
 
   return invk * fasterlog2 ((1.0f + x) / (1.0f - x));
 }
-#endif // FASTERF
+//#endif // FASTERF
 
 /**********************************************************************/
-#ifdef FASTGAMMA
+//#ifdef FASTGAMMA
 /**********************************************************************/
 
 /* gamma/digamma functions only work for positive inputs */
@@ -266,10 +329,10 @@ float fasterdigamma (float x)
   return -1.0f / x - 1.0f / (2 * onepx) + fasterlog (onepx);
 }
 
-#endif // FASTGAMMA
+//#endif // FASTGAMMA
 
 /**********************************************************************/
-#ifdef FASTHYPERBOLIC
+//#ifdef FASTHYPERBOLIC
 /**********************************************************************/
 
 float fastsinh (float p)
@@ -302,10 +365,72 @@ float fastertanh (float p)
   return -1.0f + 2.0f / (1.0f + fasterexp (-2.0f * p));
 }
 
-#endif // FASTHYPERBOLIC
+//#endif // FASTHYPERBOLIC
 
 /**********************************************************************/
-#ifdef FASTLAMBERT_W
+//#ifdef FASTARCHYPERBOLIC
+/**********************************************************************/
+
+float fastasin(float x)
+{
+    const float halfpi = 1.5707963267948966f;
+    const float a0 = 1.5707288;
+    const float a1 = -0.2121144;
+    const float a2 = 0.0742610;
+    const float a3 = -0.0187293;
+
+    //float xx = abs(x);
+
+    return (halfpi - fastsqrt(1-x) * (a0 + a1*x + a2*x*x + a3*x*x*x));
+}
+
+float fastacos(float x)
+{
+    float negate = (float)(x < 0);
+    float ret = -0.0187293;
+    x = fastabs(x);
+    ret = ret * x;
+    ret = ret + 0.0742610;
+    ret = ret * x;
+    ret = ret - 0.2121144;
+    ret = ret * x;
+    ret = ret + 1.5707288;
+    ret = ret * fastsqrt(1.0-x);
+    ret = ret - 2 * negate * ret;
+    return negate * 3.14159265358979 + ret;
+}
+
+float fastatan2(float y, float x)
+{
+    //http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
+    //Volkan SALMA
+
+    const float pi = 3.1415926535897932384626433832795;
+    const float ONEQTR_PI = pi / 4.0;
+    const float THRQTR_PI = 3.0 * pi / 4.0;
+    float r, angle;
+    float abs_y = fastabs(y) + 1e-10f;      // kludge to prevent 0/0 condition
+    if ( x < 0.0f )
+    {
+        r = (x + abs_y) / (abs_y - x);
+        angle = THRQTR_PI;
+    }
+    else
+    {
+        r = (x - abs_y) / (x + abs_y);
+        angle = ONEQTR_PI;
+    }
+    angle += (0.1963f * r * r - 0.9817f) * r;
+    if ( y < 0.0f )
+        return( -angle );     // negate if in quad III or IV
+    else
+        return( angle );
+}
+
+//#endif // FASTARCHYPERBOLIC
+
+/**********************************************************************/
+//#ifdef FASTLAMBERT_W
 /**********************************************************************/
 
 // these functions compute the upper branch aka W_0
@@ -352,7 +477,7 @@ float fastlambertwexpx (float x)
   static const float k = 1.1765631309f;
   static const float a = 0.94537622168f;
 
-  float logarg = fmaxf (x, k);
+  float logarg = fastmax(x, k);
   float powarg = (x < k) ? a * (x - k) : 0;
 
   float logterm = fastlog (logarg);
@@ -371,7 +496,7 @@ float fasterlambertwexpx (float x)
   static const float k = 1.1765631309f;
   static const float a = 0.94537622168f;
 
-  float logarg = fmaxf (x, k);
+  float logarg = fastmax(x, k);
   float powarg = (x < k) ? a * (x - k) : 0;
 
   float logterm = fasterlog (logarg);
@@ -382,26 +507,10 @@ float fasterlambertwexpx (float x)
 
   return w * (1.0f + x - logw) / (1.0f + w);
 }
-#endif // FASTLAMBERT_W
+//#endif // FASTLAMBERT_W
 
 /**********************************************************************/
-#ifdef FASTPOW
-/**********************************************************************/
-
-float fastpow(float x, float p)
-{
-  return fastpow2(p * fastlog2 (x));
-}
-
-float fasterpow(float x, float p)
-{
-  return fasterpow2(p * fasterlog2 (x));
-}
-
-#endif // FASTPOW
-
-/**********************************************************************/
-#ifdef FASTSIGMOID
+//#ifdef FASTSIGMOID
 /**********************************************************************/
 
 float fastsigmoid (float x)
@@ -413,10 +522,10 @@ float fastersigmoid (float x)
 {
   return 1.0f / (1.0f + fasterexp (-x));
 }
-#endif // FASTSIGMOID
+//#endif // FASTSIGMOID
 
 /**********************************************************************/
-#ifdef FASTTRIG
+//#ifdef FASTTRIG
 /**********************************************************************/
 
 // http://www.devmaster.net/forums/showthread.php?t=5784
@@ -484,7 +593,8 @@ float fastsinfull (float x)
   static const float twopi = 6.2831853071795865f;
   static const float invtwopi = 0.15915494309189534f;
 
-  int k = x * invtwopi;
+  //int k = x * invtwopi;
+  float k = x * invtwopi;
   float half = (x < 0) ? -0.5f : 0.5f;
   return fastsin ((half + k) * twopi - x);
 }
@@ -494,7 +604,8 @@ float fastersinfull (float x)
   static const float twopi = 6.2831853071795865f;
   static const float invtwopi = 0.15915494309189534f;
 
-  int k = x * invtwopi;
+  //int k = x * invtwopi;
+  float k = x * invtwopi;
   float half = (x < 0) ? -0.5f : 0.5f;
   return fastersin ((half + k) * twopi - x);
 }
@@ -548,7 +659,8 @@ float fasttanfull (float x)
   static const float twopi = 6.2831853071795865f;
   static const float invtwopi = 0.15915494309189534f;
 
-  int k = x * invtwopi;
+  //int k = x * invtwopi;
+  float k = x * invtwopi;
   float half = (x < 0) ? -0.5f : 0.5f;
   float xnew = x - (half + k) * twopi;
 
@@ -560,13 +672,14 @@ float fastertanfull (float x)
   static const float twopi = 6.2831853071795865f;
   static const float invtwopi = 0.15915494309189534f;
 
-  int k = x * invtwopi;
+  //int k = x * invtwopi;
+  float k = x * invtwopi;
   float half = (x < 0) ? -0.5f : 0.5f;
   float xnew = x - (half + k) * twopi;
 
   return fastersin (xnew) / fastercos (xnew);
 }
 
-#endif // FASTTRIG
+//#endif // FASTTRIG
 
 #endif // __FASTMATH_C_
