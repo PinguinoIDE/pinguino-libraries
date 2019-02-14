@@ -1,15 +1,13 @@
 /*  --------------------------------------------------------------------
-    FILE:               isrwrapper.c
-    PROJECT:            pinguino 32
-    PURPOSE:            weak definition of isr routines
-    PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:      05 Feb. 2015
-    LAST RELEASE:       05 Feb. 2015
+    FILE:           isrwrapper.c
+    PROJECT:        pinguino 32
+    PURPOSE:        weak definition of isr routines
+    PROGRAMERS:     Regis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  05 Feb. 2015
     --------------------------------------------------------------------
     CHANGELOG:
     --------------------------------------------------------------------
     NOTE: P32MX795 share some vectors : 
-
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -31,7 +29,7 @@
 
 #if 0 // p32-gcc doen't emit any weak attribute ... Don't know why ...
 
-    void __DoNothing() { /* do something */ };
+    void __DoNothing() {  Nop(); /* do nothing */ };
     // SERIAL
     void Serial1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Serial2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
@@ -48,6 +46,12 @@
     void Timer3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void Timer5Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    //EXTERNAL
+    void Int0Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int3Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
+    void Int4Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     // SPI
     void SPI1Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
     void SPI2Interrupt() __attribute__ ((weak, alias ("__DoNothing")));
@@ -119,24 +123,51 @@
 
     /**************************************************************************/
 
-    #if !defined(TMR1INT) && !defined(__MILLIS__) && !defined(__DCF77__) // DCF77 TO MOVE
+    // TODO : MOVE DCF77 FROM TIMER1 TO TIMER?
+    #if !defined(TMR1INTUSER) && !defined(TMR1INT)   && \
+        !defined(__MILLIS__)  && !defined(__DCF77__) && !defined(__SWPWM__)
     void Timer1Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR2INT) && !defined(__SERVOS__) && !defined(__AUDIO__)
+    #if !defined(TMR2INTUSER) && !defined(TMR2INT) && \
+        !defined(__SERVO__)   && !defined(__AUDIO__)
     void Timer2Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR3INT) && !defined(__IRREMOTE__) //&& !defined(__PWM__)
+    #if !defined(TMR3INTUSER) && !defined(TMR3INT) && \
+        !defined(__IRREMOTE__) //&& !defined(__PWM__)
     void Timer3Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR4INT) && !defined(__STEPPER__)
+    #if !defined(TMR4INTUSER) && !defined(TMR4INT) && \
+        !defined(__STEPPER__)
     void Timer4Interrupt(void) { Nop(); }
     #endif
 
-    #if !defined(TMR5INT) //&& !defined(__DCF77__) TODO
+    #if !defined(TMR5INTUSER) && !defined(TMR5INT) //&& !defined(__DCF77__) TODO
     void Timer5Interrupt(void) { Nop(); }
+    #endif
+
+    /**************************************************************************/
+    
+    #if !defined(INT0INT)
+    void Int0Interrupt(void) { Nop(); }
+    #endif
+    
+    #if !defined(INT1INT)
+    void Int1Interrupt(void) { Nop(); }
+    #endif
+    
+    #if !defined(INT2INT)
+    void Int2Interrupt(void) { Nop(); }
+    #endif
+    
+    #if !defined(INT3INT)
+    void Int3Interrupt(void) { Nop(); }
+    #endif
+    
+    #if !defined(INT4INT)
+    void Int4Interrupt(void) { Nop(); }
     #endif
 
     /**************************************************************************/
@@ -220,7 +251,7 @@
     void RTCCInterrupt(void) { Nop(); }
     #endif // __RTCC__
 
-    #if !defined(__USBCDCINTERRUPT__) // !defined(__USBCDC__) || 
+    #if !defined(__USBINTERRUPT__)
     void USBInterrupt(void) { Nop(); }
     #endif
 

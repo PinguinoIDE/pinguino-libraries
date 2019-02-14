@@ -1,0 +1,3 @@
+Output(ST7735) #define OUTPUT_ST7735#include <output.c>
+Output(CDC) #define OUTPUT_CDC#include <output.c>
+Output(SERIAL) #define OUTPUT_SERIAL#include <output.c>

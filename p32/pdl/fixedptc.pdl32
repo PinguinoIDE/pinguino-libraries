@@ -1,0 +1,25 @@
+fixed fixedpt#include <fixedptc.c>
+
+iconst fixedpt_rconst#include <fixedptc.c>
+iint  fixedpt_fromint#include <fixedptc.c>
+itoi  fixedpt_toint#include <fixedptc.c>
+itof  fixedpt_tofloat#include <fixedptc.c>
+ifrac fixedpt_fracpart#include <fixedptc.c>
+
+iadd  fixedpt_add#include <fixedptc.c>
+isub  fixedpt_sub#include <fixedptc.c>
+ixmul fixedpt_xmul#include <fixedptc.c>
+ixdiv fixedpt_xdiv#include <fixedptc.c>
+imul  fixedpt_mul#include <fixedptc.c>
+idiv  fixedpt_div#include <fixedptc.c>
+iabs  fixedpt_abs#include <fixedptc.c>
+istr  fixedpt_str#include <fixedptc.c>
+icstr fixedpt_cstr#include <fixedptc.c>
+isqrt fixedpt_sqrt#include <fixedptc.c>
+isin  fixedpt_sin#include <fixedptc.c>
+icos  fixedpt_cos#include <fixedptc.c>
+itan  fixedpt_tan#include <fixedptc.c>
+iexp  fixedpt_exp#include <fixedptc.c>
+iln   fixedpt_ln#include <fixedptc.c>
+ilog  fixedpt_log#include <fixedptc.c>
+ipow  fixedpt_pow#include <fixedptc.c>

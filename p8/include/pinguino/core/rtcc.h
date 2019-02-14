@@ -94,7 +94,9 @@ typedef enum
 // Prototypes RTCC
 
 void RTCC_ConvertTime(rtccTime*);
+//rtccTime* RTCC_ConvertTime(rtccTime*);
 void RTCC_ConvertDate(rtccDate*);
+//rtccDate* RTCC_ConvertDate(rtccDate*);
 
 void RTCC_SetWriteEnable(void);
 void RTCC_SetWriteDisable(void);
@@ -115,7 +117,9 @@ void RTCC_SetDate(u32);
 void RTCC_SetTimeDate(u32, u32);
 
 void RTCC_GetTime(rtccTime*);
+//rtccTime* RTCC_GetTime();
 void RTCC_GetDate(rtccDate*);
+//rtccDate* RTCC_GetDate();
 void RTCC_GetTimeDate(rtccTime*, rtccDate*);
 
 void RTCC_SetCalibration(s16);

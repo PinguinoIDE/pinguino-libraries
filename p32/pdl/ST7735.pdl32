@@ -1,32 +1,37 @@
 ST7735.init ST7735_init#include <ST7735.c>
-ST7735.clearScreen ST7735_clearScreen#include <ST7735.c>
-ST7735.clearWindow ST7735_clearWindow#include <ST7735.c>
-ST7735.setOrientation ST7735_setOrientation#include <ST7735.c>
-ST7735.setFont ST7735_setFont#include <ST7735.c>
+ST7735.clearScreen ST7735_clearScreen#include <ST7735.c>#define ST7735CLEARSCREEN
+ST7735.clearWindow ST7735_clearWindow#include <ST7735.c>#define ST7735CLEARWINDOW
+ST7735.setOrientation ST7735_setOrientation#include <ST7735.c>#define ST7735SETORIENTATION
+ST7735.setFont ST7735_setFont#include <ST7735.c>#define ST7735SETFONT
 
-ST7735.displayOff ST7735_displayOff#include <ST7735.c>
-ST7735.displayOn ST7735_displayOn#include <ST7735.c>
-ST7735.invertDisplay ST7735_invertDisplay#include <ST7735.c>
-ST7735.normalDisplay ST7735_normalDisplay#include <ST7735.c>
+ST7735.reset ST7735_reset#include <ST7735.c>#define ST7735RESET
+
+ST7735.displayOff ST7735_displayOff#include <ST7735.c>#define ST7735DISPLAYOFF
+ST7735.displayOn ST7735_displayOn#include <ST7735.c>#define ST7735DISPLAYON
+ST7735.invertDisplay ST7735_invertDisplay#include <ST7735.c>#define ST7735INVERTDISPLAY
+ST7735.normalDisplay ST7735_normalDisplay#include <ST7735.c>#define ST7735NORMALDISPLAY
 
 ST7735.getFontWidth ST7735_getFontWidth#include <ST7735.c>
 ST7735.getFontHeight ST7735_getFontHeight#include <ST7735.c>
 
-ST7735.setCursor ST7735_setCursor#include <ST7735.c>
-ST7735.printChar ST7735_printChar#include <ST7735.c>
+ST7735.setCursor ST7735_setCursor#include <ST7735.c>#define ST7735SETCURSOR
+ST7735.printChar ST7735_printChar#include <ST7735.c>#define ST7735PRINTCHAR
 ST7735.print ST7735_print#include <ST7735.c>#define ST7735PRINT
 ST7735.println ST7735_println#include <ST7735.c>#define ST7735PRINTLN
+ST7735.printCenter ST7735_printCenter#include <ST7735.c>#define ST7735PRINTCENTER
 ST7735.printNumber ST7735_printNumber#include <ST7735.c>#define ST7735PRINTNUMBER
 ST7735.printFloat ST7735_printFloat#include <ST7735.c>#define ST7735PRINTFLOAT
 ST7735.printf ST7735_printf#include <ST7735.c>#define ST7735PRINTF
 
-ST7735.setColor ST7735_setColor#include <ST7735.c>
-ST7735.setBackgroundColor ST7735_setBackgroundColor#include <ST7735.c>
-ST7735.getColor ST7735_getColor#include <ST7735.c>
+ST7735.setColor ST7735_setColor#include <ST7735.c>#define ST7735SETCOLOR
+ST7735.setBackgroundColor ST7735_setBackgroundColor#include <ST7735.c>#define ST7735SETBACKGROUNDCOLOR
+ST7735.getColor ST7735_getColor#include <ST7735.c>#define ST7735GETCOLOR
+ST7735.packColor ST7735_packColor#include <ST7735.c>#define ST7735PACKCOLOR
+ST7735.unpackColor ST7735_unpackColor#include <ST7735.c>#define ST7735UNPACKCOLOR
 
 ST7735.drawPixel ST7735_drawPixel#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.clearPixel ST7735_clearPixel#include <ST7735.c>#define ST7735GRAPHICS
-ST7735.drawBitmap ST7735_drawBitmap#include <ST7735.c>#define ST7735GRAPHICS
+ST7735.drawBitmap ST7735_drawBitmap#include <ST7735.c>#define ST7735DRAWBITMAP
 ST7735.drawCircle ST7735_drawCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.fillCircle ST7735_fillCircle#include <ST7735.c>#define ST7735GRAPHICS
 ST7735.drawLine ST7735_drawLine#include <ST7735.c>#define ST7735GRAPHICS

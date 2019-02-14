@@ -1,30 +1,54 @@
-I2C.master I2C1_master#include <i2c1.c>
-I2C.slave I2C1_slave#include <i2c1.c>  
-I2C.init I2C1_init#include <i2c1.c>
-I2C.send I2C1_send#include <i2c1.c>
-I2C.get I2C1_get#include <i2c1.c>
-I2C.write I2C1_writechar#include <i2c1.c>
-I2C.writechar I2C1_writechar#include <i2c1.c>
-I2C.read I2C1_readchar#include <i2c1.c>
-I2C.readchar I2C1_readchar#include <i2c1.c>
-I2C.readcharNack I2C1_readchar#include <i2c1.c>
-I2C.readcharAck I2C1_readcharAck#include <i2c1.c>
-I2C.wait I2C1_wait#include <i2c1.c>
-I2C.start I2C1_start#include <i2c1.c>
-I2C.stop I2C1_stop#include <i2c1.c>
-I2C.restart I2C1_restart#include <i2c1.c>
-I2C.sendnack I2C1_sendNack#include <i2c1.c>
-I2C.sendack I2C1_sendAck#include <i2c1.c>
+I2C.master I2C1_master#include <i2c.c>
+I2C.slave I2C1_slave#include <i2c.c>  
+I2C.init I2C1_init#include <i2c.c>
+I2C.write I2C1_write#include <i2c.c>
+I2C.writeChar I2C1_write#include <i2c.c>
+I2C.read I2C1_read#include <i2c.c>
+I2C.readChar I2C1_read#include <i2c.c>
+I2C.wait I2C1_wait#include <i2c.c>
+I2C.start I2C1_start#include <i2c.c>
+I2C.stop I2C1_stop#include <i2c.c>
+I2C.restart I2C1_restart#include <i2c.c>
+I2C.sendNack I2C1_sendNack#include <i2c.c>
+I2C.sendAck I2C1_sendAck#include <i2c.c>
 
-Wire.begin I2C1_begin#include <i2c1.c>#define WIRE
-Wire.write I2C1_inBuffer#include <i2c1.c>
-Wire.writeS I2C1_inBufferS#include <i2c1.c>
-Wire.writeStr I2C1_inBufferStr#include <i2c1.c>
-Wire.read I2C1_outBuffer#include <i2c1.c>
-Wire.receive I2C1_outBuffer#include <i2c1.c>
-Wire.beginTransmission I2C1_beginTransmission#include <i2c1.c>
-Wire.endTransmission I2C1_endTransmission#include <i2c1.c>
-Wire.available I2C1_available#include <i2c1.c>
-Wire.requestFrom I2C1_requestFrom#include <i2c1.c>
+I2C1.master I2C1_master#include <i2c.c>
+I2C1.slave I2C1_slave#include <i2c.c>  
+I2C1.init I2C1_init#include <i2c.c>
+I2C1.write I2C1_write#include <i2c.c>
+I2C1.writeChar I2C1_write#include <i2c.c>
+I2C1.read I2C1_read#include <i2c.c>
+I2C1.readChar I2C1_read#include <i2c.c>
+I2C1.wait I2C1_wait#include <i2c.c>
+I2C1.start I2C1_start#include <i2c.c>
+I2C1.stop I2C1_stop#include <i2c.c>
+I2C1.restart I2C1_restart#include <i2c.c>
+I2C1.sendNack I2C1_sendNack#include <i2c.c>
+I2C1.sendAck I2C1_sendAck#include <i2c.c>
+
+I2C2.master I2C2_master#include <i2c.c>
+I2C2.slave I2C2_slave#include <i2c.c>  
+I2C2.init I2C2_init#include <i2c.c>
+I2C2.write I2C2_write#include <i2c.c>
+I2C2.writeChar I2C2_write#include <i2c.c>
+I2C2.read I2C2_read#include <i2c.c>
+I2C2.readChar I2C2_read#include <i2c.c>
+I2C2.wait I2C2_wait#include <i2c.c>
+I2C2.start I2C2_start#include <i2c.c>
+I2C2.stop I2C2_stop#include <i2c.c>
+I2C2.restart I2C2_restart#include <i2c.c>
+I2C2.sendNack I2C2_sendNack#include <i2c.c>
+I2C2.sendAck I2C2_sendAck#include <i2c.c>
+
+Wire.begin I2C1_begin#include <i2c.c>#define WIRE
+Wire.write I2C1_inBuffer#include <i2c.c>
+Wire.writeS I2C1_inBufferS#include <i2c.c>
+Wire.writeStr I2C1_inBufferStr#include <i2c.c>
+Wire.read I2C1_outBuffer#include <i2c.c>
+Wire.receive I2C1_outBuffer#include <i2c.c>
+Wire.beginTransmission I2C1_beginTransmission#include <i2c.c>
+Wire.endTransmission I2C1_endTransmission#include <i2c.c>
+Wire.available I2C1_available#include <i2c.c>
+Wire.requestFrom I2C1_requestFrom#include <i2c.c>
 Wire.onRequest I2C1_onRequest#include <i2c.c>#define I2CINT
 Wire.onReceive I2C1_onReceive#include <i2c.c>#define I2CINT

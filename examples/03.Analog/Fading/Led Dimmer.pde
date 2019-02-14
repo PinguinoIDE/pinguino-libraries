@@ -18,7 +18,7 @@
 	PIC32 PINGUINO 220   can use pins	D2, D3, D11, D12, D13
 	--------------------------------------------------------------------------*/
 
-#define MYLED 11
+#define MYLED PWM1
 
 u8 i = 0;
 s8 dir;
@@ -37,6 +37,6 @@ void loop()
     i = i + dir;
     // Duty Cycle is a percentage measure of the time that the LED is physically on.
     PWM.setPercentDutyCycle(MYLED, i);
-    // Delay of 25 ms
+    // Delay of 50 ms
     delay(50);
 }

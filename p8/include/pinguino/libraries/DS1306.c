@@ -21,7 +21,7 @@
 #include <DS1306.h>
 #include <digitalw.c>
 #include <spi.c>
-#include <spiloc.c>
+//#include <SpiLoc.c>	// SPI software now in si.c
 #include <string.h>     // memset
 
  
@@ -33,7 +33,7 @@ u8 DS1306_LocalSPI;
 
 
 // Must call initialize prior to using any other method in this class (except constructor)
-void DS1306_init(u8 LocalSPI, u8 LoCE,u8 LoSCK, u8 LoSDO, u8 LoSDI) 
+void DS1306_init(u8 LocalSPI, u8 LoCE, u8 LoSCK, u8 LoSDO, u8 LoSDI) 
 {
 	unsigned char cr;
 	// Initialize SPI Bus
@@ -60,6 +60,7 @@ void DS1306_init(u8 LocalSPI, u8 LoCE,u8 LoSCK, u8 LoSDO, u8 LoSDI)
     case 1:
     case 2:
      SPI_begin();
+     //SPI_init();
      break;
    }
 
@@ -313,9 +314,7 @@ void DS1306_decodeHourByte(unsigned char hourByte, unsigned char *hour24, unsign
 void DS1306_getTime(ds1306time *time)
 {
 	unsigned char buf[DS1306_SIZE_DATETIME];
-
-    memset((__data *)time, 0, sizeof(ds1306time));
-
+	memset(time, 0, sizeof(ds1306time));
 	DS1306_readn(DS1306_DATETIME, buf, DS1306_SIZE_DATETIME);
 	DS1306_decodeTimePacket(buf, time);
 }
@@ -339,8 +338,7 @@ void DS1306_setAlarm(int alarm, const ds1306alarm *time)
 // in that field
 void DS1306_getAlarm(int alarm, ds1306alarm *time)
 {
-    memset((__data *)time, 0, sizeof(ds1306time));
-
+	memset(time, 0, sizeof(ds1306alarm));
 	if (alarm < 2) {
 		unsigned char buf[DS1306_SIZE_ALARM];
 		DS1306_readn(alarm == 0 ? DS1306_ALARM0 : DS1306_ALARM1, buf, DS1306_SIZE_ALARM);
@@ -494,7 +492,8 @@ BOOL DS1306_writeUser(unsigned char addr, const char *buf, int num)
 // Will return true provided read is valid
 BOOL DS1306_readUser(unsigned char addr, char *buf, int num)
 {
-	memset((__data *)buf, 0, num);
+	//memset((__data *)buf, 0, num);
+	memset(buf, 0, num);
 	if (addr >= DS1306_USER_START && addr < DS1306_USER_END && (addr + num - 1) <= DS1306_USER_END) {
 		DS1306_readn(addr, (unsigned char *) buf, num);
 		return true;
@@ -539,3 +538,4 @@ void DS1306_set1HzState(BOOL enabled)
 	}
 	DS1306_write(DS1306_CR, cr);
 }
+

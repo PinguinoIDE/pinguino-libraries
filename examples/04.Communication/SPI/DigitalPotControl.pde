@@ -26,6 +26,7 @@
  
 */
 
+const u8 MODULE = SPI1;
 
 // pin SS is the slave select for the digital pot:
 const int slaveSelectPin = 10;
@@ -35,8 +36,8 @@ int digitalPotWrite(int address, int value)
   // take the SS pin low to select the chip:
   digitalWrite(slaveSelectPin,LOW);
   //  send in the address and value via SPI:
-  SPI.transfer(address);
-  SPI.transfer(value);
+  SPI.transfer(MODULE, address);
+  SPI.transfer(MODULE, value);
   // take the SS pin high to de-select the chip:
   digitalWrite(slaveSelectPin,HIGH); 
 }
@@ -46,7 +47,7 @@ void setup()
   // set the slaveSelectPin as an output:
   pinMode (slaveSelectPin, OUTPUT);
   // initialize SPI:
-  SPI.begin(); 
+  SPI.begin(MODULE); 
 }
 
 void loop()

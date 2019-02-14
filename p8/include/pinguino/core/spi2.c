@@ -35,16 +35,17 @@
 #define __SPI2__
 #endif
 
-#if !defined(__18f26j50) && !defined(__18f46j50) && \
-    !defined(__18f27j53) && !defined(__18f47j53)
-    #error "*** No SPI2 for this microcontroller ***"
-#endif
-
+#include <compiler.h>
 #include <spi.h>
 #include <spi.c>
 #include <delayms.c>
 #include <digitalp.c>
 #include <digitalw.c>
+
+#if !defined(__18f26j50) && !defined(__18f46j50) && \
+    !defined(__18f27j53) && !defined(__18f47j53)
+    #error "*** No SPI2 for this microcontroller ***"
+#endif
 
 #define SPI2_setPin(sda, sck)       SPI_setPin(SPI2, sda, sck)
 #define SPI2_select()               SPI_select(SPI2)

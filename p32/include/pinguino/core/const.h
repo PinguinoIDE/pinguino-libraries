@@ -27,14 +27,8 @@
 #ifndef __CONST_H
     #define __CONST_H
 
-    #define PINGUINO_MAJOR_VERSION 11
-    #define PINGUINO_MINOR_VERSION 1
-
-    // Tell the compiler the next function must be MIPS32.
-    // Typically needed by all functions such as interrupt handlers
-    // which cannot be MIPS16 functions when -mips16 option is enabled.
-    // Usage : void MIPS32 myfunction(...)
-    #define MIPS32          __attribute__((noinline,nomips16))
+    #define PINGUINO_MAJOR_VERSION 12
+    #define PINGUINO_MINOR_VERSION 20180130
 
     #ifndef PI
         #define PI          3.1415926535897932384626433832795
@@ -147,5 +141,24 @@
     #ifndef FLOAT
         #define FLOAT       32
     #endif
+    
+    #define MHZ             1000000UL
+    
+    // Com. constants
+    #define I2C1                1
+    #define I2C2                2
+    #define SPISW               0
+    #define SPI1                1
+    #define SPI2                2
+
+    // Fonts constants.
+    #define FONT_LENGTH         0
+    #define FONT_FIXED_WIDTH    2
+    #define FONT_WIDTH          2
+    #define FONT_HEIGHT         3
+    #define FONT_FIRST_CHAR     4
+    #define FONT_CHAR_COUNT     5
+    #define FONT_WIDTH_TABLE    6
+    #define FONT_OFFSET         6
 
 #endif /* __CONST_H */

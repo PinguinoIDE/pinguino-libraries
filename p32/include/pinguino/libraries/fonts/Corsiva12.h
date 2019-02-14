@@ -40,7 +40,7 @@
 #define CORSIVA_12_WIDTH 10
 #define CORSIVA_12_HEIGHT 11
 
-const unsigned char Corsiva_12[] = { //Write font to PIC32 flash memory
+const unsigned char Corsiva12[] = {
     0x16, 0x3A, // size
     0x0A, // width
     0x0B, // height

@@ -1,22 +1,24 @@
-CDC.write CDCwrite#include <__cdc.c>#define CDCWRITE
-CDC.print CDCprint#include <__cdc.c>#define CDCPRINT
-CDC.println CDCprintln#include <__cdc.c>#define CDCPRINTLN
-CDC.printNumber CDCprintNumber#include <__cdc.c>#define CDCPRINTNUMBER
-CDC.printFloat CDCprintFloat#include <__cdc.c>#define CDCPRINTFLOAT
-CDC.printf CDCprintf#include <__cdc.c>#define CDCPRINTF
-CDC.read CDCgets#include <__cdc.c>#define CDCGETS
-CDC.getKey CDCgetkey#include <__cdc.c>#define CDCGETKEY
-CDC.getString CDCgetstring#include <__cdc.c>#define CDCGETSTRING
-BULK.read BULK_read#include <__bulk.c>
-BULK.write BULK_write#include <__bulk.c>
-BULK.printf BULK_printf#include <__bulk.c>
-BULK.available BULK_available#include <__bulk.c>
-BULK.gets BULKgets#include <__bulk.c>
-BULK.puts BULKputs#include <__bulk.c>
-USB.read BULK_read#include <__bulk.c>
-USB.write BULK_write#include <__bulk.c>
-USB.send BULK_write#include <__bulk.c>
-USB.printf BULK_printf#include <__bulk.c>
-USB.available BULK_available#include <__bulk.c>
-USB.gets BULKgets#include <__bulk.c>
-USB.puts BULKputs#include <__bulk.c>
+CDC.begin CDCbegin#include <usbcdc.c>#define CDCBEGIN
+CDC.printChar CDCprintChar#include <usbcdc.c>#define CDCPRINTCHAR
+CDC.print CDCprint#include <usbcdc.c>#define CDCPRINT
+CDC.println CDCprintln#include <usbcdc.c>#define CDCPRINTLN
+CDC.printNumber CDCprintNumber#include <usbcdc.c>#define CDCPRINTNUMBER
+CDC.printFloat CDCprintFloat#include <usbcdc.c>#define CDCPRINTFLOAT
+CDC.printf CDCprintf#include <usbcdc.c>#define CDCPRINTF
+CDC.read CDCread#include <usbcdc.c>#define CDCREAD
+CDC.write CDCwrite#include <usbcdc.c>#define CDCSEND
+CDC.getKey CDCgetkey#include <usbcdc.c>#define CDCGETKEY
+CDC.getString CDCgetstring#include <usbcdc.c>#define CDCGETSTRING
+BULK.read BULK_read#include <usbbulk.c>
+BULK.write BULK_write#include <usbbulk.c>
+BULK.printf BULK_printf#include <usbbulk.c>
+BULK.available BULK_available#include <usbbulk.c>
+BULK.gets BULKgets#include <usbbulk.c>
+BULK.puts BULKputs#include <usbbulk.c>
+USB.read BULK_read#include <usbbulk.c>
+USB.write BULK_write#include <usbbulk.c>
+USB.send BULK_write#include <usbbulk.c>
+USB.printf BULK_printf#include <usbbulk.c>
+USB.available BULK_available#include <usbbulk.c>
+USB.gets BULKgets#include <usbbulk.c>
+USB.puts BULKputs#include <usbbulk.c>

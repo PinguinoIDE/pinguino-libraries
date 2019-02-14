@@ -1,3 +1,7 @@
+System.getPLL System_getPLL#include <oscillator.c>
+System.getPLLDIV System_getPLLDIV#include <oscillator.c>
+System.getCPUDIV System_getCPUDIV#include <oscillator.c>
+System.getSource System_getSource#include <oscillator.c>
 System.getCpuFrequency System_getCpuFrequency#include <oscillator.c>
 System.getPeripheralFrequency System_getPeripheralFrequency#include <oscillator.c>
 

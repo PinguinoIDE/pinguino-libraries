@@ -43,13 +43,13 @@
 // bit.  This should be changed back once the definitions are
 // synced.
 
-#define _BSTALL     0x04        //Buffer Stall enable
-#define _DTSEN      0x08        //Data Toggle Synch enable
-#define _DAT0       0x00        //DATA0 packet expected next
-#define _DAT1       0x40        //DATA1 packet expected next
-#define _DTSMASK    0x40        //DTS Mask
-#define _USIE       0x80        //SIE owns buffer
-#define _UCPU       0x00        //CPU owns buffer
+#define _USIE               0x80    //SIE owns buffer
+#define _DAT0               0x00    //DATA0 packet expected next
+#define _DAT1               0x40    //DATA1 packet expected next
+#define _DTSMASK            0x40    //DTS Mask
+#define _DTSEN              0x08    //Data Toggle Synch enable
+#define _BSTALL             0x04    //Buffer Stall enable
+#define _UCPU               0x00    //CPU owns buffer
 
 #define _STAT_MASK  0xFC
 
@@ -70,30 +70,48 @@ typedef union __attribute__ ((packed)) _BD_STAT
         unsigned    PID1    :1;
         unsigned    PID2    :1;
         unsigned    PID3    :1;
+        unsigned            :2;
     };
     struct __attribute__ ((packed)){
         unsigned            :2;
-        unsigned    PID     :4;         //Packet Identifier
+        unsigned    PID     :4;     //Packet Identifier
+        unsigned            :2;
     };
     u16 Val;
+    //u8 Val;
 } BD_STAT;
 
 // BDT Entry Layout
+/*
 typedef union __attribute__ ((packed))__BDT
 {
     struct __attribute__ ((packed))
     {
-        BD_STAT     STAT;
-        u16         CNT:10;
-        u32         ADR;		//Buffer Address
+        BD_STAT             STAT;
+        u16                 CNT:10;
+        u32                 ADR;    //Buffer Address
     };
+
     struct __attribute__ ((packed))
     {
-        unsigned    res  :16;
-        unsigned    count:10;
+        unsigned    res     :16;
+        unsigned    count   :10;
     };
+
     u32 w[2];
     u16 v[4];
+    u64 Val;
+} BDT_ENTRY;
+*/
+
+typedef union __attribute__ ((packed))__BDT
+{
+    struct __attribute__ ((packed))
+    {
+        BD_STAT             STAT;
+        u16                 CNT:10;
+        u32                 ADR;    //Buffer Address
+    };
     u64 Val;
 } BDT_ENTRY;
 
@@ -115,12 +133,13 @@ typedef union __attribute__ ((packed))__BDT
 //#define USB_PING_PONG__ALL_BUT_EP0	0x03
 
 // Translate virtual address to physical one.
-#if 1
+#if 0
 
 #define ConvertToPhysicalAddress(va)       ( (u32) (va) & 0x1FFFFFFF )
 
 #else
-static inline void *ConvertToPhysicalAddress (volatile void *addr)
+//static inline void *ConvertToPhysicalAddress (volatile void *addr)
+static inline u32 ConvertToPhysicalAddress (volatile void *addr)
 {
     u32 virt = (u32) addr;
     u32 phys;
@@ -143,7 +162,8 @@ static inline void *ConvertToPhysicalAddress (volatile void *addr)
         // kuseg
         phys = virt + 0x40000000;
     }
-    return (void*) phys;
+    //return (void*) phys;
+    return phys;
 }
 #endif
 

@@ -1,10 +1,34 @@
-// analogic input library for pinguino
-// Jean-Pierre MANDON 2008
-// added 18F4550 support 2009/08/10
-// 2012-07-10 regis blanchot added 18F26J50 support
-// 2012-11-19 regis blanchot added 18F1220 and 18F1230 support
-// 2013-06-26 regis blanchot fixed analogWrite()
-// 2013-09-09 regis blanchot added 18F47J53 support
+/*  --------------------------------------------------------------------
+    FILE:           analog.c
+    PROJECT:        pinguino
+    PURPOSE:        analog input and output (PWM)
+    PROGRAMER:      Jean-Pierre MANDON
+                    Regis Blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
+    CHANGELOG:
+            2008 - JP Mandon      - first release
+    10 Aug. 2010 - JP Mandon      - added 18F4550 support
+    10 Jul. 2012 - Regis Blanchot - added 18Fx6J50 support
+    19 Nov. 2012 - Regis Blanchot - added 18F1220 and 18F1230 support
+    26 Jun. 2013 - Regis Blanchot - fixed analogWrite()
+    09 Sep. 2013 - Regis blanchot - added 18Fx7J53 support
+    03 Feb. 2016 - Regis blanchot - added 16F1459 support
+    05 Apr. 2017 - Régis Blanchot - added Pinguino 47J53B (aka Pinguino Torda)
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    ------------------------------------------------------------------*/
 
 #ifndef __ANALOG_C
 #define __ANALOG_C
@@ -25,19 +49,29 @@
 void analog_init(void)
 {
 
-    #if defined(PINGUINO1220) || defined(PINGUINO1320)
+    #if defined(PINGUINO1459)
+    
+    ADCON1=0x1F;        // 0b00001000 = 0, 0, VRef-=VSS, VRef+=VDD, AN0 to AN4 enabled 
+    
+    #elif defined(PINGUINO1220) || defined(PINGUINO1320)
 
 	TRISA=TRISA | 0x1F; // 0b00011111 = RA0,1,2,3,4 = AN0 to AN4 are INPUT
 	ADCON1=0x1F;        // 0b00001000 = 0, 0, VRef-=VSS, VRef+=VDD, AN0 to AN4 enabled 
 	ADCON2=0xBD;        // 0b10111101 = Right justified, 0, 20 TAD, FOSC/16
 
-    #elif defined(PINGUINO4550)
+    #elif defined(PINGUINO2455) || defined(PINGUINO4455) || \
+          defined(PINGUINO2550) || defined(PINGUINO4550)
 
-	TRISA=TRISA | 0x2F;
+	TRISA=TRISA | 0x2F; // 0b00101111 = RA0,1,2,3 and RA5 = AN0 to AN4 are INPUT
+    #if defined(__18f2455) || defined(__18f2550)
+	ADCON1=0x0A;        // 0b00001000 = 0, 0, VRef-=VSS, VRef+=VDD, AN0 to AN4 enabled 
+	ADCON2=0xBD;        // 0b10111101 = Right justified, 0, 20 TAD, FOSC/16
+    #else
 	TRISE=TRISE | 0x07;	
 	ADCON1=0x07;
 	ADCON2=0xBD;
-
+    #endif
+    
     #elif defined(PICUNO_EQUO)
 
 	TRISA=TRISA | 0x2F;	//RA0..2, RA5
@@ -45,7 +79,20 @@ void analog_init(void)
 	ADCON1=0x08;		//AN0-AN6, Vref+ = VDD, RA4 as Digital o/p
 	ADCON2=0xBD;		//Right justified, 20TAD, FOSC/16
 
-    #elif defined(PINGUINO26J50)
+    #elif defined(PINGUINO25K50) || defined(PINGUINO45K50) 
+    // RB : 01-12-2013
+    TRISA  = TRISA  | 0x2F; // 0b00101111 = RA0,1,2,3 and RA5 = AN0 to AN4 are INPUT
+    ANSELA = ANSELA | 0x2F; // AN0 to AN4 enabled 
+    ANSELB = 0;
+    ANSELC = 0;
+    #if defined(__18f45k50) 
+    ANSELD = 0;
+    ANSELE = 0;
+    #endif
+	ADCON1 = 0x00;          // VRef-=VSS, VRef+=VDD
+	ADCON2 = 0xBD;          // 0b10111101 = Right justified, 0, 20 TAD, FOSC/16
+ 
+    #elif defined(PINGUINO26J50) || defined(PINGUINO46J50)
 
 	TRISA=TRISA | 0x2F;	// 0b00101111 = RA0,1,2,3 and RA5 = AN0 to AN4 are INPUT
     //1 = Pin configured as a digital port
@@ -55,7 +102,7 @@ void analog_init(void)
 	ADCON0=0x00;        // 0b00000000 = VRef-=VSS, VRef+=VDD, No channel selected yet 
 	ADCON1=0xBD;		// 0b10111101 = Right justified, Calibration Normal, 20TAD, FOSC/16
 
-    #elif defined(PINGUINO47J53)
+    #elif defined(PINGUINO27J53) || defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
     // RB 09/09/2013: Analog Conversion Mode is set to 12-bit in Bootloader Config file
     // #pragma config ADCSEL = BIT12 // 12-bit conversion mode is enabled
 
@@ -72,25 +119,10 @@ void analog_init(void)
 	ADCON0=0x00;        // 0b00000000 = VRef-=VSS, VRef+=VDD, No channel selected yet 
 	ADCON1=0b10111110;	// Right justified, Calibration Normal, 20TAD, FOSC/64
 
-    #elif defined(__18f25k50) || defined(__18f45k50) 
-    // RB : 01-12-2013
-    TRISA  = TRISA  | 0x2F; // 0b00101111 = RA0,1,2,3 and RA5 = AN0 to AN4 are INPUT
-    ANSELA = ANSELA | 0x2F; // AN0 to AN4 enabled 
-    ANSELB = 0;
-    ANSELC = 0;
-    #if defined(__18f45k50) 
-    ANSELD = 0;
-    ANSELE = 0;
-    #endif
-	ADCON1 = 0x00;          // VRef-=VSS, VRef+=VDD
-	ADCON2 = 0xBD;          // 0b10111101 = Right justified, 0, 20 TAD, FOSC/16
+    #else
     
-    #else // PINGUINO2550
-
-	TRISA=TRISA | 0x2F; // 0b00101111 = RA0,1,2,3 and RA5 = AN0 to AN4 are INPUT
-	ADCON1=0x0A;        // 0b00001000 = 0, 0, VRef-=VSS, VRef+=VDD, AN0 to AN4 enabled 
-	ADCON2=0xBD;        // 0b10111101 = Right justified, 0, 20 TAD, FOSC/16
-
+        #error "Your board is not yet supported"
+        
     #endif
 }
 
@@ -103,7 +135,7 @@ void analog_init(void)
 void analogreference(u8 Type)
 {
     #if !defined(PINGUINO26J50) && !defined(PINGUINO46J50) && \
-        !defined(PINGUINO27J53) && !defined(PINGUINO47J53)   
+        !defined(PINGUINO27J53) && !defined(PINGUINO47J53A) && !defined(PINGUINO47J53B)   
 
     if(Type == DEFAULT)			//the default analog reference of 5 volts (on 5V Arduino boards) or 3.3 volts (on 3.3V Arduino boards)
         ADCON1|=0x00;			//Vref+ = VDD
@@ -124,6 +156,9 @@ void analogreference(u8 Type)
 
 /*  --------------------------------------------------------------------
     analogRead
+    * set channel to ANALOG (ANSEL or ADCON0 or ANCON0) and TRIS register
+    * start the A/D Converter
+    * return the value read
     ------------------------------------------------------------------*/
 
 //#ifdef ANALOGREAD
@@ -140,7 +175,17 @@ u16 analogread(u8 channel)
     // ADCON1=0x0A;
     // #endif
 
-    #ifdef PICUNO_EQUO
+    #if defined(PINGUINO1459)
+    
+    // TODO
+    TRISA = 0xFF;
+    TRISB = 0xFF;
+    TRISC = 0xFF;
+    ANSELA = 0xFF;
+    ANSELB = 0xFF;
+    ANSELC = 0xFF;
+    
+    #elif defined(PICUNO_EQUO)
 
         if(channel>=14 && channel<=16)
             ADCON0=(channel-14) << 2;
@@ -150,13 +195,31 @@ u16 analogread(u8 channel)
     // RB - March 2014 - Enable individual Analog channel selection
     //                   Has to be done for other Pinguino
     
-    #elif defined(PINGUINO47J53)
+    #elif defined(PINGUINO47J53A)
 
         if (channel > 15)
             return 0;
 
         if (channel >= 8 && channel <= 15)
             channel = channel - 8;      // A0=8 to A7=15
+
+        if (channel < 5)
+            TRISA |= 1 << channel;      // channel as INPUT
+
+        if (channel >= 5 && channel <= 7)
+            TRISE |= 1 << (channel - 5);// channel as INPUT
+
+        ANCON0 |= 1 << channel;         // channel enabled
+
+        ADCON0 = channel << 2;          // A0=0 to A7=7
+
+    #elif defined(PINGUINO47J53B) // AKA Pinguino Torda
+
+        if (channel > 23)
+            return 0;
+
+        if (channel >= 16 && channel <= 23)
+            channel = channel - 16;     // A0=16 to A7=23
 
         if (channel < 5)
             TRISA |= 1 << channel;      // channel as INPUT
@@ -219,9 +282,9 @@ u16 analogread(u8 channel)
 // Set the TMR2 prescale value, then enable Timer2 by writing to T2CON.
 // PIC18F47J53 Family :
 // The assignment of a particular timer to a module is determined by the
-// Timer to CCP enable bits in the CCPTMRSx registers.
-// The CCPTMRS1 register selects the timers for CCP modules, 7, 6, 5 and 4,
-// and the CCPTMRS2 register selects the timers for CCP modules, 10, 9 and 8
+// Timer to PWM enable bits in the PWMTMRSx registers.
+// The PWMTMRS1 register selects the timers for PWM modules, 7, 6, 5 and 4,
+// and the PWMTMRS2 register selects the timers for PWM modules, 10, 9 and 8
 
 void analogwrite_init()
 {
@@ -229,7 +292,7 @@ void analogwrite_init()
         defined(__18f27j53) || defined(__18f47j53)
 
     CCPTMRS0 = 0;
-    CCPTMRS1 = 0;                       // assign Timer2 to all CCP pins
+    CCPTMRS1 = 0;                       // assign Timer2 to all PWM pins
     CCPTMRS2 = 0;
 
     #endif
@@ -243,72 +306,88 @@ void analogwrite(u8 pin, u16 duty)
     switch (pin)
     {
 
-        #if defined(__18f26j53) || defined(__18f46j53) || \
-            defined(__18f27j53) || defined(__18f47j53)
+        #if defined(__16F1459)
+
+        // PWM Duty Cycle = (PWMxDCH:PWMxDCL<7:6>)
+        
+        case PWM1:
+            PWM1CON  = 0b00001100;
+            PWM1DCH  = (duty >> 2) & 0xFF;      // 8 MSB
+            PWM1DCL |= ((u8)duty & 0x03) << 6;  // 2 LSB in <7:6>
+            break;
+
+        case PWM2:
+            PWM2CON  = 0b00001100;
+            PWM2DCL  = ( duty >> 2 ) & 0xFF;    // 8 MSB
+            PWM2DCH |= ((u8)duty & 0x03) << 6;  // 2 LSB in <7:6>
+            break;
+
+        #elif defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53)
 
         /*
-        On PIC18F47J53 CCPx pin are multiplexed with a PORTB data latch,
-        the appropriate TRIS bit must be cleared by user to make the CCPx pin an output.
+        On PIC18F47J53 PWMx pin are multiplexed with a PORTB data latch,
+        the appropriate TRIS bit must be cleared by user to make the PWMx pin an output.
         */
         
-        case CCP4:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP4CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR4L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP4CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM1:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP4CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR4L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP4CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP5:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP5CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR5L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP5CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM2:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP5CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR5L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP5CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP6:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP6CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR6L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP6CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM3:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP6CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR6L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP6CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP7:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP7CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR7L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP7CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM4:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP7CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR7L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP7CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP8:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP8CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR8L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP8CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM5:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP8CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR8L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP8CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP9:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP9CON  = 0b00001100;              // Configure the CCPx module for PWM operation
-            CCPR9L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP9CON |= ((u8)duty & 0x03) << 4;  // and CCPxCON<5:4> bits
+        case PWM6:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP9CON  = 0b00001100;              // Configure the PWMx module for PWM operation
+            CCPR9L   = ( duty >> 2 ) & 0xFF;    // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP9CON |= ((u8)duty & 0x03) << 4;  // and PWMxCON<5:4> bits
             break;
 
-        case CCP10:
-            //BitClear(TRISB, pin);             // Make the CCPx pin an output by clearing the appropriate TRIS bit.
-            CCP10CON  = 0b00001100;             // Configure the CCPx module for PWM operation
-            CCPR10L   = ( duty >> 2 ) & 0xFF;   // Set the PWM duty cycle by writing to the CCPRxL register
-            CCP10CON |= ((u8)duty & 0x03) << 4; // and CCPxCON<5:4> bits
+        case PWM7:
+            //BitClear(TRISB, pin);             // Make the PWMx pin an output by clearing the appropriate TRIS bit.
+            CCP10CON  = 0b00001100;             // Configure the PWMx module for PWM operation
+            CCPR10L   = ( duty >> 2 ) & 0xFF;   // Set the PWM duty cycle by writing to the PWMRxL register
+            CCP10CON |= ((u8)duty & 0x03) << 4; // and PWMxCON<5:4> bits
             break;
 
         #else
 
-        case CCP1:
+        case PWM1:
             CCP1CON  = 0b00001100;
             CCPR1L   = ( duty >> 2 ) & 0xFF;    // 8 LSB
             CCP1CON |= ((u8)duty & 0x03) << 4;  // 2 MSB in <5:4>
             break;
 
-        case CCP2:
+        case PWM2:
             CCP2CON  = 0b00001100;
             CCPR2L   = ( duty >> 2 ) & 0xFF;    // 8 LSB
             CCP2CON |= ((u8)duty & 0x03) << 4;  // 2 MSB in <5:4>

@@ -1,11 +1,7 @@
-Keypad.init Keypad_init#include <keypad32.c>
-Keypad.getKey Keypad_getKey#include <keypad32.c>
-Keypad.getState Keypad_getState#include <keypad32.c>
-Keypad.setDebounceTime Keypad_setDebounceTime#include <keypad32.c>
-
-
-Keypad.setHoldTime Keypad_setHoldTime#include <keypad32.c>
-
-Keypad.transitionTo Keypad_transitionTo#include <keypad32.c>
-
-Keypad.initializePins Keypad_initializePins#include <keypad32.c>
+Keypad.init Keypad_init#include <keypad.c>
+Keypad.getKey Keypad_getKey#include <keypad.c>
+Keypad.getState Keypad_getState#include <keypad.c>
+Keypad.setDebounceTime Keypad_setDebounceTime#include <keypad.c>
+Keypad.setHoldTime Keypad_setHoldTime#include <keypad.c>
+Keypad.transitionTo Keypad_transitionTo#include <keypad.c>
+Keypad.initializePins Keypad_initializePins#include <keypad.c>

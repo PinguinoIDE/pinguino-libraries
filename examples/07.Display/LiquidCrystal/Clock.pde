@@ -45,22 +45,27 @@ void tick()
         }
     }     
     lcd.setCursor(4, 1);
-    lcd.printf("%02u:%02u:%02u", h, m, s);
+    //lcd.printf("%02u:%02u:%02u", h, m, s);
+    lcd.printNumber(h,DEC);
+    lcd.printChar(':');
+    lcd.printNumber(m,DEC);
+    lcd.printChar(':');
+    lcd.printNumber(s,DEC);
 }
 
 void setup()
 {
-	// 4 bits mode, last four pins are not used
-  lcd.pins(0, 1, 2, 3, 4, 5, 0, 0, 0, 0); // RS, E, D4 ~ D8	
+    // 4 bits mode, D0-D3 are not used
+    lcd.pins(0, 1, 0, 0, 0, 0, 2, 3, 4, 5); // RS, E, D4 ~ D8
 
-	// LCD format
-	lcd.begin(2, 0); // lines, dotsize
+    // LCD format
+    lcd.begin(2, 0); // lines, dotsize
 
-	lcd.home(); // 0, 0
-	lcd.printf("Simple Clock Demo");
+    lcd.home(); // 0, 0
+    lcd.print("Simple Clock");
 	
-	// Timer0 call function tick() every sec.
-	OnTimer0(tick, INT_MILLISEC, 1000);
+    // Timer0 call function tick() every sec.
+    OnTimer0(tick, INT_MILLISEC, 1000);
 }
  
 void loop()

@@ -212,26 +212,42 @@ void PMP_init()
     /// 3. Configure Mode
 
     // Enable Interrupt Request mode: IRQM<1:0> bits (PMMODE<14:13>).
-    PMMODEHbits.IRQM = PMP_MODE_IRQ_OFF;
+    PMMODEHbits.IRQM1 = PMP_MODE_IRQ_OFF|0b10;
+    PMMODEHbits.IRQM0 = PMP_MODE_IRQ_OFF|0b01;
     
     // Select auto address increment: INCM<1:0> bits (PMMODE<12:11>).
     if (_pmp_mode==PMP_MODE_ESLAVE || _pmp_mode==PMP_MODE_SLAVE)
     {
         if (_pmp_inc==1)
-            PMMODEHbits.INCM = PMP_MODE_INC_BUFFER;
+        {
+            PMMODEHbits.INCM1 = PMP_MODE_INC_BUFFER|0b10;
+            PMMODEHbits.INCM0 = PMP_MODE_INC_BUFFER|0b01;
+        }
         else
-            PMMODEHbits.INCM = PMP_MODE_INC_OFF;
+        {
+            PMMODEHbits.INCM1 = PMP_MODE_INC_OFF|0b10;
+            PMMODEHbits.INCM0 = PMP_MODE_INC_OFF|0b01;
+        }
     }
     else // master mode 1 or 2
     {
         if (_pmp_inc==1)
-            PMMODEHbits.INCM = PMP_MODE_INC_ADDR;
+        {
+            PMMODEHbits.INCM1 = PMP_MODE_INC_ADDR|0b10;
+            PMMODEHbits.INCM0 = PMP_MODE_INC_ADDR|0b01;
+        }
 
         if (_pmp_inc==-1)
-            PMMODEHbits.INCM = PMP_MODE_DEC_ADDR;
+        {
+            PMMODEHbits.INCM1 = PMP_MODE_DEC_ADDR|0b10;
+            PMMODEHbits.INCM0 = PMP_MODE_DEC_ADDR|0b01;
+        }
         
         if (_pmp_inc==0)
-            PMMODEHbits.INCM = PMP_MODE_INC_OFF;
+        {
+            PMMODEHbits.INCM1 = PMP_MODE_INC_OFF|0b10;
+            PMMODEHbits.INCM0 = PMP_MODE_INC_OFF|0b01;
+        }
     }
     
     // Select 8- or 16-bit Data mode: MODE16 bit (PMMODE<10>).
@@ -263,7 +279,8 @@ void PMP_init()
     PMCONHbits.PSIDL = 0;    // PMP idle when MCU idle
 
     // Select multiplexed addressing: ADRMUX<1:0> bits (PMCON<12:11>).
-    PMCONHbits.ADRMUX = _pmp_mux; // Address and data appear on separate pins
+    PMCONHbits.ADRMUX1 = _pmp_mux|0b10; // Address and data appear on separate pins
+    PMCONHbits.ADRMUX0 = _pmp_mux|0b01; // Address and data appear on separate pins
     
     //PMPTTL: PMP Module TTL Input Buffer Select bit
     //1 = PMP module uses TTL input buffers
@@ -320,10 +337,16 @@ void PMP_init()
     
     // Enable PMCS1 Chip Selects: CSF<1:0> bits (PMCON<7:6>)
     if ((_pmp_control & PMCS1) || (_pmp_control & PMCS2))
-        PMCONLbits.CSF = PMP_CS_ON;
+    {
+        PMCONLbits.CSF1 = PMP_CS_ON|0b10;
+        PMCONLbits.CSF0 = PMP_CS_ON|0b01;
+    }
     else
-        PMCONLbits.CSF = PMP_CS_OFF;
-
+    {
+        PMCONLbits.CSF1 = PMP_CS_OFF|0b10;
+        PMCONLbits.CSF0 = PMP_CS_OFF|0b01;
+    }
+    
     // Address Latch Polarity bit
     PMCONLbits.ALP  = _pmp_polarity;
     

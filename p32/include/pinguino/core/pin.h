@@ -160,7 +160,7 @@
             #define D4              4
             #define D5              5
             #define D6              6
-            #define RTCC    6
+            #define RTC             6
             #define D7              7
             #define D8              8
             #define D9              9
@@ -217,7 +217,7 @@
             #define PWM3            2
             #define PWM4            1
            
-            #define RTCC            9
+            #define RTC             9
            
             //#define PMCS1           0
             //#define PMRD            2

@@ -1,22 +1,74 @@
-/*******************************************************************************
-	Title:	USB Pinguino Bootloader
-	File:	config.h
-	Descr.: configuration bits for supported PIC18F
-	Author:	Régis Blanchot <rblanchot@gmail.com>
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    Title:	USB Pinguino Bootloader
+    File:	config.h
+    Descr.: configuration bits for supported PIC18F
+    Author:	Régis Blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
     CHANGELOG :
     09 Jul 2015 - Régis Blanchot - replaced #include <pic18fregs.h> by
                                    #include <compiler.h> to enable compatibility
                                    between SDCC and XC8
-    ----------------------------------------------------------------------------
-	This file is part of Pinguino (http://www.pinguino.cc)
-	Released under the LGPL license (http://www.gnu.org/licenses/lgpl.html)
-*******************************************************************************/
+    09 Sep. 2015 - Régis Blanchot - added PIC16F1459 support
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
+    --------------------------------------------------------------------
+    This file is part of Pinguino (http://www.pinguino.cc)
+    Released under the LGPL license (http://www.gnu.org/licenses/lgpl.html)
+    ------------------------------------------------------------------*/
 
 #include <compiler.h>
 
 /**********************************************************************/
-#if   defined(__16F1459)
+#if defined(__16F1708) 
+/**********************************************************************/
+
+    // CONFIG1
+    #if (CRYSTAL == INTOSC)             // Internal 16 MHz Osc.
+        #pragma config FOSC = INTOSC    // Oscillator Selection (Internal oscillator)
+    #elif (CRYSTAL == 12000000L || CRYSTAL == 16000000L)
+        #pragma config FOSC = HSH       // Oscillator Selection (External oscillator)
+    #else
+        #error "    ---------------------------------    "
+        #error "    Crystal Frequency Not supported.     "
+        #error "    ---------------------------------    "
+    #endif
+
+    #pragma config WDTE = OFF           // Watchdog controlled by SWDTEN bit
+    #pragma config PWRTE = ON			// PowerUp Timer
+    #if defined(DEBUG)
+    #pragma config MCLRE = OFF			// MCLR
+    #else
+    #pragma config MCLRE = ON			// MCLR
+    #endif
+    #pragma config CP = OFF				// Code Protect
+    #pragma config BOREN = OFF 			// Brown Out
+    #pragma config CLKOUTEN = OFF		// CLKOUT pin function as I/O
+    #pragma config IESO = ON			// Int/Ext switchover mode
+    #pragma config FCMEN = OFF			// Fail Safe Clock Monitor
+
+    /*
+     * Note: When using the PLLEN bit of the Configuration Words, the PLL cannot
+     * be disabled by software. The 8 MHz and 16 MHz HFINTOSC options will no
+     * longer be available. Therefore PLLEN is disabled here and enabled in
+     * main.c
+     */
+
+    // CONFIG2
+    #pragma config WRT = OFF            // Flash memory write protection
+    #pragma config PPS1WAY = OFF        // PPSLOCK bit can be set and cleared
+    #pragma config ZCDDIS = OFF         // ZCD can be enabled by setting the ZCDSEN bit of ZCDCON
+    #pragma config PLLEN = OFF          // PLL x4 is disabled
+    #pragma config STVREN = ON          // Stack Overflow Reset
+    #pragma config BORV = LO            // Brown-out Reset Voltage
+    #pragma config LPBOR = OFF          // Low-Power Brown-out Reset
+    //#pragma config DEBUG = OFF        // Background Debugging
+    #if (VOLTAGE == 0)
+        #pragma config LVP = OFF        // High Voltage Programming
+    #else
+        #pragma config LVP = ON         // Low Voltage Programming
+    #endif
+
+/**********************************************************************/
+#elif defined(__16F1459) 
 /**********************************************************************/
 
     /*
@@ -32,13 +84,13 @@
         #pragma config PLLMULT = 3x     // PLL Selection (3x clock multiplier) => 3 x 16 = 48 MHz
         #pragma config CPUDIV = NOCLKDIV// 1:1 mode (for 48MHz CPU)
 
-    #elif (CRYSTAL == 12)
+    #elif (CRYSTAL == 12000000L)
         #pragma config FOSC = HSH       // Oscillator Selection (External oscillator)
         #pragma config PLLEN = DISABLED // PLL is disabled
         #pragma config PLLMULT = 4x     // PLL Selection (4x clock multiplier) => 4 x 12 = 48 MHz
         #pragma config CPUDIV = NOCLKDIV// 1:1 mode (for 48MHz CPU)
 
-    #elif (CRYSTAL == 16)
+    #elif (CRYSTAL == 16000000L)
         #pragma config FOSC = HSH       // Oscillator Selection (External oscillator)
         #pragma config PLLEN = DISABLED // PLL is disabled
         #pragma config PLLMULT = 3x     // PLL Selection (3x clock multiplier) => 3 x 16 = 48 MHz
@@ -53,29 +105,29 @@
     #endif
 
     // CONFIG1
-    #pragma config FCMEN = OFF			// Fail Safe Clock Monitor
-    #pragma config IESO = ON			// Int/Ext switchover mode
-    #pragma config CLKOUTEN = OFF		// CLKOUT pin function as I/O
-    #pragma config BOREN = OFF 			// Brown Out
-    #pragma config CP = OFF				// Code Protect
+    #pragma config FCMEN = OFF          // Fail Safe Clock Monitor
+    #pragma config IESO = ON            // Int/Ext switchover mode
+    #pragma config CLKOUTEN = OFF       // CLKOUT pin function as I/O
+    #pragma config BOREN = OFF          // Brown Out
+    #pragma config CP = OFF             // Code Protect
     #if defined(DEBUG)
-    #pragma config MCLRE = OFF			// MCLR
+    #pragma config MCLRE = OFF          // MCLR
     #else
-    #pragma config MCLRE = ON			// MCLR
+    #pragma config MCLRE = ON           // MCLR
     #endif
-    #pragma config PWRTE = ON			// PowerUp Timer
+    #pragma config PWRTE = ON           // PowerUp Timer
     #pragma config WDTE = OFF           // Watchdog controlled by SWDTEN bit
 
     // CONFIG2
     #if (VOLTAGE == 0)
-        #pragma config LVP = OFF		// High Voltage Programming
+        #pragma config LVP = OFF        // High Voltage Programming
     #else
-        #pragma config LVP = ON 		// Low Voltage Programming
+        #pragma config LVP = ON         // Low Voltage Programming
     #endif
-    //#pragma config DEBUG = OFF			// Background Debugging
+    //#pragma config DEBUG = OFF        // Background Debugging
     #pragma config LPBOR = OFF          // Low-Power Brown-out Reset
     #pragma config BORV = LO            // Brown-out Reset Voltage
-    #pragma config STVREN = ON			// Stack Overflow Reset
+    #pragma config STVREN = ON          // Stack Overflow Reset
     #pragma config WRT = OFF            // Flash memory write protection
 
     #if (SPEED == LOW_SPEED)
@@ -96,22 +148,22 @@
 #elif defined(__18f4685)
 /**********************************************************************/
 
-	#pragma config IESO = OFF	// Internal/external switchover
-	#pragma config FCMEN = OFF	// Fail-safe clock monitor
-	#pragma config BORV = 3		// Brown-out Voltage set to 2.1V
-	#pragma config BOREN = OFF	// Brown-out Reset bit
-	#pragma config PWRT = OFF	// Power-up Timer
-	#pragma config WDT = OFF	// Watch Dog Timer
-	#pragma config MCLRE = ON	// MCLR Pin Enable bit
-	#pragma config LPT1OSC = OFF	// Low Power Timer1 Oscilator
-	#pragma config PBADEN = ON	// PORTB pins configured as digital I/O
-	#pragma config DEBUG = OFF	// Background Debugger Enable bit
-	#pragma config XINST = OFF	// Extended Instruction Set bit
-	#pragma config BBSIZ = 1024	// Boot Block Size
-	#pragma config LVP = ON		// RB5 is PGM pin
-	#pragma config STVREN = ON	// Stack Full/Underflow will cause reset
-	#pragma config OSC = IRCIO67	// Internal oscilator block, port
-					// function on RA6 and RA7
+	#pragma config IESO = OFF           // Internal/external switchover
+	#pragma config FCMEN = OFF          // Fail-safe clock monitor
+	#pragma config BORV = 3             // Brown-out Voltage set to 2.1V
+	#pragma config BOREN = OFF          // Brown-out Reset bit
+	#pragma config PWRT = OFF           // Power-up Timer
+	#pragma config WDT = OFF            // Watch Dog Timer
+	#pragma config MCLRE = ON           // MCLR Pin Enable bit
+	#pragma config LPT1OSC = OFF        // Low Power Timer1 Oscilator
+	#pragma config PBADEN = ON          // PORTB pins configured as digital I/O
+	#pragma config DEBUG = OFF          // Background Debugger Enable bit
+	#pragma config XINST = OFF          // Extended Instruction Set bit
+	#pragma config BBSIZ = 1024         // Boot Block Size
+	#pragma config LVP = ON             // RB5 is PGM pin
+	#pragma config STVREN = ON          // Stack Full/Underflow will cause reset
+	#pragma config OSC = IRCIO67        // Internal oscilator block, port
+                                        // function on RA6 and RA7
 
 /**********************************************************************/
 #elif defined(__18f2550) || defined(__18f4550) || \
@@ -132,21 +184,21 @@
 
     #else
 
-        #if   (CRYSTAL == 4)
+        #if   (CRYSTAL == 4000000L)
             #pragma config PLLDIV = 1
-        #elif (CRYSTAL == 8)
+        #elif (CRYSTAL == 8000000L)
             #pragma config PLLDIV = 2
-        #elif (CRYSTAL == 12)
+        #elif (CRYSTAL == 12000000L)
             #pragma config PLLDIV = 3
-        #elif (CRYSTAL == 16)
+        #elif (CRYSTAL == 16000000L)
             #pragma config PLLDIV = 4
-        #elif (CRYSTAL == 20)
+        #elif (CRYSTAL == 20000000L)
             #pragma config PLLDIV = 5
-        #elif (CRYSTAL == 24)
+        #elif (CRYSTAL == 24000000L)
             #pragma config PLLDIV = 6
-        #elif (CRYSTAL == 40)
+        #elif (CRYSTAL == 40000000L)
             #pragma config PLLDIV = 10
-        #elif (CRYSTAL == 48)
+        #elif (CRYSTAL == 48000000L)
             #pragma config PLLDIV = 12
         #else    
                 #error "    ---------------------------------    "
@@ -212,21 +264,21 @@
 
         //#pragma config PLLDIV = CRYSTAL / 4
         
-        #if   (CRYSTAL == 4)
+        #if   (CRYSTAL == 4000000L)
             #pragma config PLLDIV = 1
-        #elif (CRYSTAL == 8)
+        #elif (CRYSTAL == 8000000L)
             #pragma config PLLDIV = 2
-        #elif (CRYSTAL == 12)
+        #elif (CRYSTAL == 12000000L)
             #pragma config PLLDIV = 3
-        #elif (CRYSTAL == 16)
+        #elif (CRYSTAL == 16000000L)
             #pragma config PLLDIV = 4
-        #elif (CRYSTAL == 20)
+        #elif (CRYSTAL == 20000000L)
             #pragma config PLLDIV = 5
-        #elif (CRYSTAL == 24)
+        #elif (CRYSTAL == 24000000L)
             #pragma config PLLDIV = 6
-        #elif (CRYSTAL == 40)
+        #elif (CRYSTAL == 40000000L)
             #pragma config PLLDIV = 10
-        #elif (CRYSTAL == 48)
+        #elif (CRYSTAL == 48000000L)
             #pragma config PLLDIV = 12
         #else    
                 #error "    ---------------------------------    "
@@ -378,21 +430,21 @@
     #else
         #pragma config OSC = HSPLL      // Oscillator Selection (External oscillator)
 
-        #if   (CRYSTAL == 4)
+        #if   (CRYSTAL == 4000000L)
             #pragma config PLLDIV = 1
-        #elif (CRYSTAL == 8)
+        #elif (CRYSTAL == 8000000L)
             #pragma config PLLDIV = 2
-        #elif (CRYSTAL == 12)
+        #elif (CRYSTAL == 12000000L)
             #pragma config PLLDIV = 3
-        #elif (CRYSTAL == 16)
+        #elif (CRYSTAL == 16000000L)
             #pragma config PLLDIV = 4
-        #elif (CRYSTAL == 20)
+        #elif (CRYSTAL == 20000000L)
             #pragma config PLLDIV = 5
-        #elif (CRYSTAL == 24)
+        #elif (CRYSTAL == 24000000L)
             #pragma config PLLDIV = 6
-        #elif (CRYSTAL == 40)
+        #elif (CRYSTAL == 40000000L)
             #pragma config PLLDIV = 10
-        #elif (CRYSTAL == 48)
+        #elif (CRYSTAL == 48000000L)
             #pragma config PLLDIV = 12
         #else    
                 #error "    ---------------------------------    "

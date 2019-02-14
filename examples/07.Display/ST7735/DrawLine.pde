@@ -34,10 +34,11 @@
 void setup()
 {
     // init. the random number generator
-    int seed = millis();
+    int seed;
+    seed = millis();
     randomSeed(seed);
     
-    ST7735.init(SPIMODULE, 6, 5, 0, 0); // CS and DC
+    ST7735.init(SPIMODULE, 7); // DC
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
     ST7735.clearScreen(SPIMODULE);
 }   
@@ -49,7 +50,7 @@ void loop()
     u16 x2 = random(0, 159);     // coordinate x E [0,159]
     u16 y2 = random(0, 127);     // coordinate y E [0, 127]
     //u16 c  = random(0, 0xFFFF);  // color c E [0, 65535]
-    u16 c = millis() % 0xFFFF;
+    u16 c = millis() % 0xFFFF;   //
 
     // display
     ST7735.setColor(SPIMODULE, c);

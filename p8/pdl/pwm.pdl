@@ -7,3 +7,7 @@ PWM.setDeadBand PWM_setDeadBand#include <pwm.c>#define PWMSETDEADBAND
 PWM.setASautoRestart PWM_setASautoRestart#include <pwm.c>#define PWMSETASAUTORESTART
 PWM.setASmanualRestart PWM_setASmanualRestart#include <pwm.c>#define PWMSETASMANUALRESTART
 PWM.setAutoShutdown PWM_setAutoShutdown#include <pwm.c>#define PWMSETAUTOSHUTDOWN
+
+SWPWM.setFrequency PWM_setFrequency#include <swpwm.c>
+SWPWM.setDutyCycle PWM_setDutyCycle#include <swpwm.c>
+SWPWM.setPercentDutyCycle PWM_setPercentDutyCycle#include <swpwm.c>

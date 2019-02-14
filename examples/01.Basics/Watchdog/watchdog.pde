@@ -1,34 +1,33 @@
-//--	watchdog-test.pde
+/*	----------------------------------------------------------------------------
+    Blink the built-in led with help from watchdog timer and sleep mode
+    ----------------------------------------------------------------------------
+    author:	Régis Blanchot
+    ----------------------------------------------------------------------------
+    READ THIS CAREFULLY :
+    This is intended only for people who don't want to use USB bootloader
+    but an ICSP programmer instead.
+    --------------------------------------------------------------------------*/
 
 void setup()
 {
-	Watchdog.clear();
-
-	pinMode(USERLED, OUTPUT);
-
-	// turn off all led
-	digitalWrite(USERLED, LOW);
-
-	// led indicates pinguino reset by watchdog
-	if (Watchdog.event())	
-          {
-	    digitalWrite(USERLED, HIGH);
-              delay(2000);
-              digitalWrite(USERLED, LOW);
-	}
-
-	// enable watchdog, start full wdt period
-	Watchdog.enable();
-	Watchdog.clear();
+    // We want to use the Built-in led
+    pinMode(USERLED, OUTPUT);
+    // Enable Watchdog Timer
+    // Watchdog is driven by the Internal Oscillator (8MHz)
+    // Nominal period of Watchdog is 4ms
+    // Watchdog postscaler is set to 
+    // 1:32768 by config. bits (bootloader version <= 4.8)
+    // 1:256 (bootloader version > 4.8)
+    // Watchdog timer will overload after 32768*4ms = 135sec = 2.25min
+    // or 256*4ms = 1024 ms = 1 sec. 
+    Watchdog.enable();
 }
 
 void loop()
 {
-	// blink led every second
-	digitalWrite(USERLED, HIGH);
-	delay(500);
-	digitalWrite(USERLED, LOW);
-	delay(500);
-
-	// watchdog should reset pinguino due to lack of clear
+    Watchdog.clear(); // clear watchdog timer
+    // Enter Sleep Mode
+    System.sleep();         // wait for watchdog timer overload
+    // Back to Run Mode
+    toggle(USERLED);          // toggle the led
 }

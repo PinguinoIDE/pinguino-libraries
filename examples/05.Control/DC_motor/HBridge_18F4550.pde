@@ -1,8 +1,8 @@
 /*----------------------------------------------------- 
 Author:  --<>
 Date: Sun Jan 25 15:00:00 2015
-Description: 18F4550 Enhanced PWM - Full Bridge
-
+Description: Enhanced PWM - Full Bridge
+Boards : 44-pin PIC18F only
 Function:
 PWM_setEnhancedOutput(config, mode)
 
@@ -26,11 +26,11 @@ PWM_MODE_4    P1A,P1C active low, P1B,P1D active low
 -----------------------------------------------------*/
 
 // Pin Definitions
-#define P1A     12   // (RC2)
-#define P1B     26   // (RD5)
-#define P1C     27   // (RD6)
-#define P1D     28   // (RD7)
-#define FLT0    0    // INT0
+#define PWM1A     12   // (RC2)
+#define PWM1B     26   // (RD5)
+#define PWM1C     27   // (RD6)
+#define PWM1D     28   // (RD7)
+#define FLT0      0    // INT0
 
 // Variables
 u8 led_handle = 0;
@@ -46,45 +46,44 @@ void setup() {
 
     // I/O Settings 
     pinMode(USERLED, OUTPUT);
-    pinMode(P1A, OUTPUT);
-    pinMode(P1B, OUTPUT);
-    pinMode(P1C, OUTPUT);
-    pinMode(P1D, OUTPUT);
-    pinMode(FLT0,INPUT);                    //FLT0 as input
+    pinMode(PWM1A, OUTPUT);
+    pinMode(PWM1B, OUTPUT);
+    pinMode(PWM1C, OUTPUT);
+    pinMode(PWM1D, OUTPUT);
+    pinMode(FLT0,  INPUT);                    //FLT0 as input
     
     digitalWrite(USERLED, LOW);
-    digitalWrite(P1A, LOW);
-    digitalWrite(P1B, LOW);
-    digitalWrite(P1C, LOW);
-    digitalWrite(P1D, LOW);   
+    digitalWrite(PWM1A, LOW);
+    digitalWrite(PWM1B, LOW);
+    digitalWrite(PWM1C, LOW);
+    digitalWrite(PWM1D, LOW);   
     OnTimer0(TMR0_Tick, INT_MILLISEC, 500);
     
     // Quick Output test
-    digitalWrite(P1A, HIGH);
+    digitalWrite(PWM1A, HIGH);
     delay(500);
-    digitalWrite(P1A, LOW);
-    digitalWrite(P1B, HIGH);
+    digitalWrite(PWM1A, LOW);
+    digitalWrite(PWM1B, HIGH);
     delay(500);
-    digitalWrite(P1B, LOW);
-    digitalWrite(P1C, HIGH);
+    digitalWrite(PWM1B, LOW);
+    digitalWrite(PWM1C, HIGH);
     delay(500);
-    digitalWrite(P1C, LOW);
-    digitalWrite(P1D, HIGH);
+    digitalWrite(PWM1C, LOW);
+    digitalWrite(PWM1D, HIGH);
     delay(500);
-    digitalWrite(P1D, LOW);
+    digitalWrite(PWM1D, LOW);
     delay(500);
-    
 
     PWM.setAutoShutdown(TRUE);            // This set ECCP1AS = 0b01000000
     PWM.setASautoRestart(TRUE);
     
     PWM.setFrequency(4000);                // 4KHz
-    PWM.setDutyCycle(CCP1,512);
+    PWM.setDutyCycle(PWM1, 512);
  
 }
 
-void loop() {
-    
+void loop()
+{
     PWM.setEnhancedOutput(FULL_OUT_FWD, PWM_MODE_1);    // 2 sec FORWARD
     delay(2000);
     PWM.setEnhancedOutput(FULL_OUT_REV, PWM_MODE_1);    // 2 sec REVERSE
@@ -92,8 +91,7 @@ void loop() {
     
     // Duty Cycle Test
     i += 100;    
-    if (i >= 1023) {
+    if (i >= 1023)
         i = 0;
-    }    
-    PWM.setDutyCycle(CCP1,i);
+    PWM.setDutyCycle(PWM1, i);
 }

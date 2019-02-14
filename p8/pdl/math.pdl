@@ -1,0 +1,87 @@
+min min#include <macro.h>
+max max#include <macro.h>
+abs abs#include <mathlib.c>
+constrain constrain#include <macro.h>
+map map#include <mathlib.c>
+bounds bounds#include <mathlib.c>
+
+powf powf#include <math.h>
+sqrtf sqrtf#include <math.h>
+absf fabsf#include <math.h>
+sinf sinf#include <math.h>
+cosf cosf#include <math.h>
+tanf tanf#include <math.h>
+logf logf#include <math.h>
+
+sinr sinr#include <trigo.c>#define SINR
+cosr cosr#include <trigo.c>#define COSR
+sin100 sin100#include <trigo.c>#define SIN100
+cos100 cos100#include <trigo.c>#define COS100
+
+randomSeed srand#include <stdlib.h>
+random random#include <mathlib.c>
+
+MahonyQuaternionUpdate MahonyQuaternionUpdate#include <quaternions.c>
+MadgwickQuaternionUpdate MadgwickQuaternionUpdate#include <quaternions.c>
+
+fastabs fastabs#include <fastmath.c>#define FASTABS
+fastmin fastmin#include <fastmath.c>#define FASTMIN
+fastmax fastmax#include <fastmath.c>#define FASTMAX
+
+fastpow fastpow#include <fastmath.c>#define FASTPOW
+fastpow2 fastpow2#include <fastmath.c>#define FASTEXP
+fasterpow fasterpow#include <fastmath.c>#define FASTPOW
+fasterpow2 fasterpow2#include <fastmath.c>#define FASTEXP
+fastexp fastexp#include <fastmath.c>#define FASTEXP
+fasterexp fasterexp#include <fastmath.c>#define FASTEXP
+
+fastlog fastlog#include <fastmath.c>#define FASTLOG
+fastlog2 fastlog2#include <fastmath.c>#define FASTLOG
+fasterlog fasterlog#include <fastmath.c>#define FASTLOG
+fasterlog2 fasterlog2#include <fastmath.c>#define FASTLOG
+fastln fastln#include <fastmath.c>#define FASTLOG
+fasterln fasterln#include <fastmath.c>#define FASTLOG
+
+fasterfc fasterfc#include <fastmath.c>#define FASTERF
+fastererfc fastererfc#include <fastmath.c>#define FASTERF
+fasterf fasterf#include <fastmath.c>#define FASTERF
+fastererf fastererf#include <fastmath.c>#define FASTERF
+fastinverseerf fastinverseerf#include <fastmath.c>#define FASTERF
+fasterinverseerf fasterinverseerf#include <fastmath.c>#define FASTERF
+
+fastlgamma fastlgamma#include <fastmath.c>#define FASTGAMMA
+fasterlgamma2 fasterlgamma#include <fastmath.c>#define FASTGAMMA
+fastdigamma fastdigamma#include <fastmath.c>#define FASTGAMMA
+fasterdigamma2 fasterdigamma#include <fastmath.c>#define FASTGAMMA
+
+fastsinh fastsinh#include <fastmath.c>#define FASTHYPERBOLIC
+fastersinh fastersinh#include <fastmath.c>#define FASTHYPERBOLIC
+fastcosh fastcosh#include <fastmath.c>#define FASTHYPERBOLIC
+fastercosh fastercosh#include <fastmath.c>#define FASTHYPERBOLIC
+fasttanh fasttanh#include <fastmath.c>#define FASTHYPERBOLIC
+fastertanh fastertanh#include <fastmath.c>#define FASTHYPERBOLIC
+
+fastasin fastasin#include <fastmath.c>#define FASTASIN
+fastacos fastacos#include <fastmath.c>#define FASTACOS
+fastatan fastatan2#include <fastmath.c>#define FASTATAN2
+
+fastlambert fastlambertw#include <fastmath.c>#define FASTLAMBERT_W
+fasterlambert fasterlambertw#include <fastmath.c>#define FASTLAMBERT_W
+fastlambertwexpx fastlambertwexpx#include <fastmath.c>#define FASTLAMBERT_W
+fasterlambertwexpx fasterlambertwexpx#include <fastmath.c>#define FASTLAMBERT_W
+
+fastsigmoid fastsigmoid#include <fastmath.c>#define FASTSIGMOID
+fastersigmoid fastersigmoid#include <fastmath.c>#define FASTSIGMOID
+
+fastsin fastsin#include <fastmath.c>#define FASTTRIG
+fastersin fastersin#include <fastmath.c>#define FASTTRIG
+fastsinfull fastsinfull#include <fastmath.c>#define FASTTRIG
+fastersinfull fastersinfull#include <fastmath.c>#define FASTTRIG
+fastcos fastcos#include <fastmath.c>#define FASTTRIG
+fastercos fastercos#include <fastmath.c>#define FASTTRIG
+fastcosfull fastcosfull#include <fastmath.c>#define FASTTRIG
+fastercosfull fastercosfull#include <fastmath.c>#define FASTTRIG
+fasttan fasttan#include <fastmath.c>#define FASTTRIG
+fastertan fastertan#include <fastmath.c>#define FASTTRIG
+fasttanfull fasttanfull#include <fastmath.c>#define FASTTRIG
+fastertanfull fastertanfull#include <fastmath.c>#define FASTTRIG

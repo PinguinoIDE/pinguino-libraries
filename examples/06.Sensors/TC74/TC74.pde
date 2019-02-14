@@ -1,8 +1,8 @@
 /*
     Project: Using TC74 for temperature measurement
-	Author:  regis blanchot
-	first release : 20-05-2013
-	last update   : 20-05-2013
+    Author:  regis blanchot
+    first release : 20-05-2013
+    last update   : 20-05-2013
     NB : SDA and SCL require a pullup resistor to VCC
     (typical 10 kΩ for 100 kHz, 2 kΩ for 400 kHz)
     

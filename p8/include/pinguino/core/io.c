@@ -1,19 +1,21 @@
 /*	----------------------------------------------------------------------------
-    FILE:			io.c
-    PROJECT:		pinguino
-    PURPOSE:		Peripheral Remappage and IOs Configuration
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	20 Jun. 2012
-    LAST RELEASE:	28 Feb 2013
+    FILE:           io.c
+    PROJECT:        pinguino
+    PURPOSE:        Peripheral Remappage and IOs Configuration
+    PROGRAMER:      Régis Blanchot <rblanchot@gmail.com>
+    FIRST RELEASE:  20 Jun. 2012
+    LAST RELEASE:   28 Feb 2013
     ----------------------------------------------------------------------------
     CHANGELOG:
-    23 Nov 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
-    07 Dec 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
-    05 Oct 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
-                                   with EECON2 = 0x55; EECON2 = 0xAA;]
-    28 Feb 2013 - Régis Blanchot - renamed functions
-                                   added IO_init()
-    01 Oct 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
+    23 Nov. 2012 - Régis Blanchot - added PIC18F1220,1320,2455,4455,46j50 support
+    07 Dec. 2012 - Régis Blanchot - added PIC18F25K50 and PIC18F45K50 support
+    05 Oct. 2013 - Régis Blanchot - replaced SystemUnlock/SystemLock
+                                    with EECON2 = 0x55; EECON2 = 0xAA;]
+    28 Feb. 2013 - Régis Blanchot - renamed functions
+                                    added IO_init()
+    01 Oct. 2015 - Régis Blanchot - added SPI2 pins in IO_remap()
+    09 Sep. 2015 - Régis Blanchot - added PIC16F1459 support
+    27 Jan. 2016 - Régis Blanchot - added PIC16F1708 support
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -45,10 +47,11 @@ void IO_init(void)
     
     // Set everything low
 
-    #if defined(__16F1459)
-    //LATA  = 0x00;
-    //LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
-    //LATC  = 0x00;
+    #if defined(__16F1459) || defined(__16F1708) || \
+        defined(__18f13k50) || defined(__18f14k50)
+    LATA  = 0x00;
+    LATB  = 0x80;       // Except UART TX bit (maintain high state to not emit extra low state) 
+    LATC  = 0x00;
     #else
     LATA  = 0x00;
     LATB  = 0x00;
@@ -82,10 +85,14 @@ void IO_init(void)
 
     TRISA = 0x00;
     #ifndef I2CINT
-    TRISB = 0x00;
+        TRISB = 0x00;
+        #if defined(__SERIAL__) && defined(__16F1459)
+        TRISBbits.TRISB5 = 1; // Clear all bits except RB5 (Serial INPUT)
+        #endif
     #endif
     
-    #if defined(__16F1459)
+    #if defined(__16F1459) || defined(__16F1708) || \
+        defined(__18f13k50) || defined(__18f14k50)
     TRISC = 0x00;
     #else
     TRISCbits.TRISC0 = 0x00;
@@ -120,10 +127,17 @@ void IO_digital(void)
     #if defined(__18f2455) || defined(__18f4455) || \
         defined(__18f2550) || defined(__18f4550)
 
-        ADCON1 = 0x0F;				// AN0 to AN12 Digital I/O
-        CMCON = 0x07;               // Comparators as Digital I/O
+        ADCON1 = 0x0F;              // AN0 to AN12 Digital I/O
+        CMCON  = 0x07;              // Comparators as Digital I/O
 
-    #elif defined(__16F1459) || defined(__18f25k50) || defined(__18f45k50)
+    #elif defined(__18f13k50) || defined(__18f14k50)
+
+        // Initialize all Analog pins as Digital I/O
+        ANSEL  = 0;                 // AN3 to AN7  Digital I/O
+        ANSELH = 0;                 // AN8 to AN11 Digital I/O
+
+    #elif defined(__16F1459)  || defined(__16F1708)  || \
+          defined(__18f25k50) || defined(__18f45k50)
 
         // Initialize all Analog pins as Digital I/O
         ANSELA = 0;
@@ -137,8 +151,8 @@ void IO_digital(void)
     #elif defined(__18f26j50) || defined(__18f46j50)
 
         // Initialize all Analog pins as Digital I/O
-        ANCON0 = 0xFF;				// AN0 to AN7  Digital I/O
-        ANCON1 = 0x1F;				// AN8 to AN12 Digital I/O
+        ANCON0 = 0xFF;              // AN0 to AN7  Digital I/O
+        ANCON1 = 0x1F;              // AN8 to AN12 Digital I/O
 
         // Turn off all comparators 
         CM1CON = 0x00;
@@ -148,8 +162,8 @@ void IO_digital(void)
     #elif defined(__18f27j53) || defined(__18f47j53)
 
         // Initialize all Analog pins as Digital I/O
-        ANCON0 = 0xFF;				// AN0 to AN7  Digital I/O
-        ANCON1 = 0x1F;				// AN8 to AN12 Digital I/O
+        ANCON0 = 0xFF;              // AN0 to AN7  Digital I/O
+        ANCON1 = 0x1F;              // AN8 to AN12 Digital I/O
 
     #endif
 }
@@ -181,7 +195,7 @@ void IO_digital(void)
 // NB2 : pins must be explicitly reconfigured as digital I/O when used
 //       with a PPS
 
-#if defined(__16F1459)  || \
+#if defined(__16F1459)  || defined(__16F1708)  || \
     defined(__18f26j50) || defined(__18f46j50) || \
     defined(__18f27j53) || defined(__18f47j53)
     
@@ -192,17 +206,26 @@ void IO_remap(void)
         //bit 7 CLKRSEL: Pin Selection bit
         //1 = CLKR function is on RC3
         //0 = CLKR function is on RA4
-        APFCONbits.CLKRSEL = 1;                         // RC3
+        //APFCONbits.CLKRSEL = 1;                         // RC3
+
+        //bit 5 SSSEL: Pin Selection bit
+        //1 = SS function is on RA4
+        //0 = SS function is on RC2
+        //APFCONbits.SDOSEL = 0;                          // RC2
 
         //bit 5 SSSEL: Pin Selection bit
         //1 = SS function is on RA3
         //0 = SS function is on RC6
-        APFCONbits.SSSEL = 0;                           // RC6
+        //APFCONbits.SSSEL = 0;                           // RC6
 
         //bit 3 T1GSEL: Pin Selection bit
         //1 = T1G function is on RA3
         //0 = T1G function is on RA4
-        APFCONbits.T1GSEL = 1;                          // RA3
+        //APFCONbits.T1GSEL = 1;                          // RA3
+
+    #elif defined(__16F1708)
+
+        // TODO
 
     #elif defined(__18f26j50) || defined(__18f46j50)
 
@@ -231,9 +254,11 @@ void IO_remap(void)
          * prevent the module from receiving data on the SDI2 pin, as the
          * module uses the SCK2IN signal to latch the received data.
         **/
-        RPINR22 = 5;                    // 2014-20-03 fixed by AG (see above)
-        RPINR21 = 6;                    // RP6 (RB3) <- SDI2
+        
+        //RPINR23 = 3;                    // RP3 (RB0) <- SS2 (Slave mode)
+        RPINR22 = 5;                    // RP5 (RB2) <- SCK2 [2014-20-03 - AG - fixed (see above)]
         RPOR5 = 10;                     // RP5 (RB2) -> SCK2
+        RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR4 = 9;                      // RP4 (RB1) -> SDO2 (func. num. 9)
         //RPOR3 = 12;                     // RP3 (RB0) -> SS2 (SPI DMA Slave Select)
         //#endif
@@ -246,7 +271,7 @@ void IO_remap(void)
         RPOR12 = 18;                    // RP12 (RC1) <- CCP2
                 //P2B      - 19 - ECCP2 Enhanced PWM Output, Channel B
                 //P2C      - 20 - ECCP2 Enhanced PWM Output, Channel C
-                //P2D     - 21 - ECCP2 Enhanced PWM Output, Channel D
+                //P2D      - 21 - ECCP2 Enhanced PWM Output, Channel D
         // RPINR24 = ;                     // PWM Fault Input (FLT0)
         
         //#endif
@@ -259,9 +284,10 @@ void IO_remap(void)
 
     #elif defined(__18f27j53) || defined(__18f47j53)
 
+        //SystemUnlock();
         EECON2 = 0x55;
         EECON2 = 0xAA;
-        PPSCONbits.IOLOCK = 0;			// Turn on PPS Write Protect
+        PPSCONbits.IOLOCK = 0;          // Turn on PPS Write Protect
 
         /**
          * datasheet 18f47j53 p296
@@ -275,15 +301,24 @@ void IO_remap(void)
          * prevent the module from receiving data on the SDI2 pin, as the
          * module uses the SCK2IN signal to latch the received data.
         **/
+        
+        //RPINR23 = 3;                    // RP3 (RB0) <- SS2 (Slave mode)
         RPINR22 = 5;                    // RP5 (RB2) <- SCK2 [2014-20-03 - AG - fixed (see above)]
         RPOR5 = 11;                     // RP5 (RB2) -> SCK2 (func. num. 11)
         RPINR21 = 6;                    // RP6 (RB3) <- SDI2
         RPOR4 = 10;                     // RP4 (RB1) -> SDO2 (func. num. 10)
-   
+
+        #if defined(SERIALUSEPORT2)
+        RPINR16 = 4;                    // RP4 (RB1) <- RX2
+        RPOR3 = 6;                      // RP3 (RB0) -> TX2 (func. num. 6)
+        //RPINR17 = ;                     // EUSART2 Clock Input (CKR2)
+        #endif
+    
+        //SystemLock();
         EECON2 = 0x55;
         EECON2 = 0xAA;
-        PPSCONbits.IOLOCK = 1;			// Turn on PPS Write Protect
-    
+        PPSCONbits.IOLOCK = 1;          // Turn on PPS Write Protect
+
     #endif
 }
 #endif // defined(__18f26j50) || defined(__18f46j50) ...

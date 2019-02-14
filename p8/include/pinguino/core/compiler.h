@@ -1,7 +1,7 @@
 /*	----------------------------------------------------------------------------
 	FILE:			compiler.h
 	PROJECT:		pinguino
-	PURPOSE:		compatibilty helper for SDC and XC8
+	PURPOSE:		compatibilty helper for SDCC and XC8
 	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
 	FIRST RELEASE:	26 Jun. 2015
 	LAST RELEASE:	26 Jun. 2015
@@ -22,9 +22,11 @@
 	--------------------------------------------------------------------------*/
 
 #ifndef __COMPILER_H
-    #define __COMPILER_H
+#define __COMPILER_H
 
     #ifdef __XC8__
+
+        #pragma warning disable 1496 // disable warnings when using va_arg and va_start arithmetic 
 
         #include <xc.h>
 
@@ -39,6 +41,9 @@
         #endif
         #ifdef __18F4455
             #define __18f4455
+        #endif
+        #ifdef __18F25K22
+            #define __18f25k22
         #endif
         #ifdef __18F2550
             #define __18f2550
@@ -75,23 +80,65 @@
 
         // XC8 bug ? We must declare at least one variable in the section
         // or the linker complains
-        #if !defined(__USB__) && !defined(__USBCDC) && !defined(__USBBULK)
+        #if !defined(__USB__) && !defined(__USBCDC__) && !defined(__USBBULK)
         volatile unsigned char __section("usbram5") __dummy__;
         #endif
 
     #else
 
-        /*
-        #if SDCC < 320
-            #error "*******************************************"
-            #error "*          Outdated SDCC version          *"
-            #error "* try to update to version 3.2.0 or newer *"
-            #error "*******************************************"
-        #endif
-        */
-        
         #include <pic18fregs.h>
 
+    #endif
+
+
+    #ifdef _16F1459
+        #define __16f1459
+        #define PROC_NAME      "16F1459"
+    #endif
+    #ifdef __18f13k50
+        #define PROC_NAME      "18F13K50"
+    #endif
+    #ifdef __18f14k50
+        #define PROC_NAME      "18F14K50"
+    #endif
+    #ifdef __18f2455
+        #define PROC_NAME      "18F2455"
+    #endif
+    #ifdef __18f4455
+        #define PROC_NAME      "18F4455"
+    #endif
+    #ifdef __18f25k22
+        #define PROC_NAME      "18F25K22"
+    #endif
+    #ifdef __18f2550
+        #define PROC_NAME      "18F2550"
+    #endif
+    #ifdef __18f4550
+        #define PROC_NAME      "18F4550"
+    #endif
+    #ifdef __18f25k50
+        #define PROC_NAME      "18F25K50"
+    #endif
+    #ifdef __18f45k50
+        #define PROC_NAME      "18F45K50"
+    #endif
+    #ifdef __18f26j50
+        #define PROC_NAME      "18F26J50"
+    #endif
+    #ifdef __18f46j50
+        #define PROC_NAME      "18F46J50"
+    #endif
+    #ifdef __18f26j53
+        #define PROC_NAME      "18F26J53"
+    #endif
+    #ifdef __18f46j53
+        #define PROC_NAME      "18F46J53"
+    #endif
+    #ifdef __18f27j53
+        #define PROC_NAME      "18F27J53"
+    #endif
+    #ifdef __18f47j53
+        #define PROC_NAME      "18F47J53"
     #endif
 
 #endif /* __COMPILER_H */

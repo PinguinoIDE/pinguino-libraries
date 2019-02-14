@@ -34,64 +34,90 @@
     Display interfaces
     ------------------------------------------------------------------*/
 
-    #define SSD1306_PMP                 1<<0    // Parallel port
-    
-    #define SSD1306_I2C                 1<<1
-    #define SSD1306_6800                1<<2
-    #define SSD1306_8080                1<<3    // 
-    #define SSD1306_SPI3                1<<4
-    #define SSD1306_SPI4                1<<5
+#if defined(SSD1306USEPMP6800) || defined(SSD1306USEPMP8080)
+#if defined(__18f46j53) || defined(__18f47j53) || defined(__PIC32MX__)
+    #include <pmp.h>
+    #define SSD1306_PMP6800             1    // Parallel port
+    #define SSD1306_PMP8080             2    // Parallel port
+#endif
+#endif
+
+#if defined(SSD1306USEPORT6800) || defined(SSD1306USEPORT8080)
+    #define SSD1306_PORT6800            1
+    #define SSD1306_PORT8080            2 
+#endif
+
+#if defined(SSD1306USEI2C1) || defined(SSD1306USEI2C2)
+    #include <i2c.h>
+    #define SSD1306_I2C1                I2C1
+    #define SSD1306_I2C2                I2C2
+#endif
+
+#if defined(SSD1306USESPISW) ||defined(SSD1306USESPI1) ||defined(SSD1306USESPI2)
+    #include <spi.h>
+    #define SSD1306_SPISW               SPISW
+    #define SSD1306_SPI1                SPI1
+    #define SSD1306_SPI2                SPI2
+    #ifdef __PIC32MX__
+    #define SSD1306_SPI3                SPI3
+    #define SSD1306_SPI4                SPI4
+    #endif
+#endif
 
 /**	--------------------------------------------------------------------
     Display sizes
     ------------------------------------------------------------------*/
 
-    #define SSD1306_128X32              1<<6
-    #define SSD1306_128X64              1<<7
+    //#define SSD1306_128X32              1
+    #define SSD1306_128X64              2
     
 /**	--------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
 
-    #define SSD1306_SETCONTRAST 0x81
+    #define SSD1306_CMD_SINGLE          0x80
+    #define SSD1306_CMD_STREAM          0x00
+    #define SSD1306_DATA_STREAM         0x40
+
+    #define SSD1306_SETCONTRAST         0x81
     #define SSD1306_DISPLAYALLON_RESUME 0xA4
-    #define SSD1306_DISPLAYALLON 0xA5
-    #define SSD1306_NORMALDISPLAY 0xA6
-    #define SSD1306_INVERTDISPLAY 0xA7
-    #define SSD1306_DISPLAYOFF 0xAE
-    #define SSD1306_DISPLAYON 0xAF
+    #define SSD1306_DISPLAYALLON        0xA5
+    #define SSD1306_NORMALDISPLAY       0xA6
+    #define SSD1306_INVERTDISPLAY       0xA7
+    #define SSD1306_DISPLAYOFF          0xAE
+    #define SSD1306_DISPLAYON           0xAF
 
-    #define SSD1306_SETDISPLAYOFFSET 0xD3
-    #define SSD1306_SETCOMPINS 0xDA
+    #define SSD1306_SETDISPLAYOFFSET    0xD3
+    #define SSD1306_SETCOMPINS          0xDA
 
-    #define SSD1306_SETVCOMDETECT 0xDB
+    #define SSD1306_SETVCOMDETECT       0xDB
 
-    #define SSD1306_SETDISPLAYCLOCKDIV 0xD5
-    #define SSD1306_SETPRECHARGE 0xD9
+    #define SSD1306_SETDISPLAYCLOCKDIV  0xD5
+    #define SSD1306_SETPRECHARGE        0xD9
 
-    #define SSD1306_SETMULTIPLEX 0xA8
+    #define SSD1306_SETMULTIPLEX        0xA8
 
-    #define SSD1306_SETLOWCOLUMN 0x00
-    #define SSD1306_SETHIGHCOLUMN 0x10
+    #define SSD1306_SETLOWCOLUMN        0x00
+    #define SSD1306_SETHIGHCOLUMN       0x10
 
-    #define SSD1306_SETSTARTLINE 0x40
+    #define SSD1306_SETSTARTLINE        0x40
 
-    #define SSD1306_MEMORYMODE 0x20
+    #define SSD1306_MEMORYMODE          0x20
 
-    #define SSD1306_COMSCANINC 0xC0
-    #define SSD1306_COMSCANDEC 0xC8
+    #define SSD1306_COMSCANINC          0xC0
+    #define SSD1306_COMSCANDEC          0xC8
 
-    #define SSD1306_SEGREMAP 0xA0
-    #define SSD1306_SEGREMAPINV 0xA1
+    #define SSD1306_SEGREMAP            0xA0
+    #define SSD1306_SEGREMAPINV         0xA1
 
-    #define SSD1306_CHARGEPUMP 0x8D
+    #define SSD1306_CHARGEPUMP          0x8D
 
-    #define SSD1306_EXTERNALVCC 0x1
-    #define SSD1306_SWITCHCAPVCC 0x2
+    #define SSD1306_EXTERNALVCC         0x1
+    #define SSD1306_SWITCHCAPVCC        0x2
 
     // Scrolling #defines
-    #define SSD1306_ACTIVATE_SCROLL 0x2F
-    #define SSD1306_DEACTIVATE_SCROLL 0x2E
+    #define SSD1306_ACTIVATE_SCROLL     0x2F
+    #define SSD1306_DEACTIVATE_SCROLL   0x2E
     #define SSD1306_SET_VERTICAL_SCROLL_AREA 0xA3
     #define SSD1306_RIGHT_HORIZONTAL_SCROLL 0x26
     #define SSD1306_LEFT_HORIZONTAL_SCROLL 0x27
@@ -102,28 +128,28 @@
     Display constants
     ------------------------------------------------------------------*/
 
-    #define DISPLAY_WIDTH 128
-    #define DISPLAY_WIDTH_BITS 7
-    #define DISPLAY_WIDTH_MASK 0x7f
+    #define DISPLAY_WIDTH               128
+    #define DISPLAY_WIDTH_BITS          7
+    #define DISPLAY_WIDTH_MASK          0x7F
     
-    #if (DISPLAY & SSD1306_128X64)
-        #define DISPLAY_ROWS 8
-        #define DISPLAY_ROW_BITS 3
-        #define DISPLAY_ROW_MASK 0x07
+    #ifdef SSD1306_128X64
+        #define DISPLAY_ROWS            8
+        #define DISPLAY_ROW_BITS        3
+        #define DISPLAY_ROW_MASK        0x07
     #else // SSD1306_128X32
-        #define DISPLAY_ROWS 4
-        #define DISPLAY_ROW_BITS 2
-        #define DISPLAY_ROW_MASK 0x03
+        #define DISPLAY_ROWS            4
+        #define DISPLAY_ROW_BITS        2
+        #define DISPLAY_ROW_MASK        0x03
     #endif
 
-    #define DISPLAY_HEIGHT  (DISPLAY_ROWS * 8)
-    #define DISPLAY_SIZE    (DISPLAY_WIDTH * DISPLAY_ROWS)
-    #define PORTRAIT        100
-    #define LANDSCAPE       101
+    #define DISPLAY_HEIGHT              (DISPLAY_ROWS * 8)
+    #define DISPLAY_SIZE                (DISPLAY_WIDTH * DISPLAY_ROWS)
+    #define PORTRAIT                    100
+    #define LANDSCAPE                   101
 
     // only 2 colors available on these type of screen
-    #define Blue            0x001F
-    #define Yellow          0xFFE0
+    #define Blue                        0x001F
+    #define Yellow                      0xFFE0
 
 /**	--------------------------------------------------------------------
     Typedef.
@@ -185,81 +211,105 @@
     Prototypes
     ------------------------------------------------------------------*/
 
-#if   (DISPLAY & SSD1306_6800) || (DISPLAY & SSD1306_8080)
-    #if   (DISPLAY & SSD1306_PMP)
-        void SSD1306_init(u8 rst, u16 dc);
-    #else
-        void SSD1306_init(u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7);
-    #endif
-#elif (DISPLAY & SSD1306_SPI3) || (DISPLAY & SSD1306_SPI4)
-    // TODO
-#elif (DISPLAY & SSD1306_I2C)
-        void SSD1306_init(u8 addr);
-#endif
+void SSD1306_init(u16, ...);
+void SSD1306_sendCommand(u16, u8);
+void SSD1306_sendData(u16, u8);
+void SSD1306_displayOff(u16);
+void SSD1306_displayOn(u16);
+void SSD1306_sleep(u16);
+void SSD1306_wake(u16);
+void SSD1306_setInverse(u16, u8);
+void SSD1306_setDisplayOffset(u16, u8);
+void SSD1306_setContrast(u16, u8);
+void SSD1306_setDisplayStartLine(u16, u8);
+void SSD1306_setSegmentRemap(u16, u8);
+void SSD1306_setMultiplexRatio(u16, u8);
+void SSD1306_setComOutputScanDirection(u16, u8);
+void SSD1306_setComPinsHardwareConfiguration(u16, u8, u8);
+void SSD1306_startHorizontalScroll(u16, u8, u8, u8, u16); 
+void SSD1306_startVerticalAndHorizontalScroll(u16, u8, u8, u8, u16, u8);
+void SSD1306_stopScroll(u16);
+void SSD1306_pamSetStartAddress(u16, u8);
+void SSD1306_setMemoryAddressingMode(u16, u8);
+void SSD1306_hvSetColumnAddress(u16, u8, u8);
+void SSD1306_hvSetPageAddress(u16, u8, u8);
+void SSD1306_pamSetPageStart(u16, u8);
+void SSD1306_setDisplayClockRatioAndFrequency(u16, u8, u8);
+void SSD1306_setPrechargePeriod(u16, u8, u8);
+void SSD1306_setVcomhDeselectLevel(u16, u8);
+void SSD1306_nop(u16);
+void SSD1306_setChargePumpEnable(u16, u8);
+void SSD1306_refresh(u16);
+void SSD1306_clearScreen(u16);
+void SSD1306_scrollRight(u16);
+void SSD1306_scrollLeft(u16);
+void SSD1306_scrollUp(u16);
+void SSD1306_scrollDown(u16);
+void SSD1306_setFont(u16, const u8 *);
+void SSD1306_printChar(u16, u8);
+void SSD1306_printChar2(u8);
+void SSD1306_print(u16, u8 *);
+void SSD1306_println(u16, u8 *);
+void SSD1306_printNumber(u16, long, u8);
+void SSD1306_printFloat(u16, float, u8);
+void SSD1306_printf(u16, const u8 *, ...);
+void SSD1306_setCursor(u16, u8, u8);
+void SSD1306_drawPixel(u16, u8, u8);
+void SSD1306_clearPixel(u16, u8, u8);
+u8 SSD1306_getColor(u16, u8, u8);
+void SSD1306_drawBitmap(u16, u16, u16, u16, u16, u16*);
+void drawPixel(u16, u16, u16);
+void SSD1306_drawCircle(u16, u16, u16, u16);
+void SSD1306_fillCircle(u16, u16, u16, u16);
+void SSD1306_drawLine(u16, u16, u16, u16, u16);
 
-void SSD1306_sendCommand(u8 _cmd);
-void SSD1306_sendData(u8 _data);
-void SSD1306_displayOff();
-void SSD1306_displayOn();
-void SSD1306_sleep();
-void SSD1306_wake();
-void SSD1306_setInverse(u8 value);
-void SSD1306_setDisplayOffset(u8 value);
-void SSD1306_setContrast(u8 value);
-void SSD1306_setDisplayStartLine(u8 value);
-void SSD1306_setSegmentRemap(u8 value);
-void SSD1306_setMultiplexRatio(u8 value);
-void SSD1306_setComOutputScanDirection(u8 value);
-void SSD1306_setComPinsHardwareConfiguration(u8 sequential, u8 lr_remap);
-void SSD1306_startHorizontalScroll(u8 direction, u8 start, u8 end, u16 interval); 
-void SSD1306_startVerticalAndHorizontalScroll(u8 direction, u8 start, u8 end, u16 interval, u8 vertical_offset);
-void SSD1306_stopScroll();
-void SSD1306_pamSetStartAddress(u8 address);
-void SSD1306_setMemoryAddressingMode(u8 mode);
-void SSD1306_hvSetColumnAddress(u8 start, u8 end);
-void SSD1306_hvSetPageAddress(u8 start, u8 end);
-void SSD1306_pamSetPageStart(u8 address);
-void SSD1306_setDisplayClockRatioAndFrequency(u8 ratio, u8 frequency);
-void SSD1306_setPrechargePeriod(u8 phase1, u8 phase2);
-void SSD1306_setVcomhDeselectLevel(u8 level);
-void SSD1306_nop();
-void SSD1306_setChargePumpEnable(u8 enable);
-void SSD1306_refresh();
-void SSD1306_clearScreen(void);
-void SSD1306_scrollRight();
-void SSD1306_scrollLeft();
-void SSD1306_scrollUp();
-void SSD1306_scrollDown();
-void SSD1306_setFont(const u8 *font);
-void SSD1306_printChar(u8 c);
-void SSD1306_print(u8 *string);
-void SSD1306_println(u8 *string);
-void SSD1306_printNumber(long value, u8 base);
-void SSD1306_printFloat(float number, u8 digits);
-void SSD1306_printf(const u8 *fmt, ...);
-void SSD1306_setCursor(u8 x, u8 y);
-void SSD1306_drawPixel(u8 x, u8 y);
-void SSD1306_clearPixel(u8 x, u8 y);
-u8 SSD1306_getColor(u8 x, u8 y);
-void SSD1306_drawBitmap(u16 x, u16 y, u16 w, u16 h, u16* bitmap);
-void drawPixel(u16 x, u16 y);
-void SSD1306_drawCircle(u16 x, u16 y, u16 radius);
-void SSD1306_fillCircle(u16 x, u16 y, u16 radius);
-void SSD1306_drawLine(u16 x0, u16 y0, u16 x1, u16 y1);
+/**	--------------------------------------------------------------------
+    Basic functions
+    ------------------------------------------------------------------*/
 
-#define SSD1306_getFontWidth()  (SSD1306.font.width)
-#define SSD1306_getFontHeight() (SSD1306.font.height)
-#define SSD1306_invertDisplay() SSD1306_sendCommand(SSD1306_INVERTDISPLAY)
-#define SSD1306_normalDisplay() SSD1306_sendCommand(SSD1306_NORMALDISPLAY)
+#define SSD1306_displayOff(module)                  SSD1306_sendCommand(module, 0xAE)
+#define SSD1306_displayOn(module)                   SSD1306_sendCommand(module, 0xAF)
+#define SSD1306_sleep(module)                       SSD1306_sendCommand(module, 0xAE)
+#define SSD1306_wake(module)                        SSD1306_sendCommand(module, 0xAF)
+#define SSD1306_setInverse(module, value)           SSD1306_sendCommand(module, value ? 0xA7 : 0xA6)
+#define SSD1306_setDisplayOffset(module, value) {   SSD1306_sendCommand(module, 0xD3); SSD1306_sendCommand(module, value & 0x3F);}
+#define SSD1306_setContrast(module, value)      {   SSD1306_sendCommand(module, 0x81); SSD1306_sendCommand(module, value);}
+#define SSD1306_setDisplayStartLine(module, value)  SSD1306_sendCommand(module, 0x40 | value)
+#define SSD1306_setSegmentRemap(module, value)      SSD1306_sendCommand(module, value ? 0xA1 : 0xA0)
+#define SSD1306_setMultiplexRatio(module, value){   SSD1306_sendCommand(module, 0xA8); SSD1306_sendCommand(module, value & 0x3F);}
+#define SSD1306_setComOutputScanDirection(module, value) SSD1306_sendCommand(module, value ? 0xC8 : 0xC0)
+#define SSD1306_setComPinsHardwareConfiguration(module, sequential, lr_remap) {SSD1306_sendCommand(module, 0xDA); SSD1306_sendCommand(module, 0x02 | ((sequential & 1) << 4) | ((lr_remap & 1) << 5));}
+#define SSD1306_pamSetStartAddress(module, address){SSD1306_sendCommand(module, address & 0x0F); SSD1306_sendCommand(module, (address << 4) & 0x0F);}
+#define SSD1306_setMemoryAddressingMode(module, mode){SSD1306_sendCommand(module, 0x20); SSD1306_sendCommand(module, mode & 0x3);}
+#define SSD1306_hvSetColumnAddress(module, start, end){SSD1306_sendCommand(module, 0x21); SSD1306_sendCommand(module, start & DISPLAY_WIDTH_MASK); SSD1306_sendCommand(module, end & DISPLAY_WIDTH_MASK);}
+#define SSD1306_hvSetPageAddress(module, start, end){ SSD1306_sendCommand(module, 0x22); SSD1306_sendCommand(module, start & DISPLAY_ROW_MASK); SSD1306_sendCommand(module, end & DISPLAY_ROW_MASK);}
+#define SSD1306_pamSetPageStart(module, address)    SSD1306_sendCommand(module, 0xB0 | (address & DISPLAY_ROW_MASK))
+#define SSD1306_setDisplayClockRatioAndFrequency(module, ratio, frequency) {SSD1306_sendCommand(module, 0xD5); SSD1306_sendCommand(module, (ratio & 0x0F) | ((frequency & 0x0F) << 4));}
+#define SSD1306_setPrechargePeriod(module, phase1, phase2){SSD1306_sendCommand(module, 0xD9); SSD1306_sendCommand(module, (phase1 & 0x0F) | ((phase2 & 0x0F ) << 4));}
+#define SSD1306_setVcomhDeselectLevel(module, level){SSD1306_sendCommand(module, 0xDB); SSD1306_sendCommand(module, (level & 0x03) << 4);}
+#define SSD1306_nop(module)                         SSD1306_sendCommand(module, 0xE3)
+#define SSD1306_setChargePumpEnable(module, enable){SSD1306_sendCommand(module, 0x8D); SSD1306_sendCommand(module, enable ? 0x14 : 0x10);}
+#define SSD1306_getFontWidth(m)  (SSD1306.font.width)
+#define SSD1306_getFontHeight(m) (SSD1306.font.height)
+#define SSD1306_invertDisplay(m) SSD1306_sendCommand(m, SSD1306_INVERTDISPLAY)
+#define SSD1306_normalDisplay(m) SSD1306_sendCommand(m, SSD1306_NORMALDISPLAY)
 
 /**	--------------------------------------------------------------------
     Globals
     ------------------------------------------------------------------*/
 
+// One display at a time
 lcd_t SSD1306;
 
-//extern u8 SSD1306_buffer[(DISPLAY_WIDTH * DISPLAY_ROWS)];
-u8* SSD1306_bufferptr;
+/*
+#if defined(__18f47j53)
+// SPISW, SPI1, SPI2, I2C, PMP6800, PMP8080, PORTD
+lcd_t SSD1306[7];
+#else
+// SPISW, SPI1, I2C, PMP6800, PMP8080, PORTD
+lcd_t SSD1306[6];
+#endif
+*/
 
 /**	--------------------------------------------------------------------
     Pin Assignment
@@ -287,51 +337,23 @@ u8* SSD1306_bufferptr;
 
     //#define swap(i, j) {int t = i; i = j; j = t;}
 
-    #if (DISPLAY & SSD1306_8080) || (DISPLAY & SSD1306_6800)
-
-        #if (DISPLAY & SSD1306_PMP)
-
-            u8 RES;
-            u16 DC;
-        
-        #else
-
-            u8 RES;
-            u16 CS, DC, RW, E, RD;
-            u8 D0, D1, D2, D3, D4, D5, D6, D7;
-
-            #define DATA		LATD    // RB0 to RB7
-            #define dDATA		TRISD
-
-            #define CMD			LATB
-            #define dCMD		TRISB   // RS, WR, RD, CS and RST
-
-            #define CS          2       // Chip Select
-            #define RST         3       // Reset
-            #define DC          4       // Command / Data
-            #define WR          5       // Write (8080) or Read / Write (6800)
-            #define RD          6       // Read (8080)
-            #define E           6       // Enable (6800)
-
-        #endif
-
-        #define Low(x)		BitClear(CMD,x)
-        #define High(x)		BitSet(CMD,x)
-        /*
-        #define Low(x)      do { __asm bcf _LATB,x  __endasm; } while(0)
-        #define High(x)     do { __asm bsf _LATB,x  __endasm; } while(0)
-        #define Output(x)   do { __asm bcf _TRISB,x __endasm; } while(0)
-        #define Input(x)    do { __asm bsf _TRISB,x __endasm; } while(0)
-        */
-        
-    #elif (DISPLAY & SSD1306_SPI3) || (DISPLAY & SSD1306_SPI4)
-    
-        // TODO
-    
-    #elif (DISPLAY & SSD1306_I2C)
-
-        u8 SSD1306_i2c_address;
-
+    #ifndef __PIC32MX__
+    #define Low(x)              digitalwrite(x, LOW)
+    #define High(x)             digitalwrite(x, HIGH)
+    #else
+    #define Low(x)              low(x)
+    #define High(x)             high(x)
     #endif
+    /*
+    #define Low(x)      do { __asm bcf _LATB,x  __endasm; } while(0)
+    #define High(x)     do { __asm bsf _LATB,x  __endasm; } while(0)
+    #define Output(x)   do { __asm bcf _TRISB,x __endasm; } while(0)
+    #define Input(x)    do { __asm bsf _TRISB,x __endasm; } while(0)
+    */
+
+    #define DATA                LATD    // RD0 to RD7
+    #define dDATA               TRISD
+    #define CMD                 LATB    // RB0 to RB7
+    #define dCMD                TRISB
 
 #endif /* __SSD1306_H */

@@ -1,0 +1,6 @@
+KeypadState KeypadState#include <keypad.c>
+Keypad.init Keypad_init#include <keypad.c>
+Keypad.getKey Keypad_getKey#include <keypad.c>
+Keypad.getStatus Keypad_getStatus#include <keypad.c>
+Keypad.setDebounceTime Keypad_setDebounceTime#include <keypad.c>
+Keypad.setHoldTime Keypad_setHoldTime#include <keypad.c>

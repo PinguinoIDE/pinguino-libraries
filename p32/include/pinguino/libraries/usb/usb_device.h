@@ -24,12 +24,15 @@
  * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
  * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
  */
+ 
 #ifndef USBDEVICE_H
 #define USBDEVICE_H
 
 #include <typedef.h>
 #include <usb/usb_ch9.h>
 #include <usb/usb_hal_pic32.h>
+
+/*--------------------------------------------------------------------*/
 
 #if defined(__USBHID__)
 
@@ -193,7 +196,7 @@ typedef union __attribute__ ((packed)) _CTRL_TRF_SETUP
     {
         unsigned :8;
         unsigned :8;
-        u8 bDevADR;		//Device Address 0-127
+        u8 bDevADR;          //Device Address 0-127
         u8 bDevADRH;         //Must equal zero
         unsigned :8;
         unsigned :8;
@@ -514,25 +517,24 @@ void usb_configure_endpoint (u8 ep, u8 dir);
 
 /* Section: MACROS */
 
-#define BCD(x)   ((( x / 10 ) << 4) | ( x % 10 ))
-#define DESC_CONFIG_BYTE(a) (a)
-#define DESC_CONFIG_WORD(a) (a&0xFF),((a>>8)&0xFF)
-#define DESC_CONFIG_DWORD(a) (a&0xFF),((a>>8)&0xFF),((a>>16)&0xFF),((a>>24)&0xFF)
-#define usb_handle_busy(handle) (handle != 0 && handle->STAT.UOWN)
-#define usb_handle_get_length(handle) (handle->CNT)
-#define usb_handle_get_addr(handle) (handle->ADR)
-#define usb_ep0_set_source_ram(src) usb_in_pipe.pSrc.bRam = src
-#define usb_ep0_set_source_rom(src) usb_in_pipe.pSrc.bRom = src
-#define usb_ep0_transmit(options) usb_in_pipe.info.Val = options | USB_INPIPES_BUSY
-#define usb_ep0_set_size(size) usb_in_pipe.wCount = size
+#define BCD(x)                                  ((( x / 10 ) << 4) | ( x % 10 ))
+#define DESC_CONFIG_BYTE(a)                     (a)
+#define DESC_CONFIG_WORD(a)                     (a&0xFF),((a>>8)&0xFF)
+#define DESC_CONFIG_DWORD(a)                    (a&0xFF),((a>>8)&0xFF),((a>>16)&0xFF),((a>>24)&0xFF)
+#define usb_handle_busy(handle)                 (handle != 0 && handle->STAT.UOWN)
+#define usb_handle_get_length(handle)           (handle->CNT)
+#define usb_handle_get_addr(handle)             (handle->ADR)
+#define usb_ep0_set_source_ram(src)             usb_in_pipe.pSrc.bRam = src
+#define usb_ep0_set_source_rom(src)             usb_in_pipe.pSrc.bRom = src
+#define usb_ep0_transmit(options)               usb_in_pipe.info.Val = options | USB_INPIPES_BUSY
+#define usb_ep0_set_size(size)                  usb_in_pipe.wCount = size
 #define usb_ep0_send_ram_ptr(src,size,options)  {usb_ep0_set_source_ram(src);usb_ep0_set_size(size);usb_ep0_transmit(options | USB_EP0_RAM);}
 #define usb_ep0_send_rom_ptr(src,size,options)  {usb_ep0_set_source_rom(src);usb_ep0_set_size(size);usb_ep0_transmit(options | USB_EP0_ROM);}
-#define usb_tx_one_packet(ep, data, len)    usb_transfer_one_packet(ep, IN_TO_HOST, data, len)
-#define usb_rx_one_packet(ep, data, len)    usb_transfer_one_packet(ep, OUT_FROM_HOST, data, len)
-
-#define usb_get_remote_wakeup_status() usb_remote_wakeup
-#define usb_get_device_state() usb_device_state
-//#define usb_is_device_suspended() (U1PWRC & _U1PWRC_USUSPEND_MASK)
+#define usb_tx_one_packet(ep, data, len)        usb_transfer_one_packet(ep, IN_TO_HOST, data, len)
+#define usb_rx_one_packet(ep, data, len)        usb_transfer_one_packet(ep, OUT_FROM_HOST, data, len)
+#define usb_get_remote_wakeup_status()          usb_remote_wakeup
+#define usb_get_device_state()                  usb_device_state
+#define usb_is_device_suspended()               (U1PWRC & _U1PWRC_USUSPEND_MASK)
 
 #if (USB_PING_PONG_MODE == USB_PING_PONG__FULL_PING_PONG)
     #define USB_NEXT_EP0_OUT_PING_PONG 0x0008

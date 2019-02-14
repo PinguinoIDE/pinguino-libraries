@@ -1,12 +1,11 @@
 /*  --------------------------------------------------------------------
     FILE:           audio.c
-    PROJECT:        pinguino
-    PURPOSE:        playing sound
-    PROGRAMER:      regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:   5 Jan. 2010
-    LAST RELEASE:   24 Feb. 2015
+    PROJECT:        Pinguino
+    PURPOSE:        Functions to play sounds
+    PROGRAMER:      Régis Blanchot <rblanchot@gmail.com>
     --------------------------------------------------------------------
     CHANGELOG:
+    *  5 Jan. 2010  Régis Blanchot - first release
     * 15 Feb. 2015  Régis Blanchot - added Sine Wave Generator
     * 16 Feb. 2015  Régis Blanchot - added Audio.init(SAMPLERATE)
     * 17 Feb. 2015  Régis Blanchot - added Direct Digital Synthesis
@@ -36,34 +35,46 @@
 
 #ifndef __AUDIO_C
     #define __AUDIO_C
-
     #define __AUDIO__
 
+    #include <typedef.h>
+    #include <pin.h>            // CCPx pin definitions
+    #include <audio.h>
+    #ifndef __PIC32MX__
+    #include <delayms.c>
+    #include <digitalp.c>
+    #include <oscillator.c>     // System_getPeripheralFrequency
+    #else
     #include <p32xxxx.h>        // PIC32 registers
-    #include <typedef.h>        // Pinguino's type (u8, u16, u32, ...)
-    #include <pin.h>            // Pinguino's pin definitions
-    #include <audio.h>          // Notes frequencies
     #include <delay.c>
     #include <digitalw.c>
     #include <system.c>         // getPeripheralClock
     #include <interrupt.c>      // interrupts routines
+    #endif
     
+    // PWM mode
+    #define PWMMODE         0b00001100
+
     // PWM registers pointers
+    #ifndef __PIC32MX__
+    volatile u8 *pCCPxCON;               // CCPxCON
+    volatile u8 *pCCPRxL;                // CCPRxL
+    #else
     volatile u16* pOCxCON;
     volatile u16* pOCxR;
     volatile u16* pOCxRS;
+    #endif
 
     // Global variables
-    //volatile u32 gDuty50;
-    volatile u32 gPeriodPlus1;
+    volatile u16 gPeriodPlus1;  // u32 ?
     volatile u16 gPhase = 0;    // 16-bit accumulator
     volatile u16 gFreq1Inc = 0;
     volatile u16 gFreq2Inc = 0;
-             u32 gSampleRate;
+             u16 gSampleRate;  // u32 ?
              u8  gStaccato = true;
 
-    // Duty cycle waveform table
-    volatile const u16 sine64[64] = {
+    // Waveform table
+    const u8 sine64[64] = {
         50,54,59,64,68,73,77,81,85,88,91,93,95,97,98,99,99,99,98,97,95,
         93,91,88,85,81,77,73,68,64,59,54,50,45,40,35,31,26,22,18,14,11,
         8,6,4,2,1,0,0,0,1,2,4,6,8,11,14,18,22,26,31,35,40,45 };
@@ -71,32 +82,37 @@
     const u32 gPrescaler[8] = { 1, 2, 4, 8, 16, 32, 64, 256 };
 
     // Prototypes
-    void Audio_init(u32 samplerate);
-    void Audio_tone(u8 pin, u32 freq, u32 duration);
-    void Audio_DTMF(u8 pin, u32 freq1, u32 freq2, u32 duration);
+    void Audio_init(u16 samplerate);
+    void Audio_tone(u8 pin, u16 freq, u16 duration);
+    void Audio_DTMF(u8 pin, u16 freq1, u16 freq2, u16 duration);
     void Audio_noTone(u8 pin);
 
 /*  --------------------------------------------------------------------
     Audio_init
     --------------------------------------------------------------------
-    @descr :            Generate a sample PWM period signal
-                        Enable TIMER2 interrupt
-    @param :            Samplerate frequency in Hertz
-    @note  :            This function computes the best values for the 
-                        TIMER2 prescaler and PR2 register depending on
-                        current Peripheral Frequency.
-    @return:            none
-    @usage :            Audio.init(CDQUALITY);
+    @descr :    Generate a sample PWM period signal
+                Enable TIMER2 interrupt
+    @param :    Samplerate frequency in Hertz
+    @note  :    This function computes the best values for the 
+                TIMER2 prescaler and PR2 register depending on
+                current Peripheral Frequency.
+    @return:    none
+    @usage :    Audio.init(CDQUALITY);
     ------------------------------------------------------------------*/
 
     void Audio_init(u32 samplerate)
     {
         u32 tckps = 0;
-        
+
         gSampleRate = samplerate;
 
-        // TIMER2 period calculation
+        // TIMER2 period (PR2+1) calculation
+        // Timer2 clock input is the peripheral clock (FOSC/4). 
+        #ifndef __PIC32MX__
+        gPeriodPlus1 = System_getPeripheralFrequency() / samplerate;
+        #else
         gPeriodPlus1 = GetPeripheralClock() / samplerate;
+        #endif
 
         // The PWM period must not exceed the resolution width
         while ((gPeriodPlus1 > PWMRESOLUTION) & (tckps <= 8))
@@ -263,31 +279,61 @@
             case 60: pOCxCON = (u16*)&OC5CON; pOCxR = (u16*)&OC5R; pOCxRS = (u16*)&OC5RS; break;
 
             ///*********************************************************
-            #else
-            
-                #error "Your board is not supported"
+            #elif defined(__16F1459)
             ///*********************************************************
+            
+            case PWM1 : pCCPxCON = &PWM1CON;  pCCPRxL = &PWM1DCL;  break;
+            case PWM2 : pCCPxCON = &PWM2CON;  pCCPRxL = &PWM2DCL;  break;
+
+            ///*********************************************************
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+            ///*********************************************************
+
+            case PWM1 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
+            case PWM2 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
+            case PWM3 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
+            case PWM4 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
+            case PWM5 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
+            case PWM6 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
+            case PWM7 : pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
+
+            ///*********************************************************
+            #else
+            ///*********************************************************
+
+            case PWM1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
+            case PWM2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
 
             #endif
         }
 
-        // 16-bit accumulator
+        // 16-bit accumulator's increment value.
+        // the accumulator will go back to zero after (gSampleRate/freq) ticks
         gPhase = 0;
-        
-        // 16-bit accumulator's increment value = 65536 / (gSampleRate/freq)
         gFreq1Inc = 65536 * freq / gSampleRate;
 
+        #ifndef __PIC32MX__
+        *pCCPxCON = PWMMODE;
+        pinmode(pin, OUTPUT);   // PWM pin as OUTPUT
+        PIE1bits.TMR2IE = 1;    // enable interrupt
+        #else
         // PWMx On, PWMx pin set automatically as OUTPUT 
         *pOCxCON = PWMMODE;
-        
+        #endif
+
         Delayms(duration);
         
         if (gStaccato)
+            #ifndef __PIC32MX__
+            *pCCPxCON = 0;      // staccato
+            #else
             *pOCxCON = 0;      // staccato (PWMx Off)
+            #endif
     }
 
 /*  --------------------------------------------------------------------
-    dualTone (DTMF - dual-tone multi-frequency)
+    Audio_dualTone (DTMF - dual-tone multi-frequency)
     --------------------------------------------------------------------
     Play sound with a certain frequency for a certain duration
     @param pin:         pin number where buzzer or loudspeaker is connected
@@ -386,33 +432,67 @@
             case 60: pOCxCON = (u16*)&OC5CON; pOCxR = (u16*)&OC5R; pOCxRS = (u16*)&OC5RS; break;
 
             ///*********************************************************
-            #else
-                #error "Your board is not supported"
+            #elif defined(__16F1459)
             ///*********************************************************
+            
+            case PWM1 : pCCPxCON = &PWM1CON;  pCCPRxL = &PWM1DCL;  break;
+            case PWM2 : pCCPxCON = &PWM2CON;  pCCPRxL = &PWM2DCL;  break;
+
+            ///*********************************************************
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+            ///*********************************************************
+
+
+            case PWM1 : pCCPxCON = &CCP4CON;  pCCPRxL = &CCPR4L;  break;
+            case PWM2 : pCCPxCON = &CCP5CON;  pCCPRxL = &CCPR5L;  break;
+            case PWM3 : pCCPxCON = &CCP6CON;  pCCPRxL = &CCPR6L;  break;
+            case PWM4 : pCCPxCON = &CCP7CON;  pCCPRxL = &CCPR7L;  break;
+            case PWM5 : pCCPxCON = &CCP8CON;  pCCPRxL = &CCPR8L;  break;
+            case PWM6 : pCCPxCON = &CCP9CON;  pCCPRxL = &CCPR9L;  break;
+            case PWM7 : pCCPxCON = &CCP10CON; pCCPRxL = &CCPR10L; break;
+
+            ///*********************************************************
+            #else
+            ///*********************************************************
+
+            case PWM1 : pCCPxCON = &CCP1CON;  pCCPRxL = &CCPR1L;  break;
+            case PWM2 : pCCPxCON = &CCP2CON;  pCCPRxL = &CCPR2L;  break;
 
             #endif
         }
 
-        // 16-bit accumulator, will automatically go back to zero
+        // 16-bit accumulator's increment value.
+        // the accumulator will go back to zero after (gSampleRate/freq) ticks
         gPhase = 0;
         // 16-bit accumulator's increment value = 65536 / (gSampleRate/freq)
         gFreq1Inc = 65536 * freq1 / gSampleRate;
         gFreq2Inc = 65536 * freq2 / gSampleRate;
 
+        #ifndef __PIC32MX__
+        *pCCPxCON = PWMMODE;
+        pinmode(pin, OUTPUT);   // PWM pin as OUTPUT
+        PIE1bits.TMR2IE = 1;    // enable interrupt
+        #else
         // PWM On, PWM pin as OUTPUT
         //IntEnable(_TIMER_2_IRQ);  // Enable TIMER2 interrupt
         *pOCxCON = PWMMODE;
-        
+	#endif
+
         Delayms(duration);
         
         if (gStaccato)
+            #ifndef __PIC32MX__
+            *pCCPxCON = 0;      // staccato
+            #else
             *pOCxCON = 0;      // staccato
+	    #endif
     }
 
     #endif // AUDIODTMF
 
 /*  --------------------------------------------------------------------
-    noTone
+    Audio_noTone
     --------------------------------------------------------------------
     @param pin:         pin number where loudspeaker is connected
     
@@ -426,10 +506,17 @@
     {
         // We don't stop TIMER2 interrupt here
         // because user can use more than one PWM at a time
-        //IntDisable(_TIMER_2_IRQ); // Disable TIMER2 interrupt
+        /*
+	#ifndef __PIC32MX__
+        pinmode(pin, INPUT);    // PWM pin as INPUT
+        PIE1bits.TMR2IE = 0;    // disable interrupt 
+        #else
+        IntDisable(_TIMER_2_IRQ); // Disable TIMER2 interrupt
+        #endif
+        */
         TMR2  = 0;
 
-        switch (pin)            // PWM Off
+        switch (pin)            // PWM mode disable
         {
             ///*********************************************************
             #if defined(PIC32_PINGUINO_220)
@@ -510,17 +597,38 @@
             case 60: OC5CON = 0; break;
 
             ///*********************************************************
-            #else
-            
-                #error "Your board is not supported"
+            #elif defined(__16F1459)
             ///*********************************************************
+            
+            case PWM1 : PWM1CON = 0; break;
+            case PWM2 : PWM2CON = 0; break;
+
+            ///*********************************************************
+            #elif defined(__18f26j53) || defined(__18f46j53) || \
+                  defined(__18f27j53) || defined(__18f47j53)
+            ///*********************************************************
+
+            case PWM1 : CCP4CON  = 0; break;
+            case PWM2 : CCP5CON  = 0; break;
+            case PWM3 : CCP6CON  = 0; break;
+            case PWM4 : CCP7CON  = 0; break;
+            case PWM5 : CCP8CON  = 0; break;
+            case PWM6 : CCP9CON  = 0; break;
+            case PWM7 : CCP10CON = 0; break;
+
+            ///*********************************************************
+            #else
+            ///*********************************************************
+
+            case PWM1 : CCP1CON  = 0; break;
+            case PWM2 : CCP2CON  = 0; break;
 
             #endif
         }
     }
 
 /*  --------------------------------------------------------------------
-    staccato
+    Audio_staccato
     --------------------------------------------------------------------
     Separates note from the note that may follow by silence
     @param:             none
@@ -529,7 +637,7 @@
     #define Audio_staccato() { gStaccato = true; }
     
 /*  --------------------------------------------------------------------
-    legato
+    Audio_legato
     --------------------------------------------------------------------
     Plays note with the shortest silence between notes
     @param:             none

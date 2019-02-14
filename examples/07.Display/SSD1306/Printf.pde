@@ -42,22 +42,13 @@
         if SSD1306_SPI4
 **/
 
-#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_8080 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_I2C  | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI3 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI4 | SSD1306_128X64)
-
 /**
     Load one or more fonts and active them with SSD1306.setFont()
 **/
 
-#include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
+#include <fonts/font5x7.h>
+
+const u8 intf = SSD1306_I2C1;
 
 u8 i=0;
 
@@ -65,16 +56,22 @@ void setup()
 {
     //On Pingino 32MX250 USERLED is on pin 13
     //which is also used by the PMP Data bus 
-    //pinMode(USERLED, OUTPUT);
-    SSD1306.init(3, 4);
-    SSD1306.clearScreen();
-    SSD1306.setFont(font6x8);
+    pinMode(USERLED, OUTPUT);
+    // 0x3C<<1|0x00 = 0x78 (0b0111.1000)
+    SSD1306.init(intf, 0x78);
+    SSD1306.clearScreen(intf);
+    SSD1306.setFont(intf, font5x7);
 }
 
 void loop()
 {
-    SSD1306.printf("i=%03d\r\n",i++);
-    SSD1306.refresh();
-    //toggle(USERLED);
+    SSD1306.printf(intf, "i=%03d\r\n",i++);
+    /*
+    SSD1306.print(intf, "i=");
+    SSD1306.printNumber(intf, i++, DEC);
+    SSD1306.print(intf, "\r\n");
+    */
+    SSD1306.refresh(intf);
+    toggle(USERLED);
     delay(100);
 }

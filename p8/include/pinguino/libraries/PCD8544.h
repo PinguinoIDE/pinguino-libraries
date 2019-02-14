@@ -1,57 +1,53 @@
-/*****************************************************************
-    ███████╗ █████╗ ███████╗██╗  ██╗██╗  ██╗██╗      ██████╗██████╗  *
-    ██╔════╝██╔══██╗██╔════╝██║  ██║██║  ██║██║     ██╔════╝██╔══██╗ *
-    █████╗  ╚█████╔╝███████╗███████║███████║██║     ██║     ██║  ██║ *
-    ██╔══╝  ██╔══██╗╚════██║╚════██║╚════██║██║     ██║     ██║  ██║ *
-    ██║     ╚█████╔╝███████║     ██║     ██║███████╗╚██████╗██████╔╝ *
-    ╚═╝      ╚════╝ ╚══════╝     ╚═╝     ╚═╝╚══════╝ ╚═════╝╚═════   *
--------------------------------------------------------Alpha version *
- ******************************************************************
- PCD8544.c :
- * C library for Monochrome Nokia LCD
- * with PCD8544 controler
- * for pinguino boards
+/*  --------------------------------------------------------------------
+    File          : PCD8544.h
+    Project       : Pinguino
+    Description   : Pinguino C library for Monochrome Nokia LCD
+                    with PCD8544 controler
+    Author        : Thomas Missonier (sourcezax@users.sourceforge.net)
+                    Régis Blanchot (rblanchot@gmail.com)
+    First release : March 2014
+    --------------------------------------------------------------------
+    CHANGELOG:
+    04 Feb. 2016 - Régis Blanchot - added Pinguino SPI library support
+    22 Oct. 2016 - Régis Blanchot - fixed graphics functions
+    --------------------------------------------------------------------
+    TODO:
+    --------------------------------------------------------------------
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
 
-    ->File        : PCD8544.c
-    ->Revision    : 0.01 Alpha
-    ->Last update : March 2014
-    ->Description : f8544lcd core code.
-    ->Author      : Thomas Missonier (sourcezax@users.sourceforge.net). 
+    - Redistributions of source code must retain the above copyright notice,
+      this list of conditions, the others licences below, and the following disclaimer.
+    - Redistributions in binary form must reproduce the above notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions, the others licences below, and the following disclaimer.
-- Redistributions in binary form must reproduce the above notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
----------------------------------------------------------------------------
-*********************************************************************/
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+    ------------------------------------------------------------------*/
 
 #ifndef __PCD8544H
 #define __PCD8544H
 
 #include <typedef.h>            // Pinguino's type : u8, u8, ..., and bool
 #include <macro.h>              // BitSet, BitClear
+#include <spi.h>                // NUMOFSPI
 
-/**	--------------------------------------------------------------------
+//#include <logo/pinguino84x48.h> // Screen buffer pre-filled with Pinguino Logo
+
+/** --------------------------------------------------------------------
     Display interfaces
     ------------------------------------------------------------------*/
-
+/*
 #define PCD8544_SPIHW           1<<0
 #define PCD8544_SPISW           1<<1
 #define PCD8544_PORTB           1<<2
@@ -69,17 +65,18 @@ POSSIBILITY OF SUCH DAMAGE.
     #define PCD8544_LIGHT       6  // LCD BACKNOKIA_LIGHT : GROUND or NOKIA_VCC 3.3V depends on models                                      
     #define PCD8544_GND         7  // LCD GROUND 
 #endif
-
-/**	--------------------------------------------------------------------
+*/
+/** --------------------------------------------------------------------
     Display sizes
     ------------------------------------------------------------------*/
 
-#define DISPLAY_WIDTH  84
-#define DISPLAY_HEIGHT 48
-#define DISPLAY_SIZE   (DISPLAY_WIDTH * DISPLAY_HEIGHT / 8)
-#define DISPLAY_ROWS   ((DISPLAY_HEIGHT / 8) - 1)
+#define PCD8544_DISPLAY_WIDTH  84
+#define PCD8544_DISPLAY_HEIGHT 48
+#define PCD8544_DISPLAY_ROWS   (PCD8544_DISPLAY_HEIGHT / 8)
+#define PCD8544_DISPLAY_SIZE   (PCD8544_DISPLAY_WIDTH * PCD8544_DISPLAY_ROWS)
+#define PCD8544_TABSIZE        4
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
 
@@ -101,22 +98,22 @@ POSSIBILITY OF SUCH DAMAGE.
 // H = 1
 #define PCD8544_SETTEMP 0x04
 #define PCD8544_SETBIAS 0x10
-#define PCD8544_SETVOP 0x80
+#define PCD8544_SETVOP  0x80
 
 //Colors
-#define BLACK 1
-#define WHITE 0
+#define PCD8544_BLACK 1
+#define PCD8544_WHITE 0
 
 //Orientations
-#define PORTRAIT 1
-#define LANDSCAPE 0
+#define PCD8544_PORTRAIT 1
+#define PCD8544_LANDSCAPE 0
 
 #ifdef _PCD8544_USE_ROUND_RECT
     #define _PCD8544_USE_CIRCLE
     #define _PCD8544_USE_RECT
 #endif
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Typedef.
     ------------------------------------------------------------------*/
 
@@ -146,18 +143,21 @@ POSSIBILITY OF SUCH DAMAGE.
 
     typedef struct
     {
-        u8 width;
-        u8 height;
-        const u8 *address;
-    } font_t;
+        u8 dc;
+        u8 cs;
+        u8 sdo;
+        u8 sck;
+        u8 rst;
+    } pin_t;
 
     typedef struct
     {
-        u8 r;			// 8/8/8 representation
-        u8 g;
-        u8 b;
-        u16 c;			// 5/6/5 representation
-    } color_t;
+        const u8 *address;
+        u8 width;
+        u8 height;
+        u8 firstChar;
+        u8 charCount;
+    } font_t;
 
     typedef struct
     {
@@ -167,6 +167,7 @@ POSSIBILITY OF SUCH DAMAGE.
         u16 endy;
         u16 width;
         u16 height;
+        u16 rows;
     } rect_t;
 
     typedef union
@@ -181,121 +182,97 @@ POSSIBILITY OF SUCH DAMAGE.
 
     typedef struct
     {
-        u8 _din, _sclk, _dc, _rst, _cs;
         u8 orientation;
-        u8  textsize;
+        pin_t pin;
         rect_t screen;
-        color_t bcolor;
-        color_t color;
-        coord_t cursor;
+        coord_t pixel;
         font_t font;
     } lcd_t;
 
-/**	--------------------------------------------------------------------
+/** --------------------------------------------------------------------
     Globals
     ------------------------------------------------------------------*/
 
-lcd_t PCD8544;
-u8 * PCD8544_buffer = logo;  // screen buffer points on logo[]
+u8 PCD8544_SPI;
+lcd_t PCD8544[NUMOFSPI];
+//u8 * PCD8544_buffer = logo;  // screen buffer points on logo[]
 
 /**	--------------------------------------------------------------------
     Prototypes
     ------------------------------------------------------------------*/
 
-#if (PCD8544_INTERFACE & PCD8544_SPISW)
-    #if (PCD8544_INTERFACE & PCD8544_PORTB)
-    void PCD8544_init();
-    #else
-    void PCD8544_init(u8 SCLK, u8 DIN, u8 DC, u8 CS, u8 RST);
-    #endif
-#else // PCD8544_SPIHW
-    void PCD8544_init(u8 DC, u8 RST);
-#endif
+void PCD8544_init(int, ...);
+void PCD8544_command(u8, u8);
+void PCD8544_data(u8, u8);
+void PCD8544_setContrast(u8, u8);
+void PCD8544_clearScreen(u8);
+void PCD8544_refresh(u8);
+void PCD8544_drawPixel(u8, u8, u8);
+void PCD8544_clearPixel(u8, u8, u8);
+//u8 PCD8544_getPixel(u8, u8, u8);
 
-void PCD8544_command(u8 c);
-void PCD8544_data(u8 c);
-void PCD8544_setContrast(u8 val);
-void PCD8544_clearScreen();
-void PCD8544_refresh();
-void PCD8544_drawPixel(u8 x, u8 y);//, u8 color);
-void PCD8544_clearPixel(u8 x, u8 y);//, u8 color);
-u8 PCD8544_getPixel(u8 x, u8 y);
-
-#ifdef _PCD8544_USE_GRAPHICS
+#ifdef PCD8544GRAPHICS
 //LINE
-void PCD8544_drawLine(u8 x0, u8 y0, u8 x1, u8 y1);//, u8 color);
-void PCD8544_drawFastVLine(u8 x, u8 y, u8 h, u8 color);
-void PCD8544_drawFastHLine(u8 x, u8 y, u8 w, u8 color);
+void PCD8544_drawLine(u8, u8, u8, u8, u8);
 //TRIANGLE
-void PCD8544_drawTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
-void PCD8544_fillTriangle(u8 x0, u8 y0, u8 x1, u8 y1,u8 x2, u8 y2, u8 color);
+void PCD8544_drawTriangle(u8, u8, u8, u8, u8, u8, u8);
+void PCD8544_fillTriangle(u8, u8, u8, u8, u8, u8, u8);
 //RECT
-void PCD8544_drawRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-void PCD8544_fillRect(u8 x, u8 y, u8 w, u8 h, u8 color);
-#define PCD8544_fillScreen(color) PCD8544_fillRect(0, 0,PCD8544.screen.width,PCD8544..screen.height, (color))
+void PCD8544_drawRect(u8, u8, u8, u8, u8);
+void PCD8544_fillRect(u8, u8, u8, u8, u8);
+#define PCD8544_fillScreen(m) PCD8544_fillRect(m, 0, 0,PCD8544[m].screen.width,PCD8544[m].screen.height)
 //ROUND_RECT
-void PCD8544_drawRoundRect(u8 x0, u8 y0, u8 w, u8 h,u8 radius, u8 color);
-void PCD8544_fillRoundRect(u8 x, u8 y, u8 w,u8 h, u8 r, u8 color);
+void PCD8544_drawRoundRect(u8, u8, u8, u8, u8);
+void PCD8544_fillRoundRect(u8, u8, u8, u8, u8);
 //CIRCLE
-void PCD8544_drawCircle(u8 x0, u8 y0, u8 r0);//, u8 color);
-void PCD8544_drawCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 color);
-void PCD8544_fillCircle(u8 x0, u8 y0, u8 r);//, u8 color);
-void PCD8544_fillCircleHelper(u8 x0, u8 y0, u8 r, u8 cornername,u8 delta, u8 color);
+void PCD8544_drawCircle(u8, u8, u8, u8);
+void PCD8544_fillCircle(u8, u8, u8, u8);
 //BITMAP
-void PCD8544_drawBitmap(u8 x, u8 y, const u8 *bitmap,u8 w, u8 h, u8 color);
+void PCD8544_drawBitmap(u8, u8, u8, const u8 *,u8, u8);
+//BASICS
+void drawPixel(u16, u16);
+extern void drawBitmap(u8, const u8 *, u16, u16);
 #endif
 
-void PCD8544_setCursor(u8 x, u8 y);
-#ifdef  _PCD8544_USE_TEXT
-void PCD8544_setTextColor(u8 c);
-void PCD8544_setTextColor2(u8 c, u8 bg);
-void PCD8544_setTextSize(u8 s);
-#endif
+void PCD8544_setCursor(u8, u8, u8);
+void PCD8544_home(u8);
 
 #ifdef _PCD8544_USE_ORIENTATION
-void PCD8544_setOrientation(u8 r);
-#define PCD8544_getOrientation() (PCD8544.orientation)
+void PCD8544_setOrientation(u8, u8);
+#define PCD8544_getOrientation(m) (PCD8544[m].orientation)
 #endif
 
 #ifdef  _PCD8544_USE_INVERT
-void PCD8544_invertDisplay(bool i);
-#endif
-
-#ifdef enablePartialUpdate
-static void PCD8544_updateBoundingBox(u8 xmin, u8 ymin, u8 xmax, u8 ymax);
-#endif
-
-#if !(PCD8544_INTERFACE & PCD8544_SPIHW)
-//Local Shifout implementation
-void PCD8544_shiftOut(u8 c);
+void PCD8544_invertDisplay(u8);
+void PCD8544_normalDisplay(u8);
 #endif
 
 //Print functions
 //#ifdef _PCD8544_USE_TEXT
-void PCD8544_printChar(u8 c);
-void PCD8544_print(u8 *string);
-void PCD8544_println(u8 *string);
-void PCD8544_printf(const u8 *fmt, ...);
-void PCD8544_printNumber(long value, u8 base);
-void PCD8544_printFloat(float number, u8 digits);
+void PCD8544_printChar(u8, u8 c);
+void PCD8544_print(u8, const u8 *);
+void PCD8544_println(u8, const u8 *);
+void PCD8544_printf(u8, const u8 *, ...);
+void PCD8544_printNumber(u8, long, u8);
+void PCD8544_printFloat(u8, float, u8);
 //#endif
 
-#define PCD8544_getFontWidth()  (PCD8544.font.width)
-#define PCD8544_getFontHeight() (PCD8544.font.height)
-
-#ifdef _PCD8544_USE_TEXT
-#define PCD8544_setTextWrap(w) PCD8544.wrap = (w)
-#endif 
-
-#if (PCD8544_INTERFACE & PCD8544_SPISW)
-    #if (PCD8544_INTERFACE & PCD8544_PORTB)
-        //#define Low(x)      BitSet(LATB, x)
-        //#define High(x)     BitClear(LATB, x)
-        #define Low(x)      do { __asm bcf _LATB,x  __endasm; } while(0)
-        #define High(x)     do { __asm bsf _LATB,x  __endasm; } while(0)
-        //#define Output(x)   do { __asm bcf _TRISB,x __endasm; } while(0)
-        //#define Input(x)    do { __asm bsf _TRISB,x __endasm; } while(0)
-    #endif
+/*
+#ifdef __SDCC
+#define PCD8544_drawPixel(m, x, y)  *(PCD8544_buffer[(y) >> 3] + (x)) |= (1 << ((y) % 8))
+#else
+#define PCD8544_drawPixel(m, x, y)  PCD8544_buffer[(y) >> 3][x] |= (1 << ((y) % 8))
 #endif
+
+#ifdef __SDCC
+#define PCD8544_clearPixel(m, x, y) *(PCD8544_buffer[y >> 3] + (x)) &= ~(1 << (y % 8))
+#else
+#define PCD8544_clearPixel(m, x, y) PCD8544_buffer[y >> 3][x] &= ~(1 << (y % 8))
+#endif
+*/
+#define PCD8544_getFontWidth(m)  (PCD8544[m].font.width)
+#define PCD8544_getFontHeight(m) (PCD8544[m].font.height)
+#define PCD8544_select(m)         SPI_select(m)
+#define PCD8544_deselect(m)       SPI_deselect(m)
 
 #endif // __PCD8544H

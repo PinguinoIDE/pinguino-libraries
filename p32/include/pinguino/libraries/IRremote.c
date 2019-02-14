@@ -31,12 +31,7 @@
 #include <macro.h>
 #include <pin.h>
 #include <IRremote.h>
-//#include <IRremoteInt.h>      // moved content in IRremote.h
-#include <interrupt.c>
 #include <pwm.c>
-#include <digitalw.c>           // digitalwrite
-#include <delay.c>              // Delayms
-#include <system.c>             // GetPeripheralClock
 
 #ifdef DEBUG
 #include <serial.c>             // Serial functions
@@ -308,7 +303,7 @@ void IRsend_mark(u16 time)
     
     // while () {} needs much less time than for (;;) {}
     // for loop without NOPs : ~ 1,3 ms (889 iterations on 18f26j50)
-    // while loop without NOPs: ~ 712 µs (889 Iterations on 18f26j50)
+    // while loop without NOPs: ~ 712 Âµs (889 Iterations on 18f26j50)
     while (i) {
       _1us_
       i--;
@@ -390,9 +385,9 @@ void IRrecv_enableIRIn(u8 recvpin)
 // enable/disable blinking of USERLED on IR processing
 void IRrecv_blink13(u8 blinkflag)
 {
-  irparams.blinkflag = blinkflag;
-  if (blinkflag)
-    pinmode(USERLED, OUTPUT);
+    irparams.blinkflag = blinkflag;
+    if (blinkflag)
+        pinmode(USERLED, OUTPUT);
 }
 #endif
 

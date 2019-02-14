@@ -9,27 +9,35 @@
 //   |     | 
 //   +-----+
 
-#define MYSERVO 0   // servo attached to pin 0
+#define MYSERVO 0   // servo attached to pin PWM0 (D8)
 
-u8 position=90;
-s8 dir=1;
+u16 MaxPulse, MinPulse;
 
 void setup(void)
 {
-    pinMode(USERLED, OUTPUT);    
     servo.attach(MYSERVO);
-    servo.setMinimumPulse(MYSERVO, 500);
-    servo.setMaximumPulse(MYSERVO, 1800);
-    servo.write(MYSERVO, 90);
-    delay(5000);
+    /* If you need special values */
+    //servo.setMinimumPulse(MYSERVO, 1000); // 1.0ms = 1000 us =   0 deg
+    //servo.setMaximumPulse(MYSERVO, 2000); // 2.0ms = 2000 us = 180 deg
+    /* If you need to know servo values */
+    MinPulse = servo.getMinimumPulse(MYSERVO);
+    MaxPulse = servo.getMaximumPulse(MYSERVO);
+    
+    pinMode(USERLED, OUTPUT);    
 }  
 
 void loop(void)
 {
-    servo.write(MYSERVO, position);
-    position = position + dir;
-    if (position>=180) dir = -1;
-    if (position<1)   dir = 1;
-    toggle(USERLED);
-    delay(10);
+    u16 angle;
+    u16 pulse;
+
+    /* from 0 to 180 degrees */
+    digitalWrite(USERLED, 1);
+    for (angle = 0; angle < 180; angle++)
+        servo.write(MYSERVO, angle);
+
+    /* from MaximumPulse (180 deg) to MinimumPulse (0 deg) */
+    digitalWrite(USERLED, 0);
+    for (pulse = MaxPulse; pulse > MinPulse; pulse -= 10)
+        servo.pulse(MYSERVO, pulse);
 }

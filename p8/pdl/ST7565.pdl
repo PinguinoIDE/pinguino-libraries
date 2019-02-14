@@ -1,11 +1,41 @@
 ST7565.init ST7565_init#include <ST7565.c>
-ST7565.clear ST7565_clear#include <ST7565.c>
-ST7565.refresh ST7565_refresh#include <ST7565.c>
-ST7565.setPixel ST7565_setPixel#include <ST7565.c>
-ST7565.fillCircle ST7565_fillCircle#include <ST7565.c>
-ST7565.drawChar ST7565_drawChar#include <ST7565.c>
-ST7565.drawString ST7565_drawString#include <ST7565.c>
-ST7565.drawLine ST7565_drawLine#include <ST7565.c>
-ST7565.drawRect ST7565_drawRect#include <ST7565.c>
-ST7565.fillRect ST7565_fillRect#include <ST7565.c>
-ST7565.drawBitmap ST7565_drawBitmap#include <ST7565.c>
+ST7565.clearScreen ST7565_clearScreen#include <ST7565.c>#define ST7565CLEARSCREEN
+ST7565.clearWindow ST7565_clearWindow#include <ST7565.c>#define ST7565CLEARWINDOW
+ST7565.setOrientation ST7565_setOrientation#include <ST7565.c>#define ST7565SETORIENTATION
+ST7565.setFont ST7565_setFont#include <ST7565.c>#define ST7565SETFONT
+
+ST7565.reset ST7565_reset#include <ST7565.c>#define ST7565RESET
+
+ST7565.displayOff ST7565_displayOff#include <ST7565.c>#define ST7565DISPLAYOFF
+ST7565.displayOn ST7565_displayOn#include <ST7565.c>#define ST7565DISPLAYON
+ST7565.invertDisplay ST7565_invertDisplay#include <ST7565.c>#define ST7565INVERTDISPLAY
+ST7565.normalDisplay ST7565_normalDisplay#include <ST7565.c>#define ST7565NORMALDISPLAY
+
+ST7565.getFontWidth ST7565_getFontWidth#include <ST7565.c>
+ST7565.getFontHeight ST7565_getFontHeight#include <ST7565.c>
+
+ST7565.setCursor ST7565_setCursor#include <ST7565.c>#define ST7565SETCURSOR
+ST7565.printChar ST7565_printChar#include <ST7565.c>#define ST7565PRINTCHAR
+ST7565.print ST7565_print#include <ST7565.c>#define ST7565PRINT
+ST7565.println ST7565_println#include <ST7565.c>#define ST7565PRINTLN
+ST7565.printCenter ST7565_printCenter#include <ST7565.c>#define ST7565PRINTCENTER
+ST7565.printNumber ST7565_printNumber#include <ST7565.c>#define ST7565PRINTNUMBER
+ST7565.printFloat ST7565_printFloat#include <ST7565.c>#define ST7565PRINTFLOAT
+ST7565.printf ST7565_printf#include <ST7565.c>#define ST7565PRINTF
+
+ST7565.setColor ST7565_setColor#include <ST7565.c>#define ST7565SETCOLOR
+ST7565.setBackgroundColor ST7565_setBackgroundColor#include <ST7565.c>#define ST7565SETBACKGROUNDCOLOR
+ST7565.getColor ST7565_getColor#include <ST7565.c>#define ST7565GETCOLOR
+ST7565.packColor ST7565_packColor#include <ST7565.c>#define ST7565PACKCOLOR
+ST7565.unpackColor ST7565_unpackColor#include <ST7565.c>#define ST7565UNPACKCOLOR
+
+ST7565.drawPixel ST7565_drawPixel#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.clearPixel ST7565_clearPixel#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.drawBitmap ST7565_drawBitmap#include <ST7565.c>#define ST7565DRAWBITMAP
+ST7565.drawCircle ST7565_drawCircle#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.fillCircle ST7565_fillCircle#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.drawLine ST7565_drawLine#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.drawRect ST7565_drawRect#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.drawRoundRect ST7565_drawRoundRect#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.fillRect ST7565_fillRect#include <ST7565.c>#define ST7565GRAPHICS
+ST7565.fillRoundRect ST7565_fillRoundRect#include <ST7565.c>#define ST7565GRAPHICS

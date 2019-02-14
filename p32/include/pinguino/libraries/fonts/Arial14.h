@@ -37,15 +37,15 @@
 #ifndef ARIAL_14_H
 #define ARIAL_14_H
 
-#define ARIAL_14_WIDTH 10
-#define ARIAL_14_HEIGHT 14
+//#define ARIAL_14_WIDTH  10
+//#define ARIAL_14_HEIGHT 14
 
-const unsigned char Arial_14[] = { //Write font to PIC32 flash memory
+const unsigned char Arial14[] = {
     0x1E, 0x6C, // size
-    0x0A, // width
-    0x0E, // height
-    0x20, // first char
-    0x60, // char count
+    0x0A,       // width
+    0x0E,       // height
+    0x20,       // first char
+    0x60,       // char count
     
     // char widths
     0x00, 0x01, 0x03, 0x08, 0x07, 0x0A, 0x08, 0x01, 0x03, 0x03, 

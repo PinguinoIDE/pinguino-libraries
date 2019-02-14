@@ -32,9 +32,9 @@
 
 #if !defined(__18f26j50) && !defined(__18f46j50) && \
     !defined(__18f27j53) && !defined(__18f47j53)
-        #error "****************************************************"
-        #error "*** Your Pinguino doesn't have a RTCC module     ***"
-        #error "****************************************************"
+    #error "****************************************************"
+    #error "*** Your Pinguino doesn't have a RTCC module     ***"
+    #error "****************************************************"
 #endif
 
 #include <compiler.h>
@@ -59,18 +59,24 @@ void RTCC_SetTime(u32 tm)
     t0.l = tm;
     //RTCC_ConvertTime(&t0);
     RTCC_SetWriteEnable();
+    
     RTCCFGbits.RTCPTR1 = 0;     
     RTCCFGbits.RTCPTR0 = 1;     
-    // RTCPTR = 01 points on RTCVALH = Weekday and RTCVALL = Hours
+    // RTCPTR = 01 = Weekday/Hours
+
     RTCC_Wait();
     RTCVALL = t0.hours;
+
     RTCC_Wait();
-    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    dummy = RTCVALH;        // auto-decrement RTCPTR    
+
     // RTCPTR = 00 = Minutes/Seconds
     RTCC_Wait();
     RTCVALL = t0.seconds;
+
     RTCC_Wait();
     RTCVALH = t0.minutes;   
+
     RTCC_SetWriteDisable();
 }
 #endif
@@ -88,21 +94,29 @@ void RTCC_SetDate(u32 dt)
         
     d0.l = dt;
     RTCC_SetWriteEnable();
+
     RTCCFGbits.RTCPTR1 = 1;
     RTCCFGbits.RTCPTR0 = 1; 
     // RTCPTR = 11 = Reserved/Year
+
     RTCC_Wait();
     RTCVALL = d0.year;
+
     RTCC_Wait();
-    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    dummy = RTCVALH;        // auto-decrement RTCPTR
+
     // RTCPTR = 10 = Month/Day
+
     RTCC_Wait();
-    RTCVALL = d0.dayofmonth;      
+    RTCVALL = d0.dayofmonth;
+
     RTCC_Wait();
-    RTCVALH = d0.month;   
+    RTCVALH = d0.month;
+
     // RTCPTR = 01 = Weekday/Hours
     RTCC_Wait();
     RTCVALH = d0.dayofweek;
+
     // RTCPTR = 00 = Minutes/Seconds
     RTCC_SetWriteDisable();
 }
@@ -131,6 +145,28 @@ void RTCC_SetTimeDate(u32 tm, u32 dt)
 	---------------------------------------------------------------------------*/
 
 #if defined(RTCCGETTIME) || defined(RTCCGETTIMEDATE)
+
+/*
+rtccTime* RTCC_GetTime()
+{
+    u8 dummy;
+    rtccTime* pTm = NULL;
+
+    RTCCFGbits.RTCPTR1 = 0;
+    RTCCFGbits.RTCPTR0 = 1;
+    RTCC_Wait();
+    pTm->hours = RTCVALL;     
+    RTCC_Wait();
+    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    RTCC_Wait();
+    pTm->seconds = RTCVALL;
+    RTCC_Wait();
+    pTm->minutes = RTCVALH;
+    pTm = RTCC_ConvertTime(pTm);
+    return pTm;
+}
+*/
+
 void RTCC_GetTime(rtccTime* pTm)
 {
     u8 dummy;
@@ -150,6 +186,32 @@ void RTCC_GetTime(rtccTime* pTm)
 #endif
 
 #if defined(RTCCGETDATE) || defined(RTCCGETTIMEDATE)
+
+/*
+rtccDate* RTCC_GetDate()
+{
+    u8 dummy;
+    rtccDate* pDt = NULL;
+
+    RTCCFGbits.RTCPTR1 = 1;
+    RTCCFGbits.RTCPTR0 = 1;
+    RTCC_Wait();
+    pDt->year = RTCVALL;
+    RTCC_Wait();
+    dummy = RTCVALH;        // dummy read of RTCVALH to auto-decrement RTCPTR    
+    RTCC_Wait();
+    pDt->dayofmonth = RTCVALL;
+    RTCC_Wait();
+    pDt->month = RTCVALH;
+    RTCC_Wait();
+    dummy = RTCVALL;
+    RTCC_Wait();
+    pDt->dayofweek = RTCVALH;
+    pDt = RTCC_ConvertDate(pDt);
+    return pDt;
+}
+*/
+
 void RTCC_GetDate(rtccDate* pDt)
 {
     u8 dummy;
@@ -170,6 +232,7 @@ void RTCC_GetDate(rtccDate* pDt)
     pDt->dayofweek = RTCVALH;
     RTCC_ConvertDate(pDt);
 }
+
 #endif
 
 #ifdef RTCCGETTIMEDATE
@@ -179,7 +242,9 @@ void RTCC_GetTimeDate(rtccTime* pTm, rtccDate* pDt)
     rtccDate dt;
 
     RTCC_GetDate(&dt);
+    //dt = RTCC_GetDate();
     RTCC_GetTime(&tm);
+    //tm = RTCC_GetTime();
     pTm->l = tm.l;
     pDt->l = dt.l;
 }
@@ -228,7 +293,7 @@ s16 RTCC_GetCalibration(void)
 #ifdef RTCCINIT
 void RTCC_init(u32 tm, u32 dt, s16 drift)
 {
-    #if defined(PINGUINO47J53) || defined(PINGUINO47J53B)
+    #if defined(PINGUINO47J53A) || defined(PINGUINO47J53B)
     T1CONbits.T1OSCEN = 1;
     #endif
     
@@ -243,4 +308,3 @@ void RTCC_init(u32 tm, u32 dt, s16 drift)
 #endif
 
 #endif	/* __RTCC1__ */
-

@@ -2,7 +2,7 @@
  * This file contains all of functions, macros, definitions, variables,
  * datatypes, etc. that are required for usage with the CDC function
  * driver. This file should be included in projects that use the CDC
- * \function driver.
+ * function driver.
  *
  * The software supplied herewith by Microchip Technology Incorporated
  * (the 'Company') for its PIC® Microcontroller is intended and
@@ -36,13 +36,16 @@ u32 cdc_bps;                    // CDC baud rate (cf. cdc.c)
 
 LINE_CODING cdc_line_coding;    // Buffer to store line coding information
 
-static USB_HANDLE data_out;
-static USB_HANDLE data_in;
+USB_HANDLE data_out;
+USB_HANDLE data_in;
 
-static CONTROL_SIGNAL_BITMAP control_signal_bitmap;
+CONTROL_SIGNAL_BITMAP control_signal_bitmap;
 
-static volatile u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
-static volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
+// *** MUST BE VOLATILE ***
+//USBVOLATILE u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+//USBVOLATILE u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
+volatile u8 cdc_data_rx[CDC_DATA_OUT_EP_SIZE];
+volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
 
 /***********************************************************************
  * SEND_ENCAPSULATED_COMMAND and GET_ENCAPSULATED_RESPONSE are required
@@ -52,7 +55,7 @@ static volatile u8 cdc_data_tx[CDC_DATA_IN_EP_SIZE];
  **********************************************************************/
 
 #define DUMMY_LENGTH    0x08
-static u8 dummy_encapsulated_cmd_response[DUMMY_LENGTH];
+u8 dummy_encapsulated_cmd_response[DUMMY_LENGTH];
 
 /***********************************************************************
  * This routine checks the setup data packet to see if it
@@ -61,50 +64,38 @@ static u8 dummy_encapsulated_cmd_response[DUMMY_LENGTH];
  
 void usb_check_cdc_request()
 {
-    #ifdef DEBUG
-    //SerialPrint(UART,"> usb_check_cdc_request\r\n");
+    #if 0 //def __DEBUG__
+    debug("usb_check_cdc_request");
     #endif
 
-    #ifdef DEBUG
-    //SerialPrint(UART,"> Recipient = ");
-    //SerialPrintNumber(UART,usb_setup_pkt.Recipient,10);
-    //SerialPrint(UART,"\r\n");
+    #if 0 //def __DEBUG__
+    debug("Recipient=%d", usb_setup_pkt.Recipient);
     #endif
 
     // If request recipient is not an interface then return
     if (usb_setup_pkt.Recipient != RCPT_INTF)
         return;
 
-    #ifdef DEBUG
-    //SerialPrint(UART,"> RCPT_INTF\r\n");
+    #if 0 //def __DEBUG__
+    debug("Request type=%d", usb_setup_pkt.RequestType);
     #endif
 
     // If request type is not class-specific then return
     if (usb_setup_pkt.RequestType != CLASS)
         return;
 
-    #ifdef DEBUG
-    //SerialPrint(UART,"> Request type CDC = ");
-    #endif
-
-    #ifdef DEBUG
-    //SerialPrint(UART,"> Request = ");
-    //SerialPrintNumber(UART,usb_setup_pkt.bRequest,10);
-    //SerialPrint(UART,"\r\n");
-    #endif
-
     // Interface ID must match interface numbers associated with CDC class
      
-    if (usb_setup_pkt.bIntfID != CDC_COMM_INTF_ID &&
-        usb_setup_pkt.bIntfID != CDC_DATA_INTF_ID)
+    if ((usb_setup_pkt.bIntfID != CDC_COMM_INTF_ID) &&
+        (usb_setup_pkt.bIntfID != CDC_DATA_INTF_ID))
         return;
 
     switch (usb_setup_pkt.bRequest)
     {
         // Required command
         case CDC_SEND_ENCAPSULATED_COMMAND:
-            #ifdef DEBUG
-            //SerialPrint(UART,"SEND_ENCAPSULATED_COMMAND\r\n");
+            #ifdef __DEBUG__
+            debug("SEND_ENCAPSULATED_COMMAND");
             #endif
             
             // send the packet
@@ -116,8 +107,8 @@ void usb_check_cdc_request()
 
         // Required command
         case CDC_GET_ENCAPSULATED_RESPONSE:
-            #ifdef DEBUG
-            //SerialPrint(UART,"GET_ENCAPSULATED_RESPONSE\r\n");
+            #ifdef __DEBUG__
+            debug("GET_ENCAPSULATED_RESPONSE");
             #endif
             
             // Populate dummy_encapsulated_cmd_response first.
@@ -126,8 +117,8 @@ void usb_check_cdc_request()
             break;
 
         case CDC_SET_LINE_CODING:
-            #ifdef DEBUG
-            SerialPrint(UART,"SET_LINE_CODING\r\n");
+            #ifdef __DEBUG__
+            debug("SET_LINE_CODING");
             #endif
             
             usb_out_pipe.wCount = usb_setup_pkt.wLength;
@@ -137,8 +128,8 @@ void usb_check_cdc_request()
             break;
 
         case CDC_GET_LINE_CODING:
-            #ifdef DEBUG
-            SerialPrint(UART,"GET_LINE_CODING\r\n");
+            #ifdef __DEBUG__
+            debug("GET_LINE_CODING");
             #endif
             
             usb_ep0_send_ram_ptr ((u8*) &cdc_line_coding,
@@ -146,8 +137,8 @@ void usb_check_cdc_request()
             break;
 
         case CDC_SET_CONTROL_LINE_STATE:
-            #ifdef DEBUG
-            SerialPrint(UART,"SET_CONTROL_LINE_STATE\r\n");
+            #ifdef __DEBUG__
+            debug("SET_CONTROL_LINE_STATE");
             #endif
             
             control_signal_bitmap._byte = (u8)usb_setup_pkt.W_Value;
@@ -155,7 +146,7 @@ void usb_check_cdc_request()
             //CONFIGURE_DTR(control_signal_bitmap.DTE_PRESENT);
             
             if (usb_setup_pkt.W_Value == 0x03)
-                cdc_trf_state = 1;
+                cdc_trf_state = CDC_TX_BUSY;
             else
                 cdc_trf_state = CDC_TX_READY;
             
@@ -175,8 +166,8 @@ void usb_check_cdc_request()
  
 void cdc_init_endpoint()
 {
-    #ifdef DEBUG
-    //SerialPrint(UART,"> cdc_init_endpoint\r\n");
+    #ifdef __DEBUG__
+    debug("cdc_init_endpoint");
     #endif
 
     // Abstract line coding information
@@ -187,7 +178,7 @@ void cdc_init_endpoint()
 
     // Flush all of the data in the CDC buffer
     cdc_trf_state = CDC_TX_READY;
-    cdc_tx_len = 0;
+    //cdc_tx_len = 0;
     cdc_rx_len = 0;
 
     /* Do not have to init Cnt of IN pipes here.
@@ -198,20 +189,23 @@ void cdc_init_endpoint()
      */
      
     usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
-    usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP);
+    usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED | USB_DISALLOW_SETUP | USB_OUT_ENABLED);
+    //usb_enable_endpoint(CDC_COMM_EP, USB_IN_ENABLED | USB_HANDSHAKE_ENABLED);
+    //usb_enable_endpoint(CDC_DATA_EP, USB_IN_ENABLED | USB_OUT_ENABLED | USB_HANDSHAKE_ENABLED);
 
     data_out = usb_rx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
     data_in  = 0;
 }
 
 /***********************************************************************
- * Get received data.
+ * 
  **********************************************************************/
  
 #if 0
 u8 cdc_consume (void (*func) (u32))
 {
     u8 len;
+    u32 n;
 
     if (! data_out || usb_handle_busy(data_out))
         return 0;
@@ -220,23 +214,48 @@ u8 cdc_consume (void (*func) (u32))
     len = usb_handle_get_length(data_out);
     if (func != 0)
     {
-        u32 n;
         for (n=0; n<len; n++)
-            func (cdc_data_rx[n]);
+            func(cdc_data_rx[n]);
     }
 
     // Prepare dual-ram buffer for next OUT transaction
-    data_out = usb_rx_one_packet (CDC_DATA_EP,
-            (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+    data_out = usb_rx_one_packet (CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
 
     return len;
 }
 #endif
 
 /***********************************************************************
- * Get received data.
+ * Get a string from CDC port
+ * Return the number of bytes read
  **********************************************************************/
  
+/*
+u8 CDCgets(u8 *buffer)
+{
+    #if defined(__32MX220F032D__) || defined(__32MX220F032B__) || \
+        defined(__32MX250F128B__) || defined(__32MX270F256B__)
+
+        USB_Service();
+        return USB_Service_CDC_GetString( buffer );
+
+    #else
+
+        CDCTxService();
+        return getsUSBUSART(buffer, 64);
+
+    #endif
+
+    if (mUSBUSARTIsTxTrfReady())
+    {
+        CDCTxService();
+        numBytesRead = getsUSBUSART(buffer, 64);
+        CDCTxService();
+        return numBytesRead;
+    }
+}
+*/
+
 u8 cdc_gets(char *buffer)
 {
     u8 len = 0;
@@ -252,15 +271,14 @@ u8 cdc_gets(char *buffer)
         for (cdc_rx_len = 0; cdc_rx_len < len; cdc_rx_len++)
             buffer[cdc_rx_len] = cdc_data_rx[cdc_rx_len];
         
-        data_out = usb_rx_one_packet (CDC_DATA_EP,
-                (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
+        data_out = usb_rx_one_packet (CDC_DATA_EP, (u8*)&cdc_data_rx, sizeof(cdc_data_rx));
     }
 
     return len;
 }
 
 /***********************************************************************
- * Get received one char data.
+ * Get one char from the CDC port.
  **********************************************************************/
 
 char cdc_getc()
@@ -277,54 +295,22 @@ char cdc_getc()
 }
 
 /***********************************************************************
- * Send a char to the USB.
- * Return a number of free bytes in transmit buffer.
- **********************************************************************/
- 
-void cdc_putc(char c)
-{
-    //|| cdc_tx_len >= sizeof(cdc_data_tx))
-    if (cdc_trf_state == CDC_TX_READY)
-    {
-        cdc_tx_len = 1;
-        cdc_trf_state = CDC_TX_BUSY;
-        cdc_data_tx[0] = c;
-    }
-    //return sizeof(cdc_data_tx) - cdc_tx_len;
-}
-
-/***********************************************************************
- * Send a string to the USB.
- * Régis Blanchot 23-01-2015 
- **********************************************************************/
- 
-void cdc_puts(const char *buffer, u8 len)
-{
-    if (cdc_trf_state == CDC_TX_READY)
-    {
-        cdc_tx_len = len;
-        cdc_trf_state = CDC_TX_BUSY;
-        *cdc_data_tx = *buffer;
-    }
-}
-
-/***********************************************************************
- * cdc_tx_service handles device-to-host transaction(s). This function
- * should be called once per Main Program loop after the device reaches
- * the configured state.
+ * Handles device-to-host transaction(s)
+ * This function should be called once per Main Program loop after the
+ * device reaches the configured state.
  **********************************************************************/
 
 void cdc_tx_service()
 {
     u8 byte_to_send, i;
     
-    #ifdef DEBUG
-    //SerialPrint(UART,"> cdc_tx_service\r\n");
+    #if 0 //def __DEBUG__
+    debug("cdc_tx_service()");
     #endif
 
     // Check that USB connection is established.
-    //if ((usb_device_state < CONFIGURED_STATE) || U1PWRCbits.USUSPEND)
-    //    return;
+    if (usb_device_state < CONFIGURED_STATE) // || U1PWRCbits.USUSPEND)
+        return;
 
     if (usb_handle_busy(data_in))
         return;
@@ -357,14 +343,15 @@ void cdc_tx_service()
         // Lastly, determine if a zero length packet state is necessary.
         if (cdc_tx_len == 0)
         {
-            if(byte_to_send == CDC_DATA_IN_EP_SIZE)
+            if (byte_to_send == CDC_DATA_IN_EP_SIZE)
                 cdc_trf_state = CDC_TX_BUSY_ZLP;
             else
                 cdc_trf_state = CDC_TX_COMPLETING;
         }
         
         // send packet
-        data_in = usb_tx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_tx, cdc_tx_len);
+        //data_in = usb_tx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_tx, cdc_tx_len);
+        data_in = usb_tx_one_packet(CDC_DATA_EP, (u8*)&cdc_data_tx, byte_to_send);
     }
 }
 

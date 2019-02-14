@@ -1,79 +1,66 @@
 /**
-        Author: 	    Régis Blanchot (Apr. 2014)
-        Library :     Thomas Missonier (sourcezax@users.sourceforge.net).
-        Tested on:	Pinguino 32MX250 and Pinguino 47J53A
-        Output:	    Nokia 5110 84x48 LCD Display  with PCD8544 Controller
+    Author:    Régis Blanchot (Apr. 2014)
+    Library :  Thomas Missonier (sourcezax@users.sourceforge.net).
+    Tested on: Pinguino 32MX250 and all 8-bit Pinguino
+    Output:    Nokia 5110 84x48 LCD Display with PCD8544 Controller
+    Wiring:    see also http://wiki.pinguino.cc/index.php/SPI_pins
+
+                                           47J53 45k50
+    1 NOKIA_RST    // any pin              4     2
+    2 NOKIA_SCE    // Pinguino CS or SS    0     13
+    3 NOKIA_DC     // any pin              5     3
+    4 NOKIA_SDIN   // Pinguino SDO         1     23
+    5 NOKIA_SCLK   // Pinguino SCK         2     1
+    6 NOKIA_VCC    // 3.3V 
+    7 NOKIA_LIGHT  // GND or 3.3V depends on models                                      
+    8 NOKIA_GND    // GND 
 **/
 
 /// Load one or more fonts and active them with PCD8544.setFont()
-
 #include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
 
-/* Pin configuration */
-#define PCD8544_INTERFACE     (PCD8544_SPIHW)
-//define PCD8544_INTERFACE       (PCD8544_SPISW | PCD8544_PORTB)
+/// SPI Module
+//#define SPIMODULE SPISW
+#define SPIMODULE SPI1
+//#define SPIMODULE SPI2 // PIC32 and PIC18FxxJ5x only
 
-//define PCD8544_INTERFACE       (PCD8544_SPISW)
-#define NOKIA_RST               4  // LCD RST 
-//define NOKIA_SCE               6  // Pinguino SS
-#define NOKIA_DC                6  // LCD Dat/Com
-//define NOKIA_SDIN              4  // Pinguino SDO
-//define NOKIA_SCLK              3  // Pinguino SCLK 
-//define NOKIA_VCC               2  // 3.3V 
-//define NOKIA_LIGHT             1  // GND or 3.3V depends on models                                      
-//define NOKIA_GND               0  // GND 
+u8 i=0;
 
 void setup()
 {
-    pinMode(USERLED,     OUTPUT);
+    pinMode(USERLED, OUTPUT);
 
     /// Screen init
 
-    // if PCD8544_INTERFACE == PCD8544_SPISW or PCD8544_INTERFACE == PCD8544_SPIHW
-    /*
-    digitalWrite(NOKIA_VCC,   HIGH); // LCD NOKIA_VCC to 3.3V
-    digitalWrite(NOKIA_LIGHT, LOW);  // LCD BackNOKIA_LIGHT On
-    digitalWrite(NOKIA_GND,   LOW);  // LCD NOKIA_GND to NOKIA_GND
-
-    pinMode(NOKIA_VCC,   OUTPUT);
-    pinMode(NOKIA_LIGHT, OUTPUT);
-    pinMode(NOKIA_GND,   OUTPUT);
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPISW and PCD8544_PORTB
-    /*
-    PCD8544.init();
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPISW
-    /*
-    PCD8544.init(NOKIA_SCLK, NOKIA_SDIN, NOKIA_DC, NOKIA_SCE, NOKIA_RST);
-    */
-    
-    // if PCD8544_INTERFACE == PCD8544_SPIHW
-    PCD8544.init(NOKIA_DC, NOKIA_RST);
+    // if SPIMODULE = SPISW (SPI Software)
+    //PCD8544.init(SPIMODULE, 3, 2, 23, 1, 13); // DC, RST, SDO, SCK and CS pins
+    PCD8544.init(SPIMODULE, 3, 2); // DC and RST pin 45K50
+    //PCD8544.init(SPIMODULE, 4, 5); // DC and RST pin 47J53
+    //PCD8544.init(SPIMODULE, 0, 2); // DC and RST pin 32MX2x0 SPI1
+    //PCD8544.init(SPIMODULE, 5, 6); // DC and RST pin 32MX2x0 SPI2
  
-    PCD8544.setContrast(40); // Change the contrast (0 to 127)
-    PCD8544.setFont(font6x8);
-    PCD8544.setTextColor(BLACK);
-    PCD8544.setTextSize(1);
-    PCD8544.refresh();          // show Pinguino splashscreen
-    delay(3000);
-
-    PCD8544.clearScreen();      // Clear screen buffer
-    PCD8544.setCursor(1,2);
-    PCD8544.print("Hello World!");
-    PCD8544.refresh();
+    PCD8544.setFont(SPIMODULE, font6x8);
+    PCD8544.setContrast(SPIMODULE, 40); // Change the contrast (0 to 127, default is 40)
+    //PCD8544.invertDisplay(SPIMODULE);
+    PCD8544.clearScreen(SPIMODULE);  // Clear screen buffer
+    //PCD8544.home(SPIMODULE);
+    //PCD8544.setCursor(SPIMODULE, 0, 2);
+    PCD8544.print(SPIMODULE, "Hello World");
+    PCD8544.refresh(SPIMODULE);
+    delay(2500);
+    PCD8544.clearScreen(SPIMODULE);  // Clear screen buffer
 }
 
 void loop()
 {
+    //PCD8544.printf(SPIMODULE, "i=%d\r\n", i++);
+    //
+    PCD8544.print(SPIMODULE, "i=");
+    PCD8544.printNumber(SPIMODULE, i++, DEC);
+    PCD8544.print(SPIMODULE, "\r\n");
+    //
+    PCD8544.refresh(SPIMODULE);
     // Show that Pinguino is still alive
     toggle(USERLED);
-    delay(1000);
+    delay(500);
 }

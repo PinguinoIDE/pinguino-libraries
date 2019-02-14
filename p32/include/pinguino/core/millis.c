@@ -69,10 +69,13 @@ void millis_init(void)
         _millis = 0;
 }
 
-u32 millis()
+#define millis()    (_millis)
+/*
+static inline u32 millis()
 {
     return (_millis);
 }
+*/
 
 u32 micros()
 {
@@ -90,7 +93,8 @@ void Timer1Interrupt()
     // is this an TIMER1 interrupt ?
     //if (IntGetFlag(INT_TIMER1))
     //{
-        IntClearFlag(INT_TIMER1);
+        //IntClearFlag(INT_TIMER1);
+        IFS0CLR = 1 << INT_TIMER1;
         _millis++;
     //}
 }

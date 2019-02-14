@@ -1,11 +1,10 @@
 /*  --------------------------------------------------------------------
-    FILE:               main32.c
-    PROJECT:            pinguino 32
-    PURPOSE:            application main function
-    PROGRAMERS:         Regis Blanchot <rblanchot@gmail.com>
-                        Jean-Pierre Mandon <jp.mandon@gmail.com>
-    FIRST RELEASE:      16 Nov. 2010
-    LAST RELEASE:       20 Mar. 2015
+    FILE:           main32.c
+    PROJECT:        Pinguino 32
+    PURPOSE:        Application main function
+    PROGRAMERS:     Regis Blanchot <rblanchot@gmail.com>
+                    Jean-Pierre Mandon <jp.mandon@gmail.com>
+    FIRST RELEASE:  16 Nov. 2010
     --------------------------------------------------------------------
     CHANGELOG:
 
@@ -14,6 +13,7 @@
     03 Mar. 2015    R.Blanchot moved interrupt weak definitions in isrwrapper.c
     20 Mar. 2015    R.Blanchot removed SystemConfig() (defined in the bootloader)
     14 Apr. 2015    R.Blanchot added SPI init.
+    23 Jun. 2016    R.Blanchot added CDC_begin()
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -49,10 +49,6 @@
 #endif
 */
 
-#ifdef __USBCDC
-    #include <cdc.h>
-#endif
-
 /**********************************************************************/
 #include "user.c"               // Pinguino User's Sketch
 /**********************************************************************/
@@ -62,13 +58,18 @@ int main()
     // Configure pins
     IOsetDigital();
     IOsetSpecial();
-    #if defined(__SERIAL__) || defined(__SPI__) || \
-        defined(__PWM__)    || defined(__AUDIO__)
+    #if defined(__SERIAL__) || defined(__SPI__)   || \
+        defined(__PWM__)    || defined(__SERVO__) || \
+        defined(__AUDIO__)
     IOsetRemap();
     #endif
 
     // Different init.
     
+    #ifdef __DEBUG__
+    debug_init();
+    #endif
+
     #ifdef __WATCHDOG__
     watchdog_init();
     #endif
@@ -85,10 +86,6 @@ int main()
     PWM_init();
     #endif    
 
-    #ifdef __USBCDC
-    CDC_init();
-    #endif    
-
     //#ifdef __RTCC__
     //RTCC_init();
     //#endif    
@@ -97,9 +94,17 @@ int main()
     SPI_init();
     #endif    
     
-    #ifdef __SERVOS__
-    servos_init();
+    #ifdef __SERVO__
+    servo_init();
     #endif    
+
+    #ifdef __USBCDC__
+    CDC_begin(115200);
+    #endif
+
+    #ifdef __USBBULK__
+    BULK_begin();
+    #endif
 
 /** USER'S SKETCH *****************************************************/
 
@@ -107,15 +112,10 @@ int main()
 
     while (1)
     {
-        #ifdef __USBCDC
-            #if defined(__32MX220F032D__) || \
-                defined(__32MX220F032B__) || \
-                defined(__32MX250F128B__) || \
-                defined(__32MX270F256B__)
-                USB_Service();
-            #else
-                CDCTxService();
-            #endif
+        #if defined(__USBPOLLING__)
+        usb_device_tasks();
+        // otherwise we're in interrupt mode and
+        // USBInterrupt() is called (see lkr/ISR_wrapper.S, line 165)
         #endif
  
         loop();

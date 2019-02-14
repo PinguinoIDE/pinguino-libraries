@@ -11,6 +11,7 @@
             . pins have to be the CPU SPI pins
             . PINGUINO 32 have up to 4 SPI module (SPI1 to SPI4)
             . PINGUINO 8  have only one SPI module (SPI1)
+              except Pinguino with PIC18F47J53 which have 2
         - Software SPI
             . SPISW
             . SPI operations are handled by the SPI library
@@ -21,29 +22,25 @@
         ST7735    PINGUINO
         ---------------------------------------
         LED       VSS (backlight on)
-        SCK       SCKx
-        SDA       SDOx
-        A0 (DC)   can be connected to any digital pin
+        SCK       SCK
+        SDA       SDO
+        A0        DC (any digital pin)
         RESET     VSS
-        CS        can be connected to any digital pin
+        CS        CS or SS
         GND       GND
         VSS       VSS (+5V or +3.3V)
-
-        Function  Microchip    Pinguino 47J53
-        ---------------------------------------
-        SDO1      RC7          Pin 23
-        SCK1      RB4          Pin 4
-        SDI1      RB5          Pin 5
-        ---------------------------------------
-        SDO2      RB1          Pin 1
-        SCK2      RB2          Pin 2
-        SDI2      RB3          Pin 3
 **/
 
 // Load one or more fonts and active them with ST7735.setFont()
 #include <fonts/font6x8.h>
+//#include <fonts/Corsiva12.h>      // font definition for 12 points Corsiva font.
+//#include <fonts/Arial14.h>        // font definition for 14 points Arial font.
+//#include <fonts/ArialBold14.h>    // font definition for 14 points Arial Bold font.
+//#include <fonts/VerdanaBold28.h>  // font definition for 28 points Verdana Bold font.
 
 #define SPIMODULE SPI2
+
+u8 i;
 
 void setup()
 {
@@ -51,19 +48,33 @@ void setup()
     
     // SDA and SCK pins must be defined by user
     // if module used is SPISW (SPI Software)
-    // ST7735.init(SPISW, 6, 5, 7, 1); // CS, DC, SDA, SCK
-
-    ST7735.init(SPIMODULE, 0, 4, 0, 0); // CS and DC
-    ST7735.setFont(SPIMODULE, font6x8);
+    //ST7735.init(SPIMODULE, 7, 1, 2, 0); // DC, SDA, SCK, CS
+    //ST7735.init(SPIMODULE, 14); // DC=TX1 for Pinguino torda
+    //ST7735.init(SPIMODULE, 24); // DC=SCL2 for Pinguino torda
+    ST7735.init(SPIMODULE, 19); // DC=SCL1 for Olimex PIC32 Pinguino
     ST7735.setBackgroundColor(SPIMODULE, ST7735_BLACK);
-    ST7735.setColor(SPIMODULE, ST7735_YELLOW);
-    ST7735.setOrientation(SPIMODULE, 270);
+    ST7735.setOrientation(SPIMODULE, 90);
     ST7735.clearScreen(SPIMODULE);
+
+    ST7735.setFont(SPIMODULE, font6x8);
+    ST7735.setColor(SPIMODULE, ST7735_YELLOW);
+    ST7735.setCursor(SPIMODULE, 0, 0);
+    ST7735.printCenter(SPIMODULE, "Hello World");
+    /*
+    ST7735.setFont(SPIMODULE, ArialBold14);
+    ST7735.setColor(SPIMODULE, ST7735_GREEN);
+    ST7735.setCursor(SPIMODULE, 0, 2);
+    ST7735.printCenter(SPIMODULE, "Hello World");
+
+    ST7735.setFont(SPIMODULE, VerdanaBold28);
+    ST7735.setColor(SPIMODULE, ST7735_RED);
+    ST7735.setCursor(SPIMODULE, 0, 2);
+    ST7735.printCenter(SPIMODULE, "Hello World");
+    */
 }   
 
 void loop()
 {
-    ST7735.println(SPIMODULE, "Hello World!");
     toggle(USERLED);
     delay(1000);
 }

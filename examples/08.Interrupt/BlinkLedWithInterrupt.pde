@@ -26,6 +26,8 @@ void setup()
     /* All Pinguino */
     //OnTimer1(myBlink, INT_MILLISEC, 500);    // Use Timer1 to toggle the USERLED every 500 ms
     OnTimer2(myBlink, INT_MILLISEC, 500); // Use Timer2 to toggle the USERLED every 500 ms
+
+    /* 16F1459 doesn't have a Timer3 */ 
     //OnTimer3(myBlink, INT_MILLISEC, 500);         // Use Timer3 to toggle the USERLED every 500 ms
     
     /* 32-bit Pinguino, x6j50 and xxj53 only */
@@ -43,5 +45,5 @@ void loop()
 {
     // Whatever you want here
     Serial.printf("i=%d\r\n", i++);
-    delay(1000);
+    delay(100);
 }

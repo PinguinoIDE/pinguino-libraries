@@ -1,45 +1,49 @@
-/*	--------------------------------------------------------------------
-	FILE:			ST7735.c
-	PROJECT:		pinguino
-	PURPOSE:		Drive 0.96" 128x64 Oled display (ST7735 controller)
-	PROGRAMER:		regis blanchot <rblanchot@gmail.com>
-	FIRST RELEASE:	17 Oct. 2013
-	LAST RELEASE:	25 Mar. 2014
-	----------------------------------------------------------------------------
-    * Done : 8-BIT 68XX/80XX PARALLEL
-    * Todo : 3-/4-WIRE SPI
-    * Todo : I2C
-	----------------------------------------------------------------------------
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+/*  -------------------------------------------------------------------
+    FILE:           ST7735.h
+    PROJECT:        Pinguino
+    PURPOSE:        Drive 1.8" 128x160 TFT display (ST7735 controller)
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
+    17 Oct. 2013    Regis Blanchot - first release
+    25 Mar. 2014    Regis Blanchot - added multi SPI support
+    --------------------------------------------------------------------
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-	Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-	------------------------------------------------------------------*/
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+    ------------------------------------------------------------------*/
 
 #ifndef __ST7735_H
 #define __ST7735_H
 
+#if !defined(__PIC32MX__)
+#include <compiler.h>
+#endif
 #include <typedef.h>
+#include <digitalw.c>
+#include <spi.h>
 
 #define __ST7735__
 
 /**	--------------------------------------------------------------------
-    Display size (default orientation is landscape)
+    Display size (default orientation is portrait)
     ------------------------------------------------------------------*/
 
-#define ST7735_WIDTH        160
-#define ST7735_HEIGHT       128
-#define ST7735_SIZE         (ST7735_WIDTH * ST7735_HEIGHT)
+#define ST7735_DISPLAY_WIDTH        128
+#define ST7735_DISPLAY_HEIGHT       160
+#define ST7735_DISPLAY_ROWS         (ST7735_DISPLAY_HEIGHT / 8)
+#define ST7735_DISPLAY_SIZE         (ST7735_DISPLAY_WIDTH * ST7735_DISPLAY_HEIGHT)
 #define ST7735_TABSIZE      4
+
 /**	--------------------------------------------------------------------
     Display commands
     ------------------------------------------------------------------*/
@@ -117,6 +121,7 @@
 
 #define	ST7735_BLACK        0x0000
 #define	ST7735_BLUE         0x001F
+#define	ST7735_LIGHTBLUE    0x0010
 #define	ST7735_RED          0xF800
 #define ST7735_GREEN        0x0400
 #define ST7735_LIME         0x07E0
@@ -166,9 +171,11 @@
 
     typedef struct
     {
+        const u8 *address;
         u8 width;
         u8 height;
-        const u8 *address;
+        u8 firstChar;
+        u8 charCount;
     } font_t;
 
     typedef struct
@@ -206,7 +213,7 @@
         rect_t screen;
         color_t bcolor;
         color_t color;
-        coord_t cursor;
+        coord_t pixel;
         font_t font;
     } lcd_t;
 
@@ -216,39 +223,55 @@
 
 void ST7735_sendCommand(u8, u8);
 void ST7735_sendData(u8, u8);
-void ST7735_init(u8, u8, u8, u8, u8);
+
+//void ST7735_init(u8, u8, u8, u8, u8);
+void ST7735_init(int module, ...);
+
 void ST7735_setOrientation(u8, s16);
 void ST7735_setWindow(u8, u8, u8, u8, u8);
+
 void ST7735_setColor(u8, u16);
 void ST7735_setBackgroundColor(u8, u16);
+color_t *ST7735_getColor(u8, u8, u8);
+color_t *ST7735_packColor(u8, u8, u8);
+void ST7735_unpackColor(color_t*);
+
 void ST7735_clearScreen(u8);
 void ST7735_clearWindow(u8, u8, u8, u8, u8);
+
+//TODO
 //void ST7735_scrollRight();
 //void ST7735_scrollLeft();
 //void ST7735_scrollUp();
 //void ST7735_scrollDown();
+
 void ST7735_setFont(u8, const u8*);
 void ST7735_printChar(u8, u8);
-void ST7735_print(u8, u8*);
-void ST7735_println(u8, u8*);
+void ST7735_print(u8, const u8*);
+void ST7735_println(u8, const u8*);
+void ST7735_printCenter(u8, const u8*);
+u8 ST7735_charWidth(u8, u8);
+u16 ST7735_stringWidth(u8, const u8*);
 void ST7735_printNumber(u8, long, u8);
 void ST7735_printFloat(u8, float, u8);
 void ST7735_printf(u8, const u8*, ...);
 void ST7735_setCursor(u8, u8, u8);
+
 void ST7735_drawPixel(u8, u8, u8);
 void ST7735_clearPixel(u8, u8, u8);
-void ST7735_drawBitmap(u8, u16, u16, u16, u16, u16*);
+void ST7735_drawBitmap(u8, u8, const u8*, u16, u16);
 void ST7735_drawCircle(u8, u16, u16, u16);
 void ST7735_fillCircle(u8, u16, u16, u16);
 void ST7735_drawLine(u8, u16, u16, u16, u16);
 void ST7735_drawVLine(u8, u16, u16, u16);
 void ST7735_drawHLine(u8, u16, u16, u16);
 
+void setWindow(u8, u8, u8, u8);
 void drawPixel(u16, u16);
+void setColor(u8, u8, u8);
 void drawVLine(u16, u16, u16);
 void drawHLine(u16, u16, u16);
-
-color_t ST7735_getColor(u8, u8, u8);
+extern void drawBitmap(u8, const u8 *, u16, u16);
 
 /**	--------------------------------------------------------------------
     Macros
@@ -260,26 +283,22 @@ color_t ST7735_getColor(u8, u8, u8);
 #define ST7735_normalDisplay(m)  ST7735_sendCommand(m, ST7735_INVOFF)
 #define ST7735_displayOn(m)      ST7735_sendCommand(m, ST7735_DISPON)
 #define ST7735_displayOff(m)     ST7735_sendCommand(m, ST7735_DISPOFF)
+#define ST7735_reset(m)          ST7735_sendCommand(m, ST7735_SWRESET)
+#ifndef __PIC32MX__
+#define ST7735_low(x)            digitalwrite(x, 0)
+#define ST7735_high(x)           digitalwrite(x, 1)
+#else
 #define ST7735_low(x)            low(x)
 #define ST7735_high(x)           high(x)
+#endif
+#define ST7735_select(m)         SPI_select(m)
+#define ST7735_deselect(m)       SPI_deselect(m)
 
 /**	--------------------------------------------------------------------
     Globals
     ------------------------------------------------------------------*/
 
 u8 ST7735_SPI;
-
-// SPISW, SPI1, SPI2, SPI3 and SPI4
-#if defined(__32MX795F512L__) || \
-    defined(__32MX795F512H__)
-    
-lcd_t ST7735[5];
-
-// SPISW, SPI1 and SPI2
-#else
-
-lcd_t ST7735[3];
-
-#endif
+lcd_t ST7735[NUMOFSPI];
 
 #endif /* __ST7735_H */

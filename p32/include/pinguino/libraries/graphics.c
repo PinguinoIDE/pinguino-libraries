@@ -1,17 +1,18 @@
-/*	----------------------------------------------------------------------------
-    FILE:			graphic.c
-    PROJECT:		pinguino
-    PURPOSE:		graphic routines for all TFT or OLED displays
-    PROGRAMER:		Henning Karlsen http://www.henningkarlsen.com
-                    Marcus Fazzi
-                    Regis Blanchot
-    FIRST RELEASE:	10 Jul. 2010
-    LAST RELEASE:	03 Apr. 2012
-    ----------------------------------------------------------------------------
+/*  --------------------------------------------------------------------
+    FILE:       graphics.c
+    PROJECT:    pinguino
+    PURPOSE:    graphic routines for all GLCD, TFT or OLED displays
+    PROGRAMER:  Regis Blanchot
+    --------------------------------------------------------------------
     CHANGELOG : 
-    ----------------------------------------------------------------------------
 
-    ----------------------------------------------------------------------------
+    Jul 10 2010 - RB - initial release
+    Jan 29 2016 - RB - added drawBitmap (from SD)
+    Nov 15 2016 - RB - added drawTriangle, fillTriangle
+                       added drawVBarGraph, drawHBarGraph
+    --------------------------------------------------------------------
+    TODO :
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -27,64 +28,48 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
     --------------------------------------------------------------------------*/
 
-#ifndef __GRAPHIC_C
-#define __GRAPHIC_C
+#ifndef __GRAPHICS_C
+#define __GRAPHICS_C
 
-#define _abs_(a) (((a)> 0) ? (a) : -(a))
+#include <typedef.h>    // u8, u16, ..
+#include <macro.h>      // swap
+
+#ifndef __PIC32MX__
+#include <mathlib.c>    // abs
+#else
+#include <math.c>       // abs
+#endif
+
+#ifdef DRAWBITMAP
+    #define SDOPEN
+    #define SDLSEEK
+    #define SDCLOSE
+    #define SDMOUNT
+    #define SDREAD
+    #define SDREAD16
+    #define SDREAD32
+    #include <sd/tff.h>
+    //#include <sd/diskio.h>
+    #include <sd/diskio.c>
+#endif
+
+//#define _abs_(a) (((a)> 0) ? (a) : -(a))
+
+/*  --------------------------------------------------------------------
+    Prototypes
+    ------------------------------------------------------------------*/
 
 // Specific to each display
 extern void drawPixel(u16, u16);
-extern void drawVLine(u16, u16, u16);
-extern void drawHLine(u16, u16, u16);
-//extern void setColor(u16 c);
+extern void setColor(u8, u8, u8);
 
-void drawCircle(u16 x, u16 y, u16 radius)
-{
-    s16 f = 1 - radius;
-    s16 ddF_x = 1;
-    s16 ddF_y = -2 * radius;
-    s16 x1 = 0;
-    s16 y1 = radius;
-
-    drawPixel(x, y + radius);
-    drawPixel(x, y - radius);
-    drawPixel(x + radius, y);
-    drawPixel(x - radius, y);
-
-    while(x1 < y1)
-    {
-        if(f >= 0) 
-        {
-            y1--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x1++;
-        ddF_x += 2;
-        f += ddF_x;    
-        drawPixel(x + x1, y + y1);
-        drawPixel(x - x1, y + y1);
-        drawPixel(x + x1, y - y1);
-        drawPixel(x - x1, y - y1);
-        drawPixel(x + y1, y + x1);
-        drawPixel(x - y1, y + x1);
-        drawPixel(x + y1, y - x1);
-        drawPixel(x - y1, y - x1);
-    }
-}
-
-void fillCircle(u16 x, u16 y, u16 radius)
-{
-    s16 x1, y1;
-    for(y1=-radius; y1<=radius; y1++) 
-        for(x1=-radius; x1<=radius; x1++) 
-            if(x1*x1+y1*y1 <= radius*radius) 
-                drawPixel(x+x1, y+y1); 
-}
+/*  --------------------------------------------------------------------
+    Fonctions
+    ------------------------------------------------------------------*/
 
 void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
 {
-    s16 steep, t;
+    s16 steep;
     s16 deltax, deltay, error;
     s16 x, y;
     s16 ystep;
@@ -97,24 +82,22 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
     if (( y1 < 0) || (y1 > VRES)) return;
     */
     
-    steep = _abs_(y1 - y0) > _abs_(x1 - x0);
+    steep = abs(y1 - y0) > abs(x1 - x0);
 
     if (steep)
     {
-        // swap x and y
-        t = x0; x0 = y0; y0 = t;
-        t = x1; x1 = y1; y1 = t;
+        swap(x0, y0);
+        swap(x1, y1);
     }
 
     if (x0 > x1)
     {
-        // swap ends
-        t = x0; x0 = x1; x1 = t;
-        t = y0; y0 = y1; y1 = t;
+        swap(x0, x1);
+        swap(y0, y1);
     }
 
     deltax = x1 - x0;
-    deltay = _abs_(y1 - y0);
+    deltay = abs(y1 - y0);
 
     error = 0;
     y = y0;
@@ -135,6 +118,76 @@ void drawLine(u16 x0, u16 y0, u16 x1, u16 y1)
             y += ystep;
             error -= deltax;
         }
+    }
+}
+
+void drawVLine(u16 x, u16 y, u16 h)
+{
+    drawLine(x, y, x, y+h-1);
+}
+
+void drawHLine(u16 x, u16 y, u16 w)
+{
+    drawLine(x, y, x+w-1, y);
+}
+
+void drawTriangle(u8 x1, u8 y1, u8 x2, u8 y2, u8 x3, u8 y3)
+{
+    drawLine(x1, y1, x2, y2);
+    drawLine(x2, y2, x3, y3);
+    drawLine(x3, y3, x1, y1);
+}
+
+/*
+ * Code adapted from the code on a blog by Fahad Uddin
+ * (He has approved it's use in this library, under GPL licensing)
+ * Designation: Computer Information and Systems Engineer
+ * Email: engg_fahd@hotmail.com
+ * http://mycsnippets.blogspot.com/2010/12/program-to-fill-triangle-in-c-language.html
+ * 
+ * Note: This code requires floating point. If floating point is not used
+ * the calculations are not precise enough to create the proper line lengths to
+ * fully fill the tiangular area.
+ * --- bperrybap
+ */
+
+void fillTriangle(u8 x1, u8 y1, u8 x2, u8 y2, u8 x3, u8 y3)
+{
+    u8 sl,sx1,sx2;
+    double m1,m2,m3;
+
+    if(y2>y3)
+    {
+        swap(x2,x3);
+        swap(y2,y3);
+    }
+
+    if(y1>y2)
+    {
+        swap(x1,x2);
+        swap(y1,y2);
+    }
+
+    m1=(double)(x1-x2)/(y1-y2);
+    m2=(double)(x2-x3)/(y2-y3);
+    m3=(double)(x3-x1)/(y3-y1);
+
+    for(sl=y1;sl<=y2;sl++)
+    {
+        sx1= m1*(sl-y1)+x1;
+        sx2= m3*(sl-y1)+x1;
+        if(sx1>sx2)
+            swap(sx1,sx2);
+        drawLine(sx1, sl, sx2, sl);
+    }
+    
+    for(sl=y2;sl<=y3;sl++)
+    {
+        sx1= m2*(sl-y3)+x3;
+        sx2= m3*(sl-y1)+x1;
+        if(sx1>sx2)
+            swap(sx1,sx2);
+        drawLine(sx1, sl, sx2, sl);
     }
 }
 
@@ -206,7 +259,8 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         y1=y2;
         y2=tmp;
     }
-/*
+
+    /*
     if (orient==PORTRAIT)
     {
         for (i=0; i<((y2-y1)/2)+1; i++)
@@ -216,7 +270,7 @@ void fillRect(u16 x1, u16 y1, u16 x2, u16 y2)
         }
     }
     else
-*/
+    */
     {
         for (i=0; i<((x2-x1)/2)+1; i++)
         {
@@ -265,24 +319,426 @@ void fillRoundRect(u16 x1, u16 y1, u16 x2, u16 y2)
     }
 }
 
-void drawBitmap(u16 xo, u16 yo, u16 w, u16 h, const u16* bitmap)
+void drawCircle(u16 x, u16 y, u16 radius)
 {
-    u16 i, j;
+    s16 f = 1 - radius;
+    s16 ddF_x = 1;
+    s16 ddF_y = -2 * radius;
+    s16 x1 = 0;
+    s16 y1 = radius;
 
-    for (j=0; j<h; j++)
+    drawPixel(x, y + radius);
+    drawPixel(x, y - radius);
+    drawPixel(x + radius, y);
+    drawPixel(x - radius, y);
+
+    while(x1 < y1)
     {
-        for (i=0; i<w; i++)
+        if(f >= 0) 
         {
-            //setColor(bitmap[j * w + i + 2]);
-            drawPixel(xo+i, yo+j);
-            /*
-            ILI9325_write(WriteDatatoGRAM, bitmap[ ( j * w ) + i + 2]);
-            ILI9325_write(GRAMHorizontalAddressSet, xo + i);
-            ILI9325_write(GRAMVerticalAddressSet,   yo + j);
-            */
+            y1--;
+            ddF_y += 2;
+            f += ddF_y;
         }
+        x1++;
+        ddF_x += 2;
+        f += ddF_x;    
+        drawPixel(x + x1, y + y1);
+        drawPixel(x - x1, y + y1);
+        drawPixel(x + x1, y - y1);
+        drawPixel(x - x1, y - y1);
+        drawPixel(x + y1, y + x1);
+        drawPixel(x - y1, y + x1);
+        drawPixel(x + y1, y - x1);
+        drawPixel(x - y1, y - x1);
     }
 }
+
+void fillCircle(u16 x, u16 y, u16 radius)
+{
+    s16 x1, y1;
+    for (y1 = -radius; y1 <= radius; y1++) 
+        for (x1 = -radius; x1 <= radius; x1++) 
+            if (x1 * x1 + y1 * y1 <= radius * radius) 
+                drawPixel(x + x1, y + y1);
+}
+
+void drawHBarGraph(u8 x, u8 y, int width, int height, u8 border, int minval, int maxval, int curval)
+{
+    u16 busypix;   // pixels in "busy" part
+    u8 gulx, guly; // bargraph upper left corner coordinates
+    u8 glrx, glry; // bargraph lower right corner coordinates
+    u8 i;
+    
+    /*
+     * set up border and graph coordinates
+     * x,y will be adjusted to upper left corner of border
+     * gulx,guly will be set to upper left corner of graph (sans border)
+     * glrx,glry will be set to lower right corner of graph (sans border)
+     */
+
+    if(height < 0)
+    {
+        glry = y - border;
+        y = y + height + 1;
+        guly = y + border;
+    }
+    else
+    {
+        // y is ok
+        guly = y + border;
+        glry = y + height -1 - border;
+    }
+
+    if(width < 0)
+    {
+        glrx = x - border;
+        x = x + width +1;
+        gulx = x + border;
+    }
+    else
+    {
+        // x is ok
+        gulx = x + border;
+        glrx = x + width - 1 - border;
+    }
+
+    /*
+     * Draw border pixels
+     */
+
+    if(border)
+    {
+        for(i = 0; i < border; i++)
+            drawRect(x+i, y+i, abs(width)-2*i, abs(height)-2*i);
+    }
+
+    /*
+     * Draw "busy" and "not busy" bargraph pixels
+     */
+
+    busypix = map(curval, minval, maxval, 0, abs(width) -2*border);
+
+    if(width < 0)
+    {
+        // bar advances to left
+        if(busypix)
+            drawRect(glrx-busypix+1, guly, glrx, glry);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly, glrx-busypix, glry);//, PIXEL_OFF);
+    }
+    else
+    {
+        // bar advances to right
+        if(busypix)
+            drawRect(gulx, guly, gulx+busypix-1, glry);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx+busypix+1, guly, glrx, glry);//, PIXEL_OFF);
+    }
+}
+
+/**
+ * Draw a Vertical BarGraph
+ *
+ * @param x X coordinate of the corner of the bargraph
+ * @param y Y coordinate of the corner of the bargraph
+ * @param width Width in pixels of bargraph, including border pixels
+ * @param height Height in pixels of bargraph, including border pixels
+ * @param border Border pixels around bargraph (use zero for no border)
+ * @param minval Minimum value of the bargraph
+ * @param maxval Maximum value of the bargraph
+ * @param curval Current value of the bargraph
+ */
+
+void drawVBarGraph(u8 x, u8 y, int width, int height, u8 border, int minval, int maxval, int curval)
+{
+    u16 busypix; // pixels in "busy" part
+    u8 gulx, guly; // bargraph upper left corner coordinates
+    u8 glrx, glry; // bargraph lower right corner coordinates
+    u8 i;
+    
+    /*
+     * set up border and graph coordinates
+     * x,y will be adjusted to upper left corner of border
+     * gulx,guly will be set to upper left corner of bargraph (sans border)
+     * glrx,glry will be set to lower right corner of bargraph (sans border)
+     */
+
+    if(height < 0)
+    {
+        glry = y - border;
+        y = y + height + 1;
+        guly = y + border;
+    }
+    else
+    {
+        // y is ok
+        guly = y + border;
+        glry = y + height -1 - border;
+    }
+
+    if(width < 0)
+    {
+        glrx = x - border;
+        x = x + width +1;
+        gulx = x + border;
+    }
+    else
+    {
+        // x is ok
+        gulx = x + border;
+        glrx = x + width - 1 - border;
+    }
+
+    /*
+     * Draw border pixels
+     */
+
+    if(border)
+    {
+        for(i = 0; i < border; i++)
+        {
+            drawRect(x+i, y+i, abs(width)-2*i, abs(height)-2*i);
+        }
+    }
+
+    /*
+     * Draw "busy" and "not busy" bargraph pixels
+     */
+
+    busypix = map(curval, minval, maxval, 0, abs(height) -2*border);
+
+    if(height < 0)
+    {
+        // bar advances up
+        if(busypix)
+            drawRect(gulx, glry-busypix+1, glrx, glry); //, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly, glrx, glry-busypix); //, PIXEL_OFF);
+    }
+    else
+    {
+        // bar advances down
+        if(busypix)
+            drawRect(gulx, guly, glrx, guly+busypix-1);//, PIXEL_ON);
+        if(curval < maxval)
+            drawRect(gulx, guly+busypix+1, glrx, glry);//, PIXEL_OFF);
+    }
+}
+
+/*  --------------------------------------------------------------------
+    Opens a Windows Bitmap (BMP) file
+    spi  : the spi module where the SD card is connected
+    filename : path + file's name (ex : img/logo.bmp)
+    x, y : the coordinates where to the picture
+    Increasing the pixel buffer size takes more RAM but makes loading a
+    little faster. 20 pixels seems a good balance.
+    ------------------------------------------------------------------*/
+
+#ifdef DRAWBITMAP
+
+#define BUFFPIXEL 20
+
+void drawBitmap(u8 spisd, const u8 * filename, u16 x, u16 y)
+{
+    FIL bmpFile;
+    int bmpWidth, bmpHeight;   // W+H in pixels
+    u8  bmpDepth;              // Bit depth (currently must be 24)
+    u32 bmpImageoffset;        // Start of image data in file
+    u32 rowSize;               // Not always = bmpWidth; may have padding
+    u8  sdbuffer[3*BUFFPIXEL]; // pixel buffer (R+G+B per pixel)
+    u8  buffidx = sizeof(sdbuffer); // Current position in sdbuffer
+    u8  goodBmp = false;       // Set to true on valid header parse
+    u8  flip    = true;        // BMP is stored bottom-to-top
+    int w, h, row, col;
+    u8  r, g, b;
+    u32 pos = 0;
+    u16 rc;
+
+    //if((x >= output.screen.width) || (y >= output.screen.height))
+    //    return;
+
+    // Open requested file
+    // -----------------------------------------------------------------
+    
+    if (f_open(spisd, &bmpFile, filename, FA_READ) != FR_OK)
+        return;
+
+    // Parse BMP header
+    // -----------------------------------------------------------------
+    
+    // Check BMP signature
+    if(f_read16(spisd, &bmpFile) == 0x4D42)
+    {
+        f_read32(spisd, &bmpFile); // File size:
+        f_read32(spisd, &bmpFile); // Read & ignore creator bytes
+        bmpImageoffset = f_read32(spisd, &bmpFile); // Start of image data
+        f_read32(spisd, &bmpFile); // Read DIB header
+        bmpWidth  = f_read32(spisd, &bmpFile);
+        bmpHeight = f_read32(spisd, &bmpFile);
+        
+        // planes must be '1'
+        if (f_read16(spisd, &bmpFile) == 1)
+        {
+            bmpDepth = f_read16(spisd, &bmpFile); // bits per pixel
+            // 0 = uncompressed
+            if ((bmpDepth == 24) && (f_read32(spisd, &bmpFile) == 0))
+            {
+                goodBmp = true; // Supported BMP format -- proceed!
+                // BMP rows are padded (if needed) to 4-byte boundary
+                rowSize = (bmpWidth * 3 + 3) & ~3;
+                // If bmpHeight is negative, image is in top-down order.
+                // This is not canon but has been observed in the wild.
+                if (bmpHeight < 0)
+                {
+                    bmpHeight = -bmpHeight;
+                    flip      = false;
+                }
+
+                // Crop area to be loaded
+                w = bmpWidth;
+                h = bmpHeight;
+
+                //if ((x+w-1) >= output.screen.width)
+                //    w = output.screen.width  - x;
+
+                //if ((y+h-1) >= output.screen.height)
+                //    h = output.screen.height - y;
+
+                // Set TFT address window to clipped image bounds
+                //setWindow(x, y, x+w-1, y+h-1);
+
+
+                // For each scanline...
+                for (row=0; row<h; row++)
+                {
+                    if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
+                        pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
+                    else     // Bitmap is stored top-to-bottom
+                        pos = bmpImageoffset + row * rowSize;
+
+                    // Seek to start of scan line to avoid cropping
+                    // and scanline padding. the seek only takes place
+                    // if the file position actually needs to change
+                    // (avoids a lot of cluster math in SD library).
+                    if(bmpFile.fptr != pos)
+                    {
+                        f_lseek(spisd, &bmpFile, pos);
+                        buffidx = sizeof(sdbuffer); // Force buffer reload
+                    }
+
+                    // For each pixel...
+                    for (col=0; col<w; col++)
+                    {
+                        // Time to read more pixel data?
+                        if (buffidx >= sizeof(sdbuffer))
+                        {
+                            f_read(spisd, &bmpFile, sdbuffer, sizeof(sdbuffer), &rc);
+                            buffidx = 0; // Set index to beginning
+                        }
+
+                        // Convert pixel from BMP to TFT format
+                        b = sdbuffer[buffidx++];
+                        g = sdbuffer[buffidx++];
+                        r = sdbuffer[buffidx++];
+
+                        // push to display
+                        setColor(r,g,b);
+                        drawPixel(col, row);
+                    } // end pixel
+                } // end scanline
+            } // end goodBmp
+        }
+    }
+
+    f_close(spisd, &bmpFile);
+    if(!goodBmp)
+        return; // BMP format not recognized
+}
+
+#endif // DRAWBITMAP
+
+/*
+void rotateChar(char c, u16 x, u16 y, u16 pos, u16 deg){
+    char i,j,ch;
+    unsigned u16 temp;
+    u16 newx,newy;
+    //double radian;
+    //radian=deg*0.0175;  
+
+    fastWriteLow(LCD_CS);   
+    if (fsize==FONT_SMALL)
+    {
+        temp=((c-32)*12); 
+        for(j=0;j<12;j++) 
+        {
+            ch=(SmallFont[temp]); 
+            for(i=0;i<8;i++)
+            {   
+                newx=x+(((i+(pos*8))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*8))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(7-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+        }
+    }
+#ifndef _NO_BIG_FONT_
+    else{
+        temp=((c-32)*32); 
+        for(j=0;j<16;j++) 
+        {
+            ch=(BigFont[temp]); 
+            for(i=0;i<8;i++)
+            {   
+                newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(7-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+            ch=(BigFont[temp]); 
+            for(i=8;i<16;i++)
+            {   
+                newx=x+(((i+(pos*16))*cosi(deg))-((j)*sini(deg)));
+                newy=y+(((j)*cosi(deg))+((i+(pos*16))*sini(deg)));
+
+                setXY(newx,newy,newx+1,newy+1);
+                
+                if((ch&(1<<(15-i)))!=0)   
+                {
+                    setPixel(fcolorr, fcolorg, fcolorb);
+                } 
+                else  
+                {
+                    setPixel(bcolorr, bcolorg, bcolorb);
+                }   
+            }
+            temp++;
+        }
+    }
+#endif
+    fastWriteHigh(LCD_CS);
+}
+*/
 
 /*
 void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 rox, u16 roy)
@@ -312,83 +768,6 @@ void drawBitmapR(u16 x, u16 y, u16 sx, u16 sy, unsigned u16* data, u16 deg, u16 
 
                 drawPixel(newx, newy);
             }
-    }
-}
-
-unsigned u16 loadBitmap(u16 x, u16 y, u16 sx, u16 sy, char *filename)
-{
-    u16 res;
-    u16 cx, cy, cp;
-    unsigned u16 temp, result;
-    char r,g,b;
-    u16 i;
-
-    res=openFile(filename, FILEMODE_BINARY);
-    if (res==NO_ERROR)
-    {
-        fastWriteLow(LCD_CS);  
-        cx=0;
-        cy=0;
-        result=512;
-        if (orient==PORTRAIT)
-        {
-            setXY(x, y, x+sx-1, y+sy-1);
-        }
-        while (result==512)
-        {
-            result=readBinary();
-            switch(result)
-            {
-                case ERROR_WRONG_FILEMODE:
-                    return ERROR_WRONG_FILEMODE;
-                    break;
-                case ERROR_NO_FILE_OPEN:
-                    return ERROR_NO_FILE_OPEN;
-                    break;
-                default:
-                    if (orient==PORTRAIT)
-                    {
-                        for (i=0; i<result; i+=2)
-                            LCD_Write_DATA(buffer[i],buffer[i+1]);
-                    }
-                    else
-                    {
-                        cp=0;
-                        while (cp<result)
-                        {
-                            if (((result-cp)/2)<(sx-cx))
-                            {
-                                setXY(x+cx, y+cy, x+cx+((result-cp)/2)-1, y+cy);
-                                for (i=(result-cp)-2; i>=0; i-=2)
-                                    LCD_Write_DATA(buffer[cp+i],buffer[cp+i+1]);
-                                cx+=((result-cp)/2);
-                                cp=result;
-                            }
-                            else
-                            {
-                                setXY(x+cx, y+cy, x+sx-1, y+cy);
-                                for (i=sx-cx-1; i>=0; i--)
-                                    LCD_Write_DATA(buffer[cp+(i*2)],buffer[cp+(i*2)+1]);
-                                cp+=(sx-cx)*2;
-                                cx=0;
-                                cy++;
-                            }
-                        }
-                    }
-                    break;
-            }              
-        }
-        closeFile();
-        if (orient==PORTRAIT)
-            setXY(0,0,239,319);
-        else
-            setXY(0,0,319,239);
-        fastWriteHigh(LCD_CS);  
-        return 0;
-    }
-    else
-    {
-        return res;
     }
 }
 */

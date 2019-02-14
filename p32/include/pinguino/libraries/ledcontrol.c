@@ -2,6 +2,16 @@
  *    LedControl.cpp - A library for controling Leds with a MAX7219/MAX7221
  *    Copyright (c) 2007 Eberhard Fahle
  * 
+ *    09 Feb. 2014 - Regis Blanchot - adapted to Pinguino 
+ *    11 Feb. 2014 - Regis Blanchot - added scroll functions
+ *    12 Jan. 2016 - Regis Blanchot - added poweron and poweroff functions
+ *    12 Jan. 2016 - Regis Blanchot - added printNumber, printFloat and printf functions
+ *    12 Jan. 2016 - Regis Blanchot - improved the code size
+ *    12 Jan. 2016 - Regis Blanchot - fixed display bugs in scroll function
+ *    13 Jan. 2016 - Regis Blanchot - added SPI library support
+ *    13 Jan. 2016 - Regis Blanchot - added better cascadind devices management (using OP_NOOP)
+ *    24 May  2016 - Regis Blanchot - scroll function returns actual position
+ *
  *    Permission is hereby granted, free of charge, to any person
  *    obtaining a copy of this software and associated documentation
  *    files (the "Software"), to deal in the Software without
@@ -31,351 +41,414 @@
 #include <const.h>
 #include <macro.h>
 #include <ledcontrol.h>
-//#include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <spi.h>
+#include <spi.c>
+
+/*
+#ifndef __PIC32MX__
+#include <digitalw.c>       // digitalwrite
+#include <digitalp.c>       // pinmode
+#include <delayms.c>
+#else
 #include <digitalw.c>
 #include <delay.c>
+#endif
+*/
 
-//the opcodes for the MAX7221 and MAX7219
-#define OP_NOOP   0
-#define OP_DIGIT0 1
-#define OP_DIGIT1 2
-#define OP_DIGIT2 3
-#define OP_DIGIT3 4
-#define OP_DIGIT4 5
-#define OP_DIGIT5 6
-#define OP_DIGIT6 7
-#define OP_DIGIT7 8
-#define OP_DECODEMODE  9
-#define OP_INTENSITY   10
-#define OP_SCANLIMIT   11
-#define OP_SHUTDOWN    12
-#define OP_DISPLAYTEST 15
+// max
+/*
+#ifndef __PIC32MX__
+#ifndef __XC8__
+#if defined(LEDCONTROLSCROLL)
+    #include <mathlib.c>
+#endif
+#endif
+#endif
+*/
 
-void LedControl_init(u8 dataPin, u8 clkPin, u8 csPin, u8 numDevices)
+// Printf
+#ifdef LEDCONTROLPRINTF
+    #include <printFormated.c>
+#endif
+
+// PrintFloat
+#if defined(LEDCONTROLPRINTFLOAT)
+    #include <printFloat.c>
+#endif
+
+// PrintNumber
+#if defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT)
+    #include <printNumber.c>
+#endif
+
+void LedControl_spiTransfer(u8 matrix, u8 opcode, u8 data)
 {
-    u8 i;
-    
-    LEDCONTROL_SPI_MOSI = dataPin;
-    LEDCONTROL_SPI_CLK  = clkPin;
-    LEDCONTROL_SPI_CS   = csPin;
-    if(numDevices<=0 || numDevices>8 )
-        numDevices=8;
-    maxDevices=numDevices;
-    pinmode(LEDCONTROL_SPI_MOSI,OUTPUT);
-    pinmode(LEDCONTROL_SPI_CLK,OUTPUT);
-    pinmode(LEDCONTROL_SPI_CS,OUTPUT);
-    digitalwrite(LEDCONTROL_SPI_CS,HIGH);
-    LEDCONTROL_SPI_MOSI=dataPin;
-    for(i=0;i<64;i++) 
-        status[i]=0x00;
-    for(i=0;i<maxDevices;i++)
+    u8 m;
+
+    // Enable the line 
+    SPI_select(LEDCONTROL_SPI);
+
+    for (m=0; m<=gLastDevice; m++)
     {
-        LedControl_spiTransfer(i,OP_DISPLAYTEST,0);
-        //scanlimit is set to max on startup
-        LedControl_setScanLimit(i,7);
-        //decode is done in source
-        LedControl_spiTransfer(i,OP_DECODEMODE,0);
-        LedControl_clearDisplay(i);
-        //we go u8o shutdown-mode on startup
-        LedControl_shutdown(i,true);
+        if (m == matrix)
+        {
+            SPI_write(LEDCONTROL_SPI, opcode);
+            SPI_write(LEDCONTROL_SPI, data);
+        }
+        else
+        {
+            SPI_write(LEDCONTROL_SPI, OP_NOOP);
+            SPI_write(LEDCONTROL_SPI, 0);
+        }
     }
+
+    // Latch the data onto the display
+    SPI_deselect(LEDCONTROL_SPI);
 }
 
-u8 LedControl_getDeviceCount() {
-    return maxDevices;
-}
+/*  --------------------------------------------------------------------
+    On initial power-up, all control registers are reset, the
+    display is blanked, and the MAX7219/MAX7221 enter shutdown mode
+    ------------------------------------------------------------------*/
 
-void LedControl_shutdown(u8 matrix, boolean b)
+void LedControl_init(u8 module, ...)
 {
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(b)
-        LedControl_spiTransfer(matrix, OP_SHUTDOWN,0);
+    u8 m;
+    int sdo, sck, cs;
+    va_list args;
+    
+    LEDCONTROL_SPI = module;
+    
+    va_start(args, module);                     // points args after module
+
+    // init SPI communication
+
+    if (LEDCONTROL_SPI == SPISW)
+    {
+        sdo = va_arg(args, int);                 // get the next arg
+        sck = va_arg(args, int);                 // get the next arg
+        cs  = va_arg(args, int);                 // get the next arg
+        SPI_setBitOrder(LEDCONTROL_SPI, SPI_MSBFIRST);
+        SPI_begin(LEDCONTROL_SPI, sdo, sck, cs);
+    }
     else
-        LedControl_spiTransfer(matrix, OP_SHUTDOWN,1);
+    {
+        SPI_setMode(LEDCONTROL_SPI, SPI_MASTER);
+        SPI_setDataMode(LEDCONTROL_SPI, SPI_MODE2);
+        // MAX72xx have theorical 10MHz maximum rate
+        // but seems to work at max 4MHz (48MHz/16)
+        SPI_setClockDivider(LEDCONTROL_SPI, SPI_CLOCK_DIV16);
+        SPI_begin(LEDCONTROL_SPI);
+    }
+
+    gLastDevice = va_arg(args, int) - 1;         // get the last arg
+    if (gLastDevice > 7)
+        gLastDevice = 7;
+
+    // Active Matrix is the first one
+    gActiveDevice = 0;
+    //gActiveDevice = gLastDevice - 1;
+
+    // Reset the chained-matrix buffer
+    for (m=0; m<64; m++) 
+        status[m] = 0;
+    
+    // Init. all the matrix
+    for (m=0; m<=gLastDevice; m++)
+    {
+        // Normal operation mode
+        LedControl_spiTransfer(m, OP_DISPLAYTEST, 0);
+        // scanlimit is set to max on startup
+        LedControl_spiTransfer(m, OP_SCANLIMIT, 7);
+        // No decode, it is done in source
+        LedControl_spiTransfer(m, OP_DECODEMODE, 0);
+        // Set medium intensity
+        LedControl_spiTransfer(m, OP_INTENSITY, 8);
+        // we go into shutdown-mode on startup
+        //LedControl_spiTransfer(m, OP_SHUTDOWN, 0);
+        // we start power on
+        LedControl_spiTransfer(m, OP_SHUTDOWN, 1);
+    }
+
+    va_end(args);                               // cleans up the list
+
+    #if defined(LEDCONTROLPRINTCHAR)   || defined(LEDCONTROLPRINT)      || \
+        defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT) || \
+        defined(LEDCONTROLPRINTF)      || defined(LEDCONTROLSCROLL)
+    LedControl_setFont(font8x8);
+    #endif
 }
 
-void LedControl_setScanLimit(u8 matrix, u8 limit)
+//#define LedControl_getDeviceCount() (gLastDevice)
+#if defined(LEDCONTROLSHUTDOWN) || \
+    defined(LEDCONTROLPOWERON)  || defined(LEDCONTROLPOWEROFF)
+
+void LedControl_shutdown(u8 b)
 {
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(limit>=0 || limit<8)
-        LedControl_spiTransfer(matrix, OP_SCANLIMIT,limit);
+    u8 m;
+    
+    for (m=0; m<=gLastDevice; m++)
+        LedControl_spiTransfer(m, OP_SHUTDOWN, b);
 }
 
-void LedControl_setIntensity(u8 matrix, u8 u8ensity)
+#define LedControl_poweron()  LedControl_shutdown(1)
+#define LedControl_poweroff() LedControl_shutdown(0)
+#endif
+
+#if defined(LEDCONTROLSETSCANLIMIT)
+void LedControl_setScanLimit(u8 limit)
 {
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(u8ensity>=0 || u8ensity<16)
-        LedControl_spiTransfer(matrix, OP_INTENSITY,u8ensity);
-}
+    u8 m;
 
+    for (m=0; m<=gLastDevice; m++)
+        LedControl_spiTransfer(m, OP_SCANLIMIT, limit & 7);
+}
+#endif
+
+#if defined(LEDCONTROLSETINTENSITY)
+void LedControl_setIntensity(u8 intensity)
+{
+    u8 m;
+
+    for (m=0; m<=gLastDevice; m++)
+        LedControl_spiTransfer(m, OP_INTENSITY, intensity & 15);
+}
+#endif
+
+#if defined(LEDCONTROLCLEARDISPLAY) || defined(LEDCONTROLCLEARALL)
 void LedControl_clearDisplay(u8 matrix)
 {
-    u8 offset;
-    u8 i;
+    u8 offset, i;
     
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    offset=matrix*8;
-    for(i=0;i<8;i++)
+    //if (matrix >= gLastDevice)
+    //    return;
+        
+    offset = matrix << 3; //* 8;
+    for (i=0; i<8; i++)
     {
-        status[offset+i]=0;
-        LedControl_spiTransfer(matrix, i+1,status[offset+i]);
+        status[offset + i] = 0;
+        LedControl_spiTransfer(matrix, i+1, 0);
     }
 }
+#endif
 
+#if defined(LEDCONTROLCLEARALL)
 void LedControl_clearAll()
 {
-    u8 i;
+    u8 m;
     
-    for (i=0;i<maxDevices;i++)
-        LedControl_clearDisplay(i);
+    for (m=0; m<=gLastDevice; m++)
+        LedControl_clearDisplay(m);
+
+    gActiveDevice = 0;
 }
+#endif
 
 void LedControl_setLed(u8 matrix, u8 row, u8 column, boolean state)
 {
-    u8 offset;
-    u8 val=0x00;
+    u8 offset, val;
 
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(row<0 || row>7 || column<0 || column>7)
-        return;
-    offset=matrix*8;
-    val=0b10000000 >> column;
-    if(state)
-        status[offset+row]=status[offset+row]|val;
+    //if (matrix >= gLastDevice)
+    //    return;
+    
+    offset = (matrix << 3) + (row & 7);
+    val = 0x80 >> (column & 7);
+
+    if (state)
+        status[offset] |= val;
     else
-    {
-        val=~val;
-        status[offset+row]=status[offset+row]&val;
-    }
-    LedControl_spiTransfer(matrix, row+1,status[offset+row]);
+        status[offset] &= ~val;
+
+    LedControl_spiTransfer(matrix, row+1, status[offset]);
 }
 
 void LedControl_setRow(u8 matrix, u8 row, u8 value)
 {
-    u8 offset;
-    
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(row<0 || row>7)
-        return;
-    offset=matrix*8;
-    status[offset+row]=value;
-    LedControl_spiTransfer(matrix, row+1,status[offset+row]);
+    u8 col;
+
+    //if (matrix >= gLastDevice)
+    //    return;
+
+    for (col=0; col<8; col++)
+        LedControl_setLed(matrix, col, row & 7, (value >> col) & 0x01);
 }
-    
+
 void LedControl_setColumn(u8 matrix, u8 col, u8 value)
 {
-    u8 val;
-    u8 row;
+    u8 offset;
+    
+    //if (matrix >= gLastDevice)
+    //    return;
 
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(col<0 || col>7) 
-        return;
-    for(row=0;row<8;row++)
-    {
-        //val=value >> (7-row);
-        val=value >> row;
-        val=val & 0x01;
-        LedControl_setLed(matrix,row,col,val);
-    }
+    offset = (matrix << 3) + (col & 7);
+    status[offset] = value;
+    LedControl_spiTransfer(matrix, col+1, value);
 }
 
-#if defined(SETDIGIT)
+#if defined(LEDCONTROLSETDIGIT) || defined(LEDCONTROLSETCHAR)
 void LedControl_setDigit(u8 matrix, u8 digit, u8 value, boolean dp)
 {
-    u8 offset;
-    u8 v;
+    u8 offset, v;
 
-    if(matrix<0 || matrix>=maxDevices)
+    //if (matrix >= gLastDevice)
+    //    return;
+
+    if (digit > 7 || value > 15)
         return;
-    if(digit<0 || digit>7 || value>15)
-        return;
-    offset=matrix*8;
-    v=charTable[value];
-    if(dp)
-        v|=0b10000000;
-    status[offset+digit]=v;
-    LedControl_spiTransfer(matrix, digit+1,v);
+
+    offset = matrix << 3; //* 8;
+    v = charTable[value];
+    if (dp)
+        v |= 0b10000000;
+    status[offset+digit] = v;
+    LedControl_spiTransfer(matrix, digit+1, v);
     
+}
+#define LedControl_setChar(a,b,c,d) LedControl_setDigit(a,b,c,d)
+#endif
+
+#if defined(LEDCONTROLPRINTCHAR)   || defined(LEDCONTROLPRINT)      || \
+    defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT) || \
+    defined(LEDCONTROLPRINTF)      || defined(LEDCONTROLSCROLL)
+
+void LedControl_setFont(const u8* font)
+{
+    font_address   = font;
+    font_width     = font[FONT_WIDTH];
+    font_height    = font[FONT_HEIGHT];
+    font_firstchar = font[FONT_FIRST_CHAR];
+    font_charcount = font[FONT_CHAR_COUNT];
+}
+
+void LedControl_printChar(u8 charIndex)
+{
+    u8 col;
+    
+    //charIndex = charIndex & 0x7f - 0x20;
+    charIndex = charIndex & font_charcount - font_firstchar;
+
+    // display char on the active matrix
+    for (col=0; col<font_width; col++)
+        LedControl_setRow(gActiveDevice, 7-col, font_address[FONT_OFFSET+charIndex*font_width+col]);
+        //LedControl_setColumn(gActiveDevice, col, font_address[FONT_OFFSET+charIndex*font_width+col]);
+        //LedControl_setColumn(gActiveDevice, 7-col, font_address[FONT_OFFSET+charIndex*8+col]);
+
+    // point to the next matrix
+    if (gActiveDevice++ >= gLastDevice)
+        gActiveDevice = 0;
+
+    //Delayms(5);
 }
 #endif
 
-#if defined(SETCHAR)
-void LedControl_setChar(u8 matrix, u8 digit, char value, boolean dp)
+#if defined(LEDCONTROLPRINT) || defined(LEDCONTROLPRINTNUMBER)
+void LedControl_print(const char * str)
 {
-    u8 offset;
-    u8 index,v;
+    while (*str)
+        LedControl_printChar(*str++);
 
-    if(matrix<0 || matrix>=maxDevices)
-        return;
-    if(digit<0 || digit>7)
-        return;
-    offset=matrix*8;
-    index=(u8)value;
-    if(index >127) {
-        //nothing define we use the space char
-        value=32;
-    }
-    v=charTable[index];
-    if(dp)
-        v|=0b10000000;
-    status[offset+digit]=v;
-    LedControl_spiTransfer(matrix, digit+1,v);
+    //Delayms(5);
 }
 #endif
 
-void shiftOut(u8 dataPin, u8 clockPin, u8 bitOrder, u8 val)
-{
-    u8 i;
-    u8 bitMask;
-
-    for (i = 0; i < 8; i++)
-    {
-        if (bitOrder == LSBFIRST)
-            bitMask = (1 << i);
-        else
-            bitMask = (1 << (7 - i));
-
-        digitalwrite(dataPin, (val & bitMask) ? HIGH : LOW);
-        digitalwrite(clockPin, HIGH);
-        digitalwrite(clockPin, LOW);            
-    }
+#if defined(LEDCONTROLPRINTNUMBER) || defined(LEDCONTROLPRINTFLOAT)
+void LedControl_printNumber(s32 value, u8 base)
+{  
+    printNumber(LedControl_printChar, value, base);
 }
+#endif
 
-void LedControl_spiTransfer(u8 matrix, volatile u8 opcode, volatile u8 data)
-{
-    //Create an array with the data to shift out
-    u8 offset=matrix*2;
-    u8 maxbytes=maxDevices*2;
-    u8 i;
-    
-    for(i=0;i<maxbytes;i++)
-        spidata[i]=(u8)0;
-    //put our device data u8o the array
-    spidata[offset+1]=opcode;
-    spidata[offset]=data;
-    //enable the line 
-    digitalwrite(LEDCONTROL_SPI_CS,LOW);
-    //Now shift out the data 
-    for(i=maxbytes;i>0;i--)
-        shiftOut(LEDCONTROL_SPI_MOSI,LEDCONTROL_SPI_CLK,MSBFIRST,spidata[i-1]);
-    //latch the data onto the display
-    digitalwrite(LEDCONTROL_SPI_CS,HIGH);
-}    
+#if defined(LEDCONTROLPRINTFLOAT)
+void LedControl_printFloat(float number, u8 digits)
+{ 
+    printFloat(LedControl_printChar, number, digits);
+}
+#endif
 
-/*
-u8 LedControl_getCharArrayPosition(char input)
+#if defined(LEDCONTROLPRINTF)
+void LedControl_printf(const u8 *fmt, ...)
 {
-     if ((input==' ')||(input=='+')) return 10;
-     if (input==':') return 11;
-     if (input=='-') return 12;
-     if (input=='.') return 13;
-     if ((input =='(')) return  14;  //replace by 'ñ'   
-     if ((input >='0')&&(input <='9')) return (input-'0');
-     if ((input >='A')&&(input <='Z')) return (input-'A' + 15);
-     if ((input >='a')&&(input <='z')) return (input-'a' + 15);     
-     return 13;
-}  
-*/
+    static u8 buffer[25];
+    u8 *str=(char*)&buffer;
+    va_list	args;
+
+    va_start(args, fmt);
+    psprintf2(buffer, fmt, args);
+    va_end(args);
+
+    while (*str)
+        LedControl_printChar(*str++);
+
+    //Delayms(5);
+}
+#endif
 
 // Scroll Message
-// d'après : http://breizhmakers.over-blog.com/article-un-peu-d-animation-ou-le-scrolling-a-base-de-max7219-105669349.html
-#if defined(SCROLL)
-void LedControl_scroll(const char * displayString)
+// from : http://breizhmakers.over-blog.com/article-un-peu-d-animation-ou-le-scrolling-a-base-de-max7219-105669349.html
+#if defined(LEDCONTROLSCROLL)
+u16 LedControl_scroll(const char * string)
 {
-    u8 nextchar;    // next char to display
-    u8 r;           // current row
-    u8 m;           // current matrix
-    u8 ascii;       // current ASCII code
-    u8 curchar;     // current displayed char
-    u8 offset;      // nombre de bits à prendre dans l'octet suivant
-    u8 row[8];      // number of lines of the matrix
-    u16 scrollmax = 8 * max(maxDevices, strlen(displayString));
-    
-    // octet de départ
-    curchar = scroll / 8;
+    u8 m;                           // current matrix (0 < m < 8)
+    u8 r;                           // current row    (0 < r < 8)
+    u8 row[8];                      // new char to display
+    u8 charIndex;                   // current char index in the font tab
+    u8 curchar = gScroll / 8;       // current char to display (first matrix)
+    u8 offset = gScroll & 7;        // pixel to scroll (0 < offset < 8)
+    //u8 len = strlen(str) - 1;       // number of char (from 0)
+    u8 len;
+    u8 str[64];
+    u16 scrollmax = 8 * max(gLastDevice+1, len+1);
 
-    // nombre de bits à prendre dans l'octet suivant
-    offset  = scroll % 8;
+    // fill the string with leading spaces, one for each matrix
+    for (m = 0; m <= gLastDevice; m++)
+        str[m] = ' ';
+    str[m] = '\0';
+    strcat(str, string);
+    len = strlen(str) - 1;
 
-    for (m=0; m<maxDevices; m++)
+    // for every matrix connected
+    for (m = 0; m <= gLastDevice; m++)
     {
         // for every line of the matrix
-        for(r=0; r<8; r++)
+        for (r = 0; r < 8; r++)
         {
-            row[r]=0;
+            if (curchar > len)
+                charIndex = 0;
+            else
+                //charIndex = str[curchar] & 0x7F - 0x20;
+                charIndex = str[curchar] & font_charcount - font_firstchar;
+            // shift the current char by offset
+            //row[r] = font[charIndex][r] >> offset;
+            row[r] = font_address[FONT_OFFSET+charIndex*8+r] >> offset;
 
-            // matrix = current char shifted by offset
+            // add the next char shifted by (8 - offset)
+            // only if offset is not null
 
-            ascii = displayString[curchar]-32;
-            row[r] |= ( alphabetBitmap[ascii][r] >> offset );
-
-            // si on n'est pas sur le premier bit d'un octet il faut prendre les bits qui restent à
-            // afficher dans l'octet suivant
-
-            if (offset > 0) 
-            {
-                ascii = displayString[curchar+1]-32;
-                if (ascii >= 0x20 && ascii <= 0x7F)
-                {
-                    nextchar = alphabetBitmap[ascii][r];
-                    row[r] |=  nextchar << (8-offset);
-                }
-            }
+            if (offset == 0) continue;
+             
+            if ((curchar+1) > len)
+                charIndex = 0;
+            else
+                charIndex = str[curchar + 1] & font_charcount - font_firstchar;
+            //row[r] |= font[charIndex][r] << (8-offset);
+            row[r] |= font_address[FONT_OFFSET+charIndex*8+r] << (8-offset);
         }
 
         // Display the new matrix
-        for (r=0; r<8; r++)
-            LedControl_setColumn(m, 7-r, row[r]);     
+        for (r = 0; r < 8; r++)
+            LedControl_setRow(m, 7 - r, row[r]);     
 
         curchar++;
     }
 
-    // and wait a bit
-    Delayms(50);
-
+    //Delayms(5);
+    
     // Do we cover the whole scroll area ?
-    scroll = (scroll+1) % scrollmax;
-}
-#endif
-
-#if defined(WRITESTRING)
-void LedControl_writeString(const char * displayString)
-{
-    u8 matrix=0;
-    char c;
-    
-    while (c = *displayString++)
-    {
-        LedControl_displayChar(matrix, c);
-        Delayms(300);
-        //LedControl_clearAll();
-        //LedControl_clearDisplay(matrix);
-        matrix++;
-        if (matrix >= maxDevices)
-            matrix=0;
-    }
-    Delayms(300);
-}
-#endif
-
-#if defined(WRITESTRING) || defined(DISPLAYCHAR)
-void LedControl_displayChar(u8 matrix, u8 charIndex)
-{
-    u8 i;
-    
-    if (charIndex >= 0x20 && charIndex <= 0x7F)
-    {
-        for (i=0; i<8;i++)
-            LedControl_setColumn(matrix, 7-i, alphabetBitmap[2+charIndex-32][i]);
-    }
+    gScroll = (gScroll + 1) % scrollmax;
+    return gScroll;
 }
 #endif
 

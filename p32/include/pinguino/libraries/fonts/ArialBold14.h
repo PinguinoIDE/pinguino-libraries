@@ -19,33 +19,35 @@
  *
  * The font data are defined as
  *
- * struct _FONT_ {
- *     uint16_t   font_Size_in_Bytes_over_all_included_Size_it_self;
- *     unsigned char    font_Width_in_Pixel_for_fixed_drawing;
- *     unsigned char    font_Height_in_Pixel_for_all_characters;
- *     unit8_t    font_First_Char;
- *     unsigned char    font_Char_Count;
+ * struct _FONT_
+ * {
+ *     u16 font_Size_in_Bytes_over_all_included_Size_it_self;
+ *     u8  font_Width_in_Pixel_for_fixed_drawing;
+ *     u9  font_Height_in_Pixel_for_all_characters;
+ *     u8  font_First_Char;
+ *     u8  font_Char_Count;
  *
- *     unsigned char    font_Char_Widths[font_Last_Char - font_First_Char +1];
- *                  // for each character the separate width in pixels,
- *                  // characters < 128 have an implicit virtual right empty row
+ *     u8  font_Char_Widths[font_Last_Char - font_First_Char +1];
+ *         // for each character the separate width in pixels,
+ *         // characters < 128 have an implicit virtual right empty row
  *
- *     unsigned char    font_data[];
- *                  // bit field of all characters
+ *     u8  font_data[];
+ *         // bit field of all characters
+ * }
  */
 
 #ifndef ARIAL_BOLD_14_H
 #define ARIAL_BOLD_14_H
 
-#define ARIAL_BOLD_14_WIDTH 10
-#define ARIAL_BOLD_14_HEIGHT 14
+//#define ARIAL_BOLD_14_WIDTH 10
+//#define ARIAL_BOLD_14_HEIGHT 14
 
-const unsigned char Arial_Bold_14[] = { //Write font to PIC32 flash memory
+const unsigned char ArialBold14[] = {
     0x22, 0x08, // size
-    0x0A, // width
-    0x0E, // height
-    0x20, // first char
-    0x60, // char count
+    0x0A,       // width
+    0x0E,       // height
+    0x20,       // first char
+    0x60,       // char count
 
     // char widths
     0x04, 0x02, 0x05, 0x06, 0x07, 0x08, 0x09, 0x02, 0x03, 0x03,
@@ -156,7 +158,22 @@ const unsigned char Arial_Bold_14[] = { //Write font to PIC32 flash memory
     0x06, 0x06, 0x7E, 0xFC, 0x80, 0xC0, 0xC0, 0xFC, 0x7C, 0x00, // 125
     0x60, 0x30, 0x30, 0x70, 0x60, 0x60, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 126
     0xFE, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0xFE, 0x1C, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1C // 127
-
 };
 
 #endif
+
+// 0xFE, 0xFE, 0x06, 0x06, 0xFC, 0xFC, 0xC0, 0xC0 // 91 = [
+// 11111110
+// 11111110
+// 00000110
+// 00000110
+// 00111111
+// 00111111
+// 00110000
+// 00110000
+
+// 0xFE, 0xFE, 0x1C, 0x1C, // 73 = I
+// 11111110
+// 11111110
+// 00000111
+// 00000111

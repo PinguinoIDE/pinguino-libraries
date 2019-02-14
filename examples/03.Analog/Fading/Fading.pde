@@ -8,7 +8,7 @@
 */
 
 
-u8 ledPin = 10;    // LED connected to digital pin 10 (CCP1)
+u8 ledPin = PWM1;    // LED connected to digital pin CCP1
 
 void setup()
 { 

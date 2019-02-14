@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #-------------------------------------------------------------------------------
-# File: temp18b20.py
+# File: Thermometer.py
 #
 # display time and temperature
 # temperature is sent by pinguino device though usb bus
@@ -16,7 +16,7 @@
 import usb		# requires pyusb available at https://sourceforge.net/projects/pyusb/files/
 import sys
 import time
-import Tkinter	# requires python-tk (apt-get install python-tk)
+import Tkinter	        # requires python-tk (apt-get install python-tk)
 from Tkinter import *
 
 curtime = ''
@@ -105,6 +105,8 @@ def update():
 		t = pinguino.read(4, INTERVAL)
 	except usb.USBError as err:
 		pass
+        
+	# if we really got a temperature
 	if len(t) > 0:
 		#print 't =',t	# debug
 		if t[0] == 1:

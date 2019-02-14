@@ -27,12 +27,9 @@
 #ifndef __SERIAL2__
 #define __SERIAL2__
 
-#include <stdarg.h>
-#ifdef SERIALPRINTF
-#include <printf.c>
-#endif
-#include <serial.c>
 #include <typedef.h>
+#include <stdarg.h>
+#include <serial.c>
 
 void serial2init(u32 speed)
 {
@@ -40,6 +37,15 @@ void serial2init(u32 speed)
         SerialConfigure(UART1, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
     #else
         SerialConfigure(UART2, UART_ENABLE,	UART_RX_TX_ENABLED,	speed);
+    #endif
+}
+
+void serial2printchar(u8 c)
+{
+    #ifdef PIC32_PINGUINO_220
+        SerialPutChar(UART1, c);
+    #else
+        SerialPutChar(UART2, c);
     #endif
 }
 
@@ -57,6 +63,17 @@ void serial2printf(char *fmt, ...)
     va_end(args);
 }
 #endif
+
+#if defined(SERIALPRINTX)
+void serial2printx(const char *s, s32 value, u8 base)
+{
+    #ifdef PIC32_PINGUINO_220
+    SerialPrintX(UART1, s, value, base);
+    #else
+    SerialPrintX(UART2, s, value, base);
+    #endif
+}
+#endif /* SERIALPRINTX ... */
 
 #if defined(SERIALPRINT) || defined(SERIALPRINTLN) || \
     defined(SERIALPRINTNUMBER) || defined(SERIALPRINTFLOAT)
@@ -165,4 +182,3 @@ BOOL serial2clearrxerror(void)
 }
 
 #endif /* __SERIAL2__ */
-

@@ -27,6 +27,18 @@
 #include <typedef.h>
 #include <stdlib.h>
 
+int abs(int v)
+{
+    return (v < 0) ? -(unsigned)v : v;
+}
+
+/*
+long abs(long x)
+{
+    return ((x)>0?(x):-(x));
+}
+*/
+
 /**	----------------------------------------------------------------------------
 	---------- random
  	----------------------------------------------------------------------------
@@ -40,13 +52,6 @@ long random(long mini, long maxi)
 {
     return ((rand()%maxi) + mini);
 }
-
-/*
-long abs(long x)
-{
-    return ((x)>0?(x):-(x));
-}
-*/
 
 long map(long x, long in_min, long in_max, long out_min, long out_max)
 {

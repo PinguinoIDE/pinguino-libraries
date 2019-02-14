@@ -1,30 +1,59 @@
+#define MATRIX 3 // number of matrix
+
+u8 i;
+
 void setup()
 {
-    delay(1000);
-    /*
-    We need a LedControl to work with.
-    pin 0 is connected to the DataIn 
-    pin 1 is connected to the CLK 
-    pin 2 is connected to LOAD 
-    1 : We have only a single MAX72XX (adress = 0).
-    */
-    LedControl.init(0, 1, 2, 1);
-    /*
-    The MAX72XX is in power-saving mode on startup,
-    we have to do a wakeup call
-    */
-    LedControl.shutdown(0, false);
-    /* Set the brightness to a medium value (0~15 possible values) */
-    LedControl.setIntensity(0, 8);
-    /* and clear the display */
-    LedControl.clearDisplay(0);
+    // SPI SOFTWARE
+    // pin 3 is connected to the DataIn 
+    // pin 1 is connected to the CLK 
+    // pin 13 is connected to the CS  
+    LedControl.init(SPISW, 3, 1, 13, MATRIX);
+
+    // SPI HARDWARE
+    //LedControl.init(SPI1, MATRIX);
+
+
+    // MAX72XX are in power-saving mode on startup,
+    // we have to do a wakeup call
+    LedControl.powerOn();
+    // Set the brightness to a medium value (0~15 possible values)
+    LedControl.setIntensity(1);
 }
 
 void loop()
-{ 
-    /* display the string char by char */
-    //LedControl.writeString(" Hello World! ");
-    //delay(1000);
-    /* scroll the string 1 pixel to the left */
-    LedControl.scroll(" www.pinguino.cc ");
+{
+    // display chars one after one
+    LedControl.clearAll();
+    for (i='A'; i<='Z'; i++)
+    {
+        LedControl.printChar(i);
+        delay(333);
+    }
+    // display the string char by char
+    LedControl.clearAll();
+    for (i=0; i<=5; i++)
+    {
+        LedControl.print("Hello World!");
+        delay(1000);
+    }
+    // scroll the string 1 pixel to the left
+    LedControl.clearAll();
+    for (i=0; i<(15*8); i++)
+    {
+        LedControl.scroll("www.pinguino.cc");
+    }
+
+    // display the number with printf
+    LedControl.clearAll();
+    for (i=0; i<=255; i++)
+        LedControl.printf("%03d", i);
+
+    // display the number with printNumber
+    for (i=0; i<=255; i++)
+    {
+        LedControl.clearAll();
+        LedControl.printNumber(i, DEC);
+        delay(150);
+    }
 }

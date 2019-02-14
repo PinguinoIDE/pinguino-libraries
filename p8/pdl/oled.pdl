@@ -1,53 +1,67 @@
-SSD1306.sendCommand SSD1306_sendCommand#include <SSD1306.c>
-SSD1306.sendData SSD1306_sendData#include <SSD1306.c>
-SSD1306.displayOff SSD1306_displayOff#include <SSD1306.c>
-SSD1306.displayOn SSD1306_displayOn#include <SSD1306.c>
-SSD1306.sleep SSD1306_sleep#include <SSD1306.c>
-SSD1306.wake SSD1306_wake#include <SSD1306.c>
-SSD1306.setInverse SSD1306_setInverse#include <SSD1306.c>
-SSD1306.setDisplayOffset SSD1306_setDisplayOffset#include <SSD1306.c>
-SSD1306.setContrast SSD1306_setContrast#include <SSD1306.c>
-SSD1306.setDisplayStartLine SSD1306_setDisplayStartLine#include <SSD1306.c>
-SSD1306.setSegmentRemap SSD1306_setSegmentRemap#include <SSD1306.c>
-SSD1306.setMultiplexRatio SSD1306_setMultiplexRatio#include <SSD1306.c>
-SSD1306.setComOutputScanDirection SSD1306_setComOutputScanDirection#include <SSD1306.c>
-SSD1306.setComPinsHardwareConfiguration SSD1306_setComPinsHardwareConfiguration#include <SSD1306.c>
-SSD1306.startHorizontalScroll SSD1306_startHorizontalScroll#include <SSD1306.c>
-SSD1306.startVerticalAndHorizontalScroll SSD1306_startVerticalAndHorizontalScroll#include <SSD1306.c>
-SSD1306.stopScroll SSD1306_stopScroll#include <SSD1306.c>
-SSD1306.pamSetStartAddress SSD1306_pamSetStartAddress#include <SSD1306.c>
-SSD1306.setMemoryAddressingMode SSD1306_setMemoryAddressingMode#include <SSD1306.c>
-SSD1306.hvSetColumnAddress SSD1306_hvSetColumnAddress#include <SSD1306.c>
-SSD1306.hvSetPageAddress SSD1306_hvSetPageAddress#include <SSD1306.c>
-SSD1306.pamSetPageStart SSD1306_pamSetPageStart#include <SSD1306.c>
-SSD1306.setDisplayClockRatioAndFrequency SSD1306_setDisplayClockRatioAndFrequency#include <SSD1306.c>
-SSD1306.setPrechargePeriod SSD1306_setPrechargePeriod#include <SSD1306.c>
-SSD1306.setVcomhDeselectLevel SSD1306_setVcomhDeselectLevel#include <SSD1306.c>
-SSD1306.nop SSD1306_nop#include <SSD1306.c>
-SSD1306.setChargePumpEnable SSD1306_setChargePumpEnable#include <SSD1306.c>
-SSD1306.getFontWidth SSD1306_getFontWidth#include <SSD1306.c>
-SSD1306.getFontHeight SSD1306_getFontHeight#include <SSD1306.c>
-SSD1306.invertDisplay SSD1306_invertDisplay#include <SSD1306.c>
-SSD1306.normalDisplay SSD1306_normalDisplay#include <SSD1306.c>
-SSD1306.init SSD1306_init#include <SSD1306.c>
-SSD1306.refresh SSD1306_refresh#include <SSD1306.c>
-SSD1306.clearScreen SSD1306_clearScreen#include <SSD1306.c>
-SSD1306.scrollRight SSD1306_scrollRight#include <SSD1306.c>
-SSD1306.scrollLeft SSD1306_scrollLeft#include <SSD1306.c>
-SSD1306.scrollUp SSD1306_scrollUp#include <SSD1306.c>
-SSD1306.scrollDown SSD1306_scrollDown#include <SSD1306.c>
-SSD1306.setFont SSD1306_setFont#include <SSD1306.c>
-SSD1306.printChar SSD1306_printChar#include <SSD1306.c>
-SSD1306.print SSD1306_print#include <SSD1306.c>#define SSD1306PRINT
-SSD1306.println SSD1306_println#include <SSD1306.c>#define SSD1306PRINTLN
-SSD1306.printNumber SSD1306_printNumber#include <SSD1306.c>#define SSD1306PRINTNUMBER
-SSD1306.printFloat SSD1306_printFloat#include <SSD1306.c>#define SSD1306PRINTFLOAT
-SSD1306.printf SSD1306_printf#include <SSD1306.c>#define SSD1306PRINTF
-SSD1306.setCursor SSD1306_setCursor#include <SSD1306.c>
-SSD1306.drawPixel SSD1306_drawPixel#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.clearPixel SSD1306_clearPixel#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.getColor SSD1306_getColor#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.drawBitmap SSD1306_drawBitmap#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.drawCircle SSD1306_drawCircle#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.fillCircle SSD1306_fillCircle#include <SSD1306.c>#define SSD1306GRAPHICS
-SSD1306.drawLine SSD1306_drawLine#include <SSD1306.c>#define SSD1306GRAPHICS
+OLED_I2C1 I2C1#define OLEDUSEI2C1
+OLED_I2C2 I2C2#define OLEDUSEI2C2
+OLED_SPI1 SPI1#include <oled.h>#define OLEDUSESPI1
+OLED_SPI2 SPI2#include <oled.h>#define OLEDUSESPI2
+OLED_SPISW SPISW#include <oled.h>#define OLEDUSESPISW
+OLED_PMP6800 OLED_PMP6800#include <oled.c>#define OLEDUSEPMP6800
+OLED_PMP8080 OLED_PMP8080#include <oled.c>#define OLEDUSEPMP8080
+OLED_PORT6800 OLED_PORT6800#include <oled.c>#define OLEDUSEPORT6800
+OLED_PORT8080 OLED_PORT8080#include <oled.c>#define OLEDUSEPORT8080
+OLED.init OLED_init#include <oled.c>
+OLED.sendCommand OLED_sendCommand#include <oled.c>
+OLED.sendData OLED_sendData#include <oled.c>
+OLED.displayOff OLED_displayOff#include <oled.c>
+OLED.displayOn OLED_displayOn#include <oled.c>
+OLED.sleep OLED_sleep#include <oled.c>
+OLED.wake OLED_wake#include <oled.c>
+OLED.setInverse OLED_setInverse#include <oled.c>
+OLED.setDisplayOffset OLED_setDisplayOffset#include <oled.c>
+OLED.setContrast OLED_setContrast#include <oled.c>
+OLED.setDisplayStartLine OLED_setDisplayStartLine#include <oled.c>
+OLED.setSegmentRemap OLED_setSegmentRemap#include <oled.c>
+OLED.setMultiplexRatio OLED_setMultiplexRatio#include <oled.c>
+OLED.setComOutputScanDirection OLED_setComOutputScanDirection#include <oled.c>
+OLED.setComPinsHardwareConfiguration OLED_setComPinsHardwareConfiguration#include <oled.c>
+OLED.startHorizontalScroll OLED_startHorizontalScroll#include <oled.c>
+OLED.startVerticalAndHorizontalScroll OLED_startVerticalAndHorizontalScroll#include <oled.c>
+OLED.stopScroll OLED_stopScroll#include <oled.c>
+OLED.pamSetStartAddress OLED_pamSetStartAddress#include <oled.c>
+OLED.setMemoryAddressingMode OLED_setMemoryAddressingMode#include <oled.c>
+OLED.hvSetColumnAddress OLED_hvSetColumnAddress#include <oled.c>
+OLED.hvSetPageAddress OLED_hvSetPageAddress#include <oled.c>
+OLED.pamSetPageStart OLED_pamSetPageStart#include <oled.c>
+OLED.setDisplayClockRatioAndFrequency OLED_setDisplayClockRatioAndFrequency#include <oled.c>
+OLED.setPrechargePeriod OLED_setPrechargePeriod#include <oled.c>
+OLED.setVcomhDeselectLevel OLED_setVcomhDeselectLevel#include <oled.c>
+OLED.nop OLED_nop#include <oled.c>
+OLED.setChargePumpEnable OLED_setChargePumpEnable#include <oled.c>
+OLED.getFontWidth OLED_getFontWidth#include <oled.c>
+OLED.getFontHeight OLED_getFontHeight#include <oled.c>
+OLED.getDisplayWidth OLED_getDisplayWidth#include <oled.c>
+OLED.getDisplayHeight OLED_getDisplayHeight#include <oled.c>
+OLED.invertDisplay OLED_invertDisplay#include <oled.c>
+OLED.normalDisplay OLED_normalDisplay#include <oled.c>
+OLED.refresh OLED_refresh#include <oled.c>
+OLED.clearScreen OLED_clearScreen#include <oled.c>
+OLED.scrollRight OLED_scrollRight#include <oled.c>
+OLED.scrollLeft OLED_scrollLeft#include <oled.c>
+OLED.scrollUp OLED_scrollUp#include <oled.c>
+OLED.scrollDown OLED_scrollDown#include <oled.c>
+OLED.setFont OLED_setFont#include <oled.c>
+OLED.printChar OLED_printChar#include <oled.c>
+OLED.print OLED_print#include <oled.c>#define OLEDPRINT
+OLED.println OLED_println#include <oled.c>#define OLEDPRINTLN
+OLED.printCenter OLED_printCenter#include <oled.c>#define OLEDPRINTCENTER
+OLED.printNumber OLED_printNumber#include <oled.c>#define OLEDPRINTNUMBER
+OLED.printFloat OLED_printFloat#include <oled.c>#define OLEDPRINTFLOAT
+OLED.printx OLED_printx#include <oled.c>#define OLEDPRINTX
+OLED.printf OLED_printf#include <oled.c>#define OLEDPRINTF
+OLED.setCursor OLED_setCursor#include <oled.c>#define OLEDSETCURSOR
+OLED.drawPixel OLED_drawPixel#include <oled.c>#define OLEDGRAPHICS
+OLED.clearPixel OLED_clearPixel#include <oled.c>#define OLEDGRAPHICS
+OLED.getColor OLED_getColor#include <oled.c>#define OLEDGRAPHICS
+OLED.drawBitmap OLED_drawBitmap#include <oled.c>#define OLEDGRAPHICS
+OLED.drawCircle OLED_drawCircle#include <oled.c>#define OLEDGRAPHICS
+OLED.fillCircle OLED_fillCircle#include <oled.c>#define OLEDGRAPHICS
+OLED.drawLine OLED_drawLine#include <oled.c>#define OLEDGRAPHICS
+OLED.fillRoundRect OLED_fillRoundRect#include <oled.c>#define OLEDGRAPHICS

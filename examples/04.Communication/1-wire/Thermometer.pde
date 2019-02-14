@@ -4,7 +4,7 @@
 	author		Régis Blanchot
 	first release	14/09/2010
 	last update	06/10/2010
-	IDE			Pinguino b9.2
+	IDE		Pinguino v12
 
 	DS18B20 Connection
 	------------------
@@ -18,26 +18,20 @@
 
 void setup()
 {
-	//
-	//	find all sensors on the bus and get their Rom Code
-	//
-	
-	//DS18B20.find(ONEWIREBUS);
-
     pinMode(USERLED, OUTPUT);
 }
 
 void loop()
 {
-	TEMPERATURE t;
+    TEMPERATURE t;
 
- 	// if you want to read temperature from sensor #1 with max. resolution :
-	// if (DS18B20.read(ONEWIREBUS, 1, RES12BIT, &t))
-	// if you have only one sensor on the bus, just skip rom detection
-	if (DS18B20.read(ONEWIREBUS, SKIPROM, RES12BIT, &t))
-	{
-		CDC.printf("%d.%d Celsius\r\n", t.integer, t.fraction);
-		toggle(USERLED);		// blinked led for visual debug
-		delay(1000);			// wait for 1 sec. before next reading
-	}
+    //Read Fahrenheit with DS18x20.readFahrenheit(ONEWIREBUS, SKIPROM, &t);
+    //Read Celsius with DS18x20.readCelsius(ONEWIREBUS, SKIPROM, &t);
+    //or
+    if (DS18x20.read(ONEWIREBUS, SKIPROM, &t))
+    {
+        USB.send(&t, 4);        // send 4 bytes
+        toggle(USERLED);        // blinked led for visual debug
+        delay(1000);            // wait for 1 sec. before next reading
+    }
 }

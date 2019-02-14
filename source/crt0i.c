@@ -27,23 +27,22 @@
    might be covered by the GNU General Public License.
 -------------------------------------------------------------------------
 
-  $Id: crt0i.c 8191 2012-11-02 14:53:46Z molnarkaroly $
+  $Id: crt0i.c 9317 2015-09-13 08:19:01Z spth $
 */
 
 /*
  * based on Microchip MPLAB-C18 startup files
  */
 
-extern stack_end;
-/*
-extern TBLPTRU;
-extern TBLPTRH;
-extern TBLPTRL;
-extern FSR0L;
-extern FSR0H;
-extern TABLAT;
-extern POSTINC0;
-*/
+extern int stack_end;
+//extern int TBLPTRU;
+//extern int TBLPTRH;
+//extern int TBLPTRL;
+//extern int FSR0L;
+//extern int FSR0H;
+//extern int TABLAT;
+//extern int POSTINC0;
+
 
 #if 1
 /* Global variable for forcing gplink to add _cinit section. */
@@ -57,7 +56,7 @@ void _entry (void) __naked __interrupt 0;
 void _startup (void) __naked;
 
 /* Access bank selector. */
-#define _bank_ 0
+#define a 0
 
 
 /*
@@ -99,12 +98,12 @@ _startup (void) __naked
     lfsr    2, _stack_end
 
     ; 1st silicon does not do this on POR
-    clrf    _TBLPTRU, _bank_
+    clrf    _TBLPTRU, a
 
     ; Initialize the flash memory access configuration.
     ; This is harmless for non-flash devices, so we do it on all parts.
-    bsf     0xa6, 7, _bank_      ; EECON1.EEPGD = 1, TBLPTR accesses program memory
-    bcf     0xa6, 6, _bank_      ; EECON1.CFGS  = 0, TBLPTR accesses program memory
+    bsf     0xa6, 7, a      ; EECON1.EEPGD = 1, TBLPTR accesses program memory
+    bcf     0xa6, 6, a      ; EECON1.CFGS  = 0, TBLPTR accesses program memory
 
   /* Initialize global and/or static variables. */
 
@@ -113,11 +112,11 @@ _startup (void) __naked
    */
     ; TBLPTR = &cinit
     movlw   low(_cinit)
-    movwf   _TBLPTRL, _bank_
+    movwf   _TBLPTRL, a
     movlw   high(_cinit)
-    movwf   _TBLPTRH, _bank_
+    movwf   _TBLPTRH, a
     movlw   upper(_cinit)
-    movwf   _TBLPTRU, _bank_
+    movwf   _TBLPTRU, a
 
     ; entry_count = cinit.num_init
     TBLRDPOSTINC
@@ -215,9 +214,9 @@ copy_loop_dec:
 
     ; Decrement and test the byte counter.
     ; The cycle ends when the value of counter reaches the -1.
-    decf    byte_count, f, _bank_
+    decf    byte_count, f, a
     bc      copy_loop
-    decf    (byte_count + 1), f, _bank_
+    decf    (byte_count + 1), f, a
     bc      copy_loop
 
     ; Restore the table pointer for the next entry.
@@ -231,9 +230,9 @@ entry_loop_dec:
 
     ; Decrement and test the entry counter.
     ; The cycle ends when the value of counter reaches the -1.
-    decf    entry_count, f, _bank_
+    decf    entry_count, f, a
     bc      entry_loop
-    decf    (entry_count + 1), f, _bank_
+    decf    (entry_count + 1), f, a
     bc      entry_loop
   __endasm;
 

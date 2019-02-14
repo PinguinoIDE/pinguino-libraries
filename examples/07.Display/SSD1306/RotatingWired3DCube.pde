@@ -1,209 +1,224 @@
 /**
         Author: 	Régis Blanchot (Mar. 2014)
         Tested on:	Pinguino 47J53A & Pinguino 32MX250
-        Output:	Oled 0.96" with SSD1306 Controller
-
-        2 size available : SSD1306_128X64 or SSD1306_128X32
-        
+        Output:	Oled display
         Wiring :
         
-        if SSD1306_6800
-            if SSD1306_PMP
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO (D3)
-                OLED D/C#   connected to Pinguino PMA1 (D4)
-                OLED W/R#  connected to Pinguino PMRD/PMWR (D13)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino PMD[7:0] (D[31:24])
-            else
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO (D0)
-                OLED D/C#   connected to any GPIO (D1)
-                OLED W/R#  connected to any GPIO (D2)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino D[31:24]
-        if SSD1306_8080 
-            if SSD1306_PMP
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO (D3)
-                OLED D/C#   connected to Pinguino PMA1 (D4)
-                OLED W/R#  connected to Pinguino PMWR (D14)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino PMD[7:0]
-            else
-                OLED CS#     connected to GND
-                OLED RES#   connected to any GPIO (D0)
-                OLED D/C#   connected to any GPIO (D1)
-                OLED W/R#  connected to any GPIO (D2)
-                OLED E/RD# connected to GND
-                OLED D[7:0]  connected to Pinguino D[31:24]
-        if SSD1306_I2C
-        if SSD1306_SPI3
-        if SSD1306_SPI4
+        if OLED_PMP6800
+                OLED CS     connected to GND
+                OLED RES    connected to any GPIO (D3)
+                OLED D/C    connected to Pinguino PMA1 (D4)
+                OLED W/R    connected to Pinguino PMRD/PMWR (D13)
+                OLED E/RD   connected to GND
+                OLED D[7:0] connected to Pinguino PMD[7:0] (D[31:24])
+        if OLED_PORT6800
+                OLED CS     connected to GND
+                OLED RES    connected to any GPIO (D0)
+                OLED D/C    connected to any GPIO (D1)
+                OLED W/R    connected to any GPIO (D2)
+                OLED E/RD   connected to GND
+                OLED D[7:0] connected to Pinguino D[31:24]
+        if OLED_PMP8080 
+                OLED CS     connected to GND
+                OLED RES    connected to any GPIO (D3)
+                OLED D/C    connected to Pinguino PMA1 (D4)
+                OLED W/R    connected to Pinguino PMWR (D14)
+                OLED E/RD   connected to GND
+                OLED D[7:0] connected to Pinguino PMD[7:0]
+        if OLED_PORT8080 
+                OLED CS     connected to GND
+                OLED RES    connected to any GPIO (D0)
+                OLED D/C    connected to any GPIO (D1)
+                OLED W/R    connected to any GPIO (D2)
+                OLED E/RD   connected to GND
+                OLED D[7:0] connected to Pinguino D[31:24]
+        if OLED_I2Cx
+                OLED SDA    connected to SDAx pin
+                OLED SCL    connected to SCLx pin
+        if OLED_SPIx
+                OLED SDI    connected to SDOx pin
+                OLED SCK    connected to SCKx pin
+                OLED D/C    connected to any GPIO
+                OLED CS     connected to any GPIO (*optional on some displays)
+		
 **/
-
-#define DISPLAY (SSD1306_PMP | SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_6800 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_8080 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_I2C  | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI3 | SSD1306_128X64)
-//#define DISPLAY (SSD1306_SPI4 | SSD1306_128X64)
 
 /**
-    Load one or more fonts and active them with SSD1306.setFont()
+    Load one or more fonts and active them with OLED.setFont()
 **/
 
-#include <fonts/font6x8.h>
-//#include <fonts/font8x8.h>          // wrong direction
-//#include <fonts/font10x14.h>        // ???
-//#include <fonts/font12x8.h>         // wrong direction
-//#include <fonts/font16x8.h>         // wrong direction
-//#include <fonts/font16x16.h>        // ???
+#include <fonts/fixednums5x7.h>
 
-#define NBPOINTS 8
+/*DISPLAY CONTROLLER*******************************************/
+#define OLED_SH1106
+//#define OLED_SSD1306
+/*DISPLAY SIZE*************************************************/
+//#define OLED_128X32
+#define OLED_128X64
+/**************************************************************/
 
-typedef struct { float x, y, z, xy; } point3D;
-typedef struct { float x, y;        } point2D;
+#define NBVERTICES  8
+#define NBFACES     6
+#define NBEDGES     (NBVERTICES + NBFACES - 2)
+#define DISTANCE    256.0       // Distance eye-screen
+#define SIZE        100
 
-point3D Sommet[NBPOINTS];   // les sommets du cube
-point3D Point3D[NBPOINTS];  // les sommets apres rotation
-point2D Point2D[NBPOINTS];  // les sommets apres projection
+typedef struct { float x, y, z; } point3D;
+typedef struct { u16   x, y;    } point2D;
+
+point3D Point3D[NBVERTICES];  // Vertices after rotation
+point2D Point2D[NBVERTICES];  // Vertices after projection
+  
+//const u8 intf=OLED_I2C1;   // Interface
+const u8 intf=OLED_SPI2;   // Interface
+const u16 Zoff=1600;
+
+const point3D Vertex[NBVERTICES] = {
+    {-SIZE,-SIZE,-SIZE},
+    { SIZE,-SIZE,-SIZE},
+    { SIZE, SIZE,-SIZE},
+    {-SIZE, SIZE,-SIZE},
+    { SIZE,-SIZE, SIZE},
+    {-SIZE,-SIZE, SIZE},
+    {-SIZE, SIZE, SIZE},
+    { SIZE, SIZE, SIZE},
+};
+
+const u8 Face[NBFACES][4] = {
+    {0,5,6,3},
+    {0,1,4,5},
+    {6,5,4,7},
+    {0,3,2,1},
+    {2,3,6,7},
+    {1,4,7,2}
+};
 
 float matrice[3][3];          // 3*3 rotation matrix
-
-u16 fps=0, maxfps=0;         // frame per second and stats
-u16 xa=0, ya=0, za=0;        // angles de rotation
-u16 Xoff, Yoff, Zoff;       // position de l'observateur
+u16 gFps=0,gMaxFps=0;         // Frame per second
+u16 Xa=0, Ya=0, Za=0;         // Rotation angles 
 
 ///
-/// Effectue la rotation des points Sommet -> Point3D
+/// Rotate all the vertices
 ///
 
-void Rotation(u16 Xa, u16 Ya, u16 Za)
+void Rotation()
 {
     u8 i;
-    float a[3];
 
-    /* Calcul de la matrice de rotation 3*3 */
+    // 3*3 Rotation Matrix Calculation
 
-    matrice[0][0] = cosr(Za) * cosr(Ya);
-    matrice[1][0] = sinr(Za) * cosr(Ya);
-    matrice[2][0] = - sinr(Ya);
+    matrice[0][0] = (cosr(Za) * cosr(Ya)); 
+    matrice[1][0] = (sinr(Za) * cosr(Ya)); 
+    matrice[2][0] = (-sinr(Ya)); 
 
-    matrice[0][1] = cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa);
-    matrice[1][1] = sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za);
-    matrice[2][1] = sinr(Xa) * cosr(Ya);
+    matrice[0][1] = (cosr(Za) * sinr(Ya) * sinr(Xa) - sinr(Za) * cosr(Xa)); 
+    matrice[1][1] = (sinr(Za) * sinr(Ya) * sinr(Xa) + cosr(Xa) * cosr(Za)); 
+    matrice[2][1] = (sinr(Xa) * cosr(Ya)); 
 
-    matrice[0][2] = cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa);
-    matrice[1][2] = sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa);
-    matrice[2][2] = cosr(Xa) * cosr(Ya);
+    matrice[0][2] = (cosr(Za) * sinr(Ya) * cosr(Xa) + sinr(Za) * sinr(Xa)); 
+    matrice[1][2] = (sinr(Za) * sinr(Ya) * cosr(Xa) - cosr(Za) * sinr(Xa)); 
+    matrice[2][2] = (cosr(Xa) * cosr(Ya)); 
 
-    a[0] = - (matrice[0][0] * matrice[0][1]);
-    a[1] = - (matrice[1][0] * matrice[1][1]);
-    a[2] = - (matrice[2][0] * matrice[2][1]);
+    // Rotate each vertex of the object
 
-    /* Rotation des sommets de l'objet */
-
-    for (i = 0; i < NBPOINTS; i++)
+    for (i = 0; i < NBVERTICES; i++)
     {
-        Point3D[i].x =	((matrice[0][1] + Sommet[i].x) * (matrice[0][0] + Sommet[i].y)
-            + a[0] + Sommet[i].xy
-            + matrice[0][2] * Sommet[i].z);
-
-        Point3D[i].y = ((matrice[1][1] + Sommet[i].x) * (matrice[1][0] + Sommet[i].y)
-            + a[1] + Sommet[i].xy
-            + matrice[1][2] * Sommet[i].z);
-
-        Point3D[i].z =	((matrice[2][1] + Sommet[i].x) * (matrice[2][0] + Sommet[i].y)
-            + a[2] + Sommet[i].xy
-            + matrice[2][2] * Sommet[i].z);
-    /*
-        Point3D[i].x =	matrice[0][0]*Sommet[i].x + matrice[1][0]*Sommet[i].y + matrice[2][0]*Sommet[i].z;
-        Point3D[i].y =	matrice[0][1]*Sommet[i].x + matrice[1][1]*Sommet[i].y + matrice[2][1]*Sommet[i].z;
-        Point3D[i].z =	matrice[0][2]*Sommet[i].x + matrice[1][2]*Sommet[i].y + matrice[2][2]*Sommet[i].z;
-     */
+        Point3D[i].x = (matrice[0][0]*Vertex[i].x + matrice[1][0]*Vertex[i].y + matrice[2][0]*Vertex[i].z);
+        Point3D[i].y = (matrice[0][1]*Vertex[i].x + matrice[1][1]*Vertex[i].y + matrice[2][1]*Vertex[i].z);
+        Point3D[i].z = (matrice[0][2]*Vertex[i].x + matrice[1][2]*Vertex[i].y + matrice[2][2]*Vertex[i].z);
     }
 }
 
 ///
-/// Projette en perspective les points apres rotation.
-/// 256 = distance (oeil - écran)
+/// Project all the vertices
+///
 
-void Projection(void)
+void Projection()
 {
     u8 i;
 
-    for (i = 0; i < NBPOINTS; i++)
+    for (i = 0; i < NBVERTICES; i++)
     {
-        Point2D[i].x = ( Point3D[i].x * 256.0f ) / ( Point3D[i].z + Zoff ) + Xoff;
-        Point2D[i].y = ( Point3D[i].y * 256.0f ) / ( Point3D[i].z + Zoff ) + Yoff;
+        Point2D[i].x = (u16)((Point3D[i].x * DISTANCE) / (Point3D[i].z + Zoff)) + OLED.screen.width / 2;
+        Point2D[i].y = (u16)((Point3D[i].y * DISTANCE) / (Point3D[i].z + Zoff)) + OLED.screen.height/ 2;
     }
 }
 
 ///
-/// Initialise les coordonnees des sommets du cube
-///
-
-void initCube()
+/// Test if face ABC is visible
+/// AB /\ BC = orthogonal vector to the face
+/// K = vision vector
+/// if K * (AB /\ BC) > 0 then ABC is visible
+ 
+u8 isVisible(u8 A, u8 B, u8 C)
 {
-    u8 i;
-
-    Sommet[0].x = -100.0f;  Sommet[0].y = -100.0f;  Sommet[0].z = -100.0f;
-    Sommet[1].x =  100.0f;  Sommet[1].y = -100.0f;  Sommet[1].z = -100.0f;
-    Sommet[2].x =  100.0f;  Sommet[2].y =  100.0f;  Sommet[2].z = -100.0f;
-    Sommet[3].x = -100.0f;  Sommet[3].y =  100.0f;  Sommet[3].z = -100.0f;
+    float prod = ((Point3D[B].y - Point3D[A].y) * (Point3D[C].z - Point3D[B].z) - 
+                  (Point3D[C].y - Point3D[B].y) * (Point3D[B].z - Point3D[A].z));
     
-    Sommet[4].x =  100.0f;  Sommet[4].y = -100.0f;  Sommet[4].z =  100.0f;
-    Sommet[5].x = -100.0f;  Sommet[5].y = -100.0f;  Sommet[5].z =  100.0f;
-    Sommet[6].x = -100.0f;  Sommet[6].y =  100.0f;  Sommet[6].z =  100.0f;
-    Sommet[7].x =  100.0f;  Sommet[7].y =  100.0f;  Sommet[7].z =  100.0f;
-
-    for (i = 0; i < NBPOINTS; i++)
-        Sommet[i].xy = - Sommet[i].x * Sommet[i].y;
+    return ((u32)prod > 0 ? 1:0);
 }
 
 ///
-/// Trace un segment
+/// Draw a polygon
 ///
 
-void ligne(u8 a, u8 b)
+void drawFace(u8 A, u8 B, u8 C, u8 D)
 {
-    SSD1306_drawLine( Point2D[a].x, Point2D[a].y,
-                      Point2D[b].x, Point2D[b].y	);
+    OLED.drawLine(intf, Point2D[A].x, Point2D[A].y, Point2D[B].x, Point2D[B].y);
+    OLED.drawLine(intf, Point2D[B].x, Point2D[B].y, Point2D[C].x, Point2D[C].y);
+    OLED.drawLine(intf, Point2D[C].x, Point2D[C].y, Point2D[D].x, Point2D[D].y);
+    OLED.drawLine(intf, Point2D[D].x, Point2D[D].y, Point2D[A].x, Point2D[A].y);
 }
 
 ///
-/// Trace le cube
+/// Draw the object
 ///
 
-void drawCube()
+void drawObject()
 {
-    ligne(0,1); ligne(1,2); ligne(2,3); ligne(3,0);
-    ligne(4,5); ligne(5,6); ligne(6,7); ligne(7,4);
-    ligne(0,5); ligne(1,4); ligne(2,7); ligne(3,6);
+    u8 i, A, B, C, D;
+    
+    for (i=0; i<NBFACES; i++)
+    {
+        A = Face[i][0];
+        B = Face[i][1];
+        C = Face[i][2];
+        D = Face[i][3];
+        //if (isVisible(A, B, C))
+            drawFace(A, B, C, D);
+    }
 }
 
 ///
-/// Initialisation
+/// Init.
 ///
 
 void setup()
 {
-    SSD1306.init(3, 4);  	// init. LCD
-    SSD1306.clearScreen();
-    SSD1306.setFont(font6x8);
-    
-    // Position du cube
-    Xoff = SSD1306.screen.width  / 2;
-    Yoff = SSD1306.screen.height / 2 + 9;
-    Zoff = 1800;
+    pinMode(USERLED, OUTPUT);
 
-    // create 3D cube
-    initCube();
+    // if 6800- or 8080-interface and PMP is used
+    //OLED.init(intf, 1, PMA3); // RST on D1, DC on PMA3 (D2 on a 47J53A)
+    
+    // if i2c interface is used
+    //OLED.init(intf, 0x78); // i2c address of the display
+    
+    // if 6800- or 8080-interface (but not PMP) is used
+    //void OLED.init(u8 module, u8 rst, u16 dc, u8 d0, u8 d1, u8 d2, u8 d3, u8 d4, u8 d5, u8 d6, u8 d7)
+    //OLED.init(intf, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7);
+
+    // if SPI Hardware is used (you need to connect pins SDO, SCK and CS if needed)
+    OLED.init(intf, 4, 5); // DC [, RST]
+
+    // if SPI Software is used
+    //OLED.init(intf, 0,1,2,3,5); // SDA, SCK, CS, DC, RST
+        
+    // set the fixednums7x15 font (no letters)
+    OLED.setFont(intf, fixednums5x7);
 }
 
 ///
-/// Boucle principale
+/// Main loop
 ///
 
 void loop()
@@ -213,25 +228,24 @@ void loop()
     
     while (millis() < timeEnd)
     {
+        // update angles
+        Xa = (Xa + 1) % 360;
+        Ya = (Ya + 3) % 360;
+        Za = (Za + 1) % 360;
+        
         // calculations
-        Rotation(xa, ya, za);
+        Rotation();
         Projection();
         
         // display
-        SSD1306.clearScreen();
-        SSD1306.printf("%u fps (max. %u)", fps, maxfps);
-        drawCube();
-        SSD1306.refresh();
+        OLED.clearScreen(intf);
+        OLED.printNumber(intf, gFps, DEC);
+        drawObject();
+        OLED.refresh(intf);
 
-        // update angles
-        xa = (xa + 1) % 360;
-        ya = (ya + 3) % 360;
-        za = (za + 1) % 360;
-        
         // one frame done !
         frame++;
     }
-    
-    fps = frame;
-    if (fps > maxfps) maxfps = fps;
+    toggle(USERLED);
+    gFps = frame;
 }

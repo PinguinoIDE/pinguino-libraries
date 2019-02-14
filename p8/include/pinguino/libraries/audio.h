@@ -1,8 +1,8 @@
 /*  --------------------------------------------------------------------
     FILE:           sound.h
-    PROJECT:        pinguino
-    PURPOSE:        note frequencies to play sound
-    PROGRAMER:      regis blanchot <rblanchot@gmail.com>
+    PROJECT:        Pinguino
+    PURPOSE:        Note frequencies to play sound
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
     FIRST RELEASE:  15 Feb. 2015
     LAST RELEASE:   15 Feb. 2015
     --------------------------------------------------------------------
@@ -25,7 +25,33 @@
 #ifndef __AUDIO_H
     #define __AUDIO_H
     
-    // NOTES
+    #ifndef __PIC32MX__
+
+    #else
+    // OCM<2:0>: Output Compare Mode Select bits
+    // 110 = PWM mode on OCx; Fault pin disabled
+    // OCTSEL<3>: Output Compare Timer Select bit
+    // 1 = Timer3 is the clock source for this OCMP module
+    // 0 = Timer2 is the clock source for this OCMP module
+    // Timer3 is the clock source for this OCMP module
+    // Output Compare peripheral is enabled
+
+    //#define PWMMODE         0x800E      // Timer3
+    #define PWMMODE         0x8006      // Timer2
+    #define PWMRESOLUTION   1<<10       // 10-Bit
+    #endif
+
+    // The hearing range of human ears is roughly 20 Hz to 20000 Hz.
+    // The Nyquist–Shannon sampling theorem says the sampling frequency
+    // must be greater than twice the maximum frequency we wish to reproduce.
+    
+    // Common sampling rates
+    #define CDQUALITY       44100
+    #define TAPEQUALITY     22050
+    #define RADIOQUALITY    11025
+    #define TELQUALITY      8820
+
+    // Notes
     #define NOTE_B0  31
     #define NOTE_C1  33                 // 1rst octave
     #define NOTE_CS1 35
@@ -116,7 +142,7 @@
     #define NOTE_D8  4699
     #define NOTE_DS8 4978
 
-    // RESTS
+    // Rests
     #define R4          8               // long (or four-measure rest)
     #define R2          7               // double whole rest / breve rest
     #define R1          6               // whole rest / semibreve rest
@@ -127,6 +153,7 @@
     #define R1_32       1               // thirty-second rest / demisemiquaver rest
     #define R1_64       0               // sixty-fourth rest / hemidemisemiquaver rest
 
+    // Wav format
     typedef struct
     {
             u8          RIFF[4];        // RIFF Header  

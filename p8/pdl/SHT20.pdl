@@ -1,0 +1,7 @@
+SHT20.init SHT20_init#include <SHT20.c>
+SHT20.checkBattery SHT20_checkBattery#include <SHT20.c>
+SHT20.checkHeater SHT20_checkHeater#include <SHT20.c>
+SHT20.checkOTP SHT20_checkOTP#include <SHT20.c>
+SHT20.setResolution SHT20_setResolution#include <SHT20.c>
+SHT20.readHumidity SHT20_readHumidity#include <SHT20.c>
+SHT20.readTemperature SHT20_readTemperature#include <SHT20.c>

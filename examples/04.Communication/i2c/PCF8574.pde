@@ -58,7 +58,8 @@
 	--------------------------------------------------------------------------*/
 
 u8 i2cAddr = 0b0100111;    // PCF8574's I2C address
-void setup()
+
+void setup()
 {
     pinMode(12, OUTPUT);
     I2C.master(I2C_100KHZ);             // or I2C.master(100);
@@ -68,14 +69,14 @@ void loop()
 {
     I2C.start();                                // All I2C commands must begin with a Start condition
 
-    I2C.send((i2cAddr << 1) & 0xFE);            // write operation (bit 0 set to 0)
+    I2C.writeChar((i2cAddr << 1) & 0xFE);            // write operation (bit 0 set to 0)
     
     digitalWrite(USERLED, LOW);
-    I2C.send(0b00000000);                       // set all bits of PCF8574 register to 0
+    I2C.writeChar(0b00000000);                       // set all bits of PCF8574 register to 0
     delay(500);                                 // wait for 500 ms
     
     digitalWrite(USERLED, HIGH);
-    I2C.send(0b00000001);                       // set bit 0 of PCF8574 register to 1
+    I2C.writeChar(0b00000001);                       // set bit 0 of PCF8574 register to 1
     delay(500);                                 // wait for 500 ms
 
     I2C.stop();                                 // Terminate the write sequence

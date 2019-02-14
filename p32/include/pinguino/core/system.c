@@ -1,12 +1,11 @@
 /*	----------------------------------------------------------------------------
-    FILE:			system.c
-    PROJECT:		pinguino
-    PURPOSE:		
-    PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	16 nov. 2010
-    LAST RELEASE:	06 feb. 2012
+    FILE:       system.c
+    PROJECT:    pinguino
+    PURPOSE:    clocks calculations
+    PROGRAMER:  Régis Blanchot <rblanchot@gmail.com>
     ----------------------------------------------------------------------------
     CHANGELOG:
+    [16-11-10][Régis Blanchot][First release]
     [23-02-11][Marcus Fazzi][Removed  asm("di")/asm("ei") from GetCP0Count/SetCP0Count]
     [30-01-12][Régis Blanchot][Added P32MX220F032D support]
     [06-02-12][Roland Haag][Added new clock settings]
@@ -31,19 +30,19 @@
 #define __SYSTEM_C
 
 #include <p32xxxx.h>
-#include <const.h>              // MIPS32
+#include <const.h>                          // MIPS32
 #include <typedef.h>
 
 #if defined(PIC32_PINGUINO_220)||defined(PINGUINO32MX250)||defined(PINGUINO32MX220)
-    #define CPUCOREMAXFREQUENCY	40000000L	// 40 MHz
+    #define CPUCOREMAXFREQUENCY 40000000L   // 40 MHz
 #elif defined(PINGUINO32MX270)
-    #define CPUCOREMAXFREQUENCY	64000000L	// 64 MHz (overclock)
+    #define CPUCOREMAXFREQUENCY 64000000L   // 64 MHz (overclock)
 #else
-    #define CPUCOREMAXFREQUENCY	80000000L	// 80 MHz
+    #define CPUCOREMAXFREQUENCY 80000000L   // 80 MHz
 #endif
 
-#define CRYSTALFREQUENCY	8000000L	// 8 MHz
-#define FLASHACCESSTIME		50			// 50 ns
+#define CRYSTALFREQUENCY        8000000L    // 8 MHz
+#define FLASHACCESSTIME         50          // 50 ns
 
 // COSC<2:0>: Current Oscillator Selection bits
 // NOSC<2:0>: New Oscillator Selection bits
@@ -106,27 +105,27 @@
  */
 
 /** The indices are valid values for PLLIDIV */
-static const uint32_t pllInputDivs[]  = {  1,  2,  3,  4,  5,  6, 10,  12 };
+static const u32 pllInputDivs[]  = {  1,  2,  3,  4,  5,  6, 10,  12 };
 
 /** The indices are valid values for PLLODIV */
-static const uint32_t pllOutputDivs[] = {  1,  2,  4,  8, 16, 32, 64, 256 };
+static const u32 pllOutputDivs[] = {  1,  2,  4,  8, 16, 32, 64, 256 };
 
 /** The indices are valid values for PLLMULT */
-static const uint32_t pllMuls[]       = { 15, 16, 17, 18, 19, 20, 21,  24 };
+static const u32 pllMuls[]       = { 15, 16, 17, 18, 19, 20, 21,  24 };
 
 /** The indices are valid values for PBDIV */
-static const uint32_t pbDivs[]        = { 1, 2, 4, 8 };
+static const u32 pbDivs[]        = { 1, 2, 4, 8 };
 
-static const uint8_t pllInputDivsCount = 
+static const u8 pllInputDivsCount = 
   sizeof(pllInputDivs) / sizeof(pllInputDivs[0]);
 
-static const uint8_t pllOutputDivsCount = 
+static const u8 pllOutputDivsCount = 
   sizeof(pllOutputDivs) / sizeof(pllOutputDivs[0]);
 
-static const uint8_t pllMulsCount = 
+static const u8 pllMulsCount = 
   sizeof(pllMuls) / sizeof(pllMuls[0]);
 
-static const uint8_t pbDivsCount = 
+static const u8 pbDivsCount = 
   sizeof(pbDivs) / sizeof(pbDivs[0]);
 
 /**
@@ -147,11 +146,12 @@ typedef enum SystemClocksErrorEnum {
  * If we used C++, this struct would be the class; and all functions
  * in this file would be member functions.
  */
-typedef struct SystemClocksSettingsStruct {
-  uint8_t PLLIDIV;
-  uint8_t PLLODIV;
-  uint8_t PLLMULT;
-  uint8_t PBDIV;
+typedef struct SystemClocksSettingsStruct
+{
+  u8 PLLIDIV;
+  u8 PLLODIV;
+  u8 PLLMULT;
+  u8 PBDIV;
 
   #ifdef EXTENDED_TEST_CASE
     // Error state
@@ -163,7 +163,7 @@ typedef struct SystemClocksSettingsStruct {
     SystemUnlock() perform a system unlock sequence
     --------------------------------------------------------------------------*/
 
-void SystemUnlock()
+static inline void SystemUnlock()
 {
     SYSKEY = 0;				// ensure OSCCON is locked
     SYSKEY = 0xAA996655;	// Write Key1 to SYSKEY
@@ -174,7 +174,7 @@ void SystemUnlock()
     SystemLock() relock OSCCON by relocking the SYSKEY
     --------------------------------------------------------------------------*/
 
-void SystemLock()
+static inline void SystemLock()
 {
     SYSKEY = 0x12345678;	// Write any value other than Key1 or Key2
 }
@@ -246,12 +246,10 @@ void SystemIdle()
  */
 void SystemClocksReadSettings(SystemClocksSettings *s) 
 {
-  s->PLLIDIV = DEVCFG2bits.FPLLIDIV;
-  
-  s->PLLODIV = OSCCONbits.PLLODIV;
-  s->PLLMULT = OSCCONbits.PLLMULT;
-
-  s->PBDIV   = OSCCONbits.PBDIV;
+    s->PLLIDIV = DEVCFG2bits.FPLLIDIV;
+    s->PLLODIV = OSCCONbits.PLLODIV;
+    s->PLLMULT = OSCCONbits.PLLMULT;
+    s->PBDIV   = OSCCONbits.PBDIV;
 }
 
 /**
@@ -262,13 +260,12 @@ void SystemClocksReadSettings(SystemClocksSettings *s)
  *
  * @return The CPU frequency
  */
-uint32_t SystemClocksGetCpuFrequency(const SystemClocksSettings *s) 
+u32 SystemClocksGetCpuFrequency(const SystemClocksSettings *s) 
 {
-  return 
-    CRYSTALFREQUENCY 
-    / pllInputDivs [s->PLLIDIV]
-    / pllOutputDivs[s->PLLODIV] 
-    * pllMuls      [s->PLLMULT];
+    return CRYSTALFREQUENCY 
+        / pllInputDivs [s->PLLIDIV]
+        / pllOutputDivs[s->PLLODIV] 
+        * pllMuls      [s->PLLMULT];
 }
 
 /**
@@ -280,9 +277,9 @@ uint32_t SystemClocksGetCpuFrequency(const SystemClocksSettings *s)
  *
  * @return The peripheral clock frequency
  */
-uint32_t SystemClocksGetPeripheralFrequency(const SystemClocksSettings *s) 
+static inline u32 SystemClocksGetPeripheralFrequency(const SystemClocksSettings *s) 
 {
-  return SystemClocksGetCpuFrequency(s) / pbDivs[s->PBDIV];
+    return (SystemClocksGetCpuFrequency(s) / pbDivs[s->PBDIV]);
 }
 
 /**
@@ -294,42 +291,42 @@ uint32_t SystemClocksGetPeripheralFrequency(const SystemClocksSettings *s)
  * @return Nothing (the result is put into the struct)
  */
 void SystemClocksCalcCpuClockSettings(SystemClocksSettings *s, 
-                      uint32_t cpuFrequency) 
+                      u32 cpuFrequency) 
 {
-    if (cpuFrequency <= CPUCOREMAXFREQUENCY) 
+    u8 pllOutputDivIndex;
+    u8 pllMulIndex;
+
+    if (cpuFrequency > CPUCOREMAXFREQUENCY) 
     {
-      #ifdef EXTENDED_TEST_CASE
-        s->error = Error_None;
-      #endif
+        cpuFrequency = CPUCOREMAXFREQUENCY;
+        #ifdef EXTENDED_TEST_CASE
+        s->error = Error_RequestedFrequencyTooHigh;
+        #endif
     } 
+    #ifdef EXTENDED_TEST_CASE
     else 
     {
-      cpuFrequency = CPUCOREMAXFREQUENCY;
-
-      #ifdef EXTENDED_TEST_CASE
-        s->error = Error_RequestedFrequencyTooHigh;
-      #endif
+        s->error = Error_None;
     }
+    #endif
 
-    uint8_t pllOutputDivIndex;
     for (pllOutputDivIndex = 0; 
-       pllOutputDivIndex < pllOutputDivsCount; 
-       pllOutputDivIndex++)
+        pllOutputDivIndex < pllOutputDivsCount; 
+        pllOutputDivIndex++)
     {
-      uint8_t pllMulIndex;
-      for (pllMulIndex = 0; pllMulIndex < pllMulsCount; pllMulIndex++)
-    {
-      if ( (cpuFrequency 
-        * pllInputDivs[s->PLLIDIV]
-        * pllOutputDivs[pllOutputDivIndex])
-           == (CRYSTALFREQUENCY * pllMuls[pllMulIndex]) )
+        for (pllMulIndex = 0; pllMulIndex < pllMulsCount; pllMulIndex++)
         {
-          s->PLLODIV = pllOutputDivIndex;
-          s->PLLMULT = pllMulIndex;
-          // Match found
-          return;
+            if ( (cpuFrequency 
+                * pllInputDivs[s->PLLIDIV]
+                * pllOutputDivs[pllOutputDivIndex])
+                == (CRYSTALFREQUENCY * pllMuls[pllMulIndex]) )
+            {
+                s->PLLODIV = pllOutputDivIndex;
+                s->PLLMULT = pllMulIndex;
+                // Match found
+                return;
+            }
         }
-    }
     }
 
     /* 
@@ -341,21 +338,22 @@ void SystemClocksCalcCpuClockSettings(SystemClocksSettings *s,
     *
     * With pllInputDiv > 2 we cannot reach the max frequency.
     */
+    
     if (pllInputDivs[s->PLLIDIV] >= 2) 
     {
-      s->PLLODIV = PLLODIV1; // /1
+        s->PLLODIV = PLLODIV1; // /1
 
-      #ifdef EXTENDED_TEST_CASE
+        #ifdef EXTENDED_TEST_CASE
         s->error = Error_NoCombinationFound;
-      #endif
+        #endif
     }
     else 
     {
-      s->PLLODIV = PLLODIV2; // /2
+        s->PLLODIV = PLLODIV2; // /2
 
-      #ifdef EXTENDED_TEST_CASE
+        #ifdef EXTENDED_TEST_CASE
         s->error = Error_NoCombinationFound;
-      #endif
+        #endif
     }
 
     s->PLLMULT = PLLMULT20; // x20
@@ -372,32 +370,33 @@ void SystemClocksCalcCpuClockSettings(SystemClocksSettings *s,
  *
  * @return Nothing (the result is put into the struct)
  */
+
 void SystemClocksCalcPeripheralClockSettings(SystemClocksSettings *s, 
-                         uint32_t peripheralFrequency) 
+                         u32 peripheralFrequency) 
 {
-    #ifdef EXTENDED_TEST_CASE
-    s->error = Error_None;
-    #endif
+    u8 i;
+    const u32 cpuFrequency = SystemClocksGetCpuFrequency(s);
 
     if (peripheralFrequency > CPUCOREMAXFREQUENCY) 
     {
-      peripheralFrequency = CPUCOREMAXFREQUENCY;
+        peripheralFrequency = CPUCOREMAXFREQUENCY;
 
-      #ifdef EXTENDED_TEST_CASE
+        #ifdef EXTENDED_TEST_CASE
         s->error = Error_RequestedFrequencyTooHigh;
-      #endif
+        #endif
     }
+    #ifdef EXTENDED_TEST_CASE
+    else
+        s->error = Error_None;
+    #endif
 
-    const uint32_t cpuFrequency = SystemClocksGetCpuFrequency(s);
-
-    uint8_t i;
     for (i = 0; i < pbDivsCount; i++) 
     {
-      if (cpuFrequency == peripheralFrequency * pbDivs[i]) 
+        if (cpuFrequency == peripheralFrequency * pbDivs[i]) 
         {
-          s->PBDIV = i;
-          // Match found
-          return;
+            s->PBDIV = i;
+            // Match found
+            return;
         }
     }
 
@@ -421,6 +420,7 @@ void SystemClocksCalcPeripheralClockSettings(SystemClocksSettings *s,
  *
  * @return Nothing
  */
+
 void SystemClocksWriteSettings(const SystemClocksSettings *s) 
 {
     SystemUnlock();
@@ -459,9 +459,7 @@ void SystemClocksWriteSettings(const SystemClocksSettings *s)
     OSCCONbits.OSWEN = 1;
     // Busy wait until osc switch has been completed
     while (OSCCONbits.OSWEN == 1) 
-    {
-      asm("nop");
-    }
+        asm("nop");
 
     /*
     * bit 20-19 PBDIV<1:0>: Peripheral Bus Clock Divisor
@@ -486,6 +484,7 @@ void SystemClocksWriteSettings(const SystemClocksSettings *s)
     GetSystemClock
     --------------------------------------------------------------------------*/
 
+#define System_getCpuFrequency() GetSystemClock()
 u32 GetSystemClock(void)
 {
     SystemClocksSettings s;
@@ -497,6 +496,7 @@ u32 GetSystemClock(void)
     GetPeripheralClock()
     --------------------------------------------------------------------------*/
 
+#define System_getPeripheralFrequency() GetPeripheralClock()
 u32 GetPeripheralClock()
 {
     SystemClocksSettings s;

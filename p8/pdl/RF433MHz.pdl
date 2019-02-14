@@ -1,0 +1,20 @@
+RF433MHz.init RF433MHz_init#include <RF433MHz_Tx.c>#__RF433MHZ__ 
+
+RF433MHz.writeChar RF433MHz_writeChar#include <RF433MHz_Tx.c>#define RF433MHZWRITECHAR
+RF433MHz.writeBytes RF433MHz_writeBytes#include <RF433MHz_Tx.c>#define RF433MHZWRITEBYTES
+
+RF433MHz.printChar RF433MHz_printChar#include <RF433MHz_Tx.c>#define RF433MHZPRINTCHAR
+RF433MHz.print RF433MHz_print#include <RF433MHz_Tx.c>#define RF433MHZPRINT
+RF433MHz.println RF433MHz_println#include <RF433MHz_Tx.c>#define RF433MHZPRINTLN
+RF433MHz.printNumber RF433MHz_printNumber#include <RF433MHz_Tx.c>#define RF433MHZPRINTNUMBER
+RF433MHz.printFloat RF433MHz_printFloat#include <RF433MHz_Tx.c>#define RF433MHZPRINTFLOAT
+RF433MHz.printf RF433MHz_printf#include <RF433MHz_Tx.c>#define RF433MHZPRINTF
+
+RF433MHz.readChar RF433MHz_readChar#include <RF433MHz_Rx.c>#define RF433MHZREADCHAR
+RF433MHz.readBytes RF433MHz_readBytes#include <RF433MHz_Rx.c>#define RF433MHZREADBYTES
+
+RF433MHz.beginReceive RF433MHz_beginReceive#include <RF433MHz_Rx.c>#define RF433MHZRECEIVER
+RF433MHz.beginReceiveBytes RF433MHz_beginReceiveBytes#include <RF433MHz_Rx.c>#define RF433MHZRECEIVER
+RF433MHz.receiveComplete RF433MHz_receiveComplete#include <RF433MHz_Rx.c>#define RF433MHZRECEIVER
+RF433MHz.getMessage RF433MHz_getMessage#include <RF433MHz_Rx.c>#define RF433MHZRECEIVER
+RF433MHz.stopReceive RF433MHz_stopReceive#include <RF433MHz_Rx.c>#define RF433MHZRECEIVER

@@ -3,10 +3,10 @@
     PROJECT:			pinguino 32
     PURPOSE:			event management
     PROGRAMER:			regis blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:		14 Jan. 2015
-    LAST RELEASE:		21 Jan. 2015
     ----------------------------------------------------------------------------
     CHANGELOG:
+    14 Jan. 2015    Régis Blanchot - First release
+    08 Aug. 2017    Régis Blanchot - Added OnChangePin functions
     ----------------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -525,5 +525,309 @@ void Timer5Interrupt()
     }
 }
 #endif /* TMR5INT */
+
+
+/*  --------------------------------------------------------------------
+    OnChangePin0
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Configure external interrupt #0
+    @param		timediv:	INT_RISING_EDGE or INT_FALLING_EDGE
+                func:		function called when interrupt occures
+    @return     INT_USED or INT_NOT_USED
+    ------------------------------------------------------------------*/
+
+#ifdef INT0INT
+u32 OnChangePin0(callback func, u8 config)
+{
+    if (intUsed[INT_EXTERNAL0] == INT_NOT_USED)
+    {
+        intUsed[INT_EXTERNAL0] = INT_USED;
+        intFunction[INT_EXTERNAL0] = func;
+
+        // Configure interrupt
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        IntSetVectorPriority(INT_EXTERNAL0_VECTOR, 7, 3);
+        IntClearFlag(INT_EXTERNAL0);
+        IntEnable(INT_EXTERNAL0);
+
+        // Configure INT0
+        if (config == INT_RISING_EDGE)
+            INTCONSET = (1<<0); //Set INT0 for rising edge trigger
+        else
+            INTCONCLR = (1<<0); //Set INT0 for falling edge trigger
+
+        return INT_EXTERNAL0;
+    }
+    
+    else
+    {
+        #ifdef DEBUG
+        debug("Error : INT_EXTERNAL0 interrupt is already used !");
+        #endif
+        return false;
+    }
+}
+
+/*  --------------------------------------------------------------------
+    INT0 interrupt (Vector 3)
+    see also ISRwrapper.S
+    ------------------------------------------------------------------*/
+
+void Int0Interrupt()
+{
+    if (IntGetFlag(INT_EXTERNAL0))
+    {
+        // call user's routine
+        intFunction[INT_EXTERNAL0]();
+        // reset the interrupt's flag
+        IntClearFlag(INT_EXTERNAL0);
+    }
+}
+
+#endif /* INT0INT */
+
+
+/*  --------------------------------------------------------------------
+    OnChangePin1
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Configure external interrupt #1
+    @param		timediv:	INT_RISING_EDGE or INT_FALLING_EDGE
+                func:		function called when interrupt occures
+    @return     INT_USED or INT_NOT_USED
+    ------------------------------------------------------------------*/
+
+#ifdef INT1INT
+u32 OnChangePin1(callback func, u8 config)
+{
+    if (intUsed[INT_EXTERNAL1] == INT_NOT_USED)
+    {
+        intUsed[INT_EXTERNAL1] = INT_USED;
+        intFunction[INT_EXTERNAL1] = func;
+
+        // Configure interrupt
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        IntSetVectorPriority(INT_EXTERNAL1_VECTOR, 7, 3);
+        IntClearFlag(INT_EXTERNAL1);
+        IntEnable(INT_EXTERNAL1);
+
+        // Configure INT1
+        if (config == INT_RISING_EDGE)
+            INTCONSET = (1<<1); //Set INT1 for rising edge trigger
+        else
+            INTCONCLR = (1<<1); //Set INT1 for falling edge trigger
+
+        return INT_EXTERNAL1;
+    }
+    
+    else
+    {
+        #ifdef DEBUG
+        debug("Error : INT_EXTERNAL1 interrupt is already used !");
+        #endif
+        return false;
+    }
+}
+
+/*  --------------------------------------------------------------------
+    INT1 interrupt (Vector 7)
+    see also ISRwrapper.S
+    ------------------------------------------------------------------*/
+
+void Int1Interrupt()
+{
+    if (IntGetFlag(INT_EXTERNAL1))
+    {
+        // call user's routine
+        intFunction[INT_EXTERNAL1]();
+        // reset the interrupt's flag
+        IntClearFlag(INT_EXTERNAL1);
+    }
+}
+
+#endif /* INT1INT */
+
+
+/*  --------------------------------------------------------------------
+    OnChangePin2
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Configure external interrupt #2
+    @param		timediv:	INT_RISING_EDGE or INT_FALLING_EDGE
+                func:		function called when interrupt occures
+    @return     INT_USED or INT_NOT_USED
+    ------------------------------------------------------------------*/
+
+#ifdef INT2INT
+u32 OnChangePin2(callback func, u8 config)
+{
+    if (intUsed[INT_EXTERNAL2] == INT_NOT_USED)
+    {
+        intUsed[INT_EXTERNAL2] = INT_USED;
+        intFunction[INT_EXTERNAL2] = func;
+
+        // Configure interrupt
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        IntSetVectorPriority(INT_EXTERNAL2_VECTOR, 7, 3);
+        IntClearFlag(INT_EXTERNAL2);
+        IntEnable(INT_EXTERNAL2);
+
+        // Configure INT2
+        if (config == INT_RISING_EDGE)
+            INTCONSET = (1<<2); //Set INT2 for rising edge trigger
+        else
+            INTCONCLR = (1<<2); //Set INT2 for falling edge trigger
+
+        return INT_EXTERNAL2;
+    }
+    
+    else
+    {
+        #ifdef DEBUG
+        debug("Error : INT_EXTERNAL2 interrupt is already used !");
+        #endif
+        return false;
+    }
+}
+
+/*  --------------------------------------------------------------------
+    INT2 interrupt (Vector 11)
+    see also ISRwrapper.S
+    ------------------------------------------------------------------*/
+
+void Int2Interrupt()
+{
+    if (IntGetFlag(INT_EXTERNAL2))
+    {
+        // call user's routine
+        intFunction[INT_EXTERNAL2]();
+        // reset the interrupt's flag
+        IntClearFlag(INT_EXTERNAL2);
+    }
+}
+
+#endif /* INT2INT */
+
+
+/*  --------------------------------------------------------------------
+    OnChangePin3
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Configure external interrupt #3
+    @param		timediv:	INT_RISING_EDGE or INT_FALLING_EDGE
+                func:		function called when interrupt occures
+    @return     INT_USED or INT_NOT_USED
+    ------------------------------------------------------------------*/
+
+#ifdef INT3INT
+u32 OnChangePin3(callback func, u8 config)
+{
+    if (intUsed[INT_EXTERNAL3] == INT_NOT_USED)
+    {
+        intUsed[INT_EXTERNAL3] = INT_USED;
+        intFunction[INT_EXTERNAL3] = func;
+
+        // Configure interrupt
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        IntSetVectorPriority(INT_EXTERNAL3_VECTOR, 7, 3);
+        IntClearFlag(INT_EXTERNAL3);
+        IntEnable(INT_EXTERNAL3);
+
+        // Configure INT4
+        if (config == INT_RISING_EDGE)
+            INTCONSET = (1<<3); //Set INT3 for rising edge trigger
+        else
+            INTCONCLR = (1<<3); //Set INT3 for falling edge trigger
+
+        return INT_EXTERNAL3;
+    }
+    
+    else
+    {
+        #ifdef DEBUG
+        debug("Error : INT_EXTERNAL3 interrupt is already used !");
+        #endif
+        return false;
+    }
+}
+
+/*  --------------------------------------------------------------------
+    INT3 interrupt (Vector 15)
+    see also ISRwrapper.S
+    ------------------------------------------------------------------*/
+
+void Int3Interrupt()
+{
+    if (IntGetFlag(INT_EXTERNAL3))
+    {
+        // call user's routine
+        intFunction[INT_EXTERNAL3]();
+        // reset the interrupt's flag
+        IntClearFlag(INT_EXTERNAL3);
+    }
+}
+
+#endif /* INT3INT */
+
+/*  --------------------------------------------------------------------
+    OnChangePin4
+    --------------------------------------------------------------------
+    @author		Regis Blanchot <rblanchot@gmail.com>
+    @descr		Configure external interrupt #4
+    @param		timediv:	INT_RISING_EDGE or INT_FALLING_EDGE
+                func:		function called when interrupt occures
+    @return     INT_USED or INT_NOT_USED
+    ------------------------------------------------------------------*/
+
+#ifdef INT4INT
+u32 OnChangePin4(callback func, u8 config)
+{
+    if (intUsed[INT_EXTERNAL4] == INT_NOT_USED)
+    {
+        intUsed[INT_EXTERNAL4] = INT_USED;
+        intFunction[INT_EXTERNAL4] = func;
+
+        // Configure interrupt
+        IntConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+        IntSetVectorPriority(INT_EXTERNAL4_VECTOR, 7, 3);
+        IntClearFlag(INT_EXTERNAL4);
+        IntEnable(INT_EXTERNAL4);
+
+        // Configure INT4
+        if (config == INT_RISING_EDGE)
+            INTCONSET = (1<<4); //Set INT4 for rising edge trigger
+        else
+            INTCONCLR = (1<<4); //Set INT4 for falling edge trigger
+
+        return INT_EXTERNAL4;
+    }
+    
+    else
+    {
+        #ifdef DEBUG
+        debug("Error : INT_EXTERNAL4 interrupt is already used !");
+        #endif
+        return false;
+    }
+}
+
+/*  --------------------------------------------------------------------
+    INT4 interrupt (Vector 19)
+    see also ISRwrapper.S
+    ------------------------------------------------------------------*/
+
+void Int4Interrupt()
+{
+    if (IntGetFlag(INT_EXTERNAL4))
+    {
+        // call user's routine
+        intFunction[INT_EXTERNAL4]();
+        // reset the interrupt's flag
+        IntClearFlag(INT_EXTERNAL4);
+    }
+}
+
+#endif /* INT4INT */
 
 #endif /* __ONEVENT_C */

@@ -138,8 +138,8 @@
 
 #define CDC_ACM_FN_DSC_VAL              0x02
 
-#define CDC_RTS_MASK   0x02
-#define CDC_DTR_MASK   0x01
+#define CDC_RTS_MASK                    0x02
+#define CDC_DTR_MASK                    0x01
 
 /*
  * This macro is used set the baud rate reported back to the host during
@@ -196,12 +196,6 @@
 #define CDC_DEFAULT_NUM_BITS    8                   // 8-bits per word
 
 /*
- * This macro is used to check if the CDC class is ready to send more data.
- */
- 
-#define cdc_is_tx_ready()   (cdc_trf_state == CDC_TX_READY)
-
-/*
  * S T R U C T U R E S
  */
 
@@ -232,7 +226,6 @@ typedef union _CONTROL_SIGNAL_BITMAP
         unsigned CARRIER_CONTROL:1;   // [0] Deactivate   [1] Activate
     };
 } CONTROL_SIGNAL_BITMAP;
-
 
 /* Functional Descriptor Structure - See CDC Specification 1.1 for details */
 
@@ -294,6 +287,7 @@ extern LINE_CODING cdc_line_coding;
 /*
  * Public Prototypes
  */
+
 void usb_check_cdc_request(void);
 void cdc_init_endpoint(void);
 //u8 cdc_consume(void (*func) (u32));

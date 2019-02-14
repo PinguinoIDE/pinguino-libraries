@@ -47,8 +47,8 @@
 #define PMP_MODE_INC_ADDR           0b01
 #define PMP_MODE_INC_OFF            0b00
 
-#define    PMP_MODE_8BIT            0        // PMP<15:8> not controlled by the PMP module
-#define    PMP_MODE_16BIT           1
+#define PMP_MODE_8BIT               0        // PMP<15:8> not controlled by the PMP module
+#define PMP_MODE_16BIT              1
 
 #define PMP_MODE_MASTER1            0b11    // Read & Write on same pin
 #define PMP_MODE_MASTER2            0b10    // Read & Write on separate pins
@@ -96,14 +96,14 @@
 #define PMA14                       1<<14
 #define PMA15                       1<<15
 
-#define PMCS                       1<<14    // PMA14 or PMCS
-#define PMCS1                      1<<14    // PMA14 or PMCS1
-#define PMCS2                      1<<15    // PMA15 or PMCS2
-#define PMRD                       1<<13    // Master 2 (arbitrary value)
-#define PMRD_PMWR                  1<<13    // Master 1 (arbitrary value)
-#define PMWR                       1<<12    // Master 2 (arbitrary value)
-#define PMENB                      1<<12    // Master 1 (arbitrary value)
-#define PMBE                       1<<11    // Master 1 (arbitrary value)
+#define PMCS                        1<<14    // PMA14 or PMCS
+#define PMCS1                       1<<14    // PMA14 or PMCS1
+#define PMCS2                       1<<15    // PMA15 or PMCS2
+#define PMRD                        1<<13    // Master 2 (arbitrary value)
+#define PMRD_PMWR                   1<<13    // Master 1 (arbitrary value)
+#define PMWR                        1<<12    // Master 2 (arbitrary value)
+#define PMENB                       1<<12    // Master 1 (arbitrary value)
+#define PMBE                        1<<11    // Master 1 (arbitrary value)
 
 /** --------------------------------------------------------------------
     Prototypes

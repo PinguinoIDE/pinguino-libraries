@@ -1,26 +1,29 @@
-/*	----------------------------------------------------------------------------
+/*	--------------------------------------------------------------------
     FILE:			pwm.c
     PROJECT:		pinguino
-    PURPOSE:		new hardware PWM control functions
+    PURPOSE:		hardware PWM control functions
     PROGRAMER:		Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:	10 oct. 2010
-    LAST RELEASE:	27 apr. 2013
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     freely adapted from JAL PWM Control Library.
-    ----------------------------------------------------------------------------
+    --------------------------------------------------------------------
     Changelog :
-    * 12 Feb. 2013  Régis Blanchot - replaced duty cycle calculation
-    * 27 Apr. 2013  Régis Blanchot - moved pin definition to pin.h
-                                     renamed function (also in pwm.pdl)
-                                     CCPR1L = duty; -> CCPR1L = duty & 0xFF;
-    * 26 Jun. 2013  Régis Blanchot - fixed PWM_setDutyCycle()
-    *  7 Jan. 2015  André Gentric  - fixed CCPxCON
-    * 28 Jan. 2015  Luca (brikker) - added enhanced CCP1 function
-    * 15 Feb. 2015  Régis Blanchot - modified PWM_setFrequency to return
-                                     the value of PR2
-    * 16 Feb. 2015  Régis Blanchot - added PWM resolution calculation
-
-    ----------------------------------------------------------------------------
+    10 Oct. 2010 - Régis Blanchot - first release
+    12 Feb. 2013 - Régis Blanchot - replaced duty cycle calculation
+    27 Apr. 2013 - Régis Blanchot - moved pin definition to pin.h
+                                    renamed function (also in pwm.pdl)
+                                    CCPR1L = duty; -> CCPR1L = duty & 0xFF;
+    26 Jun. 2013 - Régis Blanchot - fixed PWM_setDutyCycle()
+    07 Jan. 2015 - André Gentric  - fixed CCPxCON
+    28 Jan. 2015 - Luca (brikker) - added enhanced CCP1 function
+    15 Feb. 2015 - Régis Blanchot - modified PWM_setFrequency to return
+                                    the value of PR2
+    16 Feb. 2015 - Régis Blanchot - added PWM resolution calculation
+    03 Feb. 2016 - Regis blanchot - added 16F1459 support
+    03 Feb. 2016 - Regis blanchot - renamed CCPx pin to PWMx
+                                    was source of conflict with PIC1xFxxxx.h file
+    04 Feb. 2016 - Régis Blanchot - added enhanced CCP1 function support
+                                    to all 44-pin chips
+    --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -34,20 +37,24 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-    --------------------------------------------------------------------------*/
+    ------------------------------------------------------------------*/
 
 #ifndef __PWM__
 #define __PWM__
 
-#include <compiler.h>     // sfr's
+#include <compiler.h>       // sfr's
 #include <typedef.h>        // u8, u16, u32, ...
-#include <pin.h>            // USERLED
+#include <pin.h>            // USERLED, CCPx, PWMx, ...
 #include <digitalp.c>       // pinmode
-#include <oscillator.c>     // System_getPeripheralFrequency
+//#include <oscillator.c>     // System_getPeripheralFrequency
 //#include <interrupt.c>    // to save memory space
 
 // Mode of legacy PWM
-#define PWMMODE         0b00001100 // PxA, PxC active-high, PxB, PxD active-high
+#if defined(__16F1459)
+    #define PWMMODE         0b11000000 // PWM module enabled, output enabled, output low, active-high
+#else
+    #define PWMMODE         0b00001100 // PxA, PxC active-high, PxB, PxD active-high
+#endif
 
 // Config of Enhanced PWM
 #define SINGLE_OUT      0b00111111 // Single output: P1A modulated; P1B, P1C, P1D assigned as port pins
@@ -64,6 +71,8 @@
 /*  --------------------------------------------------------------------
     GLOBAL VARIABLES
     ------------------------------------------------------------------*/
+
+extern u32 _cpu_clock_;
 
 u16 gPWMRES;                        // PWM resolution
 u16 gPR2PLUS1 = 256;                // shadow value of PR2 set to max. + 1 
@@ -93,14 +102,44 @@ u16 PWM_setFrequency(u32 freq)
     // PR2+1 calculation
     // Timer2 clock input is the peripheral clock (FOSC/4). 
 
-    gPR2PLUS1 = System_getPeripheralFrequency() / freq;
+    //gPR2PLUS1 = System_getPeripheralFrequency() / freq;
+    gPR2PLUS1 = _cpu_clock_ / 4 / freq;
 
     // Timer2 prescaler calculation
     // PR2 max value is 255, so PR2+1 max value is 256
     // only 3 possible prescaler value : 1, 4 or 16
     // so gPR2PLUS1 can not be > to 16 * 256 = 4096
     // and frequency can not be < 2929Hz (12MHZ/4096)
+    // PIC16F1459 also has a 1:64 prescaler setting,
+    // which allows frequencies down to 733Hz
     
+    #if defined(__16F1459)
+    if (gPR2PLUS1 <= 16384)                 // check if it's not too high
+    {
+        if (gPR2PLUS1 <= 256)               // no needs of any prescaler
+        {
+            gT2CON = 0b00000100;            // prescaler is 1, Timer2 On
+        }
+        else if (gPR2PLUS1 <= 1024)         // needs prescaler 1:4
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 2;     // divided by 4
+            gT2CON = 0b00000101;            // prescaler is 4, Timer2 On
+        }
+        else if (gPR2PLUS1 <= 4096)         // needs prescaler 1:16
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 4;     // divided by 16
+            gT2CON = 0b00000110;            // prescaler is 16, Timer2 On
+        }
+        else                                // needs prescaler 1:64
+        {
+            gPR2PLUS1 = gPR2PLUS1 >> 6;     // divided by 64
+            gT2CON = 0b00000111;            // prescaler is 64, Timer2 On
+        }
+
+        // Returns PR2+1 value
+        return gPR2PLUS1;
+    }
+    #else
     if (gPR2PLUS1 <= 4096)                  // check if it's not too high
     {
         if (gPR2PLUS1 <= 256)               // no needs of any prescaler
@@ -121,8 +160,8 @@ u16 PWM_setFrequency(u32 freq)
         // Returns PR2+1 value
         return gPR2PLUS1;
     }
-
-    return 0;                           // error (mostly freq. is too low)
+    #endif
+    return 0;                               // error (mostly freq. is too low)
 }
 
 /*  --------------------------------------------------------------------
@@ -187,62 +226,88 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
                                         // at the first PWM output
     PR2 = gPR2PLUS1 - 1;                // set PWM period
 
+    // 3- Assign Timer2 to all CCP pins
+
+    CCPTMRS0 = 0;
+
     #if defined(__18f26j53) || defined(__18f46j53) || \
         defined(__18f27j53) || defined(__18f47j53)
 
-    CCPTMRS1 = 0;                       // assign Timer2 to all CCP pins
+    CCPTMRS1 = 0;
     CCPTMRS2 = 0;
 
     #endif
     
-    // 3- Set the PWM duty cycle by writing to the CCPRxL register and
+    // 4- Set the PWM duty cycle by writing to the CCPRxL register and
     // CCPxCON<5:4> bits.
 
-    msb = (duty >> 2) & 0xFF;          // 8 MSB
-    lsb = ((u8)duty & 0x03) << 4;      // 2 LSB in <5:4>
-
+    msb = (duty >> 2) & 0xFF;           // 8 MSB
+    #if defined(__16F1459)
+    // PWM Duty Cycle = (PWMxDCH:PWMxDCL<7:6>)
+    lsb = ((u8)duty & 0x03) << 6;       // 2 LSB in <7:6>
+    #else
+    // PWM Duty Cycle = (PWMxDCH:PWMxDCL<5:4>)
+    lsb = ((u8)duty & 0x03) << 4;       // 2 LSB in <5:4>
+    #endif
+    
     switch (pin)
     {
-        #if defined(__18f26j53) || defined(__18f46j53) || \
-            defined(__18f27j53) || defined(__18f47j53)
+        #if defined(__16F1459)
 
-        case CCP4:
+        // PWM Duty Cycle = (PWMxDCH:PWMxDCL<7:6>)
+        
+        case PWM1:
+            PWM1CON  = PWMMODE;
+            PWM1DCH  = msb;
+            PWM1DCL |= lsb;
+            break;
+
+        case PWM2:
+            PWM2CON  = PWMMODE;
+            PWM2DCL  = msb;
+            PWM2DCH |= lsb;
+            break;
+
+        #elif defined(__18f26j53) || defined(__18f46j53) || \
+              defined(__18f27j53) || defined(__18f47j53)
+
+        case PWM1:
             CCP4CON  = PWMMODE;
             CCPR4L   = msb;
             CCP4CON |= lsb;
             break;
 
-        case CCP5:
+        case PWM2:
             CCP5CON  = PWMMODE;
             CCPR5L   = msb;
             CCP5CON |= lsb;
             break;
 
-        case CCP6:
+        case PWM3:
             CCP6CON  = PWMMODE;
             CCPR6L   = msb;
             CCP6CON |= lsb;
             break;
 
-        case CCP7:
+        case PWM4:
             CCP7CON  = PWMMODE;
             CCPR7L   = msb;
             CCP7CON |= lsb;
             break;
 
-        case CCP8:
+        case PWM5:
             CCP8CON  = PWMMODE;
             CCPR8L   = msb;
             CCP8CON |= lsb;
             break;
 
-        case CCP9:
+        case PWM6:
             CCP9CON  = PWMMODE;
             CCPR9L   = msb;
             CCP9CON |= lsb;
             break;
 
-        case CCP10:
+        case PWM7:
             CCP10CON  = PWMMODE;
             CCPR10L   = msb;
             CCP10CON |= lsb;
@@ -250,13 +315,13 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
 
         #else
 
-        case CCP1:
+        case PWM1:
             CCP1CON  = PWMMODE;
             CCPR1L   = msb;
             CCP1CON |= lsb;
             break;
 
-        case CCP2:
+        case PWM2:
             CCP2CON  = PWMMODE;
             CCPR2L   = msb;
             CCP2CON |= lsb;
@@ -268,13 +333,14 @@ void PWM_setDutyCycle(u8 pin, u16 duty)
             #ifdef DEBUG
                 // "Invalid CCPx Pin"
             #endif
+            break;
     }
 
-    // 4- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
+    // 5- Set the TMR2 prescale value, then enable Timer2 by writing to T2CON
 
     T2CON = gT2CON;                     // Timer2 prescaler + ON
 
-    // 5- Make the CCPx pin an output by clearing the appropriate TRIS bit.
+    // 6- Make the CCPx pin an output by clearing the appropriate TRIS bit.
 
     pinmode(pin, OUTPUT);               // PWM pin as OUTPUT
 }
@@ -311,7 +377,8 @@ void PWM_setPercentDutyCycle(u8 pin, u8 percent)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETENHANCEDOUTPUT)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setEnhancedOutput (u8 config, u8 mode)
 {
 
@@ -341,7 +408,8 @@ void PWM_setEnhancedOutput (u8 config, u8 mode)
     }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -355,17 +423,18 @@ void PWM_setEnhancedOutput (u8 config, u8 mode)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETDEADBAND)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setDeadBand (u8 cycles) 
 {
-    if (cycles > 127) {
+    if (cycles > 127)
         cycles = 127;
-    }
     cycles |= 0b10000000;
     ECCP1DEL = (ECCP1DEL & 0b10000000) | cycles;
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your processor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -379,17 +448,18 @@ void PWM_setDeadBand (u8 cycles)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASAUTORESTART)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setASautoRestart (u8 autorestart) 
 {
-    if (autorestart) {
+    if (autorestart)
         ECCP1DEL = (ECCP1DEL | 0b10000000);
-    } else {
+    else
         ECCP1DEL = (ECCP1DEL & 0b01111111);
-    }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -402,17 +472,19 @@ void PWM_setASautoRestart (u8 autorestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETASMANUALRESTART)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setASmanualRestart (u8 manualrestart) 
 {
-    if (((ECCP1DEL & 0b10000000) >> 7) == 0) {
-        if (manualrestart) {
+    if (((ECCP1DEL & 0b10000000) >> 7) == 0)
+    {
+        if (manualrestart)
             ECCP1AS = (ECCP1AS | 0b00000000);	//bit 7 ECCPASE: ECCP Auto-Shutdown Event Status bit [0 = work; 1 = shutdown]	
-        }
     }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 
@@ -431,17 +503,18 @@ void PWM_setASmanualRestart (u8 manualrestart)
     ------------------------------------------------------------------*/
 
 #if defined(PWMSETAUTOSHUTDOWN)
-#if defined(__18f4550) || defined(__18f45k50)
+#if defined(__18f4455)  || defined(__18f4550)  || defined(__18f45k50) || \
+    defined(__18f46j50) || defined(__18f47j53) 
 void PWM_setAutoShutdown (u8 autoshutdown)
 {
-    if (autoshutdown) {
+    if (autoshutdown)
         ECCP1AS = 0b01000000;		// AS Enabled
-    } else {
+    else
         ECCP1AS = 0b00000000;		// AS Disabled
-    }
 }
 #else
-#error "Enhanced PWM modes not available or not yet supported for your porcessor."
+#error "Enhanced PWM modes not available"
+#error "or not yet supported for your porcessor."
 #endif
 #endif
 

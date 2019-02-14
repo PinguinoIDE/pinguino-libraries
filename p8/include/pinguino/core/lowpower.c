@@ -30,6 +30,7 @@
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+#include <oscillator.c>
 
 #define DEEPSLEEPFAULTWAKEUP   1<<7
 #define ULTRALOWPOWERWAKEUP    1<<5
@@ -44,19 +45,25 @@
 #ifdef SYSTEMSLEEP
 void System_sleep()
 {
-	// This bit has no effect if the Configuration bit, WDTEN, is enabled.
-    WDTCONbits.SWDTEN = 1;   // turn on the watch dog timer
+    // This bit has no effect if the Configuration bit, WDTEN, is enabled.
+    //WDTCONbits.SWDTEN = 1;   // turn on the watch dog timer
 
-	#if defined(__18f26j50) || defined(__18f46j50) || \
-		defined(__18f26j53) || defined(__18f46j53) || \
-		defined(__18f27j53) || defined(__18f47j53)
+    #if defined(__18f26j50) || defined(__18f46j50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
     // Device and on-chip regulator enter sleep mode on SLEEP instruction
     WDTCONbits.REGSLP = 1;
-	#endif
+    #endif
 
-	//Device enters Sleep mode (not Idle mode) on SLEEP instruction
+    // Device enters Sleep mode (not Idle mode) on SLEEP instruction
+    #ifndef __16F1459
     OSCCONbits.IDLEN = 0;
+    #endif
+    
     sleep();
+    
+    // Wait frequency is stable 
+    System_waitStableFrequency();
 }
 #endif
 
@@ -146,6 +153,16 @@ void System_deepSleep()
 */
     // Time-critical section must be in ASM  
 
+    #ifdef __XC8__
+    #asm
+    enterdeepsleep:
+        movlb   0x0F                ; banked
+        bsf     DSCONH, 7, 1       ; deep sleep mode
+        nop
+        sleep
+        goto    enterdeepsleep      ; should never be reached unless deep sleep fails
+    #endasm
+    #else
     __asm
     enterdeepsleep:
         movlb   0x0F                ; banked
@@ -154,7 +171,8 @@ void System_deepSleep()
         sleep
         goto    enterdeepsleep      ; should never be reached unless deep sleep fails
     __endasm;
-
+    #endif
+    
     /// Device is now in deep sleep mode.           ///
     /// It will Wake-up when RTCC alarm occurs.     ///
     /// Wake-up trigger a Power-on Reset,           ///
