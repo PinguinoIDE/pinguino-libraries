@@ -1,4 +1,3 @@
-//
 // This file implements the ADB protocol (host side).
 // It hides the underlying USB layer completely and exposes a simple API that
 // enables the client to open several independant communication channels with

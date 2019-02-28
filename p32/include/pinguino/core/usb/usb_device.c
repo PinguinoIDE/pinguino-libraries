@@ -383,6 +383,7 @@ void usb_device_tasks(void)
             return;
         }
     }
+    #endif
     
     #ifdef __ALLOW_RESUME__
     if (U1IE & _U1IE_RESUMEIE_MASK)

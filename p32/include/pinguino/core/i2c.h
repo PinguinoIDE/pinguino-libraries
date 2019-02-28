@@ -13,8 +13,8 @@
                 changed completion flag polling to the various bits e.g. PEN, SEN
                 I2C_readchar 2nd argument - NACK or ACK
                 implemented init, start, restart, stop, writechar, readchar - don't need others
-                suggest 2 new functions - writebs(module, address, *bs, count),
-                readbs(module, address, *bs, count)
+                suggest 2 new functions - writebytes(module, address, *bytes, count),
+                readbytes(module, address, *bytes, count)
                 NO interrupt facility - not sure that it is needed?
     29/04/2014  Alterations by Moreno Manzini as suggested by Djpark
                 Create 2 versions of I2C_wait, normally is used the standard one.
@@ -47,18 +47,6 @@
 
 #include <typedef.h>
 
-#if !defined(UBW32_460) && \
-    !defined(UBW32_795) && \
-    !defined(PIC32_PINGUINO_T795)
-            
-    #define NUMOFI2C        2
-
-#else
-
-    #define NUMOFI2C        1
-
-#endif
-
 // Mode I2C
 #define I2C_WRITE               0
 #define I2C_READ                1
@@ -88,15 +76,11 @@
 void I2C_master(u8, u32);
 void I2C_slave(u8, u16, u32);
 void I2C_init(u8, u8, u32);
-
-u8 I2C_write(u8, u8);
-u8 I2C_writeChar(u8, u8, u8, u8);
-u8 I2C_writeBytes(u8, u8, u8, u8*, u8);
-
-u8 I2C_read(u8);
-u8 I2C_readChar(u8, u8, u8);
-u8 I2C_readBytes(u8, u8, u8, u8*, u8);
-
+//u8   I2C_send(u8, u8, u8);
+//u8   I2C_get(u8, u16);
+u8   I2C_writeChar(u8, u8);
+u8   I2C_readChar(u8);//, u8);
+//u8   I2C_read(u8);
 void I2C_wait(u8);
 void I2C_start(u8);
 void I2C_stop(u8);
@@ -110,9 +94,10 @@ u8   I2C2Interrupt();
 #define I2C1_master(speed)          I2C_init(I2C1, I2C_MASTER_MODE, speed)
 #define I2C1_slave(DeviceID)        I2C_init(I2C1, I2C_SLAVE_MODE, DeviceID)
 #define I2C1_init()                 I2C_init(I2C1, I2C_MASTER_MODE, I2C_100KHZ)
-#define I2C1_write(x)               I2C_write(I2C1, x)
-#define I2C1_writeChar(x)           I2C_writeChar(I2C1, x)
-#define I2C1_read()                 I2C_read(I2C1)
+//#define I2C1_send(address, byte)    I2C_send(I2C1, address, byte)
+//#define I2C1_get(address)           I2C_get(I2C1, address)
+//#define I2C1_sendID(DeviceID, rw)   I2C_sendID(I2C1, DeviceID, rw)
+#define I2C1_writeChar(byte)        I2C_writeChar(I2C1, byte)
 #define I2C1_readChar()             I2C_readChar(I2C1)
 #define I2C1_wait()                 I2C_wait(I2C1)
 #define I2C1_start()                I2C_start(I2C1)
@@ -124,9 +109,10 @@ u8   I2C2Interrupt();
 #define I2C2_master(speed)          I2C_init(I2C2, I2C_MASTER_MODE, speed)
 #define I2C2_slave(DeviceID)        I2C_init(I2C2, I2C_SLAVE_MODE, DeviceID)
 #define I2C2_init()                 I2C_init(I2C2, I2C_MASTER_MODE, I2C_100KHZ)
-#define I2C2_write(x)               I2C_write(I2C2, x)
-#define I2C2_writeChar(x)           I2C_writeChar(I2C2, x)
-#define I2C2_read()                 I2C_read(I2C2)
+//#define I2C2_send(address, byte)    I2C_send(I2C2, address, byte)
+//#define I2C2_get(address)           I2C_get(I2C2, address)
+//#define I2C2_sendID(DeviceID, rw)   I2C_sendID(I2C2, DeviceID, rw)
+#define I2C2_writeChar(byte)        I2C_writeChar(I2C2, byte)
 #define I2C2_readChar()             I2C_readChar(I2C2)
 #define I2C2_wait()                 I2C_wait(I2C2)
 #define I2C2_start()                I2C_start(I2C2)

@@ -772,9 +772,9 @@ void ILI9325_scroll(u16 pixels)
     while (y >= 320)
         y -= 320;    
 
-    //LowCS;                                    // Enable LCD
-    ILI9325_write(VerticalScrollControl, y);
-    //HighCS;                                   // Disable LCD
+    //LowCS;									    // Enable LCD
+    ILI9325_write(VerticalScrollControl, y);	
+    //HighCS;                                 	// Disable LCD
 }
 
 ///	--------------------------------------------------------------------

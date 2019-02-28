@@ -49,20 +49,13 @@
     #endif
     #define false               0
     #define False               0
-    // defined in XC8 pic18f47j53.h
-    //#define NEGATIVE            0
-    #define Negative            0
     
     #ifndef TRUE
         #define TRUE            !FALSE
     #endif
     #define true                !false
     #define True                !false
-    
-    // defined in XC8 pic18f47j53.h
-    //#define POSITIVE            !false
-    #define Positive            !false
-    
+
     #ifndef NULL
         #define NULL            (void *)0
     #endif

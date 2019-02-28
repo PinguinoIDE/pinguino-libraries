@@ -79,25 +79,10 @@
 
 #define TimeOutDefault -1 //the timeout in msec default blocks
 
-// core functions
-void RF433MHz_sendZero(void);
-void RF433MHz_sendOne(void);
-void RF433MHz_start(void);
-void RF433MHz_end(void);
+//set up transmission
+void RF433MHz_init(u8, u8);
 
-// set up transmission
-void RF433MHz_init(u8, u16);
-
-// print functions
-void RF433MHz_printChar(u8);
-void RF433MHz_writeBytes(const u8 *, u8);
-void RF433MHz_print(const u8 *);
-void RF433MHz_println(const u8 *);
-void RF433MHz_printNumber(long, u8);
-void RF433MHz_printFloat(float, u8);
-void RF433MHz_printf(const u8 *, ...);
-
-// transmit 16 bits of data
+//transmit 16 bits of data
 void RF433MHz_transmit(u16);
 
 // transmit array of bytes
@@ -118,20 +103,29 @@ u16 RF433MHz_getMessage(void);
 // stop receiving data
 void RF433MHz_stopReceive(void);
 
+void RF433MHz_sendZero(void);
+void RF433MHz_sendOne(void);
+
 // Decode, encode functions
 //u8 RF433MHz_decodeMessage(u16, u8, u8);
 //u16 RF433MHz_encodeMessage(u8, u8);
 void RF433MHz_addManchesterBit(u16 *, u8 *, u8 *, u8 *, u8);
 
+// Print Functions
+void RF433MHz_printChar(u8);
+void RF433MHz_print(const u8 *);
+void RF433MHz_println(const u8 *);
+void RF433MHz_printNumber(long, u8);
+void RF433MHz_printFloat(float, u8);
+void RF433MHz_printf(const u8 *, ...);
+
 //
 typedef struct
 {
-    #ifdef RF433MHZTRANSMITTER
-    u8  TxPin;
     u8  bauds;
     u16 half_bit_interval_us;
-    #else
     u8  RxPin;
+    u8  TxPin;
     t16 period;
     u8  rx_sample;
     u8  rx_last_sample;
@@ -144,7 +138,6 @@ typedef struct
     u8  rx_maxBytes;
     u8  rx_default_data[2];
     u8* rx_data;
-    #endif
 } RF433MHZ_t;
 
 #endif // __RF433MHZ_H

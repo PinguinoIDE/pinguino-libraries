@@ -61,7 +61,6 @@ http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en545865
 DataSheet http://ww1.microchip.com/downloads/en/DeviceDoc/22226a.pdf
 ***********************************************************************************/
 
-
 #ifndef MCP342x_h
 #define MCP342x_h
 
@@ -111,7 +110,6 @@ DataSheet http://ww1.microchip.com/downloads/en/DeviceDoc/22226a.pdf
 #define MCP342x_NV         FALSE
 
 #endif
-
 
 typedef struct tagMCP342xCH
  {
@@ -206,6 +204,7 @@ NumCh = Number of channels (MCP3421 =  1 , MCP3422 =  2 , MCP3423 = 2 , MCP3424 
 
 RETURN FALSE on Error
 ***********************************************************************************/
+
 BOOL MCP342x_init(MCP342x * Mcp, u8 I2CAddr, u8 NumCh)
  {
   if ( (Mcp == NULL) || (I2CAddr > 7) || (NumCh > 4)  || (NumCh < 1))
@@ -512,7 +511,6 @@ int MCP342x_loop(MCP342x * Mcp)
      }
    }
  }
-
 
 
 /***********************************************************************************

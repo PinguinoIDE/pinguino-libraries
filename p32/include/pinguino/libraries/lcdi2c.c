@@ -288,15 +288,15 @@ static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
     
     I2C_start(module);                            // send start condition
 
-    //I2C_write(LCDI2C[module].address | I2C_WRITE);
-    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    //I2C_writechar(LCDI2C[module].address | I2C_WRITE);
+    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
 
     LCDI2C[module].data |= (1 << LCDI2C[module].pin.en);
-    I2C_write(module, LCDI2C[module].data);
+    I2C_writeChar(module, LCDI2C[module].data);
     // E Pulse Width > 300ns
 
     LCDI2C[module].data &= ~(1 << LCDI2C[module].pin.en);
-    I2C_write(module, LCDI2C[module].data);
+    I2C_writeChar(module, LCDI2C[module].data);
     // E Enable Cycle > (300 + 200) = 500ns
 
     I2C_stop(module);                             // send stop confition
@@ -352,8 +352,8 @@ void lcdi2c_blight(u8 module, u8 status)
         BitClear(LCDI2C[module].data, LCDI2C[module].pin.bl);
     
     I2C_start(module);
-    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
-    I2C_write(module, LCDI2C[module].data);
+    I2C_writeChar(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    I2C_writeChar(module, LCDI2C[module].data);
     I2C_stop(module);
 }
 #endif
@@ -424,7 +424,6 @@ void lcdi2c_print(u8 module, const u8 *string)
     while (*string)
         lcdi2c_putChar(*string++);
 }
-
 #endif
 
 /*  --------------------------------------------------------------------
@@ -492,7 +491,7 @@ void lcdi2c_printFloat(u8 module, float number, u8 digits)
     ------------------------------------------------------------------*/
 
 #if defined(LCDI2CPRINTF)
-
+/*
 void lcdi2c_printf(u8 module, char *fmt, ...)
 {
     va_list args;
@@ -502,7 +501,7 @@ void lcdi2c_printf(u8 module, char *fmt, ...)
     pprintf(lcdi2c_putChar, fmt, args);
     va_end(args);
 }
-
+*/
 void lcdi2c1_printf(char* fmt, ...)
 {
     va_list args;

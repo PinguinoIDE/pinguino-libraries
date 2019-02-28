@@ -107,39 +107,6 @@ int gBMP280I2CADDR;
 #endif
 
 /*  --------------------------------------------------------------------
-    CORE FUNCTIONS
-    ------------------------------------------------------------------*/
-
-#if defined(BMP280SPISWENABLE) || \
-    defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
-
-#define BMP280_writeChar(module, reg, val)             SPI_writeChar(module, reg, val)
-#define BMP280_writeBytes(module, reg, buffer, length) SPI_writeChar(module, reg, buffer, length)
-#define BMP280_readChar(module, reg)                   SPI_readChar(module, reg | BMP280_READ_FLAG)
-#define BMP280_readBytes(module, reg, buffer, length)  SPI_readBytes(module, reg | BMP280_READ_FLAG, buffer, length)
-
-#elif defined(BMP280I2C1ENABLE) || defined(BMP280I2C2ENABLE)
-
-#define BMP280_writeChar(module, reg, val)             I2C_writeChar(module, gBMP280I2CADDR, reg, val)
-#define BMP280_writeBytes(module, reg, buffer, length) I2C_writeBytes(module, gBMP280I2CADDR, reg, buffer, length)
-#define BMP280_readChar(module, reg)                   I2C_readChar(module, gBMP280I2CADDR, reg)
-#define BMP280_readBytes(module, reg, buffer, length)  I2C_readBytes(module, gBMP280I2CADDR, reg, buffer, length)
-
-#endif
-
-u16 BMP280_read16(u8 module, u8 reg)
-{
-    u8  data[2];
-    u16 r;
-    
-    BMP280_readBytes(module, reg, data, 2);
-    r  = data[0];
-    r <<= 8;
-    r |= data[1];
-    return r;
-}
-
-/*  --------------------------------------------------------------------
     Initialize library and coefficient for measurements
     SPI up to 10 MHz
     I2C up to 3.4 MHz
@@ -207,9 +174,10 @@ u8 BMP280_begin(int module, ...)
     va_end(args);                       // cleans up the list
     
     //Power-on-reset
-    //BMP280_writeChar(module, BMP280_REG_RESET, 0xB6);
 
-    id = BMP280_readChar(module, BMP280_REG_ID);
+    //BMP280_write8(module, BMP280_REG_RESET, 0xB6);
+
+    id = BMP280_read8(module, BMP280_REG_ID);
     if (id == 0x58 || id == 0x60)       // BMP280 or BME280
     {
         BMP280_readCalibration(module);
@@ -234,8 +202,7 @@ u8 BMP280_begin(int module, ...)
 ** I2C returns 0x00 when an error occurs
 */
 
-/*
-u8 BMP280_writeChar(u8 module, u8 reg, u8 val)
+u8 BMP280_write8(u8 module, u8 reg, u8 val)
 {
     #if defined(BMP280SPISWENABLE) || \
         defined(BMP280SPI1ENABLE)  || defined(BMP280SPI2ENABLE)
@@ -261,7 +228,6 @@ u8 BMP280_writeChar(u8 module, u8 reg, u8 val)
 
     return gOK;
 }
-*/
 
 /* 
 ** Read a byte from device
@@ -271,8 +237,7 @@ u8 BMP280_writeChar(u8 module, u8 reg, u8 val)
 ** (bit 7 = RW = ‘1’).
 */
 
-/*
-u8 BMP280_readChar(u8 module, u8 reg)
+u8 BMP280_read8(u8 module, u8 reg)
 {
     u8 val;
     
@@ -307,7 +272,6 @@ u8 BMP280_readChar(u8 module, u8 reg)
 
     return val;
 }
-*/
 
 /* 
 ** Read an unsigned integer (two bytes) from device
@@ -318,7 +282,6 @@ u8 BMP280_readChar(u8 module, u8 reg)
 ** Note that LSB is read first (Little Endian)
 */
 
-/*
 u16 BMP280_read16(u8 module, u8 reg)
 {
     u8 lsb, msb;
@@ -365,7 +328,6 @@ u16 BMP280_read16(u8 module, u8 reg)
 
     return ((msb << 8) | lsb);
 }
-*/
 
 /*
 ** Read an array of bytes from device
@@ -377,8 +339,7 @@ u16 BMP280_read16(u8 module, u8 reg)
 ** (bit 7 = RW = ‘1’).
 */
 
-/*
-u8 BMP280_readBytes(u8 module, u8 reg, u8 *values, u8 length)
+u8 BMP280_readBytes(u8 module, u8 *values, u8 reg, u8 length)
 {
     u8 x;
 
@@ -425,7 +386,6 @@ u8 BMP280_readBytes(u8 module, u8 reg, u8 *values, u8 length)
     #endif
     return gOK;
 }
-*/
 
 // The BMP280 includes factory calibration data stored on the device.
 // Each device has different numbers, these must be retrieved and
@@ -433,7 +393,7 @@ u8 BMP280_readBytes(u8 module, u8 reg, u8 *values, u8 length)
 
 // Retrieve calibration data from device:
 // Replace with a burst read from 0x88 to 0x9F ?
-// BMP280_readBytes(module, 0x88, dig, 24);
+// BMP280_readBytes(module, dig, 0x88, 24);
 void BMP280_readCalibration(u8 module)
 {
     gDig_T1 = BMP280_read16(module, 0x88);
@@ -461,7 +421,7 @@ u8 BMP280_getUncalibrated(u8 module)
     u8 data[6];
     
     // burst read from 0xF7 to 0xFC
-    gOK = BMP280_readBytes(module, BMP280_REG_RESULT, data, 6);
+    gOK = BMP280_readBytes(module, data, BMP280_REG_RESULT, 6);
     if (gOK)
     {
         // gUT and gUP are 20-bit numbers stored in 3 bytes
@@ -535,7 +495,7 @@ u8 BMP280_startMeasurment(u8 module, u8 oversampling)
         oversampling = 0;
     gOversampling = oversampling;
     
-    if (BMP280_writeChar(module, BMP280_REG_CONTROL, val[oversampling]))
+    if (BMP280_write8(module, BMP280_REG_CONTROL, val[oversampling]))
     {
         // wait before retrieving data
         Delayms(10 * oversampling + 10);

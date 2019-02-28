@@ -392,6 +392,7 @@ void lcdi2c_printChar(u8 module, u8 c)
     if (c < 32) c = 32;                     // replace ESC char with space
     lcdi2c_send8(module, c, LCD_DATA);
 }
+#endif
 
 void lcdi2c_putChar(u8 c)
 {
@@ -626,7 +627,6 @@ void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 rs, u8 rw,
     //Delayus(100);                             // Wait more than 100 μs
     lcdi2c_send4(module, cmd4bits, LCD_CMD);    // 0x20 - Mode 4 bits
     //I2C_stop(module);                           // send stop condition
-
     lcdi2c_send8(module, LCD_SYSTEM_SET_4BITS, LCD_CMD);// 0x28 - Mode 4 bits - 2 Lignes - 5x8
     //Delayus(4);                               // Wait more than 40 ns
     lcdi2c_send8(module, LCD_DISPLAY_ON, LCD_CMD);// 0x0C - Display ON + Cursor OFF + Blinking OFF
@@ -635,7 +635,6 @@ void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 rs, u8 rw,
     Delayms(2);                                 // Execution time > 1.64ms
     lcdi2c_send8(module, LCD_ENTRY_MODE_SET, LCD_CMD);// 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
     //Delayus(4);                               // Wait more than 40 ns
-    
     #if 0
     lcdi2c_newpattern(module);                  // Set new characters
     #endif

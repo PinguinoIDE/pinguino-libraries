@@ -52,12 +52,12 @@ void BMP280_readCalibration(u8);
 // reg: register address
 // value: value to write
 // returns 1 for success, 0 for fail
-//u8 BMP280_write8(u8, u8, u8);
+u8 BMP280_write8(u8, u8, u8);
 
 // read a char from a BMP280 register
 // address: register address
 // returns value read or 0 for fail
-//u8 BMP280_read8(u8, u8);
+u8 BMP280_read8(u8, u8);
 
 // read an unsigned 32 bits from a BMP280 register
 u16 BMP280_read16(u8, u8);
@@ -66,7 +66,7 @@ u16 BMP280_read16(u8, u8);
 // values: array of u8 with register address in first location [0]
 // length: number of bytes to read back
 // returns 1 for success, 0 for fail, with read bytes in values[] array
-//u8 BMP280_readBytes(u8, u8 *, u8, u8);
+u8 BMP280_readBytes(u8, u8 *, u8, u8);
     
 // command BMP280 to start a pressure measurement at a given precision
 u8 BMP280_startMeasurment(u8, u8);
@@ -94,8 +94,6 @@ float BMP280_getPressureAtSealevel(u8, float, float);
 // P0: fixed baseline pressure (mbar)
 // returns signed altitude in meters
 s32 BMP280_getAltitude(u8, u32, u32);
-
-#define BMP280_READ_FLAG                0x80
 
 // REGISTERS
 #define	BMP280_REG_ID                   0xD0

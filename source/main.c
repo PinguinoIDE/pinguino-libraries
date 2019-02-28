@@ -133,6 +133,13 @@ unsigned long _cpu_clock_ = 48000000;
         #error "********************************"
     #endif
 
+    #if defined(__16F1708)
+        #error "********************************"
+        #error "* No USB Module for this chip   *"
+        #error "* Please change for ICSP mode. *"
+        #error "********************************"
+    #endif
+
     #if !defined(__XC8__)
         // runtime start code
         //#include "crt0.c"     // minimal  init.

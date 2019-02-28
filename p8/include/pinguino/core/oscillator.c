@@ -210,6 +210,7 @@ extern u32 _cpu_clock_;
 #endif
 
 /*  --------------------------------------------------------------------
+/*
     Perform a loop for some processors until their frequency is stable
     ------------------------------------------------------------------*/
 
@@ -367,6 +368,79 @@ u8 System_getSource()
     return Flash_read(__CONFIG1H) & 0b00001111;
     #endif
     
+*/
+    Return Primary Oscillator Source 
+    It can be internal or external w/o PLL and divider
+
+    // 1459 and 1708
+    // 111 = ECH: External clock, High-Power mode: on CLKIN pin
+    // 110 = ECM: External clock, Medium-Power mode: on CLKIN pin
+    // 101 = ECL: External clock, Low-Power mode: on CLKIN pin
+    // 100 = INTOSC oscillator: I/O function on OSC1 pin
+    // 011 = EXTRC oscillator: RC function connected to CLKIN pin
+    // 010 = HS oscillator: High-speed crystal/resonator on OSC1 and OSC2 pins
+    // 001 = XT oscillator: Crystal/resonator on OSC1 and OSC2 pins
+    // 000 = LP oscillator: Low-power crystal on OSC1 and OSC2 pins
+
+    // x5k50
+    // 1101 = EC oscillator (low power, <4 MHz)
+    // 1100 = EC oscillator, CLKO function on OSC2 (low power, <4 MHz)
+    // 1011 = EC oscillator (medium power, 4 MHz - 16 MHz)
+    // 1010 = EC oscillator, CLKO function on OSC2 (medium power, 4 MHz - 16 MHz)
+    // 1001 = Internal oscillator block, CLKO function on OSC2
+    // 1000 = Internal oscillator block
+    // 0111 = External RC oscillator
+    // 0110 = External RC oscillator, CLKO function on OSC2
+    // 0101 = EC oscillator (high power, 16 MHz - 48 MHz)
+    // 0100 = EC oscillator, CLKO function on OSC2 (high power, 16 MHz - 48 MHz)
+    // 0011= HS oscillator (medium power, 4 MHz - 16 MHz)
+    // 0010= HS oscillator (high power, 16 MHz - 25 MHz)
+    // 0001= XT oscillator
+    // 0000= LP oscillator
+
+    // x550 and x455
+7    // 111x = HS oscillator, PLL enabled (HSPLL)
+6    // 110x = HS oscillator (HS)
+5    // 1011 = Internal oscillator, HS oscillator used by USB (INTHS)
+5    // 1010 = Internal oscillator, XT used by USB (INTXT)
+4    // 1001 = Internal oscillator, CLKO function on RA6, EC used by USB (INTCKO)
+4    // 1000 = Internal oscillator, port function on RA6, EC used by USB (INTIO)
+3    // 0111 = EC oscillator, PLL enabled, CLKO function on RA6 (ECPLL)
+3    // 0110 = EC oscillator, PLL enabled, port function on RA6 (ECPIO)
+2    // 0101 = EC oscillator, CLKO function on RA6 (EC)
+2    // 0100 = EC oscillator, port function on RA6 (ECIO)
+1    // 001x = XT oscillator, PLL enabled (XTPLL)
+0    // 000x = XT oscillator (XT)
+
+    // xxJ5x
+    // 111 = ECPLL oscillator with PLL software controlled, CLKO on RA6
+    // 110 = EC oscillator with CLKO on RA6
+    // 101 = HSPLL oscillator with PLL software controlled
+    // 100 = HS oscillator
+    // 011 = INTOSCPLLO, internal oscillator with PLL software controlled, CLKO on RA6, port function on RA7
+    // 010 = INTOSCPLL, internal oscillator with PLL software controlled, port function on RA6 and RA7
+    // 001 = INTOSCO internal oscillator block (INTRC/INTOSC) with CLKO on RA6, port function on RA7
+    // 000 = INTOSC internal oscillator block (INTRC/INTOSC), port function on RA6 and RA7
+
+    ------------------------------------------------------------------*/
+
+u8 System_getSource()
+{
+    #if defined(__16F1459) || defined(__16F1708)
+
+    return Flash_read(__CONFIG1) & 0b00000111;
+    //return config1 & 0b00000111;
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)  || \
+          defined(__18f25k50) || defined(__18f45k50)
+
+    #ifdef __XC8__
+    return config1h & 0b00001111;
+    #else
+    return Flash_read(__CONFIG1H) & 0b00001111;
+    #endif
+    
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
@@ -408,11 +482,20 @@ u8 System_getPLL()
 
     return OSCTUNEbits.SPLLMULT ? 3*OSCCON2bits.PLLEN : 4*OSCCON2bits.PLLEN;
 
+
     #elif defined(__18f26j50) || defined(__18f46j50) || \
           defined(__18f26j53) || defined(__18f46j53) || \
           defined(__18f27j53) || defined(__18f47j53)
 
+/*
+    #ifdef __XC8__
+    return config2l & 0b00001111;
+    #else
+    return Flash_read(__CONFIG2L) & 0b00000111;
+    #endif
+*/
     return OSCTUNEbits.PLLEN;
+
 
     #else
 
@@ -423,6 +506,70 @@ u8 System_getPLL()
 }
 
 /*  --------------------------------------------------------------------
+    Return PLL value, 0 = no PLL 
+    ------------------------------------------------------------------*/
+
+/*
+u8 System_getPLL()
+{
+    #if defined(__16F1708)
+
+    return 4*OSCCONbits.SPLLEN;
+
+    #elif defined(__16F1459)
+
+    return OSCCONbits.SPLLMULT ? 3*OSCCONbits.SPLLEN : 4*OSCCONbits.SPLLEN;
+*/
+u8 System_getPLLDIV()
+{
+    #if defined(__16F1708)  || defined(__16F1459)  || \
+        defined(__18f25k50) || defined(__18f45k50)
+
+    return 1; // No PLLDIV
+
+
+    #elif defined(__18f2455)  || defined(__18f4455)  || \
+          defined(__18f2550)  || defined(__18f4550)
+
+/*
+    return 1; // Need to know the source to know if PLL is enabled
+    
+    #elif defined(__18f25k50) || defined(__18f45k50)
+
+    return OSCTUNEbits.SPLLMULT ? 3*OSCCON2bits.PLLEN : 4*OSCCON2bits.PLLEN;
+
+*/
+    #ifdef __XC8__
+    return 8 - (config1l & 0b00000111 );
+    #else
+    return 8 - (Flash_read(__CONFIG1L) & 0b00000111 );
+    #endif
+    
+
+    #elif defined(__18f26j50) || defined(__18f46j50) || \
+          defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+
+/*
+    return OSCTUNEbits.PLLEN;
+*/
+    #ifdef __XC8__
+    return 8 - ((config1l & 0b00001110 ) >> 1);
+    #else
+    return 8 - ((Flash_read(__CONFIG1L) & 0b00001110 ) >> 1);
+    #endif
+
+
+    #else
+
+        #error "This library doesn't support your processor."
+        #error "Please contact a developper."
+
+    #endif
+}
+
+/*  --------------------------------------------------------------------
+/*
     Return PLL value, 0 = no PLL 
     ------------------------------------------------------------------*/
 

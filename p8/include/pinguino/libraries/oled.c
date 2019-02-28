@@ -755,6 +755,7 @@ void OLED_setXY(u8 module, u8 x, u8 y)
     OLED.pixel.y = y;
 }
 
+
 #ifdef OLEDSETCURSOR
 void OLED_setCursor(u8 module, u8 x, u8 y)
 {
