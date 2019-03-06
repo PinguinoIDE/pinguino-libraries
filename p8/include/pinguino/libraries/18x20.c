@@ -477,9 +477,20 @@
 
             // fractional part is removed, leaving only integer part
             t->integer = (temp >> 4) & 0x7F;
-            t->fraction = (temp & 0x0F) * 625;
-            // two digits after decimal 
+
+            // calculate the fractional part 
+            //t->fraction = (temp & 0x0F) * 625;
+            // or ...
+            t->fraction = 0;
+            temp_lsb = (temp & 0x0F);
+            if (temp_lsb & 0x0001) t->fraction += 625; 
+            if (temp_lsb & 0x0002) t->fraction += 1250; 
+            if (temp_lsb & 0x0004) t->fraction += 2500; 
+            if (temp_lsb & 0x0008) t->fraction += 5000;
+
+            // two digits after decimal ? 
             //t->fraction /= 100;
+
             #ifdef DS18X20DEBUG
             Serial_printf("Temp. = %02d.%02d\176C\r\n", t->integer, t->fraction);
             #endif

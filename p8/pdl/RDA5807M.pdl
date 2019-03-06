@@ -12,10 +12,13 @@ RDA5807M.setSoftMute RDA5807M_setSoftMute#include<RDA5807M.c>
 RDA5807M.getSoftMute RDA5807M_getSoftMute#include<RDA5807M.c>
 RDA5807M.getStrength RDA5807M_getStrength#include<RDA5807M.c>
 RDA5807M.getTuned RDA5807M_getTuned#include<RDA5807M.c>
+RDA5807M.getStation RDA5807M_getStation#include<RDA5807M.c>
 RDA5807M.setBand RDA5807M_setBand#include<RDA5807M.c>
 RDA5807M.getBand RDA5807M_getBand#include<RDA5807M.c>
 RDA5807M.setFrequency RDA5807M_setFrequency#include<RDA5807M.c>
 RDA5807M.getFrequency RDA5807M_getFrequency#include<RDA5807M.c>
+RDA5807M.getMaxFrequency RDA5807M_getMaxFrequency#include<RDA5807M.c>
+RDA5807M.getMinFrequency RDA5807M_getMinFrequency#include<RDA5807M.c>
 RDA5807M.setSpacing RDA5807M_setSpacing#include<RDA5807M.c>
 RDA5807M.getSpacing RDA5807M_getSpacing#include<RDA5807M.c>
 RDA5807M.formatedFrequency RDA5807M_formatedFrequency#include<RDA5807M.c>

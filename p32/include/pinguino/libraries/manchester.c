@@ -85,6 +85,7 @@ void Manchester_encode (u8, u8*);
 
 /*  --------------------------------------------------------------------
     Encode
+    --------------------------------------------------------------------
     u8  txbyte      the byte to be encoded
     u8* encoded     an array of two bytes that represent the manchester
                     encoded byte.
@@ -114,6 +115,7 @@ void Manchester_encode(u8 txbyte, u8* encoded)
 
 /*  --------------------------------------------------------------------
     Decode
+    --------------------------------------------------------------------
     u8* encoded     an array of two bytes that represent the manchester
                     encoded byte.
     ------------------------------------------------------------------*/
@@ -122,6 +124,12 @@ u8 Manchester_decode(u8* received)
 {
     return ( (Manchester_nibbler(received[1])*16)^(Manchester_nibbler(received[0])) );
 }
+
+/*  --------------------------------------------------------------------
+    Nibbler
+    --------------------------------------------------------------------
+    u8 encoded      byte to decode.
+    ------------------------------------------------------------------*/
 
 u8 Manchester_nibbler(u8 encoded)
 {

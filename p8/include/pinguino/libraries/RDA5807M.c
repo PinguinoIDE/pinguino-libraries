@@ -25,15 +25,16 @@
 #include <stdarg.h>
 #include "MPU9250.h"
 
-#if defined(__PIC32MX__)
+//#if defined(__PIC32MX__)
 //#include <digitalw.c>
-#include <delay.c>
-#else
+//#include <delay.c>
+//#else
 //#include <digitalw.c>
 //#include <digitalp.c>
-#include <delayms.c>
+//#include <digitalt.c>
+//#include <delayms.c>
 //#include <delayus.c>
-#endif
+//#endif
 
 #include <i2c.h>
 #include <i2c.c>
@@ -49,21 +50,32 @@ u8 RDA5807M_init(u8 module)
     u8 i;
     
     // Reset all shadow registers
+
     for (i = 0x00; i < 0x10; i++)
         RDA5807M_REG[i] = 0x0000;
 
     // The RDA5807M only support I2C control interface bus mode.
     // Max. I2C speed is 400KHz but it doesn't work !
+
     I2C_master(module, I2C_100KHZ);
+
+    // Check the Chip ID
+
+    if (!RDA5807M_getChipID(module))
+        return false;
+
+    // Reset the chip
+    
+    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SOFTRESET;
+    RDA5807M_saveRegister(module, RADIO_REG_R2);
+    RDA5807M_REG[RADIO_REG_R2] &= (~RADIO_REG_R2_SOFTRESET);
+    RDA5807M_saveRegister(module, RADIO_REG_R2);
 
     // Initialize the RDA5807M
 
     RDA5807M_REG[RADIO_REG_R7] |= RADIO_REG_R7_SOFTBLEND_EN;
     RDA5807M_REG[RADIO_REG_R7] |= RADIO_REG_R7_SOFTBLEND;
     RDA5807M_REG[RADIO_REG_R7] |= RADIO_REG_R7_65M50M;
-    RDA5807M_saveRegister(module, RADIO_REG_R7);
-
-    RDA5807M_REG[RADIO_REG_R7] |= 0x1234;
     RDA5807M_saveRegister(module, RADIO_REG_R7);
 
     RDA5807M_REG[RADIO_REG_R5] |= RADIO_REG_R5_INTMODE;
@@ -81,31 +93,22 @@ u8 RDA5807M_init(u8 module)
     RDA5807M_REG[RADIO_REG_R3] |= RADIO_REG_R3_SPACE_100;
     RDA5807M.freqSteps = 100;
     RDA5807M_REG[RADIO_REG_R3] |= RADIO_REG_R3_TUNE;
-    RDA5807M_REG[RADIO_REG_R3] |= (((10630 - RDA5807M.freqLow) / RDA5807M.freqSteps * 10) << 6);
+    RDA5807M_REG[RADIO_REG_R3] |= ((((10630 - RDA5807M.freqLow) / RDA5807M.freqSteps * 10) & RADIO_REG_R3_FREQ_MASK) << 6);
     RDA5807M_saveRegister(module, RADIO_REG_R3);
 
     RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_OUTPUT;
     RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_UNMUTE;
     //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_MONO;
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_BASS;
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_NEW;
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_RDS;
+    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEKUP;
+    //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEK;
+    //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEKMODE;
+    //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_BASS;
+    //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SENSITIVITY;
+    //RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_RDS;
     RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_ENABLE;
-
-    // Reset the chip
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SOFTRESET;
-    //RDA5807M_saveRegisters(module); // Save registers from 0x02 to 0x07
     RDA5807M_saveRegister(module, RADIO_REG_R2);
-    RDA5807M_REG[RADIO_REG_R2] &= (~RADIO_REG_R2_SOFTRESET);
-    //RDA5807M_saveRegisters(module); // Save registers from 0x02 to 0x07
-    RDA5807M_saveRegister(module, RADIO_REG_R2);
-
-    // Check the Chip ID
-    //if (RDA5807M_getChipID(module) == RADIO_CHIP_ID)
-    while ((RDA5807M_REG[RADIO_REG_CHIPID] != RADIO_CHIP_ID) && (i++))
-        RDA5807M_readRegisters(module);
-
-    return ((i) ? true:false);
+    
+    return true;
 }
 
 // switch the power off
@@ -118,30 +121,23 @@ void RDA5807M_close(u8 module)
 }
 
 // get the Chip ID
-/*
-u8 RDA5807M_getChipID(u8 module)
+u16 RDA5807M_getChipID(u8 module)
 {
-    //RDA5807M_readRegister(module, RADIO_REG_CHIPID);
-    RDA5807M_readRegisters(module);
-    return (u8)(RDA5807M_REG[RADIO_REG_CHIPID] >> 8);
+    RDA5807M_readRegister(module, RADIO_REG_R0);
+    return (RDA5807M_REG[RADIO_REG_R0] == RADIO_CHIP_ID);
 }
-*/
 
 // ----- Volume control -----
 
 void RDA5807M_setVolume(u8 module, u8 volume)
 {
-    //RDA5807M_REG[RADIO_REG_R5] &= (~RADIO_REG_R5_VOL);
-    RDA5807M_REG[RADIO_REG_R5] |= (volume & 0x0F);
-    RDA5807M_saveRegister(module, RADIO_REG_R5);
-    //RDA5807M_saveRegisters(module);
+    RDA5807M_writeRegister(module, RADIO_REG_R5, volume & RADIO_REG_R5_VOL_MASK);
 }
 
 u8 RDA5807M_getVolume(u8 module)
 {
     RDA5807M_readRegister(module, RADIO_REG_R5);
-    //RDA5807M_readRegisters(module);
-    RDA5807M.volume = RDA5807M_REG[RADIO_REG_R5] & 0x0F;
+    RDA5807M.volume = RDA5807M_REG[RADIO_REG_R5] & RADIO_REG_R5_VOL_MASK;
     return RDA5807M.volume;
 }
 
@@ -189,13 +185,13 @@ void RDA5807M_setMono(u8 module, u8 switchOn)
 u8 RDA5807M_getMono(u8 module)
 {
     RDA5807M_readRegister(module, RADIO_REG_R2);
-    //RDA5807M_readRegisters(module);
     RDA5807M.mono = RDA5807M_REG[RADIO_REG_R2] & RADIO_REG_R2_MONO;
     return RDA5807M.mono;
 }
 
 // 1 = the current channel is stereo
 // 0 = the current channel is not stereo
+// *** BUG ***
 u8 RDA5807M_getStereo(u8 module)
 {
     RDA5807M_readRegister(module, RADIO_REG_RA);
@@ -213,6 +209,8 @@ u8 RDA5807M_getTuned(u8 module)
     RDA5807M.tuned = RDA5807M_REG[RADIO_REG_RB] & RADIO_REG_RB_FMTRUE;
     return RDA5807M.tuned;
 }
+
+#define RDA5807M_getStation(module) RDA5807M_getTuned(module)
 
 // Switch mute mode.
 void RDA5807M_setMute(u8 module, u8 switchOn)
@@ -295,49 +293,50 @@ void RDA5807M_setBand(u8 module, RADIO_BAND band)
             //RDA5807M_saveRegister(module, RADIO_REG_R7);
             break;
     }
-    //RDA5807M_saveRegisters(module);
     RDA5807M_saveRegister(module, RADIO_REG_R3);
     RDA5807M_saveRegister(module, RADIO_REG_R7);
 }
 
 RADIO_BAND RDA5807M_getBand(u8 module)
 {
+    u8 band;
+    
     RDA5807M_readRegister(module, RADIO_REG_R3);
     //RDA5807M_readRegisters(module);
-    if (RDA5807M_REG[RADIO_REG_R3] & RADIO_REG_R3_BAND_FM)
+    band = RDA5807M_REG[RADIO_REG_R3] & RADIO_REG_R3_BAND_MASK;
+    if (band == RADIO_REG_R3_BAND_FM)
         RDA5807M.band = RADIO_BAND_FM;
-    if (RDA5807M_REG[RADIO_REG_R3] & RADIO_REG_R3_BAND_FMWORLD)
+    if (band == RADIO_REG_R3_BAND_FMWORLD)
         RDA5807M.band = RADIO_BAND_FMWORLD;
     return RDA5807M.band;
 }
 
 // Frequency = Channel Spacing (kHz) x RADIO_REG_R3[15:6] + RDA5807M.freqLow (MHz)
+// The tune bit is reset to low automatically when the tune operation is complete
+// so we set it high each time we set a new frequency.
 void RDA5807M_setFrequency(u8 module, RADIO_FREQ freq)
 {
     u16 ch;
 
     if (freq < RDA5807M.freqLow)  freq = RDA5807M.freqLow;
     if (freq > RDA5807M.freqHigh) freq = RDA5807M.freqHigh;
-    ch = (freq - RDA5807M.freqLow) / RDA5807M.freqSteps * 10;
+    ch = ((freq - RDA5807M.freqLow) / RDA5807M.freqSteps) * 10;
+    ch &= RADIO_REG_R3_FREQ_MASK;
+    ch <<= 6;
 
-    RDA5807M_REG[RADIO_REG_R3] |= (ch << 6); // bit[15:6]
-
-    RDA5807M_saveRegister(module, RADIO_REG_R3);
-    //RDA5807M_saveRegisters(module);
+    //RDA5807M_writeRegister(module, RADIO_REG_R2, RADIO_REG_R2_OUTPUT|RADIO_REG_R2_UNMUTE|RADIO_REG_R2_RDS|RADIO_REG_R2_ENABLE);
+    RDA5807M_writeRegister(module, RADIO_REG_R3, ch | RADIO_REG_R3_TUNE);
 }
 
-// retrieve the real frequency from the chip after automatic tuning.
+// Retrieve the real frequency from the chip after automatic tuning.
+// Frequency = Channel Spacing (kHz) x RADIO_REG_RA[9:0] + RDA5807M.freqLow (MHz)
 RADIO_FREQ RDA5807M_getFrequency(u8 module)
 {
     u16 ch;
     
     // check register A
-    RDA5807M_readRegister(module, RADIO_REG_RA);
-    //RDA5807M_readRegisters(module);
-
-    ch = RDA5807M_REG[RADIO_REG_RA] & RADIO_REG_RA_NR;
-
-    RDA5807M.freq = RDA5807M.freqLow + (ch * RDA5807M.freqSteps);
+    ch = RDA5807M_readRegister(module, RADIO_REG_RA) & RADIO_REG_RA_FREQ_MASK;
+    RDA5807M.freq = RDA5807M.freqLow + (ch * RDA5807M.freqSteps) / 10;
     
     return RDA5807M.freq;
 }
@@ -368,14 +367,12 @@ void RDA5807M_setSpacing(u8 module, u8 step)
         case 200:
             spacing = RADIO_REG_R3_SPACE_200; break;
     }
-    RDA5807M_REG[RADIO_REG_R3] |= spacing;
-    RDA5807M_saveRegister(module, RADIO_REG_R3);
-    //RDA5807M_saveRegisters(module);
+    RDA5807M_writeRegister(module, RADIO_REG_R3, spacing);
 }
 
 u8 RDA5807M_getSpacing(u8 module)
 {
-    return RDA5807M.freqSteps;
+    return (RDA5807M.freqSteps/10);
 }
 
 // format the current frequency for display and printing
@@ -391,16 +388,20 @@ u8* RDA5807M_formatedFrequency(u8 module)
 
     if ((b == RADIO_BAND_FM) || (b == RADIO_BAND_FMWORLD))
     {
-        // " ff.ff MHz" or "fff.ff MHz"
+        // int16 to " ffff" or "fffff"
         RDA5807M_int16_to_s(RDA5807M.formatedFreq, (u16)f);
 
-        // insert decimal point
-        RDA5807M.formatedFreq[5] = RDA5807M.formatedFreq[4];
-        RDA5807M.formatedFreq[4] = RDA5807M.formatedFreq[3];
-        RDA5807M.formatedFreq[3] = '.';
+        // Uncomment if 2 digit after decimal point are needed
+        //RDA5807M.formatedFreq[5] = RDA5807M.formatedFreq[4];
 
-        // append units
-        strcpy(RDA5807M.formatedFreq + 6, " MHz");
+        // set only 1 digit after decimal point
+        RDA5807M.formatedFreq[4] = RDA5807M.formatedFreq[3];
+
+        // insert decimal point : " ff.f" or "fff.f"
+        RDA5807M.formatedFreq[3] = '.';
+        
+        // append units : " ff.f MHz" or "fff.f MHz"
+        //strcpy(RDA5807M.formatedFreq + 6, " MHz");
     }
     
     return RDA5807M.formatedFreq;
@@ -432,18 +433,13 @@ void RDA5807M_int16_to_s(char *s, u16 val)
 // start seek mode upwards
 void RDA5807M_seekUp(u8 module, u8 toNextSender)
 {
-    // start seek mode
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEKUP;
-    RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEK;
-    RDA5807M_saveRegister(module, RADIO_REG_R2);
-    //RDA5807M_saveRegisters(module);
+    RDA5807M_writeRegister(module, RADIO_REG_R2, RADIO_REG_R2_SEEK|RADIO_REG_R2_SEEKUP);
 
     if (!toNextSender)
     {
         // stop scanning right now
         RDA5807M_REG[RADIO_REG_R2] &= (~RADIO_REG_R2_SEEK);
         RDA5807M_saveRegister(module, RADIO_REG_R2);
-        //RDA5807M_saveRegisters(module);
     }
 }
 
@@ -453,14 +449,12 @@ void RDA5807M_seekDown(u8 module, u8 toNextSender)
     RDA5807M_REG[RADIO_REG_R2] &= (~RADIO_REG_R2_SEEKUP);
     RDA5807M_REG[RADIO_REG_R2] |= RADIO_REG_R2_SEEK;
     RDA5807M_saveRegister(module, RADIO_REG_R2);
-    //RDA5807M_saveRegisters(module);
 
     if (!toNextSender)
     {
         // stop scanning right now
         RDA5807M_REG[RADIO_REG_R2] &= (~RADIO_REG_R2_SEEK);
         RDA5807M_saveRegister(module, RADIO_REG_R2);
-        //RDA5807M_saveRegisters(module);
     }
 }
 
@@ -484,8 +478,6 @@ void RDA5807M_seekDown(u8 module, u8 toNextSender)
 // reading starts at a previously selected Register (reg) address
 u16 RDA5807M_readRegister(u8 module, u8 reg)
 {
-    u8  high, low;
-    
     I2C_start(module);
     I2C_write(module, (RADIO_I2C_RND_ADDR << 1) & 0xFE); // write : bit 0 = 0
     I2C_write(module, reg);
@@ -493,18 +485,12 @@ u16 RDA5807M_readRegister(u8 module, u8 reg)
 
     I2C_restart(module);
     I2C_write(module, (RADIO_I2C_RND_ADDR << 1) | 0x01); // read : bit 0 = 1
-    high = I2C_read(module);
+    RDA5807M_REG[reg] = I2C_read(module) << 8;
     I2C_sendAck(module);
-    low = I2C_read(module);
+    RDA5807M_REG[reg] |= I2C_read(module);
     I2C_sendNack(module);
     I2C_stop(module);
 
-    RDA5807M_REG[reg] = (u16)(high << 8) | low;
-    /*
-    RDA5807M_REG[reg] = high;
-    RDA5807M_REG[reg] <<= 8;
-    RDA5807M_REG[reg] |= low;
-    */
     return RDA5807M_REG[reg];
 }
 
@@ -522,7 +508,7 @@ void RDA5807M_readRegisters(u8 module)
     I2C_write(module, (RADIO_I2C_SEQ_ADDR << 1) | 0x01); // read : bit 0 = 1
 
     // read from 0x0A to 0x3A
-    for (reg = RDA5807M_REG_FIRST_READ; reg < RDA5807M_REG_LAST_READ; reg++)
+    for (reg = RADIO_REG_FIRST_READ; reg < RADIO_REG_LAST_READ; reg++)
     {
         high = I2C_read(module);
         I2C_sendAck(module);
@@ -534,12 +520,12 @@ void RDA5807M_readRegisters(u8 module)
     }
 
     // then read from 0x00 to 0x09
-    for (reg = 0x00; reg < RDA5807M_REG_FIRST_READ; reg++)
+    for (reg = RADIO_REG_R0; reg < RADIO_REG_FIRST_READ; reg++)
     {
         high = I2C_read(module);
         I2C_sendAck(module);
         low = I2C_read(module);
-        if (reg == (RDA5807M_REG_FIRST_READ - 1))
+        if (reg == (RADIO_REG_FIRST_READ - 1))
             I2C_sendNack(module);
         else
             I2C_sendAck(module);
@@ -554,7 +540,7 @@ void RDA5807M_readRegisters(u8 module)
 // using the random write access mode
 void RDA5807M_writeRegister(u8 module, u8 reg, u16 val)
 {
-    //RDA5807M_REG[reg] = val;
+    RDA5807M_REG[reg] |= val;
 
     I2C_start(module);
     I2C_write(module, (RADIO_I2C_RND_ADDR << 1) & 0xFE); // write : bit 0 = 0
@@ -602,8 +588,8 @@ void RDA5807M_saveRegisters(u8 module)
 // from 0b000000 = min to 0b111111 = max
 u8 RDA5807M_getStrength(u8 module)
 {
-    //RDA5807M_readRegister(module, RADIO_REG_RB);
-    RDA5807M_readRegisters(module);
+    RDA5807M_readRegister(module, RADIO_REG_RB);
+    //RDA5807M_readRegisters(module);
     RDA5807M.rssi = RDA5807M_REG[RADIO_REG_RB] >> 10;
     return RDA5807M.rssi;
 }

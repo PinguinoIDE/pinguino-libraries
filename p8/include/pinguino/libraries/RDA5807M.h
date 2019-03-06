@@ -33,11 +33,12 @@
 // ----- Register Definitions -----
 
 // Register file origins for sequential mode
-#define RDA5807M_REG_FIRST_WRITE    0x02
-#define RDA5807M_REG_FIRST_READ     0x0A
-#define RDA5807M_REG_LAST_READ      0x3A
+#define RADIO_REG_FIRST_WRITE    0x02
+#define RADIO_REG_FIRST_READ     0x0A
+#define RADIO_REG_LAST_READ      0x3A
 
 #define RADIO_REG_CHIPID            0x00
+#define RADIO_REG_R0                0x00
 
 #define RADIO_REG_R2                0x02
 #define RADIO_REG_R2_OUTPUT         0x8000 // bit 15
@@ -48,9 +49,10 @@
 //      RADIO_REG_R2_RCLK                  // bit 10
 #define RADIO_REG_R2_SEEKUP         0x0200 // bit 9
 #define RADIO_REG_R2_SEEK           0x0100 // bit 8
+#define RADIO_REG_R2_SEEKMODE       0x0080 // bit 7
 //      RADIO_REG_R2_CLOCK                 // bit[6:4]
 #define RADIO_REG_R2_RDS            0x0008 // bit 3
-#define RADIO_REG_R2_NEW            0x0004 // bit 2
+#define RADIO_REG_R2_SENSITIVITY    0x0004 // bit 2
 #define RADIO_REG_R2_SOFTRESET      0x0002 // bit 1
 #define RADIO_REG_R2_ENABLE         0x0001 // bit 0
 
@@ -59,12 +61,14 @@
 #define RADIO_REG_R3_SPACE_200      0x0001 // 200 kHz
 #define RADIO_REG_R3_SPACE_50       0x0002 //  50 kHz
 #define RADIO_REG_R3_SPACE_25       0x0003 //  25 kHz
+#define RADIO_REG_R3_BAND_MASK      0x000C // bit[3:2]
 #define RADIO_REG_R3_BAND_FM        0x0000 // 87-108 MHz (US/Europe)
 #define RADIO_REG_R3_BAND_FMJAPAN   0x0004 // 76-91  MHz (Japan)
 #define RADIO_REG_R3_BAND_FMWORLD   0x0008 // 76-108 MHz (World wide)
 #define RADIO_REG_R3_BAND_FMEAST    0x000C // 65-76  MHz (East Europe)
 #define RADIO_REG_R3_TUNE           0x0010 // bit 4
 #define RADIO_REG_R3_TEST           0x0020 // bit 5
+#define RADIO_REG_R3_FREQ_MASK      0x01FF // bit[9:0]
 
 #define RADIO_REG_R4                0x04
 #define RADIO_REG_R4_EM50           0x0800
@@ -74,6 +78,7 @@
 
 #define RADIO_REG_R5                0x05
 #define RADIO_REG_R5_VOLMAX         0x000F // bit[3:0]
+#define RADIO_REG_R5_VOL_MASK       0x000F // bit[3:0]
 #define RADIO_REG_R5_RSVD2          0x0000 // bit[5:4]
 #define RADIO_REG_R5_SEEKTH         0x0800 // bit[11:8]
 #define RADIO_REG_R5_RSVD1          0x0000 // bit[14:12]
@@ -91,9 +96,11 @@
 
 #define RADIO_REG_RA                0x0A
 #define RADIO_REG_RA_RDS            0x8000
+#define RADIO_REG_RA_STC            0x4000
 #define RADIO_REG_RA_RDSBLOCK       0x0800
 #define RADIO_REG_RA_STEREO         0x0400
 #define RADIO_REG_RA_NR             0x03FF
+#define RADIO_REG_RA_FREQ_MASK      0x01FF
 
 #define RADIO_REG_RB                0x0B
 #define RADIO_REG_RB_FMTRUE         0x0100
@@ -163,7 +170,8 @@ typedef struct
     u8 mute;                        // Mute effect.
     u8 softMute;                    // SoftMute effect.
 
-    char formatedFreq[12];          // Last formated frequency
+    //char formatedFreq[12];          // Last formated frequency
+    char formatedFreq[7];          // Last formated frequency
 
     RADIO_BAND band;                // Last set band.
     RADIO_FREQ freq;                // Last set frequency.
@@ -194,7 +202,7 @@ typedef struct
 
 u8 RDA5807M_init(u8 module);
 void RDA5807M_close(u8 module);
-u8 RDA5807M_getChipID(u8 module);
+u16 RDA5807M_getChipID(u8 module);
   
 // ----- Audio features -----
 

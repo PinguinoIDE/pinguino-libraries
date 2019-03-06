@@ -74,26 +74,8 @@
 
 #include <typedef.h>
 #include <const.h>              // I2C1, I2C2
-//#include <pcf8574.h>
-#include <stdarg.h>
-#ifndef __PIC32MX__
-#include <delayms.c>
-#else
-#include <delay.c>
-#endif
 
 #define LCD_MASK                0b11110000              // we only use D7 to D4
-
-/*
-#define LCD_BL                  PCF8574_data.bits.P0    // P0
-#define LCD_RS                  PCF8574_data.bits.P1    // P1
-#define LCD_RW                  PCF8574_data.bits.P2    // P2
-#define LCD_EN                  PCF8574_data.bits.P3    // P3
-#define LCD_D4                  PCF8574_data.bits.P4    // P4
-#define LCD_D5                  PCF8574_data.bits.P5    // P5
-#define LCD_D6                  PCF8574_data.bits.P6    // P6
-#define LCD_D7                  PCF8574_data.bits.P7    // P7
-*/
 
 #define LCD_WRITE               0
 #define LCD_READ                1
@@ -155,10 +137,10 @@
 #define LCD_RIGHT               102
 #define LCD_LEFT                103
 
-#define DEGRE                   0b11011111     // ASCII for degree
+#define DEGREE                  0b11011111     // ASCII for degree
 #define SIGMA                   0b11100101     // ASCII for sigma
 #define MICRO                   0b11100100     // ASCII for micro
-#define INFINI                  0b11110011     // ASCII for infinite
+#define INFINITE                0b11110011     // ASCII for infinite
 #define SPACE                   0x20           // ASCII for space
 
 /*
@@ -218,10 +200,11 @@ typedef struct
 
 typedef struct
 {
-    u8 width;           //gLCDWIDTH; // from 0 to 15 = 16
-    u8 height;          //gLCDHEIGHT;// from 0 to 1 = 2
-    u8 backlight;       //gBacklight=0; // backlight status
-    u8 address;         //PCF8574_address;
+    u8 width;           // from 0 to 15 = 16
+    u8 height;          // from 0 to 1 = 2
+    u8 backlight;       // backlight status
+    u8 polarity;        // backlight polarity
+    u8 address;         // PCF8574_address;
     u8 data;
     PinOut_t pin;
 } LCDI2C_t;
@@ -233,7 +216,7 @@ static void lcdi2c_send4(u8, u8, u8);
 static void lcdi2c_send8(u8, u8, u8);
 
 // public
-void lcdi2c_init(u8, u8, u8, u8, u8, u8, u8, u8, u8);
+void lcdi2c_init(u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8);
 void lcdi2c_clearLine(u8, u8);
 void lcdi2c_setCursor(u8, u8, u8);
 void lcdi2c_printChar(u8, u8);
@@ -276,12 +259,10 @@ void lcdi2c_newchar(u8, const u8 *, u8);
 //#define lcdi2c2_newpattern()          lcdi2c_newpattern(I2C2)
 
 #if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
-#define lcdi2c_backlight(m)             lcdi2c_blight(m, false)
-#define lcdi2c1_backlight()             lcdi2c_blight(I2C1, false)
-#define lcdi2c2_backlight()             lcdi2c_blight(I2C2, false)
-#define lcdi2c_noBacklight(m)           lcdi2c_blight(m, true)
-#define lcdi2c1_noBacklight()           lcdi2c_blight(I2C1, true)
-#define lcdi2c2_noBacklight()           lcdi2c_blight(I2C2, true)
+#define lcdi2c1_backlight()            lcdi2c_backlight(I2C1)
+#define lcdi2c2_backlight()            lcdi2c_backlight(I2C2)
+#define lcdi2c1_noBacklight()          lcdi2c_noBacklight(I2C1)
+#define lcdi2c2_noBacklight()          lcdi2c_noBacklight(I2C2)
 #endif
 
 #if defined(LCDI2CCLEAR)

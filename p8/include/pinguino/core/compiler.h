@@ -42,6 +42,9 @@
         #ifdef __18F4455
             #define __18f4455
         #endif
+        #ifdef __18F25K22
+            #define __18f25k22
+        #endif
         #ifdef __18F2550
             #define __18f2550
         #endif
@@ -103,6 +106,9 @@
     #endif
     #ifdef __18f4455
         #define PROC_NAME      "18F4455"
+    #endif
+    #ifdef __18f25k22
+        #define PROC_NAME      "18F25K22"
     #endif
     #ifdef __18f2550
         #define PROC_NAME      "18F2550"

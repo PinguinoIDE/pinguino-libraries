@@ -43,6 +43,8 @@
     #define low8(x)                 ((u8) ((x) & 0xFF))
     #define make16(low,high)        ((u16)low | (u16)(high << 8))
     #define make32(low, high)       ((u32)low | (u32)(high << 16))
+    #define msb(x)                  (x & 0xF0)
+    #define lsb(x)                  (x & 0x0F)
 
     /// MATH
 

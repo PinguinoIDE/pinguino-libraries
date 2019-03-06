@@ -60,7 +60,8 @@
 //  --------------------------------------------------------------------
 //  Send an AT command to the module over the UART Port
 //  An entire command sequence will have the following format:
-//  <Prefix><Command><CR>
+//  HC-05 : <Prefix><Command><CR>
+//  HC-06 : <Prefix><Command>
 //  --------------------------------------------------------------------
 
 BT_STATUS BT_sendCommand(u8 uart_port, u8 *fmt, ...)
@@ -69,14 +70,14 @@ BT_STATUS BT_sendCommand(u8 uart_port, u8 *fmt, ...)
     va_list args;
     va_start(args, fmt);    
 
-    #ifndef __PIC32MX__
+    #ifdef __PIC32MX__
+    //while (!SerialAvailable(uart_port));
+    SerialPrintf(uart_port, fmt, args);
+    #else
     //while (!Serial_available(uart_port));
     UART_Module = uart_port;
     //Serial_printf(uart_port, fmt, args);
     pprintf(Serial_printChar, fmt, args);
-    #else
-    //while (!SerialAvailable(uart_port));
-    SerialPrintf(uart_port, fmt, args);
     #endif
 
     va_end(args);
@@ -578,7 +579,7 @@ BT_STATUS BT_ok(u8 uart_port)
 /**------------------------------------------------------------------**/
 
 //  --------------------------------------------------------------------
-//  Initialize the BGB203 Bluetooth module
+//  Initialize the HC-05 or HC-06 Bluetooth modules
 //  uart_port : UART1, UART2 or UARTx depending on board used
 //  return : name of the device (Pinguino)
 //  --------------------------------------------------------------------
@@ -588,10 +589,10 @@ BT_STATUS BT_init(u8 uart_port, u32 baud_rate)
     BT_STATUS status;
     
     // Initialize Serial communication on uart_port
-    #ifndef __PIC32MX__
-    Serial_begin(uart_port, baud_rate, NULL);
-    #else
+    #ifdef __PIC32MX__
     SerialConfigure(uart_port, UART_ENABLE, UART_RX_TX_ENABLED, baud_rate);
+    #else
+    Serial_begin(uart_port, baud_rate, NULL);
     #endif
     
     // Check the connection
@@ -619,18 +620,18 @@ BT_STATUS BT_init(u8 uart_port, u32 baud_rate)
 
 BT_STATUS BT_setUARTSpeed(u8 uart_port, u32 baud_rate)
 {
-    u32 speed[] = {1200,2400,4800,9600,19200,38400,57600,115200};
+    u16 speed[] = {12,24,48,96,192,384,576,1152};
     u8 index=0;
     BT_RESPONSE *response;
 
     while (index++ < sizeof(speed))
-        if (speed[index] == baud_rate)
+        if (speed[index] == baud_rate/100)
             continue;
 
-    if (index == 8)
-        index = 4;   // default speed (9600 bauds)
-    else
-        index += 1;
+    if (index > 7)
+        index = 3;   // default speed (9600 bauds)
+
+    index += 1;
 
     //BT_sendCommand(uart_port, (u8*)"AT+BAUD%d", index);
     BT_sendCommand(uart_port, (u8*)"AT+BAUD4");

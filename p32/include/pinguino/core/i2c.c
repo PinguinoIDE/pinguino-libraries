@@ -140,7 +140,7 @@ void I2C_init(u8 module, u8 mode, u32 speed)
                     #else
                     //Enable interrupt    
                     IntEnable(INT_I2C1_MASTER_EVENT);
-//                     IntEnable(INT_I2C1_BUS_COLLISION_EVENT);
+                    //IntEnable(INT_I2C1_BUS_COLLISION_EVENT);
                     break;
                     
                     #endif
@@ -176,9 +176,8 @@ void I2C_init(u8 module, u8 mode, u32 speed)
             !defined(PIC32_PINGUINO_T795)
             
         case I2C2:
-            
 
-            IntSetVectorPriority(INT_I2C2_VECTOR, 6, 3);
+            IntSetVectorPriority(INT_I2C2_VECTOR, 7, 3);
             IntClearFlag(INT_I2C2_BUS_COLLISION_EVENT);
             IntClearFlag(INT_I2C2_MASTER_EVENT);
             IntClearFlag(INT_I2C2_SLAVE_EVENT);
@@ -229,8 +228,8 @@ void I2C_init(u8 module, u8 mode, u32 speed)
             }
 
             // Enables the I2C module and configures the SDA and SCL pins as serial port pins
-//             I2C2CONbits.ON = 1;
-//             I2C2CON |= (1 << 15);
+            //I2C2CONbits.ON = 1;
+            //I2C2CON |= (1 << 15);
             I2C2CONSET = (1 << 15);							// Set bit 15
             break;
             

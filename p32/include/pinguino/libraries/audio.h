@@ -1,8 +1,8 @@
 /*  --------------------------------------------------------------------
     FILE:           sound.h
-    PROJECT:        pinguino
-    PURPOSE:        note frequencies to play sound
-    PROGRAMER:      regis blanchot <rblanchot@gmail.com>
+    PROJECT:        Pinguino
+    PURPOSE:        Note frequencies to play sound
+    PROGRAMER:      Regis Blanchot <rblanchot@gmail.com>
     FIRST RELEASE:  15 Feb. 2015
     LAST RELEASE:   15 Feb. 2015
     --------------------------------------------------------------------
@@ -25,6 +25,9 @@
 #ifndef __AUDIO_H
     #define __AUDIO_H
     
+    #ifndef __PIC32MX__
+
+    #else
     // OCM<2:0>: Output Compare Mode Select bits
     // 110 = PWM mode on OCx; Fault pin disabled
     // OCTSEL<3>: Output Compare Timer Select bit
@@ -36,6 +39,7 @@
     //#define PWMMODE         0x800E      // Timer3
     #define PWMMODE         0x8006      // Timer2
     #define PWMRESOLUTION   1<<10       // 10-Bit
+    #endif
 
     // The hearing range of human ears is roughly 20 Hz to 20000 Hz.
     // The Nyquist–Shannon sampling theorem says the sampling frequency

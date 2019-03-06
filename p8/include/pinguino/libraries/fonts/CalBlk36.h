@@ -62,12 +62,12 @@
 #define CalBlk36_WIDTH 28
 #define CalBlk36_HEIGHT 36
 
-GLCDFONTDECL(CalBlk36) = {
+const unsigned char CalBlk36[] = {
     0x00, 0x32, // size
-    0x1C, // width
-    0x24, // height
-    0x20, // first char
-    0x60, // char count
+    0x1C,       // width
+    0x24,       // height
+    0x20,       // first char
+    0x60,       // char count
     
     // char widths
     0x08, 0x08, 0x10, 0x16, 0x16, 0x20, 0x1B, 0x08, 0x0A, 0x0A, 

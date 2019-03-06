@@ -1,0 +1,5 @@
+SerialSW.write putcUART#include <swserial.c>
+SerialSW.read getcUART#include <swserial.c>
+SerialSW.putString putsUART#include <swserial.c>
+SerialSW.getString getsUART#include <swserial.c>
+SerialSW.printf swserial_printf#include <swserial.c>

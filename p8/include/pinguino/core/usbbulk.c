@@ -5,7 +5,7 @@
 #define __USBBULK__
 
 /**********************************************************************/
-#ifdef boot4
+#if defined(__CONNECTUSB__)
 /**********************************************************************/
 
 #define USB_USE_BULK
@@ -173,6 +173,6 @@ u8 BULK_available(void)
     return(usbavailable());
 }
 
-#endif /* boot4 and boot2 */
+#endif /* CONNECT */
 
 #endif /* __USBBULK__ */

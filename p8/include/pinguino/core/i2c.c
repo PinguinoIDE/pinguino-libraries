@@ -317,12 +317,12 @@ u8 I2C_write(u8 module, u8 value)
             
         
         SSP1BUF = value;                    // Write byte to SSPBUF (BF is set to 1)
-        return (!SSP1CON2bits.ACKSTAT);     // 1 if Ack, 0 if NAck
+        return (!SSP1CON2bits.ACKSTAT);     // Return 1 if Ack, 0 if NAck
 
         #else
 
         SSPBUF = value;                     // Write byte to SSPBUF (BF is set to 1)
-        return (!SSPCON2bits.ACKSTAT);      // 1 if Ack, 0 if NAck
+        return (!SSPCON2bits.ACKSTAT);      // Return 1 if Ack, 0 if NAck
 
         #endif
     }
@@ -331,7 +331,7 @@ u8 I2C_write(u8 module, u8 value)
     else if (module == I2C2)
     {
         SSP2BUF = value;                    // Write byte to SSPBUF (BF is set to 1)
-        return (!SSP2CON2bits.ACKSTAT);     // 1 if Ack, 0 if NAck
+        return (!SSP2CON2bits.ACKSTAT);     // Return 1 if Ack, 0 if NAck
     }
     #endif
 

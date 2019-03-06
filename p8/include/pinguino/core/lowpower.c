@@ -30,6 +30,7 @@
 #include <typedef.h>
 #include <const.h>
 #include <macro.h>
+#include <oscillator.c>
 
 #define DEEPSLEEPFAULTWAKEUP   1<<7
 #define ULTRALOWPOWERWAKEUP    1<<5
@@ -60,6 +61,9 @@ void System_sleep()
     #endif
     
     sleep();
+    
+    // Wait frequency is stable 
+    System_waitStableFrequency();
 }
 #endif
 

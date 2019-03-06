@@ -1,0 +1,46 @@
+Wifi.printChar esp8266_printChar#include <esp8266.c>#define WIFIPRINTCHAR
+Wifi.print esp8266_print#include <esp8266.c>#define WIFIPRINT
+Wifi.println esp8266_println#include <esp8266.c>#define WIFIPRINTLN
+Wifi.printNumber esp8266_printNumber#include <esp8266.c>#define WIFIPRINTNUMBER
+Wifi.printFloat esp8266_printFloat#include <esp8266.c>#define WIFIPRINTFLOAT
+Wifi.printx esp8266_printx#include <esp8266.c>#define WIFIPRINT
+Wifi.printf esp8266_printf#include <esp8266.c>#define WIFIPRINTF
+
+Wifi.init esp8266_init#include <esp8266.c>
+Wifi.begin esp8266_init#include <esp8266.c>
+Wifi.update esp8266_update#include <esp8266.c>
+Wifi.isStarted esp8266_isStarted#include <esp8266.c>
+Wifi.restart esp8266_restart#include <esp8266.c>
+Wifi.sleep esp8266_sleep#include <esp8266.c>
+Wifi.mode esp8266_mode#include <esp8266.c>
+Wifi.connect esp8266_connect#include <esp8266.c>
+Wifi.list esp8266_list#include <esp8266.c>
+Wifi.disconnect esp8266_disconnect#include <esp8266.c>
+Wifi.create esp8266_create#include <esp8266.c>
+Wifi.dhcp esp8266_DHCP#include <esp8266.c>
+Wifi.autoconnect esp8266_autoConnect#include <esp8266.c>
+Wifi.setMAC esp8266_setMAC#include <esp8266.c>
+Wifi.setIP esp8266_setIP#include <esp8266.c>
+
+Server.start esp8266_serverStart#include <esp8266.c>
+Server.send esp8266_serverSend#include <esp8266.c>
+Server.close esp8266_serverClose#include <esp8266.c>
+Server.getLocalIP esp8266_serverGetLocalIP#include <esp8266.c>
+Server.mux esp8266_serverMux#include <esp8266.c>
+Server.create esp8266_serverCreate#include <esp8266.c>
+Server.delete esp8266_serverDelete#include <esp8266.c>
+Server.maxConnections esp8266_serverMaxConnections#include <esp8266.c>
+Server.timeoutesp8266_serverTimeout#include <esp8266.c>
+Server.receive esp8266_serverReceive#include <esp8266.c>
+Server.getIP esp8266_serverGetIP#include <esp8266.c>
+Server.getMAC esp8266_serverGetMAC#include <esp8266.c>
+
+Mail.connect esp8266_mailConnectSMPT2GO#include <esp8266.c>
+Mail.disconnect esp8266_mailDisconnectSMPT2GO#include <esp8266.c>
+Mail.Start esp8266_mailStart#include <esp8266.c>
+Mail.Login esp8266_mailLogin#include <esp8266.c>
+Mail.SendID esp8266_mailSendID#include <esp8266.c>
+Mail.RecID esp8266_mailRecID#include <esp8266.c>
+Mail.Subject esp8266_mailSubject#include <esp8266.c>
+Mail.Body esp8266_mailBody#include <esp8266.c>
+Mail.End esp8266_mailEnd#include <esp8266.c>

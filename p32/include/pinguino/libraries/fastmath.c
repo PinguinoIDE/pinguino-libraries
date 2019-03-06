@@ -45,6 +45,7 @@
  * 25-01-2018 - R. Blanchot - Added fastsqrt, fastinvsqrt, fastabs
  *                            Added fastmin, fastmax
  *                            Added fastatan2, fastasin, fastacos
+ * 30-01-2018 - R. Blanchot - Added fastatan
  *=====================================================================*/
 
 #ifndef __FASTMATH_C_
@@ -400,11 +401,19 @@ float fastacos(float x)
     return negate * 3.14159265358979 + ret;
 }
 
+// https://www.dsprelated.com/showarticle/1052.php
+// Polynomial approximating arctangenet on the range -1,1.
+// Max error < 0.005 (or 0.29 degrees)
+float fastatan(float z)
+{
+    const float n1 = 0.97239411f;
+    const float n2 = -0.19194795f;
+    return (n1 + n2 * z * z) * z;
+}
+
+//http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
 float fastatan2(float y, float x)
 {
-    //http://pubs.opengroup.org/onlinepubs/009695399/functions/atan2.html
-    //Volkan SALMA
-
     const float pi = 3.1415926535897932384626433832795;
     const float ONEQTR_PI = pi / 4.0;
     const float THRQTR_PI = 3.0 * pi / 4.0;

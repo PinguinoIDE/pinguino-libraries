@@ -87,6 +87,7 @@
 #include <stdarg.h>
 #ifndef __PIC32MX__
 #include <delayms.c>
+//#include <delayus.c>
 #else
 #include <delay.c>
 #endif
@@ -257,45 +258,39 @@
     volatile u8 gI2C_module;
 
 /*  --------------------------------------------------------------------
-    Ecriture d'un quartet (mode 4 bits) dans le LCD
+    Send upper 4 bits of a byte to the PCF8574
     --------------------------------------------------------------------
-    Envoie d'un quartet vers les pins :
-    - D4 a D7 du LCD
-    - P4 a P7 du PCF8574
-    NB : quartet est en fait un 8 bits dont seuls les 4 bits de poids fort nous interessent
-    @param quartet = 4 bits a envoyer au LCD
+    Send a half-byte (value) to pin the PCF8574
+    @param value = 4 bits to send
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
     ------------------------------------------------------------------*/
 
-static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
+static void lcdi2c_send4(u8 module, u8 value, u8 mode)
 {
     //u8 status = isInterrupts();
 
-    // x  x  x  x  0  0  0    0
-    LCDI2C[module].data = quartet;
-
-    if(mode)
-        // x  x  x  x  0  0  0/1  0
-        LCDI2C[module].data |= (mode << LCDI2C[module].pin.rs);
-
-    if(LCDI2C[module].backlight)
-        // x  x  x  x  0  0  0/1  0
-        LCDI2C[module].data |= (LCDI2C[module].backlight << LCDI2C[module].pin.bl);
-
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.d4, value & Bit(0));
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.d5, value & Bit(1));
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.d6, value & Bit(2));
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.d7, value & Bit(3));
+    
+    // LCD is in "write mode" when RW is tied to ground : RW = 0
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.rw, 0);
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.rs, mode);
+    
     /// ---------- LCD Enable Cycle
 
     //if (status) noInterrupts();    
     
     I2C_start(module);                            // send start condition
 
-    //I2C_write(LCDI2C[module].address | I2C_WRITE);
-    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
+    I2C_write(module, LCDI2C[module].address);
 
-    LCDI2C[module].data |= (1 << LCDI2C[module].pin.en);
+    BitSet(LCDI2C[module].data, LCDI2C[module].pin.en);
     I2C_write(module, LCDI2C[module].data);
     // E Pulse Width > 300ns
 
-    LCDI2C[module].data &= ~(1 << LCDI2C[module].pin.en);
+    BitClear(LCDI2C[module].data, LCDI2C[module].pin.en);
     I2C_write(module, LCDI2C[module].data);
     // E Enable Cycle > (300 + 200) = 500ns
 
@@ -305,56 +300,50 @@ static void lcdi2c_send4(u8 module, u8 quartet, u8 mode)
 }
 
 /*  --------------------------------------------------------------------
-    Ecriture d'un octet dans le LCD en mode 4 bits
+    Ecriture d'un value dans le LCD en mode 4 bits
     --------------------------------------------------------------------
     Les données sont écrites en envoyant séquentiellement :
     1/ les quatre bits de poids fort
     2/ les quatre bits de poids faible
     NB : les poids sont stockes dans les quatre bits de poids fort
     qui correspondent aux pins D4 a D7 du LCD ou du PCF8574
-    @param octet = octet a envoyer au LCD
+    @param value = value a envoyer au LCD
     @param mode = LCD Command (LCD_CMD) or Data (LCD_DATA) mode
     ------------------------------------------------------------------*/
 
-static void lcdi2c_send8(u8 module, u8 octet, u8 mode)
+static void lcdi2c_send8(u8 module, u8 value, u8 mode)
 {
-    if (LCDI2C[module].pin.d4 == 0)
-    {
-        lcdi2c_send4(module, octet >> 4, mode);     // send upper 4 bits
-        lcdi2c_send4(module, octet & 0x0F, mode);   // send lower 4 bits
-    }
-    else
-    {
-        lcdi2c_send4(module, octet & 0xF0, mode);   // send upper 4 bits
-        lcdi2c_send4(module, octet << 4, mode);     // send lower 4 bits
-    }
-    //Delayus(46);                          // Wait for instruction excution time (more than 46us)
+    //I2C_start(module);                              // send start condition
+    lcdi2c_send4(module, value >> 4, mode);         // send upper 4 bits
+    lcdi2c_send4(module, value & 0x0F, mode);       // send lower 4 bits
+    //I2C_stop(module);                               // send stop confition
+
+    // Wait for instruction excution time (more than 46us)
     #ifdef __XC8__
-    Delayms(5);
+    Delayms(5);    //Delayus(46);
     #endif
 }
 
 /*  --------------------------------------------------------------------
     backlight
-    NB : PCF8574 is logical inverted so :
-    0 = ON
-    1 = OFF
+    NB : PCF8574 is logical inverted
     ------------------------------------------------------------------*/
 
-#if defined(LCDI2CBACKLIGHT) || defined (LCDI2CNOBACKLIGHT)
-void lcdi2c_blight(u8 module, u8 status)
+#if defined(LCDI2CBACKLIGHT)
+void lcdi2c_backlight(u8 module)
 {
-    LCDI2C[module].backlight = status;
+    //LCDI2C[module].backlight = 1;
+    //LCDI2C[module].polarity  = polarity;
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.bl, LCDI2C[module].polarity);
+}
+#endif
 
-    if (status)
-        BitSet(LCDI2C[module].data, LCDI2C[module].pin.bl);
-    else
-        BitClear(LCDI2C[module].data, LCDI2C[module].pin.bl);
-    
-    I2C_start(module);
-    I2C_write(module, (LCDI2C[module].address << 1) | I2C_WRITE);
-    I2C_write(module, LCDI2C[module].data);
-    I2C_stop(module);
+#if defined (LCDI2CNOBACKLIGHT)
+void lcdi2c_noBacklight(u8 module)
+{
+    //LCDI2C[module].backlight = 0;
+    //LCDI2C[module].polarity  = polarity;
+    BitWrite(LCDI2C[module].data, LCDI2C[module].pin.bl, 1-LCDI2C[module].polarity);
 }
 #endif
 
@@ -585,47 +574,59 @@ void lcdi2c_newpattern()
     No need to wait between 2 commands because i2c bus is quite slow.
     cf. Microchip AN587 Interfacing PICmicro® MCUs to an LCD Module
     --------------------------------------------------------------------
-    pcf8574 adress format is [0 1 0 0 A2 A1 A0 0]
+    PCF8574  7-bit slave adress format is [0 1 0 0 A2 A1 A0]
+    PCF8574A 7-bit slave adress format is [0 1 1 1 A2 A1 A0]
     --------------------------------------------------------------------
     usage ex. : lcdi2c.init(I2C1, 16, 2, 0x27, 4, 2, 1, 0, 3);
     ------------------------------------------------------------------*/
 
-void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 en, u8 rw, u8 rs, u8 bl)
+void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 rs, u8 rw, u8 en, u8 d4, u8 d5, u8 d6, u8 d7, u8 bl, u8 polarity)
 {
-    u8 cmd03 = 0x03, cmd02 = 0x02;
+    u8 cmd8bits = 0x03, cmd4bits = 0x02;
     
-    LCDI2C[module].width  = numcol - 1;
-    LCDI2C[module].height = numline - 1;
-    LCDI2C[module].address = i2c_address;
-    LCDI2C[module].data = 0;
-    LCDI2C[module].pin.d4 = d4_7;
-    LCDI2C[module].pin.d5 = d4_7 + 1;
-    LCDI2C[module].pin.d6 = d4_7 + 2;
-    LCDI2C[module].pin.d7 = d4_7 + 3;
-    LCDI2C[module].pin.en = en;
-    LCDI2C[module].pin.rw = rw;
-    LCDI2C[module].pin.rs = rs;
-    LCDI2C[module].pin.bl = bl;
+    LCDI2C[module].width   = numcol - 1;
+    LCDI2C[module].height  = numline - 1;
+    LCDI2C[module].address = (i2c_address << 1) & 0xFE; // Write mode = bit 0 to 0
+    LCDI2C[module].data    = 0;
+
+    LCDI2C[module].pin.rs  = rs;
+    LCDI2C[module].pin.rw  = rw;
+    LCDI2C[module].pin.en  = en;
+    LCDI2C[module].pin.d4  = d4;
+    LCDI2C[module].pin.d5  = d5;
+    LCDI2C[module].pin.d6  = d6;
+    LCDI2C[module].pin.d7  = d7;
+    LCDI2C[module].pin.bl  = bl;
+
+    LCDI2C[module].polarity  = polarity;
+
     gI2C_module = module;
 
-    if(LCDI2C[module].pin.d4 != 0)
+    /*
+    if (LCDI2C[module].pin.d4 != 0)
     {
-        cmd03=0x30;
-        cmd02=0x20;
+        cmd8bits = 0x30; // MSB of LCD_SYSTEM_SET_8BITS
+        cmd4bits = 0x20; // MSB of LCD_SYSTEM_SET_4BITS
     }
-
+    */
+    
     I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ);
     //I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ);
     //I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ);
 
     Delayms(15);                                // Wait more than 15 ms after VDD rises to 4.5V
-    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
+
+    //I2C_start(module);                          // send start condition
+    lcdi2c_send4(module, cmd8bits, LCD_CMD);    // 0x30 - Mode 8 bits
     Delayms(5);                                 // Wait for more than 4.1 ms
-    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
+    lcdi2c_send4(module, cmd8bits, LCD_CMD);    // 0x30 - Mode 8 bits
+    Delayms(5);                                 // Wait for more than 4.1 ms
     //Delayus(100);                             // Wait more than 100 μs
-    lcdi2c_send4(module, cmd03, LCD_CMD);       // 0x30 - Mode 8 bits
+    lcdi2c_send4(module, cmd8bits, LCD_CMD);    // 0x30 - Mode 8 bits
     //Delayus(100);                             // Wait more than 100 μs
-    lcdi2c_send4(module, cmd02, LCD_CMD);       // 0x20 - Mode 4 bits
+    lcdi2c_send4(module, cmd4bits, LCD_CMD);    // 0x20 - Mode 4 bits
+    //I2C_stop(module);                           // send stop condition
+
     lcdi2c_send8(module, LCD_SYSTEM_SET_4BITS, LCD_CMD);// 0x28 - Mode 4 bits - 2 Lignes - 5x8
     //Delayus(4);                               // Wait more than 40 ns
     lcdi2c_send8(module, LCD_DISPLAY_ON, LCD_CMD);// 0x0C - Display ON + Cursor OFF + Blinking OFF
@@ -634,6 +635,7 @@ void lcdi2c_init(u8 module, u8 numcol, u8 numline, u8 i2c_address, u8 d4_7, u8 e
     Delayms(2);                                 // Execution time > 1.64ms
     lcdi2c_send8(module, LCD_ENTRY_MODE_SET, LCD_CMD);// 0x06 - Increment + Display not shifted (Déplacement automatique du curseur)
     //Delayus(4);                               // Wait more than 40 ns
+    
     #if 0
     lcdi2c_newpattern(module);                  // Set new characters
     #endif

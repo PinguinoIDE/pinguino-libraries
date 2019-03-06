@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------
     FILE        : servo.c
     Version     : 5.0
-    Descr.      : Servo control on all Pinguino pins
+    Descr.      : Servo control on PWM pins
     Project     : Pinguino
     Author      : Régis Blanchot
     --------------------------------------------------------------------

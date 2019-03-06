@@ -2,9 +2,8 @@
     FILE:           main.c
     PROJECT:        pinguino
     PURPOSE:        application main function
-    PROGRAMER:      Jean-pierre Mandon - Régis Blanchot <rblanchot@gmail.com>
-    FIRST RELEASE:  19 Sep 2008
-    LAST RELEASE:   06 Oct 2015
+    PROGRAMER:      Jean-pierre Mandon
+                    Régis Blanchot <rblanchot@gmail.com>
     --------------------------------------------------------------------
     CHANGELOG :
     Originally based on a file by (c)2006 Pierre Gaufillet <pierre.gaufillet@magic.fr>
@@ -24,6 +23,7 @@
     12 Apr. 2016 - Régis Blanchot - removed __DELAYMS__ flag
     13 Oct. 2016 - Régis Blanchot - added PIC1xK50 support
     14 Oct. 2016 - Régis Blanchot - updated _cpu_clock_ value when ICSP is used
+    31 Jan. 2019 - Régis Blanchot - removed reference to boot4
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -123,7 +123,8 @@ unsigned long _cpu_clock_ = 48000000;
     // Application entry point called from bootloader v2.12
     void pinguino_main(void)
 
-#elif defined(boot4)
+//#elif defined(boot4)
+#else
 
     #if defined(__16F1708)
         #error "********************************"

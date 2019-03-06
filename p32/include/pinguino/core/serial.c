@@ -1,8 +1,10 @@
 /*	--------------------------------------------------------------------
-    FILE:			serial.c
-    PROJECT:		pinguino
-    PURPOSE:		Serial communication
-    PROGRAMER:		regis blanchot <rblanchot@gmail.com>
+    FILE:        serial.c
+    PROJECT:     Pinguino
+    PURPOSE:     Serial communication
+    PROGRAMER:   Regis Blanchot <rblanchot@gmail.com>
+    --------------------------------------------------------------------
+    TODO : Software Serial
     --------------------------------------------------------------------
     10 Nov. 2010 R. Blanchot - First release
     13 Feb. 2011 jp mandon added #define for RX/TX pin on 32mx440f256h

@@ -5,6 +5,7 @@
     PROGRAMER:		Régis Blanchot
     --------------------------------------------------------------------
     CHANGELOG :
+    2018-10-29      Régis Blanchot - remove 64-bit types (no longer supported by XC8)
     --------------------------------------------------------------------
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -33,15 +34,15 @@
     typedef signed char         s8;
     typedef signed int          s16;
     typedef signed long         s32;
-    #ifdef __XC8__
-    typedef signed long long    s64;        // SDCC doesn't support 64-bit type
+    #if 0 // def __XC8__
+    typedef signed long long    s64;        // XC8 (v2.00+) and SDCC don't support 64-bit type
     #endif
     
     typedef unsigned char       u8;
     typedef unsigned int        u16;
     typedef unsigned long       u32;
-    #ifdef __XC8__
-    typedef unsigned long long  u64;        // SDCC doesn't support 64-bit type
+    #if 0 //def __XC8__
+    typedef unsigned long long  u64;        // XC8 (v2.00+) and SDCC don't support 64-bit type
     #endif
     
     typedef union

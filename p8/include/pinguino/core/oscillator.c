@@ -210,6 +210,91 @@ extern u32 _cpu_clock_;
 #endif
 
 /*  --------------------------------------------------------------------
+    Perform a loop for some processors until their frequency is stable
+    ------------------------------------------------------------------*/
+
+u8 System_waitStableFrequency()
+{
+    #if defined(__18f13k50) || defined(__18f14k50) || \
+        defined(__18f25k50) || defined(__18f45k50) || \
+        defined(__18f26j50) || defined(__18f46j50) || \
+        defined(__18f26j53) || defined(__18f46j53) || \
+        defined(__18f27j53) || defined(__18f47j53)
+
+        u16 pll_startup_counter = 600;
+
+    #endif
+
+/**********************************************************************/
+    #if defined(__16F1708)
+/**********************************************************************/
+
+        // Wait HFINTOSC frequency is stable (HFIOFS=1) 
+        while (!OSCSTATbits.HFIOFS);
+
+        // Wait until the PLLRDY bit is set in the OSCSTAT register
+        // before attempting to set the USBEN bit.
+        while (!OSCSTATbits.PLLR);
+
+/**********************************************************************/
+    #elif defined(__16F1459)
+/**********************************************************************/
+
+        // Wait HFINTOSC frequency is stable (HFIOFS=1) 
+        while (!OSCSTATbits.HFIOFS);
+
+        // Wait until the PLLRDY bit is set in the OSCSTAT register
+        // before attempting to set the USBEN bit.
+        while (!OSCSTATbits.PLLRDY);
+
+/**********************************************************************/
+    #elif defined(__18f13k50) || defined(__18f14k50)
+/**********************************************************************/
+
+        // wait 2+ ms until the PLL locks
+        while (pll_startup_counter--);
+
+/**********************************************************************/
+    #elif defined(__18f2455) || defined(__18f4455) || \
+          defined(__18f2550) || defined(__18f4550)
+/**********************************************************************/
+
+        // wait INTOSC frequency is stable (IOFS=1) 
+        while (!OSCCONbits.IOFS);
+
+/**********************************************************************/
+    #elif defined(__18f25k50) || defined(__18f45k50)
+/**********************************************************************/
+    
+        while (!OSCCONbits.HFIOFS);
+
+        // wait 2+ ms until the PLL locks
+        while (pll_startup_counter--);
+
+/**********************************************************************/
+    #elif defined(__18f26j50) || defined(__18f46j50)
+/**********************************************************************/
+    
+        // Seems there is no time to wait before frequency is stable ...
+        
+        // wait 2+ ms until the PLL locks
+        while (pll_startup_counter--);
+
+/**********************************************************************/
+    #elif defined(__18f26j53) || defined(__18f46j53) || \
+          defined(__18f27j53) || defined(__18f47j53)
+/**********************************************************************/
+
+        // wait INTOSC frequency is stable (FLTS=1) 
+        while(!OSCCONbits.FLTS);
+
+        // wait 2+ ms until the PLL locks
+        while (pll_startup_counter--);
+
+    #endif
+}
+
+/*  --------------------------------------------------------------------
     Return Primary Oscillator Source 
     It can be internal or external w/o PLL and divider
 

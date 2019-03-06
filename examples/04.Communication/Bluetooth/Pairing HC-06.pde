@@ -17,10 +17,10 @@ void setup()
     // BT Module HC-06 is connected to UART2
     BT.begin(BT_HC06, UART2, 9600);
     BT.setDeviceName(UART2, "Pinguino");
-    BT.setPincode(UART2, 3333);
+    BT.setPincode(UART2, 1234);
     // Now go to your Bluetooth device (smartphone for ex.)
     // and look for the Pinguino Bluetooth device,
-    // code pin is 3333
+    // code pin is 1234
 }
 
 void loop()

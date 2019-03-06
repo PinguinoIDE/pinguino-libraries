@@ -37,6 +37,8 @@ OLED.nop OLED_nop#include <oled.c>
 OLED.setChargePumpEnable OLED_setChargePumpEnable#include <oled.c>
 OLED.getFontWidth OLED_getFontWidth#include <oled.c>
 OLED.getFontHeight OLED_getFontHeight#include <oled.c>
+OLED.getDisplayWidth OLED_getDisplayWidth#include <oled.c>
+OLED.getDisplayHeight OLED_getDisplayHeight#include <oled.c>
 OLED.invertDisplay OLED_invertDisplay#include <oled.c>
 OLED.normalDisplay OLED_normalDisplay#include <oled.c>
 OLED.refresh OLED_refresh#include <oled.c>
@@ -62,3 +64,4 @@ OLED.drawBitmap OLED_drawBitmap#include <oled.c>#define OLEDGRAPHICS
 OLED.drawCircle OLED_drawCircle#include <oled.c>#define OLEDGRAPHICS
 OLED.fillCircle OLED_fillCircle#include <oled.c>#define OLEDGRAPHICS
 OLED.drawLine OLED_drawLine#include <oled.c>#define OLEDGRAPHICS
+OLED.fillRoundRect OLED_fillRoundRect#include <oled.c>#define OLEDGRAPHICS

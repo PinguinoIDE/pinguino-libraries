@@ -1,0 +1,19 @@
+Cf. L298_module.jpg
+
+pin #1  : DC motor 1 "+" or stepper motor A+ (RED)
+pin #2  : DC motor 1 "-" or stepper motor A- (BLUE)
+pin #3  : 12V jumper - remove this if using a supply voltage greater than 12V DC.
+          This enables power to the onboard 5V regulator
+pin #4  : Connect your motor supply voltage here, maximum of 35V DC. Remove 12V jumper if >12V DC
+pin #5  : GND and Pinguino GND
+pin #6  : 5V output if 12V jumper in place, ideal for powering your Pinguino.
+pin #7  : DC motor 1 enable jumper. Leave this in place when using a stepper motor.
+          Connect to PWM output for DC motor speed control.
+pin #8  : IN1 -> Pinguino
+pin #9  : IN2 -> Pinguino
+pin #10 : IN3 -> Pinguino
+pin #11 : IN4 -> Pinguino
+pin #12 : DC motor 2 enable jumper. Leave this in place when using a stepper motor.
+          Connect to PWM output for DC motor speed control.
+pin #13 : DC motor 2 "+" or stepper motor B+ (BLACK)
+pin #14 : DC motor 2 "-" or stepper motor B- (GREEN)

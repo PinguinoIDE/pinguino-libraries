@@ -67,12 +67,12 @@
     u8 DS18x20SendCommand(u8, u8);
     u8 DS18x20StartMeasure(u8, u8);
     ///-----------------------------------------------------------------
+    u8 DS18x20Read(u8, u8, DS18x20_Temperature *);
+    u8 DS18x20ReadFahrenheit(u8, u8, DS18x20_Temperature *);
     u8 DS18x20ReadMeasure(u8, u8, DS18x20_Temperature *);
     u8 DS18B20ReadMeasure(u8, u8, DS18x20_Temperature *);
     u8 DS18S20ReadMeasure(u8, u8, DS18x20_Temperature *);
     ///-----------------------------------------------------------------
-    u8 DS18x20Read(u8, u8, DS18x20_Temperature *);
-    u8 DS18x20ReadFahrenheit(u8, u8, DS18x20_Temperature *);
     u8 DS18x20MatchRom(u8, u8);
     u8 DS18x20ReadRom(u8, u8, u8 *);
     u8 DS18x20ReadFamilyCode(u8, u8);
