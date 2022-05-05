@@ -95,7 +95,7 @@
     #define OLED_DISPLAY_WIDTH_BITS   7
     #define OLED_DISPLAY_WIDTH_MASK   0x7F
 
-    #ifdef OLED_132X64
+    #if defined(OLED_132X64)
         // SH1106 panel is 128 pixels wide,
         // controller RAM has space for 132,
         // it's centered so add an offset to RAM address.
@@ -104,7 +104,7 @@
         #define OLED_DISPLAY_ROWS     8
         #define OLED_DISPLAY_ROW_BITS 3
         #define OLED_DISPLAY_ROW_MASK 0x07
-    #elif OLED_132X32
+    #elif defined(OLED_132X32)
         // SH1106 panel is 128 pixels wide,
         // controller RAM has space for 132,
         // it's centered so add an offset to RAM address.
@@ -113,13 +113,13 @@
         #define OLED_DISPLAY_ROWS     4
         #define OLED_DISPLAY_ROW_BITS 2
         #define OLED_DISPLAY_ROW_MASK 0x03
-    #elif OLED_128X64
+    #elif defined(OLED_128X64)
         #define OLED_DISPLAY_WIDTH    128
         #define OLED_RAM_OFFSET       0
         #define OLED_DISPLAY_ROWS     8
         #define OLED_DISPLAY_ROW_BITS 3
         #define OLED_DISPLAY_ROW_MASK 0x07
-    #elif OLED_128X32
+    #elif defined(OLED_128X32)
         #define OLED_DISPLAY_WIDTH    128
         #define OLED_RAM_OFFSET       0
         #define OLED_DISPLAY_ROWS     4
