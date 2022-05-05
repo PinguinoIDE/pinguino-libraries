@@ -414,9 +414,12 @@ void OLED_init(u8 module, ...)
     #elif defined(OLEDUSEI2C1) ||defined(OLEDUSEI2C2)
     //OLED.init(I2C, address);
     OLED_I2CADDR = va_arg(args, int);
-    //I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ); // OK
-    //I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ); // OK
-    I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ); // OK
+        #if defined(__18f2550) || defined(__18f4550)
+        //I2C_init(module, I2C_MASTER_MODE, I2C_100KHZ); // OK
+        I2C_init(module, I2C_MASTER_MODE, I2C_400KHZ); // OK
+        #else
+        I2C_init(module, I2C_MASTER_MODE, I2C_1MHZ); // OK
+        #endif
 
     ///-----------------------------------------------------------------
 
@@ -747,7 +750,7 @@ void OLED_setFont(u8 module, const u8 *font)
     TODO:
         check x and y
     ------------------------------------------------------------------*/
-void OLED_setXY(u8 module, u8 x, u8 y)
+    void OLED_setXY(u8 module, u8 x, u8 y)
 {
     if ( x >= OLED_DISPLAY_WIDTH || y >= (OLED_DISPLAY_HEIGHT) ) return;
 
